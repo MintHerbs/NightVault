@@ -228,7 +228,7 @@ function AdminEditorContent() {
   // Milkdown instead of the legacy Monaco path.
   const noteEditorRef = useRef(null)
 
-  const { imageQueueRef, imageCountRef, handleImageUpload } = useEditorImages({
+  const { imageQueueRef, handleImageUpload } = useEditorImages({
     selectedPath, showToast, editorRef, noteEditorRef, useWysiwyg: USE_WYSIWYG, setContent,
   })
 
@@ -239,7 +239,7 @@ function AdminEditorContent() {
 
   const { handleSave, handleBackupToGithub } = useEditorSave({
     title, content, selectedPath, showToast, setSaving, setUnsaved, setTitle, setContent,
-    imageQueueRef, imageCountRef, originalPath, setOriginalPath,
+    imageQueueRef, originalPath, setOriginalPath,
     isOwner: profile?.role === 'owner', clearDraft, reloadModules,
   })
 

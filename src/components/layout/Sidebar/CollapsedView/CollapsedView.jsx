@@ -5,7 +5,7 @@ import NotificationBadge from '../../../effects/smoothui/components/notification
 import { colors } from '../../../../constants/colors'
 import styles from '../Sidebar.module.css'
 import moonLogo from '../../../../img/moon.svg'
-import { MODULES, STANDALONE_TOOLS, PACKAGE_JSON, findActiveModule, primaryTool } from '../modules'
+import { STANDALONE_TOOLS, PACKAGE_JSON, findActiveModule, primaryTool } from '../modules'
 
 function SidebarIcon({ icon, tooltip, isActive, activeColor = colors.iconActive, onClick }) {
   return (

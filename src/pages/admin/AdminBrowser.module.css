@@ -222,6 +222,19 @@
   height: 36px;
 }
 
+.navLabel {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navRowMenu {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 /* ── Main column ────────────────────────────────────────────────────────── */
 .main {
   flex: 1;

@@ -5,19 +5,8 @@ import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
 import CodeBlock from '../social/CodeBlock/CodeBlock'
 import RichTooltip, { YouTubeIcon, InstagramIcon, LinkedInIcon } from '../ui/smoothui/rich-popover/index.tsx'
+import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../lib/noteImageSrc'
 import styles from './MarkdownRenderer.module.css'
-
-function resolveImageSrc(src = '') {
-  if (!src.startsWith('/notes/img/')) return src
-
-  const owner = import.meta.env.VITE_GITHUB_OWNER
-  const repo = import.meta.env.VITE_GITHUB_REPO
-  const branch = import.meta.env.VITE_GITHUB_BRANCH || 'main'
-
-  if (!owner || !repo) return src
-
-  return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/public${src}`
-}
 
 function parseRichPopoverProps(attrString) {
   const props = {}
@@ -155,9 +144,13 @@ const markdownComponents = {
     return (
       <img
         className={styles.image}
-        src={resolveImageSrc(src)}
+        src={resolveNoteImageSrc(src)}
         alt={alt || ''}
         loading="lazy"
+        onError={(e) => {
+          const fallback = noteImageFallbackSrc(src)
+          if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback
+        }}
       />
     )
   },

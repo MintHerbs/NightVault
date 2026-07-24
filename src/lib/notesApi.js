@@ -114,29 +114,6 @@ export async function listNoteFolders() {
   return (data ?? []).map((r) => ({ moduleId: r.module_id, name: r.name, hidden: !!r.hidden }))
 }
 
-/** Every Subject's hide state, keyed by module_id — Subjects live in code
- * (modules.js), so this side table is the only place a hide flag can live. */
-export async function listModuleVisibility() {
-  const { data, error } = await supabase
-    .from('module_visibility')
-    .select('module_id, hidden')
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((r) => ({ moduleId: r.module_id, hidden: !!r.hidden }))
-}
-
-/** Whether one Subject is hidden — for the public reader's direct-URL check
- * (a hidden Subject's notes must 404 even if the note row itself isn't
- * individually hidden). */
-export async function isModuleHidden(moduleId) {
-  const { data, error } = await supabase
-    .from('module_visibility')
-    .select('hidden')
-    .eq('module_id', moduleId)
-    .maybeSingle()
-  if (error) throw new Error(error.message)
-  return !!data?.hidden
-}
-
 /**
  * Load one note's content. Accepts a path with or without a trailing `.md`
  * (older deep links carry it). Returns null when absent.
@@ -313,14 +290,5 @@ export async function setFolderHidden(moduleId, name, hidden) {
   const { error } = await supabase
     .from('note_folders')
     .upsert({ module_id: moduleId, name, hidden }, { onConflict: 'module_id,name' })
-  if (error) throw new Error(error.message)
-}
-
-/** Hide/unhide a Subject. Subjects live in `modules.js` (code), so this is
- * the only place their visibility state can live without a redeploy. */
-export async function setModuleHidden(moduleId, hidden) {
-  const { error } = await supabase
-    .from('module_visibility')
-    .upsert({ module_id: moduleId, hidden }, { onConflict: 'module_id' })
   if (error) throw new Error(error.message)
 }

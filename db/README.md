@@ -163,6 +163,63 @@ WHERE  pubname = 'supabase_realtime'
   AND  tablename = 'messages';
 ```
 
+## Syncing notes and Subjects to disk
+
+Note content, folders, and Subject structure live in Supabase now
+(`notes` / `note_folders` since E-005/T-043; `sidebar_modules` since
+2026-07-24) — the admin panel never writes to GitHub for any of these.
+GitHub still holds a static copy as a fallback the site could be
+rebuilt from if Supabase is ever unreachable: notes under
+`src/content/notes/`, Subjects as a JSON snapshot at
+`db/snapshots/sidebar_modules.json` (reference data only — nothing in
+the running app reads it back). Refresh both with
+[scripts/sync-notes-to-disk.mjs](../scripts/sync-notes-to-disk.mjs),
+wrapped as `npm run notes:sync-to-disk`:
+
+```bash
+npm run notes:sync-to-disk -- --dry-run   # preview created/updated/pruned counts
+npm run notes:sync-to-disk                # write the changes
+```
+
+It's a mirror, not a merge: any `.md` file (or empty-folder `.gitkeep`
+placeholder) under `src/content/notes/` with no matching DB row is
+deleted, matching the DB's own cascade-delete-on-folder behavior. It
+only ever touches the working tree — review with `git status`/`git
+diff` and commit by hand; it does not commit or push. Run it every now
+and then (not on every save), and after any bulk delete in the admin
+panel.
+
+## Syncing images from Supabase Storage
+
+Note images upload straight to the `note-images` Storage bucket (see
+`db/sql/0023_sidebar_modules_and_images.sql`) and are served live from
+there — instantly, no GitHub commit or Vercel redeploy needed. Storage
+stays the live source until you explicitly promote an image into the
+repo as a static asset, in two separate, explicit steps:
+
+```bash
+# 1. Pull: download every Storage object into public/notes/img/. Safe to
+#    re-run, never deletes anything.
+npm run images:pull-from-supabase -- --dry-run
+npm run images:pull-from-supabase
+
+# 2. Commit, push, and wait for the deploy to land — the promoted image
+#    must be live at the app's own URL before the next step.
+
+# 3. Prune: delete an object from Storage ONLY if a byte-identical local
+#    copy already exists (verified by downloading and comparing, not
+#    just trusting a filename match). Anything missing or mismatched
+#    locally is skipped and reported, never deleted.
+npm run images:prune-from-supabase -- --dry-run
+npm run images:prune-from-supabase
+```
+
+Pruning before the deploy from step 2 lands breaks the image — Storage
+is the only thing serving it until then. Both scripts need
+`SUPABASE_SERVICE_ROLE_KEY` in addition to `SUPABASE_DB_URL` (see
+`.env.example`), since Storage downloads/deletes need to bypass the
+RLS scoping a normal admin session has.
+
 ## Seeds
 
 `seeds/` carries optional sample data for local development. Seeds are

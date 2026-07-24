@@ -4,10 +4,10 @@ import { Editor, rootCtx, defaultValueCtx, editorViewCtx, schemaCtx, serializerC
 import { Plugin, PluginKey } from '@milkdown/kit/prose/state'
 import CodeBlock from '../../social/CodeBlock/CodeBlock'
 import { resolveDraftSrc } from '../../../lib/draftImagePreviews'
+import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../../lib/noteImageSrc'
 import {
   commonmark,
   codeBlockSchema,
-  imageSchema,
   insertImageCommand,
   toggleStrongCommand,
   toggleEmphasisCommand,
@@ -94,7 +94,16 @@ const codeBlockView = $view(codeBlockSchema, () => (node) => {
 // with Ctrl+Z); the underlying file in the repo is untouched and can still be
 // swept later by Image Cleanup. Rendering matches the default (src as-is), so
 // Markdown round-trip is unaffected — this only adds the overlay controls.
-const imageDeleteView = $view(imageSchema, () => (node, view, getPos) => {
+//
+// Registered via $prose (a real ProseMirror plugin prop), not $view: $view's
+// nodeViewCtx registration is async (gated on SchemaReady) and races the
+// EditorView's own construction, which snapshots nodeViews once via
+// `Object.fromEntries(ctx.get(nodeViewCtx))` — whichever $view plugins haven't
+// resolved by that snapshot are silently dropped forever (confirmed via
+// `view.props.nodeViews` missing `image` at runtime, T-036 image bug). Plugin
+// props are read dynamically by ProseMirror on every state update instead of
+// snapshotted once, so this survives the same race.
+const imageNodeView = (node, view, getPos) => {
   const wrap = document.createElement('span')
   wrap.className = styles.imageWrap
 
@@ -102,8 +111,15 @@ const imageDeleteView = $view(imageSchema, () => (node, view, getPos) => {
   img.className = styles.image
   const applyAttrs = (n) => {
     // draft://<key> (not-yet-uploaded) resolves to a blob URL for preview;
-    // real /notes/img/… paths pass through unchanged.
-    img.src = resolveDraftSrc(n.attrs.src) || ''
+    // saved /notes/img/… paths try the same-origin static path first (works
+    // once promoted, committed, and deployed — see noteImageSrc.js) and fall
+    // back to the note-images Storage URL on error (works immediately after
+    // upload, before that promotion happens).
+    img.src = resolveNoteImageSrc(resolveDraftSrc(n.attrs.src)) || ''
+    img.onerror = () => {
+      const fallback = noteImageFallbackSrc(resolveDraftSrc(n.attrs.src))
+      if (img.src !== fallback) img.src = fallback
+    }
     img.alt = n.attrs.alt || ''
     if (n.attrs.title) img.title = n.attrs.title
   }
@@ -163,7 +179,14 @@ const imageDeleteView = $view(imageSchema, () => (node, view, getPos) => {
       return true
     },
   }
-})
+}
+
+const imageDeleteView = $prose(() => new Plugin({
+  key: new PluginKey('NOTE_EDITOR_IMAGE_VIEW'),
+  props: {
+    nodeViews: { image: imageNodeView },
+  },
+}))
 
 // Markdown-first clipboard. Milkdown's stock clipboard plugin only runs the
 // Markdown parser when the clipboard is *pure* plain text; if any text/html is

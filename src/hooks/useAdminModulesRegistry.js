@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
-import { MODULES } from '../components/layout/Sidebar/modules'
-import { listModuleVisibility, listNotes, listNoteFolders, mergeNotesIntoModules } from '../lib/notesApi'
-import { invalidateNotesRegistry } from './useNotesRegistry'
+import { toStructuralModules, invalidateNotesRegistry } from './useNotesRegistry'
+import { listModules } from '../lib/modulesApi'
+import { listNotes, listNoteFolders, mergeNotesIntoModules } from '../lib/notesApi'
 
 async function fetchAll() {
-  const [notes, folders, moduleVisibility] = await Promise.all([
-    listNotes(), listNoteFolders(), listModuleVisibility(),
+  const [dbModules, notes, folders] = await Promise.all([
+    listModules(), listNotes(), listNoteFolders(),
   ])
-  return { notes, folders, moduleVisibility }
+  return { dbModules, notes, folders }
 }
 
 // Shared by AdminBrowser and AdminEditor so both pages see the same
@@ -15,21 +15,26 @@ async function fetchAll() {
 // fetch — the browser needs it to list Subjects/folders/files (and which are
 // hidden), the editor needs it for useEditorSave's reloadModules and
 // useEditorModules' create/rename/delete/hide handlers.
+//
+// Unlike useNotesRegistry (the public registry), hidden Subjects/folders/notes
+// are kept here, not dropped — the admin browser shows them de-emphasized
+// (T-045 phase C) rather than hiding them from the person managing them.
 export function useAdminModulesRegistry() {
-  const [modules, setModules] = useState(MODULES)
-  // Raw folder/module-visibility rows, kept alongside the merged `modules`
-  // shape (which only carries a per-note `hidden` flag — see notesApi.js) so
-  // AdminBrowser can look up a folder's or Subject's own hidden state too.
+  const [modules, setModules] = useState([])
+  // Raw folder rows, kept alongside the merged `modules` shape (which only
+  // carries a per-note `hidden` flag — see notesApi.js) so AdminBrowser can
+  // look up a folder's own hidden state too.
   const [folders, setFolders] = useState([])
   const [hiddenModuleIds, setHiddenModuleIds] = useState(() => new Set())
   const [loading, setLoading] = useState(true)
 
   const reload = useCallback(async () => {
     try {
-      const { notes, folders: nextFolders, moduleVisibility } = await fetchAll()
-      setModules(prev => mergeNotesIntoModules(prev, notes, nextFolders))
+      const { dbModules, notes, folders: nextFolders } = await fetchAll()
+      const base = toStructuralModules(dbModules)
+      setModules(mergeNotesIntoModules(base, notes, nextFolders))
       setFolders(nextFolders)
-      setHiddenModuleIds(new Set(moduleVisibility.filter(m => m.hidden).map(m => m.moduleId)))
+      setHiddenModuleIds(new Set(dbModules.filter((m) => m.hidden).map((m) => m.id)))
     } catch (err) {
       console.error('Failed to reload notes registry:', err)
     }
@@ -42,15 +47,16 @@ export function useAdminModulesRegistry() {
 
     ;(async () => {
       try {
-        const { notes, folders: nextFolders, moduleVisibility } = await fetchAll()
+        const { dbModules, notes, folders: nextFolders } = await fetchAll()
         if (cancelled) return
-        setModules(mergeNotesIntoModules(MODULES, notes, nextFolders))
+        const base = toStructuralModules(dbModules)
+        setModules(mergeNotesIntoModules(base, notes, nextFolders))
         setFolders(nextFolders)
-        setHiddenModuleIds(new Set(moduleVisibility.filter(m => m.hidden).map(m => m.moduleId)))
+        setHiddenModuleIds(new Set(dbModules.filter((m) => m.hidden).map((m) => m.id)))
       } catch (err) {
         if (cancelled) return
         console.error('Failed to load notes registry:', err)
-        setModules(MODULES)
+        setModules([])
       } finally {
         if (!cancelled) setLoading(false)
       }

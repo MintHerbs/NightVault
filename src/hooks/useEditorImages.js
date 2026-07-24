@@ -2,7 +2,6 @@ import { useRef } from 'react'
 import { registerDraftPreview } from '../lib/draftImagePreviews'
 
 export function useEditorImages({ selectedPath, showToast, editorRef, noteEditorRef, useWysiwyg, setContent }) {
-  const imageCountRef = useRef({})
   const imageQueueRef = useRef({}) // shape: { 'draft://img-1.png': { file: File, ext: string } }
 
   // Image upload handler
@@ -90,5 +89,5 @@ export function useEditorImages({ selectedPath, showToast, editorRef, noteEditor
 
   const handleFileInputChange = (e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])
 
-  return { imageQueueRef, imageCountRef, handleImageUpload, handleFileInputChange }
+  return { imageQueueRef, handleImageUpload, handleFileInputChange }
 }

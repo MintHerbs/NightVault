@@ -280,7 +280,7 @@ export default function ImageCleanupDrawer({ open, onClose, modules, isOwner }) 
                               className={styles.checkbox}
                             />
                             <img
-                              src={orphan.rawUrl}
+                              src={orphan.previewUrl}
                               alt={orphan.path}
                               className={styles.thumbnail}
                               onError={(e) => { e.target.style.display = 'none' }}

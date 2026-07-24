@@ -8,7 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:tree": "node src/test/tree/test-library-integration.js && node src/lib/treeLayout.test.js && node src/test/tree/test-fuzz.js",
-    "db:migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/db-migrate.mjs"
+    "db:migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/db-migrate.mjs",
+    "notes:sync-to-disk": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/sync-notes-to-disk.mjs",
+    "images:pull-from-supabase": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/pull-images-from-supabase.mjs",
+    "images:prune-from-supabase": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/prune-images-from-supabase.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -33,7 +36,8 @@
     "rehype-katex": "^7.0.1",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
-    "remark-math": "^6.0.0"
+    "remark-math": "^6.0.0",
+    "ws": "^8.21.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.4",

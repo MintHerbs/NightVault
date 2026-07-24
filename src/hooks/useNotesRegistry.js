@@ -1,9 +1,10 @@
 // src/hooks/useNotesRegistry.js
 //
-// Loads the note registry (content identities + explicit folders) from Supabase
-// and merges it into the structural MODULES array, producing the same
-// `module.notes = [{ filename, label }]` / `module.subfolders` shape the
-// sidebar and admin file tree already consume (E-005/T-043).
+// Loads the full public registry — Subjects (sidebar_modules), notes, and
+// explicit folders — from Supabase and merges it into the shape the sidebar
+// and admin file tree already consume (E-005/T-043, extended 2026-07-24 to
+// source Subject structure from the DB too instead of the static MODULES
+// array).
 //
 // Stale-while-revalidate: the last successful result is cached at module scope
 // and used to paint instantly on mount, but EVERY mount also refetches in the
@@ -11,27 +12,39 @@
 // after a save reflects the change without a hard reload.
 
 import { useCallback, useEffect, useState } from 'react'
-import { MODULES } from '../components/layout/Sidebar/modules'
-import { listModuleVisibility, listNotes, listNoteFolders, mergeNotesIntoModules } from '../lib/notesApi'
+import { MODULE_TOOLS } from '../components/layout/Sidebar/modules'
+import { getIconOptionByName } from '../components/admin/adminIconOptions'
+import { listModules } from '../lib/modulesApi'
+import { listNotes, listNoteFolders, mergeNotesIntoModules } from '../lib/notesApi'
 
 let lastModules = null
+
+/** Resolve DB Subject rows into the structural shape (Icon component, code-side
+ * tools) mergeNotesIntoModules expects. */
+export function toStructuralModules(dbModules) {
+  return dbModules.map((m) => ({
+    id: m.id,
+    label: m.label,
+    Icon: getIconOptionByName(m.iconName).Icon,
+    ...(MODULE_TOOLS[m.id] ? { tools: MODULE_TOOLS[m.id] } : {}),
+  }))
+}
 
 // Public consumer — hidden Subjects/folders/notes (T-045 phase C) must never
 // reach the sidebar or the notes listing, so they're dropped here, before the
 // merge, rather than carried through and hidden by CSS.
 async function fetchRegistry() {
-  const [notes, folders, moduleVisibility] = await Promise.all([
-    listNotes(), listNoteFolders(), listModuleVisibility(),
+  const [dbModules, notes, folders] = await Promise.all([
+    listModules(), listNotes(), listNoteFolders(),
   ])
-  const hiddenModuleIds = new Set(moduleVisibility.filter(m => m.hidden).map(m => m.moduleId))
-  const visibleModules = MODULES.filter(m => !hiddenModuleIds.has(m.id))
-  const visibleNotes = notes.filter(n => !n.hidden)
-  const visibleFolders = folders.filter(f => !f.hidden)
+  const visibleModules = toStructuralModules(dbModules.filter((m) => !m.hidden))
+  const visibleNotes = notes.filter((n) => !n.hidden)
+  const visibleFolders = folders.filter((f) => !f.hidden)
   return mergeNotesIntoModules(visibleModules, visibleNotes, visibleFolders)
 }
 
 export function useNotesRegistry() {
-  const [modules, setModules] = useState(lastModules ?? MODULES)
+  const [modules, setModules] = useState(lastModules ?? [])
   const [loading, setLoading] = useState(!lastModules)
   const [error, setError] = useState(null)
 
@@ -43,10 +56,10 @@ export function useNotesRegistry() {
       lastModules = merged
       setModules(merged)
     } catch (e) {
-      // On failure keep the last good data (or bare structural modules) so the
-      // sidebar still renders rather than blanking out.
+      // On failure keep the last good data (or an empty list) so the sidebar
+      // still renders rather than blanking out or throwing.
       setError(e)
-      if (!lastModules) setModules(MODULES)
+      if (!lastModules) setModules([])
     } finally {
       setLoading(false)
     }
