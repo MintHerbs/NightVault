@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import NoteReader from '../../components/markdown/NoteReader'
-import { MODULES, primaryTool } from '../../components/layout/Sidebar/modules.js'
-import { getNote, isModuleHidden } from '../../lib/notesApi'
+import { MODULE_TOOLS } from '../../components/layout/Sidebar/modules.js'
+import { getNote } from '../../lib/notesApi'
+import { listModules, isModuleHidden } from '../../lib/modulesApi'
 
 /** "getting-started" / "notes/img-push" → "Getting Started" (last segment, humanised). */
 function humaniseFilename(subpath) {
@@ -15,8 +16,8 @@ function humaniseFilename(subpath) {
 }
 
 /** Registry label for a module id, else a title-cased fallback of the id. */
-function moduleLabel(section) {
-  const found = MODULES.find((m) => m.id === section)
+function moduleLabel(section, modules) {
+  const found = modules.find((m) => m.id === section)
   if (found?.label) return found.label
   return String(section || '')
     .replace(/[-_]+/g, ' ')
@@ -30,6 +31,13 @@ function NotesPage() {
   const location = useLocation()
   const [content, setContent] = useState('')
   const [status, setStatus] = useState('idle')
+  const [modules, setModules] = useState([])
+
+  useEffect(() => {
+    let cancelled = false
+    listModules().then((m) => { if (!cancelled) setModules(m) }).catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
   const noteKey = useMemo(() => {
     if (!section || !subpath) return null
@@ -39,8 +47,8 @@ function NotesPage() {
   const eyebrow = useMemo(() => {
     if (!section) return ''
     const file = humaniseFilename(subpath)
-    return file ? `${moduleLabel(section)} · ${file}` : moduleLabel(section)
-  }, [section, subpath])
+    return file ? `${moduleLabel(section, modules)} · ${file}` : moduleLabel(section, modules)
+  }, [section, subpath, modules])
 
   const handleBack = () => {
     // Go back when there's in-app history; otherwise land on the module so a
@@ -49,8 +57,7 @@ function NotesPage() {
       navigate(-1)
       return
     }
-    const module = MODULES.find((m) => m.id === section)
-    navigate((module && primaryTool(module)?.route) ?? '/home')
+    navigate(MODULE_TOOLS[section]?.[0]?.route ?? '/home')
   }
 
   useEffect(() => {

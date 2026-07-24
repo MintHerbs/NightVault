@@ -301,7 +301,12 @@ function AdminBrowserContent() {
     if (!renaming || !renaming.value.trim()) { setRenaming(null); return }
     const { kind, key, value } = renaming
     setRenaming(null)
-    if (kind === 'module') await handleRenameModule(key, value.trim())
+    // 'rail-module' is the same action as 'module', just a distinct kind so
+    // the left rail's copy of a Subject and its main-table row (both visible
+    // at once at the Subjects root) never simultaneously match the same
+    // shared `renaming` state and render two competing inputs — see the rail
+    // row below.
+    if (kind === 'module' || kind === 'rail-module') await handleRenameModule(key, value.trim())
     else if (kind === 'folder') await handleRenameSubfolder(moduleId, key, value.trim())
     else if (kind === 'file') await handleRenameFile(moduleId, key, value.trim())
   }
@@ -553,17 +558,25 @@ function AdminBrowserContent() {
               <Folder size={20} weight={level === 'subjects' ? 'fill' : 'regular'} />
               <span>Subjects</span>
             </button>
-            {visibleModules.map(m => (
-              <button
-                key={m.id}
-                className={`${styles.navItem} ${styles.navSub} ${moduleId === m.id ? styles.navItemActive : ''}`}
-                onClick={() => navigate(`/admin/editor/${m.id}`)}
-                title={m.label}
-              >
-                {m.Icon ? <m.Icon size={18} weight="regular" /> : <Folder size={18} />}
-                <span>{m.label}</span>
-              </button>
-            ))}
+            {visibleModules.map(m => {
+              const subjectItem = { kind: 'rail-module', key: m.id, name: m.label, hidden: hiddenModuleIds.has(m.id), id: m.id }
+              return (
+                <div
+                  key={m.id}
+                  className={`${styles.navItem} ${styles.navSub} ${moduleId === m.id ? styles.navItemActive : ''}`}
+                  onClick={() => !isRenaming(subjectItem) && navigate(`/admin/editor/${m.id}`)}
+                  title={m.label}
+                >
+                  {m.Icon ? <m.Icon size={18} weight="regular" /> : <Folder size={18} />}
+                  {isRenaming(subjectItem)
+                    ? renameInput(subjectItem)
+                    : <span className={styles.navLabel}>{m.label}</span>}
+                  <div className={styles.navRowMenu}>
+                    <RowMenu items={menuFor(subjectItem)} />
+                  </div>
+                </div>
+              )
+            })}
           </nav>
         </aside>
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, CaretDown, CaretRight } from '@phosphor-icons/react'
 import { supabase } from '../../lib/supabaseClient'
-import { MODULES } from '../layout/Sidebar/modules'
+import { listModules } from '../../lib/modulesApi'
 import styles from './UsersDrawer.module.css'
 
 // Generate random 12-character password
@@ -32,10 +32,16 @@ export default function UsersDrawer({ open, onClose, currentUserId, isOwner = fa
   // Status messages
   const [status, setStatus] = useState({ message: '', type: '' })
 
+  // Subjects, for the "Allowed Directories" picker
+  const [modules, setModules] = useState([])
+
   // Load users when drawer opens
   useEffect(() => {
     if (open && isOwner) {
       loadUsers()
+      listModules().then(setModules).catch((error) => {
+        console.error('Failed to load subjects:', error)
+      })
     }
   }, [open, isOwner])
 
@@ -331,7 +337,7 @@ export default function UsersDrawer({ open, onClose, currentUserId, isOwner = fa
                   <div className={styles.formGroup}>
                     <label className={styles.label}>Allowed Directories</label>
                     <div className={styles.directoryGrid}>
-                      {MODULES.map(module => (
+                      {modules.map(module => (
                         <label key={module.id} className={styles.checkbox}>
                           <input
                             type="checkbox"

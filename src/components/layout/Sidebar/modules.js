@@ -1,24 +1,27 @@
 /**
- * Sidebar registry — STRUCTURAL definitions only (id, label, Icon, route,
- * tools). Note CONTENT no longer lives here: notes are rows in the Supabase
- * `notes` table (E-005/T-043) and are merged in at runtime by
- * useNotesRegistry via mergeNotesIntoModules, which reattaches `notes` /
- * `subfolders` to each module. This file must stay free of `notes[]` arrays.
+ * Sidebar registry — CODE-DEFINED tool routes only. Subject STRUCTURE
+ * (id/label/icon/order/hidden) moved to the Supabase `sidebar_modules` table
+ * (2026-07-24) — a Subject is admin-managed content now, not a code change.
+ * `useNotesRegistry`/`useAdminModulesRegistry` fetch Subjects from the DB,
+ * resolve each `icon_name` to a live component via `getIconOptionByName`
+ * (adminIconOptions.js), attach `tools` from MODULE_TOOLS below by id, then
+ * merge in notes/folders exactly as before. This file must stay free of both
+ * `notes[]` arrays AND a hardcoded Subject list.
  *
  * To add new items:
  *
- *   • Tool inside an existing module — append to that module's `tools[]`.
+ *   • Tool inside an existing module — append to that module's entry in
+ *     MODULE_TOOLS below (built-in app features only; never admin-editable).
  *   • Note inside an existing module — create it in the admin editor; it is
  *     saved to the `notes` table (module_id + path) and appears here
  *     automatically. The URL is `/notes/<module-id>/<path>`.
- *   • Whole new module — append an object to MODULES. Minimum is
- *     `{ id, label, Icon }`. Without tools or notes it renders as a
- *     greyed "coming soon" icon.
+ *   • Whole new Subject — create it in the admin panel (owner-only). It's a
+ *     `sidebar_modules` row, not a code change; add a MODULE_TOOLS entry
+ *     separately if it should carry a built-in tool.
  *   • Standalone tool (below the divider) — append to STANDALONE_TOOLS.
  *
  * Conventions:
  *   • `id`      kebab-case identifier — used in URLs and as React keys.
- *   • `Icon`    React component (PascalCase) from @phosphor-icons/react.
  *   • `route`   must exist in src/routes/index.jsx; clicking navigates here.
  *   • `label`   user-facing string. The ".js" suffix on tools matches the
  *               expanded sidebar's "file tree" visual metaphor.
@@ -30,106 +33,29 @@
  */
 
 import {
-  Brain,
-  BookOpen,
-  BracketsCurly,
-  Bug,
   Calculator,
-  ChartLineUp,
-  Circuitry,
-  Cloud,
-  Code,
-  Cpu,
-  Cube,
-  Database,
-  Eye,
   FileCode,
   FileJs,
-  Flask,
-  Function as FunctionIcon,
-  Gear,
-  GitBranch,
-  Globe,
-  Graph,
-  HardDrive,
-  Laptop,
-  Network,
-  Robot,
-  ShieldCheck,
-  Terminal,
-  TerminalWindow,
-  TreeStructure,
-  WifiHigh,
-  Wrench,
-  Atom,
 } from '@phosphor-icons/react'
 
-// ── Modules ─────────────────────────────────────────────────────────────────
+// ── Built-in tool routes, by Subject id ─────────────────────────────────────
+// Only Subjects with an actual coded feature need an entry here — everything
+// else renders as a greyed "coming soon" icon once merged with its DB row.
 
-export const MODULES = [
-  {
-    id: 'algorithms',
-    label: 'Algorithms',
-    Icon: ChartLineUp,
-    tools: [
-      { id: 'complexity', label: 'Code Complexity.js',     route: '/algo/code-complexity' },
-      { id: 'recurrence', label: 'Recurrence Relation.js', route: '/algo/recurrence-relation' },
-    ],
-  },
-  {
-    id: 'artificial-intelligence',
-    label: 'Artificial Intelligence',
-    Icon: Brain,
-    tools: [
-      { id: 'truth-tree',        label: 'Truth Tree.js',        route: '/logic/truth-tree' },
-      { id: 'semantic-tableaux', label: 'Semantic Tableaux.js', route: '/logic/semantic-tableaux' },
-    ],
-  },
-  {
-    id: 'database',
-    label: 'Database',
-    Icon: Database,
-    tools: [
-      { id: 'btree', label: 'B+ Tree.js',        route: '/tree' },
-      { id: 'erd',   label: 'ERD Visualizer.js', route: '/erd' },
-    ],
-  },
-
-  // Coming soon — declare with just { id, label, Icon }. Add `tools` to activate.
-  {
-    id: 'math',
-    label: 'Computational Math',
-    Icon: FunctionIcon,
-  },
-  { id: 'computer-architecture', label: 'Computer Architecture', Icon: Cpu },
-  { id: 'computer-networking',   label: 'Computer Networking',   Icon: Network },
-  { id: 'computer-security',     label: 'Computer Security',     Icon: ShieldCheck },
-  { id: 'computer-vision',       label: 'Computer Vision',       Icon: Eye },
-  {
-    id: 'operating-systems',
-    label: 'Operating Systems',
-    Icon: HardDrive,
-  },
-  {
-    id: 'notes',
-    label: 'Notes',
-    Icon: BookOpen,
-  },
-  {
-    id: 'labs',
-    label: 'Labs',
-    Icon: Flask,
-  },
-  { id: 'programming',           label: 'Programming',           Icon: TerminalWindow },
-  { id: 'software-engineering',  label: 'Software Engineering',  Icon: Code },
-  {
-    id: 'experimental',
-    label: 'experimental',
-    Icon: Atom,
-    tools: [
-    ],
-  },
-]
+export const MODULE_TOOLS = {
+  algorithms: [
+    { id: 'complexity', label: 'Code Complexity.js',     route: '/algo/code-complexity' },
+    { id: 'recurrence', label: 'Recurrence Relation.js', route: '/algo/recurrence-relation' },
+  ],
+  'artificial-intelligence': [
+    { id: 'truth-tree',        label: 'Truth Tree.js',        route: '/logic/truth-tree' },
+    { id: 'semantic-tableaux', label: 'Semantic Tableaux.js', route: '/logic/semantic-tableaux' },
+  ],
+  database: [
+    { id: 'btree', label: 'B+ Tree.js',        route: '/tree' },
+    { id: 'erd',   label: 'ERD Visualizer.js', route: '/erd' },
+  ],
+}
 
 // ── Standalone tools (below the divider) ────────────────────────────────────
 
@@ -181,19 +107,23 @@ export function noteRoute(moduleId, filename) {
   return `/notes/${moduleId}/${filename}`
 }
 
-/** Find the module that owns the given pathname, or null. */
+/** Find the module id that owns the given pathname, or null. Returns just
+ * `{ id }` — callers only ever need the id (to match against the DB-fetched
+ * module list), never label/Icon, so this stays code-only and doesn't need
+ * the DB. A `/notes/<id>/...` pathname is trusted as-is (Subject ids are DB
+ * rows now, not statically known here); a tool-route pathname is resolved
+ * against MODULE_TOOLS. */
 export function findActiveModule(pathname) {
   if (pathname.startsWith('/notes/')) {
     const id = pathname.split('/')[2]
-    return MODULES.find((m) => m.id === id) ?? null
+    return id ? { id } : null
   }
   const seg = firstSegment(pathname)
   if (!seg) return null
-  return (
-    MODULES.find((m) =>
-      (m.tools ?? []).some((t) => firstSegment(t.route) === seg)
-    ) ?? null
-  )
+  for (const [id, tools] of Object.entries(MODULE_TOOLS)) {
+    if (tools.some((t) => firstSegment(t.route) === seg)) return { id }
+  }
+  return null
 }
 
 function firstSegment(pathname) {

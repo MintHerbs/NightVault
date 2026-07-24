@@ -1,7 +1,9 @@
-import { listDirectory, uploadImage, commitFileWithRetry } from '../lib/githubApi'
+import { commitFileWithRetry } from '../lib/githubApi'
 import { upsertNote, moveNote, baseName } from '../lib/notesApi'
 import { revokeDraftPreview } from '../lib/draftImagePreviews'
 import { invalidateNotesRegistry } from './useNotesRegistry'
+import { supabase } from '../lib/supabaseClient'
+import { NOTE_IMAGES_BUCKET } from '../lib/noteImageSrc'
 
 // Title to filename conversion
 function titleToFilename(title) {
@@ -14,37 +16,39 @@ function titleToFilename(title) {
     .replace(/(^-|-$)/g, '')
 }
 
-// Resolves the `draft://` image queue: uploads each queued image to GitHub
-// (images deliberately stay in the repo, served as static assets — E-005
-// non-goal) and rewrites its draft URL to the committed path. Returns the
-// rewritten content and how many NEW images were uploaded (drives the
-// deploy-lag-honest toast, since a new image only goes live after Vercel
-// redeploys, while the note text is live from Supabase immediately).
-async function resolveImageQueue(content, moduleId, imageQueueRef, imageCountRef) {
+// Resolves the `draft://` image queue: uploads each queued image to the
+// `note-images` Supabase Storage bucket and rewrites its draft URL to the
+// uploaded path. Storage serves a new upload instantly (no GitHub-commit /
+// Vercel-redeploy lag), matching the instant-publish property note text
+// already has via the `notes` table.
+//
+// Filenames are random (crypto.randomUUID()), not a sequential per-module
+// counter like the old GitHub-numbered scheme (1.png, 2.png, ...). A counter
+// seeded from Storage alone would collide with pre-migration on-disk images
+// under public/notes/img/<module>/ the first time a module gets a new
+// upload — Storage starts empty regardless of what already exists in the
+// repo from before this migration, so "next number" there isn't actually
+// next. Confirmed by testing: a fresh upload to `database` computed `1.png`
+// from an empty Storage listing and silently landed on top of an unrelated
+// pre-existing public/notes/img/database/1.png once pulled to disk.
+async function resolveImageQueue(content, moduleId, imageQueueRef) {
   let finalContent = content
-  let uploaded = 0
   for (const [draftKey, { file, ext }] of Object.entries(imageQueueRef.current)) {
-    const imgDir = `public/notes/img/${moduleId}`
-    if (imageCountRef.current[moduleId] === undefined) {
-      const files = await listDirectory(imgDir)
-      imageCountRef.current[moduleId] = files.length
-    }
-    const newNumber = imageCountRef.current[moduleId] + 1
-    imageCountRef.current[moduleId] = newNumber
-    const imgName = `${newNumber}.${ext}`
-    const arrayBuffer = await file.arrayBuffer()
-    await uploadImage(`${imgDir}/${imgName}`, arrayBuffer)
+    const imgName = `${crypto.randomUUID()}.${ext}`
+    const { error: uploadError } = await supabase.storage
+      .from(NOTE_IMAGES_BUCKET)
+      .upload(`${moduleId}/${imgName}`, file, { contentType: file.type })
+    if (uploadError) throw new Error(uploadError.message)
     finalContent = finalContent.replaceAll(`draft://${draftKey}`, `/notes/img/${moduleId}/${imgName}`)
     revokeDraftPreview(draftKey)
-    uploaded += 1
   }
   imageQueueRef.current = {}
-  return { finalContent, uploaded }
+  return { finalContent }
 }
 
 export function useEditorSave({
   title, content, selectedPath, showToast, setSaving, setUnsaved, setTitle, setContent,
-  imageQueueRef, imageCountRef, originalPath, setOriginalPath, isOwner, clearDraft, reloadModules,
+  imageQueueRef, originalPath, setOriginalPath, isOwner, clearDraft, reloadModules,
 }) {
   // Primary save: note CONTENT goes to Supabase (source of truth), so the note
   // is live on the reader's next load with no rebuild. Images still upload to
@@ -86,9 +90,7 @@ export function useEditorSave({
     setSaving(true)
 
     try {
-      const { finalContent, uploaded } = await resolveImageQueue(
-        content, moduleId, imageQueueRef, imageCountRef
-      )
+      const { finalContent } = await resolveImageQueue(content, moduleId, imageQueueRef)
 
       if (original && !isSamePath) {
         // Rename and/or move: a single UPDATE that rewrites identity + label +
@@ -122,10 +124,7 @@ export function useEditorSave({
         })
       }
 
-      showToast(
-        uploaded > 0 ? 'Saved. New images go live after deploy (~1 min).' : 'Saved.',
-        'success'
-      )
+      showToast('Saved.', 'success')
       setUnsaved(false)
       setOriginalPath({ moduleId, path: newPath, subfolder })
 

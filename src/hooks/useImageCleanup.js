@@ -1,17 +1,19 @@
 // src/hooks/useImageCleanup.js
 //
-// Finds images in the repo (public/notes/img/**) that no note references, so
-// they can be deleted. The set of "referenced images" is derived from note
-// CONTENT in Supabase (notes.content_md) — the source of truth since
-// E-005/T-043. Previously this scanned committed .md in GitHub and keyed on
-// file SHA; once content moved to the DB that scan saw nothing and flagged
-// every live image as orphaned (T-002). Reading content_md fixes that.
+// Finds images in the `note-images` Supabase Storage bucket that no note
+// references, so they can be deleted. The set of "referenced images" is
+// derived from note CONTENT in Supabase (notes.content_md) — the source of
+// truth since E-005/T-043. Previously this scanned committed .md in GitHub
+// and keyed on file SHA; once content moved to the DB that scan saw nothing
+// and flagged every live image as orphaned (T-002). Reading content_md fixes
+// that.
 //
-// Images themselves still live in GitHub (served static), so listing and
-// deleting them still goes through the GitHub proxy.
+// Images themselves moved from GitHub to Storage 2026-07-24 — listing and
+// deleting them now goes through the Storage API directly (RLS-gated, same
+// owner-only rule this hook already enforced client-side).
 
 import { supabase } from '../lib/supabaseClient'
-import { listDirectory, deleteFile } from '../lib/githubApi'
+import { NOTE_IMAGES_BUCKET, noteImageFallbackSrc } from '../lib/noteImageSrc'
 
 // Extract all image paths from a markdown string
 function extractImages(markdown) {
@@ -53,21 +55,21 @@ export function useImageCleanup({ modules, isOwner }) {
       scannedCount++
     }
 
-    // 2. Images actually stored per module (GitHub), served static.
+    // 2. Images actually stored per module (Storage), served live.
     const allStoredImages = []
     for (const mod of modulesToScan) {
-      try {
-        const files = await listDirectory(`public/notes/img/${mod.id}`)
-        files.forEach(f => {
-          allStoredImages.push({
-            path: `/notes/img/${mod.id}/${f.name}`,
-            githubPath: f.path,
-            rawUrl: `https://raw.githubusercontent.com/${import.meta.env.VITE_GITHUB_OWNER}/${import.meta.env.VITE_GITHUB_REPO}/${import.meta.env.VITE_GITHUB_BRANCH}/public/notes/img/${mod.id}/${f.name}`,
-          })
+      const { data: files, error: listError } = await supabase.storage
+        .from(NOTE_IMAGES_BUCKET)
+        .list(mod.id)
+      if (listError || !files) continue // no images for this module yet
+      files.forEach(f => {
+        const path = `/notes/img/${mod.id}/${f.name}`
+        allStoredImages.push({
+          path,
+          storagePath: `${mod.id}/${f.name}`,
+          previewUrl: noteImageFallbackSrc(path),
         })
-      } catch {
-        // no images for this module yet
-      }
+      })
     }
 
     // 3. Orphans = stored images no note references.
@@ -79,7 +81,7 @@ export function useImageCleanup({ modules, isOwner }) {
   }
 
   // ── DELETE ────────────────────────────────────────────────────────────────
-  // Deletes confirmed orphan images from GitHub. Each item needs { githubPath }.
+  // Deletes confirmed orphan images from Storage. Each item needs { storagePath }.
   async function deleteOrphans(confirmedOrphans, onProgress) {
     if (!isOwner) throw new Error('Owners only')
     let deleted = 0
@@ -88,11 +90,11 @@ export function useImageCleanup({ modules, isOwner }) {
     for (let i = 0; i < confirmedOrphans.length; i++) {
       const img = confirmedOrphans[i]
       onProgress?.(i + 1, confirmedOrphans.length)
-      try {
-        await deleteFile(img.githubPath, `chore: remove unused image ${img.githubPath}`)
-        deleted++
-      } catch {
+      const { error } = await supabase.storage.from(NOTE_IMAGES_BUCKET).remove([img.storagePath])
+      if (error) {
         failed++  // log but don't abort — delete as many as possible
+      } else {
+        deleted++
       }
     }
 
