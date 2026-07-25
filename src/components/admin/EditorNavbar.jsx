@@ -22,6 +22,7 @@ import {
   ShareNetwork
 } from '@phosphor-icons/react'
 import StyleDropdown from './StyleDropdown'
+import Loading from '../ui/Loading'
 import styles from './EditorNavbar.module.css'
 
 export default function EditorNavbar({
@@ -143,10 +144,7 @@ export default function EditorNavbar({
                 onClick={onSave}
                 disabled={saving}
               >
-                <CloudArrowUp
-                  size={18}
-                  className={saving ? styles.spinning : ''}
-                />
+                {saving ? <Loading size={18} color="var(--accent)" /> : <CloudArrowUp size={18} />}
               </button>
             </Tooltip.Trigger>
             <Tooltip.Portal>

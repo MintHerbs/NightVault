@@ -6,6 +6,7 @@ import {
   ListBullets, MagnifyingGlass, SquaresFour,
 } from '@phosphor-icons/react'
 import PageShell from '../../components/layout/PageShell'
+import Loading from '../../components/ui/Loading'
 import { useNotesRegistry } from '../../hooks/useNotesRegistry'
 import {
   subfoldersForModule, filesForFolder, rootFilesForModule, segmentToSubfolder,
@@ -204,7 +205,7 @@ export default function NotesBrowserPage() {
         </div>
 
         {loading && level === 'subjects' ? (
-          <div className={styles.emptyState}>Loading…</div>
+          <div className={styles.emptyState}><Loading /></div>
         ) : notFound ? (
           <div className={styles.emptyState}>This subject doesn't exist.</div>
         ) : view === 'list' ? (

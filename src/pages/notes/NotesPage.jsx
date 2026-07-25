@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import NoteReader from '../../components/markdown/NoteReader'
+import Loading from '../../components/ui/Loading'
 import { deriveSubfolder, getNote } from '../../lib/notesApi'
 import { listModules, isModuleHidden } from '../../lib/modulesApi'
 
@@ -99,9 +100,7 @@ function NotesPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', padding: '80px 24px' }}>
-      {status === 'loading' && (
-        <div style={{ color: '#E8E0D5', fontSize: '18px' }}>Loading...</div>
-      )}
+      {status === 'loading' && <Loading />}
       {status === 'not_found' && (
         <div style={{ color: '#ff6b6b', fontSize: '18px' }}>Note not found.</div>
       )}

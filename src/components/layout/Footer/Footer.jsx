@@ -1,18 +1,16 @@
 /**
  * Footer — site footer for content pages.
  *
- * Renders the brand blurb, grouped navigation (tools + resources), and a
+ * Renders the brand blurb, grouped navigation (tools + legal), and a
  * copyright line.
  *
  * Internal destinations use react-router <Link> so navigation stays
- * client-side; external destinations (GitHub, Contributors) are plain
- * anchors opened in a new tab.
+ * client-side; the GitHub link is a plain anchor opened in a new tab.
  */
 import { Link } from 'react-router-dom';
 import styles from './Footer.module.css';
 
 const GITHUB_URL = 'https://github.com/MintHerbs/b-tree';
-const CONTRIBUTORS_URL = 'https://github.com/MintHerbs/b-tree/graphs/contributors';
 
 const TOOL_LINKS = [
   { label: 'CPA Calculator', to: '/tools/grade-toolkit' },
@@ -22,10 +20,8 @@ const TOOL_LINKS = [
   { label: 'Recurrence Relation', to: '/algo/recurrence-relation' },
 ];
 
-const RESOURCE_LINKS = [
-  { label: 'Community', to: '/social/feed' },
-  { label: 'Guidelines', to: '/social/guidelines' },
-  { label: 'Team', to: '/about' },
+const LEGAL_LINKS = [
+  { label: 'Terms & Conditions', to: '/terms' },
   { label: 'Disclaimer', to: '/disclaimer' },
 ];
 
@@ -52,29 +48,13 @@ export default function Footer() {
           ))}
         </nav>
 
-        <nav className={styles.column} aria-label="Resources">
-          <h2 className={styles.columnTitle}>Resources</h2>
-          {RESOURCE_LINKS.map(({ label, to }) => (
+        <nav className={styles.column} aria-label="Legal">
+          <h2 className={styles.columnTitle}>Legal</h2>
+          {LEGAL_LINKS.map(({ label, to }) => (
             <Link key={to} to={to} className={styles.link}>
               {label}
             </Link>
           ))}
-          <a
-            href={CONTRIBUTORS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.link}
-          >
-            Contributors
-          </a>
-          <a
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.link}
-          >
-            GitHub
-          </a>
         </nav>
       </div>
 

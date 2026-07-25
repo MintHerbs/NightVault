@@ -12,6 +12,7 @@ import { useAdmin } from './useAdmin'
 import { useAdminModulesRegistry } from '../../hooks/useAdminModulesRegistry'
 import { useEditorModules } from '../../hooks/useEditorModules'
 import ToastNotification, { useToast } from '../../components/admin/ToastNotification'
+import Loading from '../../components/ui/Loading'
 import { ADMIN_ICON_OPTIONS, getIconNameForComponent } from '../../components/admin/adminIconOptions'
 import {
   subfoldersForModule, filesForFolder, rootFilesForModule,
@@ -468,7 +469,7 @@ function AdminBrowserContent() {
   const targetSubfolders = targetModule ? subfoldersForModule(targetModule) : []
 
   if (authLoading) {
-    return <div className={styles.fullLoading}>Loading…</div>
+    return <div className={styles.fullLoading}><Loading color="var(--accent)" /></div>
   }
   if (isTooNarrow) {
     return (
