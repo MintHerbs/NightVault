@@ -26,11 +26,24 @@ markup and copy. Standardize all of them on the `Quantum` animation from
 - `src/pages/admin/AdminBrowser.jsx:471` — `<div className={styles.fullLoading}>Loading…</div>` (identical pattern to AdminUsers)
 - `src/features/chat/components/ChatPanel/ChatPanel.jsx:29-31` + `ChatPanel.module.css` `.spinner`/`@keyframes spin` — hand-rolled CSS border-spinner, no text
 
+A follow-up sweep (2026-07-25, prompted by "verify the loading animation has
+been applied everywhere") found a 7th site this ticket's original audit
+missed:
+
+- `src/components/admin/EditorNavbar.jsx:141-150` + `EditorNavbar.module.css`
+  `.spinning`/`@keyframes spin` — the Save button's `CloudArrowUp` icon spun
+  in place via a hand-rolled CSS rotation while `saving` was true. Same
+  "one more spinner, slightly different" pattern this ticket exists to
+  eliminate.
+
 Not in scope: `TenorSearch.jsx`'s GIF grid skeleton and `HomeFeedPage.jsx`'s
 `FeedSkeleton` are content-placeholder skeletons (a different pattern from
-a spinner/text loading state) and SmoothUI's `grid-loader` is reserved for
-Dynamic Island AI states per `docs/design/components.md` — none of these
-were touched.
+a spinner/text loading state); SmoothUI's `grid-loader` is reserved for
+Dynamic Island AI states per `docs/design/components.md`, explicitly not to
+be touched. Button busy-state labels (`ChangePasswordModal`'s "Updating...",
+`AdminLogin`'s "Signing in...") are a distinct pattern — text on a disabled
+button, not a spinner/loading-state display — and also out of scope. None of
+these were touched.
 
 ## Impact
 
@@ -56,6 +69,7 @@ and delete the now-unused `ChatPanel.module.css` spinner CSS.
 - [x] All six call sites listed above render the shared component
 - [x] Unused spinner CSS/keyframes removed from `ChatPanel.module.css`
 - [x] `npm run build` passes
+- [x] `EditorNavbar`'s Save button renders `<Loading size={18} color="var(--accent)" />` in place of the spinning `CloudArrowUp` icon while `saving`; `.spinning`/`@keyframes spin` removed from `EditorNavbar.module.css`
 
 ## References
 
