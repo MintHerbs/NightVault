@@ -29,6 +29,7 @@ const LazyGradesRedirect = () => (
 )
 
 export const NotesPage = lazy(() => import('../pages/notes/NotesPage'))
+export const NotesBrowserPage = lazy(() => import('../pages/notes-browser/NotesBrowserPage'))
 
 export const routeComponents = {
   '/tree': TreePage,
@@ -59,4 +60,5 @@ export function preloadAcademiaRoutes() {
   import('../pages/tools/grade-toolkit/GradeToolkitPage')
   import('../pages/home/HomePage')
   import('../pages/notes/NotesPage')
+  import('../pages/notes-browser/NotesBrowserPage')
 }

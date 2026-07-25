@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { lazy } from 'react'
-import { routeComponents, NotesPage, preloadAcademiaRoutes } from './academiaRoutes'
+import { routeComponents, NotesPage, NotesBrowserPage, preloadAcademiaRoutes } from './academiaRoutes'
 import { HomeFeedPage, GuidelinesPage, SocialChatRoute, preloadSocialRoutes } from './socialRoutes'
 
 // Admin routes
@@ -22,6 +22,11 @@ export function AppRoutes({ onAIStateChange, onChatOpen }) {
         />
       ))}
       <Route path="/notes/:section/*" element={<NotesPage />} />
+
+      {/* Public read-only Drive-style browser (T-049) — Subjects → folders → files */}
+      <Route path="/notes-browser" element={<NotesBrowserPage />} />
+      <Route path="/notes-browser/:moduleId" element={<NotesBrowserPage />} />
+      <Route path="/notes-browser/:moduleId/:subfolder" element={<NotesBrowserPage />} />
 
       <Route path="/social/feed" element={<HomeFeedPage onAIStateChange={onAIStateChange} onChatOpen={onChatOpen} />} />
       <Route path="/social/chat" element={<SocialChatRoute onChatOpen={onChatOpen} />} />

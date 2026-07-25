@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import NoteReader from '../../components/markdown/NoteReader'
-import { MODULE_TOOLS } from '../../components/layout/Sidebar/modules.js'
-import { getNote } from '../../lib/notesApi'
+import { displaySubfolder, getNote } from '../../lib/notesApi'
 import { listModules, isModuleHidden } from '../../lib/modulesApi'
 
 /** "getting-started" / "notes/img-push" → "Getting Started" (last segment, humanised). */
@@ -28,7 +27,6 @@ function NotesPage() {
   const { section } = useParams()
   const subpath = useParams()['*']
   const navigate = useNavigate()
-  const location = useLocation()
   const [content, setContent] = useState('')
   const [status, setStatus] = useState('idle')
   const [modules, setModules] = useState([])
@@ -51,13 +49,10 @@ function NotesPage() {
   }, [section, subpath, modules])
 
   const handleBack = () => {
-    // Go back when there's in-app history; otherwise land on the module so a
-    // deep-linked note never strands the reader.
-    if (location.key !== 'default') {
-      navigate(-1)
-      return
-    }
-    navigate(MODULE_TOOLS[section]?.[0]?.route ?? '/home')
+    // Deterministic, not history-based (T-049) — a note reached by direct
+    // link or a shared URL has no "back" to fall through to, so back always
+    // returns to the read-only browser at this note's own folder.
+    navigate(`/notes-browser/${section}/${displaySubfolder(subpath)}`)
   }
 
   useEffect(() => {

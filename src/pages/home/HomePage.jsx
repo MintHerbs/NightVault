@@ -1,6 +1,7 @@
 import {
   Calculator,
   ChartLineUp,
+  Files,
   Function as FunctionIcon,
   Globe,
   Graph,
@@ -15,6 +16,13 @@ import styles from './home.module.css';
 // (see src/components/layout/Sidebar/modules.js). Calculator and Globe are
 // deliberately the sidebar's own icons for these destinations.
 const TOOLS = [
+  {
+    id: 'notes',
+    title: 'Notes',
+    description: 'Browse every subject\'s notes, folder by folder.',
+    Icon: Files,
+    route: '/notes-browser',
+  },
   {
     id: 'cpa',
     title: 'CPA Calculator',

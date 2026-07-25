@@ -1,0 +1,296 @@
+/* Public read-only Drive-style browser (T-049). Deliberately transparent —
+   unlike AdminBrowser's opaque .app, this page sits inside PageShell's
+   content variant (no background set there either) so the global Starfield
+   shows through the breadcrumb/list/grid area. Row/card surfaces use the
+   same --md-surface-container tokens AdminBrowser uses, for visual parity,
+   without importing its admin-only token file. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mainHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+
+.crumbSegment {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.crumbSep {
+  color: var(--md-on-surface-variant);
+  flex-shrink: 0;
+}
+
+.crumbLink {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  border-radius: var(--md-shape-sm);
+  color: var(--md-on-surface-variant);
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.crumbLink:hover { background: rgba(255, 255, 255, 0.06); color: var(--md-on-surface); }
+
+.crumbTitle {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--md-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60vw;
+}
+
+.viewToggle {
+  display: flex;
+  gap: 2px;
+  background: var(--md-surface-container-low);
+  border-radius: var(--md-shape-md);
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.viewButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  border-radius: var(--md-shape-sm);
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.viewButton:hover { background: rgba(255, 255, 255, 0.06); }
+.viewButtonActive { background: var(--md-surface-container-high); color: var(--md-on-surface); }
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.searchWrap {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+  max-width: 360px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--md-on-surface-variant);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px 0 36px;
+  border-radius: var(--md-shape-lg);
+  border: 1px solid var(--md-outline-variant);
+  background: var(--md-surface-container-low);
+  color: var(--md-on-surface);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.searchInput:focus { outline: 2px solid var(--color-accent); outline-offset: -1px; }
+
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--md-shape-lg);
+  border: 1px solid var(--md-outline-variant);
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+  white-space: nowrap;
+}
+.chip:hover { background: rgba(255, 255, 255, 0.06); }
+.chipActive {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: var(--color-accent);
+  color: var(--md-on-surface);
+}
+
+.menuContent {
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  background: var(--md-surface-container-high);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-md);
+  padding: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+.menuItem {
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 8px 10px;
+  border-radius: var(--md-shape-sm);
+  color: var(--md-on-surface);
+  font-size: 14px;
+  cursor: pointer;
+}
+.menuItem:hover { background: rgba(255, 255, 255, 0.08); }
+
+.emptyState {
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--md-on-surface-variant);
+  font-size: 14px;
+}
+
+/* List view */
+.table {
+  display: flex;
+  flex-direction: column;
+}
+
+.tableHead {
+  display: grid;
+  grid-template-columns: 1fr 140px;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--md-outline-variant);
+}
+
+.thName, .thDate {
+  background: none;
+  border: none;
+  text-align: left;
+  color: var(--md-on-surface-variant);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.thSortable { cursor: pointer; }
+.thSortable:hover { color: var(--md-on-surface); }
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 140px;
+  gap: 12px;
+  align-items: center;
+  min-height: 52px;
+  padding: 0 12px;
+  border-radius: var(--md-shape-sm);
+  cursor: pointer;
+  transition: background 100ms ease;
+}
+.row:hover { background: var(--md-surface-container); }
+
+.cellName {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.name {
+  color: var(--md-on-surface);
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cellDate {
+  color: var(--md-on-surface-variant);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.fileIcon { color: var(--md-on-surface-variant); flex-shrink: 0; }
+.folderIcon { color: var(--color-accent); flex-shrink: 0; }
+
+/* Grid view */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--md-shape-lg);
+  background: var(--md-surface-container);
+  cursor: pointer;
+  transition: background 150ms ease;
+  min-height: 48px;
+}
+.card:hover { background: var(--md-surface-container-high); }
+
+.cardName {
+  color: var(--md-on-surface);
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Mobile (matches PageShell/Sidebar's shared 968px breakpoint) */
+@media (max-width: 968px) {
+  .crumbTitle { font-size: 19px; max-width: 50vw; }
+}
+
+@media (max-width: 640px) {
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .searchWrap { max-width: none; }
+  .chips { justify-content: flex-start; }
+
+  /* Date column drops out — not enough width to keep it legible next to a
+     comfortably-tappable name column. */
+  .tableHead, .row { grid-template-columns: 1fr; }
+  .thDate, .cellDate { display: none; }
+
+  .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+}
