@@ -1,13 +1,92 @@
+import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math'
 import remarkGfm from 'remark-gfm'
+import remarkDirective from 'remark-directive'
+import { visit } from 'unist-util-visit'
 import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
 import CodeBlock from '../social/CodeBlock/CodeBlock'
 import RichTooltip, { YouTubeIcon, InstagramIcon, LinkedInIcon } from '../ui/smoothui/rich-popover/index.tsx'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../lib/noteImageSrc'
 import { parseImageTitle } from '../../lib/noteImageWidth'
+import { HEX_COLOR_RE } from '../../constants/noteColors'
+import { YOUTUBE_ID_RE, youtubeThumbnailSrc, youtubeEmbedSrc } from '../../lib/youtube'
 import styles from './MarkdownRenderer.module.css'
+
+// Maps the note-editor's directive syntax (`:color[...]{hex="..."}`,
+// `:mark[...]{hex="..."}`, `::youtube{id="..."}` — see
+// NoteEditor.jsx's colorMarkSchema/highlightMarkSchema/youtubeSchema, T-055)
+// to real hast elements via `data.hName`/`data.hProperties`. This keeps
+// everything inside the safe mdast/hast pipeline — no rehype-raw, no raw
+// HTML string ever reaches the DOM from note content. `hex`/`id` are
+// re-validated here independently of the editor's own validation, since
+// stored Markdown can also arrive via a GitHub backup restore. An invalid
+// value is left as an unrecognised directive node (renders as plain
+// children/nothing) rather than passed through unchecked.
+function remarkNoteDirectives() {
+  return (tree) => {
+    visit(tree, (node) => {
+      if (node.type !== 'textDirective' && node.type !== 'leafDirective') return
+      const data = node.data || (node.data = {})
+      const attrs = node.attributes || {}
+
+      if (node.type === 'textDirective' && node.name === 'color') {
+        const hex = attrs.hex || ''
+        if (!HEX_COLOR_RE.test(hex)) return
+        data.hName = 'span'
+        data.hProperties = { style: `color: ${hex}` }
+        return
+      }
+      if (node.type === 'textDirective' && node.name === 'mark') {
+        const hex = attrs.hex || ''
+        if (!HEX_COLOR_RE.test(hex)) return
+        data.hName = 'span'
+        data.hProperties = { style: `background-color: ${hex}` }
+        return
+      }
+      if (node.type === 'leafDirective' && node.name === 'youtube') {
+        const id = attrs.id || ''
+        if (!YOUTUBE_ID_RE.test(id)) return
+        data.hName = 'youtube-embed'
+        data.hProperties = { videoId: id }
+      }
+    })
+  }
+}
+
+function YouTubeEmbed({ videoId }) {
+  const [playing, setPlaying] = useState(false)
+
+  if (!YOUTUBE_ID_RE.test(videoId || '')) return null
+
+  return (
+    <div className={styles.videoWrapper} contentEditable={false}>
+      {playing ? (
+        <iframe
+          className={styles.videoFrame}
+          src={youtubeEmbedSrc(videoId)}
+          allow="autoplay; encrypted-media; picture-in-picture"
+          allowFullScreen
+          frameBorder="0"
+          title="YouTube video"
+        />
+      ) : (
+        <button
+          type="button"
+          className={styles.videoThumbButton}
+          onClick={() => setPlaying(true)}
+          aria-label="Play video"
+        >
+          <img className={styles.videoThumb} src={youtubeThumbnailSrc(videoId)} alt="" loading="lazy" />
+          <span className={styles.videoPlayIcon}>
+            <svg viewBox="0 0 24 24" width={28} height={28} fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+          </span>
+        </button>
+      )}
+    </div>
+  )
+}
 
 // Milkdown serialises blank-line spacing as literal `<br />` HTML. react-markdown
 // renders raw HTML as text (there is deliberately no rehype-raw, since arbitrary HTML
@@ -161,6 +240,9 @@ const markdownComponents = {
   li({ children }) {
     return <li className={styles.li}>{children}</li>
   },
+  'youtube-embed': function YouTubeEmbedComponent({ videoId }) {
+    return <YouTubeEmbed videoId={videoId} />
+  },
   img({ src, alt, title }) {
     // The image title carries the width chosen in the editor (`w=<px>`), so the
     // reader shows the same size the author saw. See lib/noteImageWidth.js.
@@ -198,7 +280,7 @@ function MarkdownRenderer({ content }) {
         return (
           <ReactMarkdown
             key={i}
-            remarkPlugins={[remarkGfm, remarkMath, remarkBrToBreak]}
+            remarkPlugins={[remarkGfm, remarkMath, remarkBrToBreak, remarkDirective, remarkNoteDirectives]}
             rehypePlugins={[rehypeKatex]}
             components={markdownComponents}
           >

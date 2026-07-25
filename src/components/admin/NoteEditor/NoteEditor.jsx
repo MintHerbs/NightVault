@@ -2,10 +2,14 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Editor, rootCtx, defaultValueCtx, editorViewCtx, schemaCtx, serializerCtx } from '@milkdown/kit/core'
 import { Plugin, PluginKey, TextSelection } from '@milkdown/kit/prose/state'
+import remarkDirective from 'remark-directive'
 import CodeBlock from '../../social/CodeBlock/CodeBlock'
 import { resolveDraftSrc } from '../../../lib/draftImagePreviews'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../../lib/noteImageSrc'
 import { parseImageTitle, formatImageTitle, MIN_IMAGE_WIDTH } from '../../../lib/noteImageWidth'
+import { YOUTUBE_ID_RE, youtubeThumbnailSrc, youtubeEmbedSrc } from '../../../lib/youtube'
+import { isSafeUrl } from '../../../lib/url'
+import { HEX_COLOR_RE } from '../../../constants/noteColors'
 import {
   commonmark,
   codeBlockSchema,
@@ -20,7 +24,18 @@ import { gfm, toggleStrikethroughCommand } from '@milkdown/kit/preset/gfm'
 import { listener, listenerCtx } from '@milkdown/kit/plugin/listener'
 import { history } from '@milkdown/kit/plugin/history'
 import { math } from '@milkdown/plugin-math'
-import { callCommand, replaceAll, getMarkdown, markdownToSlice, $prose, $view } from '@milkdown/kit/utils'
+import {
+  callCommand,
+  replaceAll,
+  getMarkdown,
+  markdownToSlice,
+  $prose,
+  $view,
+  $remark,
+  $command,
+  $markSchema,
+  $nodeSchema,
+} from '@milkdown/kit/utils'
 import { Milkdown, MilkdownProvider, useEditor, useInstance } from '@milkdown/react'
 import 'katex/dist/katex.min.css'
 import '@milkdown/kit/prose/view/style/prosemirror.css'
@@ -58,6 +73,276 @@ function normalizeLatexDelimiters(text) {
     .replace(/\\\[([\s\S]*?)\\?\]/g, (_, body) => `$$\n${unescapeMath(body.trim())}\n$$`)
     // \( … \) → $ … $     (inline)
     .replace(/\\\(([\s\S]*?)\\?\)/g, (_, body) => `$${unescapeMath(body.trim())}$`)
+}
+
+// Registers remark-directive on Milkdown's own remark pipeline (the same
+// extension point `remarkPluginsCtx` exposes), giving the parser generic
+// `:name[text]{attr=val}` / `::name{attr=val}` syntax to build safe custom
+// marks/nodes on — used below for text color, highlight and YouTube embeds
+// instead of raw HTML (MarkdownRenderer deliberately has no rehype-raw; the
+// editor shouldn't grow a parallel unsafe-HTML path either). See T-055.
+const directiveRemark = $remark('directive', () => remarkDirective)
+
+// Text color mark — round-trips to `:color[text]{hex="#..."}`. `hex` is
+// validated on both this (write) path and MarkdownRenderer's (read) path
+// before it ever reaches a `style` attribute — stored Markdown can also
+// arrive via a GitHub backup restore, bypassing the editor entirely.
+const colorMarkSchema = $markSchema('text_color', () => ({
+  attrs: { hex: { default: '' } },
+  parseDOM: [{
+    tag: 'span[data-color-hex]',
+    getAttrs: (dom) => {
+      if (!(dom instanceof HTMLElement)) return false
+      // Read the hex back from a data attribute rather than `dom.style.color`
+      // — the browser normalises an inline `style="color: #.."` to `rgb(...)`
+      // on the CSSOM getter, which would never match HEX_COLOR_RE.
+      const hex = dom.getAttribute('data-color-hex') || ''
+      return HEX_COLOR_RE.test(hex) ? { hex } : false
+    },
+  }],
+  toDOM: (mark) => ['span', { style: `color: ${mark.attrs.hex}`, 'data-color-hex': mark.attrs.hex }, 0],
+  parseMarkdown: {
+    match: (node) => node.type === 'textDirective' && node.name === 'color',
+    runner: (state, node, markType) => {
+      const hex = node.attributes?.hex || ''
+      if (!HEX_COLOR_RE.test(hex)) {
+        state.next(node.children)
+        return
+      }
+      state.openMark(markType, { hex })
+      state.next(node.children)
+      state.closeMark(markType)
+    },
+  },
+  toMarkdown: {
+    match: (mark) => mark.type.name === 'text_color',
+    runner: (state, mark) => {
+      state.withMark(mark, 'textDirective', undefined, {
+        name: 'color',
+        attributes: { hex: mark.attrs.hex },
+      })
+    },
+  },
+}))
+
+// Highlight mark — same shape as text_color, `background-color` instead of
+// `color`, round-trips to `:mark[text]{hex="#..."}`.
+const highlightMarkSchema = $markSchema('text_highlight', () => ({
+  attrs: { hex: { default: '' } },
+  parseDOM: [{
+    tag: 'span[data-highlight-hex]',
+    getAttrs: (dom) => {
+      if (!(dom instanceof HTMLElement)) return false
+      const hex = dom.getAttribute('data-highlight-hex') || ''
+      return HEX_COLOR_RE.test(hex) ? { hex } : false
+    },
+  }],
+  toDOM: (mark) => ['span', { style: `background-color: ${mark.attrs.hex}`, 'data-highlight-hex': mark.attrs.hex }, 0],
+  parseMarkdown: {
+    match: (node) => node.type === 'textDirective' && node.name === 'mark',
+    runner: (state, node, markType) => {
+      const hex = node.attributes?.hex || ''
+      if (!HEX_COLOR_RE.test(hex)) {
+        state.next(node.children)
+        return
+      }
+      state.openMark(markType, { hex })
+      state.next(node.children)
+      state.closeMark(markType)
+    },
+  },
+  toMarkdown: {
+    match: (mark) => mark.type.name === 'text_highlight',
+    runner: (state, mark) => {
+      state.withMark(mark, 'textDirective', undefined, {
+        name: 'mark',
+        attributes: { hex: mark.attrs.hex },
+      })
+    },
+  },
+}))
+
+// Applying a color/highlight always sets (or clears, for `hex: null`) the
+// mark across the current selection — not a toggle. A plain ProseMirror
+// `toggleMark` would remove the mark on re-click regardless of which color
+// was picked, so switching from one swatch straight to another would just
+// delete the mark instead of changing its color. Requires a non-empty
+// selection, same as Google Docs (there's no "next typed character" color).
+function applyColorLikeMark(markType) {
+  return (hex) => (state, dispatch) => {
+    const { from, to, empty } = state.selection
+    if (empty) return false
+    if (dispatch) {
+      let tr = state.tr.removeMark(from, to, markType)
+      if (hex) tr = tr.addMark(from, to, markType.create({ hex }))
+      dispatch(tr)
+    }
+    return true
+  }
+}
+
+const setTextColorCommand = $command('SetTextColor', (ctx) => applyColorLikeMark(colorMarkSchema.type(ctx)))
+const setHighlightCommand = $command('SetHighlight', (ctx) => applyColorLikeMark(highlightMarkSchema.type(ctx)))
+
+// YouTube embed — a block atom node (like image), round-tripping to the leaf
+// directive `::youtube{id="VIDEO_ID"}`. No draft/upload lifecycle needed: a
+// YouTube URL is stable the instant it's typed, unlike an uploaded image.
+const youtubeSchema = $nodeSchema('youtube', () => ({
+  inline: false,
+  group: 'block',
+  atom: true,
+  selectable: true,
+  isolating: true,
+  attrs: { videoId: { default: '', validate: 'string' } },
+  parseDOM: [{
+    tag: 'div[data-type="youtube"]',
+    getAttrs: (dom) => {
+      if (!(dom instanceof HTMLElement)) return false
+      const videoId = dom.getAttribute('data-video-id') || ''
+      return YOUTUBE_ID_RE.test(videoId) ? { videoId } : false
+    },
+  }],
+  toDOM: (node) => ['div', { 'data-type': 'youtube', 'data-video-id': node.attrs.videoId }],
+  parseMarkdown: {
+    match: (node) => node.type === 'leafDirective' && node.name === 'youtube',
+    runner: (state, node, type) => {
+      const id = node.attributes?.id || ''
+      if (!YOUTUBE_ID_RE.test(id)) return
+      state.addNode(type, { videoId: id })
+    },
+  },
+  toMarkdown: {
+    match: (node) => node.type.name === 'youtube',
+    runner: (state, node) => {
+      state.addNode('leafDirective', undefined, undefined, {
+        name: 'youtube',
+        attributes: { id: node.attrs.videoId },
+      })
+    },
+  },
+}))
+
+// YouTube node view: rounded thumbnail + play button (mirrors imageWrap's
+// rounded-corner treatment), swapped for a lazy-mounted iframe on click so
+// no third-party embed/tracker loads until a viewer opts in.
+const youtubeNodeView = (node) => {
+  const wrap = document.createElement('div')
+  wrap.className = styles.videoWrap
+  wrap.contentEditable = 'false'
+
+  const thumb = document.createElement('img')
+  thumb.className = styles.videoThumb
+  thumb.draggable = false
+  thumb.alt = 'YouTube video'
+
+  const playButton = document.createElement('button')
+  playButton.type = 'button'
+  playButton.className = styles.videoPlayButton
+  playButton.setAttribute('aria-label', 'Play video')
+  playButton.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'
+
+  const applyAttrs = (n) => {
+    thumb.src = youtubeThumbnailSrc(n.attrs.videoId)
+  }
+  applyAttrs(node)
+
+  let frame = null
+  let playing = false
+  const play = () => {
+    if (playing) return
+    playing = true
+    frame = document.createElement('iframe')
+    frame.className = styles.videoFrame
+    frame.src = youtubeEmbedSrc(node.attrs.videoId)
+    frame.allow = 'autoplay; encrypted-media; picture-in-picture'
+    frame.allowFullscreen = true
+    frame.frameBorder = '0'
+    wrap.replaceChildren(frame)
+  }
+
+  const swallow = (e) => { e.preventDefault(); e.stopPropagation() }
+  playButton.addEventListener('mousedown', swallow)
+  playButton.addEventListener('click', (e) => { swallow(e); play() })
+
+  wrap.append(thumb, playButton)
+
+  return {
+    dom: wrap,
+    ignoreMutation: () => true,
+    stopEvent: (e) => playButton.contains(e.target) || (frame ? frame.contains(e.target) : false),
+    update: (updated) => {
+      if (updated.type !== node.type) return false
+      node = updated
+      if (!playing) applyAttrs(updated)
+      return true
+    },
+    destroy: () => { frame = null },
+  }
+}
+
+const youtubeNodeViewPlugin = $prose(() => new Plugin({
+  key: new PluginKey('NOTE_EDITOR_YOUTUBE_VIEW'),
+  props: {
+    nodeViews: { youtube: youtubeNodeView },
+  },
+}))
+
+// Auto-embeds a bare YouTube URL the moment it's the *sole* content of its
+// own paragraph — whether that paragraph arrived via paste (this runs right
+// after `markdownClipboard`'s dispatch, since both are ordinary
+// doc-changing transactions) or by typing the URL out directly. A URL
+// alongside other text in the same paragraph is left as a plain link/autolink
+// — only a standalone line unfurls, matching Notion/Docs-style behaviour.
+function bareYouTubeId(text) {
+  const trimmed = text.trim()
+  if (!trimmed || /\s/.test(trimmed)) return null
+  if (!isSafeUrl(trimmed)) return null
+  for (const pattern of [
+    /(?:youtube(?:-nocookie)?\.com)\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)([\w-]{11})/,
+    /youtu\.be\/([\w-]{11})/,
+  ]) {
+    const match = pattern.exec(trimmed)
+    if (match && YOUTUBE_ID_RE.test(match[1])) return match[1]
+  }
+  return null
+}
+
+// `isLoadingRef` is `MilkdownInner`'s `applyingExternal` ref — true for the
+// transaction that loads/resets a note's content (note open, draft restore,
+// clear). Without this guard, an *existing* note that already contains a
+// bare YouTube URL on its own line (written before this feature existed)
+// would get silently rewritten into an embed the instant it's opened for
+// editing — before the admin has touched anything — which breaks the
+// "load → change nothing → save is a no-op diff" invariant T-036 established
+// for this editor. Only actual typing/pasting should trigger the auto-embed.
+function createYoutubeAutoEmbed(isLoadingRef) {
+  return $prose(() => new Plugin({
+    key: new PluginKey('NOTE_EDITOR_YOUTUBE_AUTOEMBED'),
+    appendTransaction: (transactions, _oldState, newState) => {
+      if (isLoadingRef.current) return null
+      if (!transactions.some((tr) => tr.docChanged)) return null
+      const paragraph = newState.schema.nodes.paragraph
+      const youtube = newState.schema.nodes.youtube
+      if (!paragraph || !youtube) return null
+
+      let target = null
+      newState.doc.descendants((node, pos) => {
+        if (target || node.type !== paragraph) return
+        let allText = true
+        node.forEach((child) => { if (!child.isText) allText = false })
+        if (!allText) return
+        const id = bareYouTubeId(node.textContent)
+        if (id) target = { pos, size: node.nodeSize, id }
+      })
+      if (!target) return null
+
+      return newState.tr.replaceWith(
+        target.pos,
+        target.pos + target.size,
+        youtube.create({ videoId: target.id })
+      )
+    },
+  }))
 }
 
 // Render fenced code blocks with the shared social CodeBlock (themed, read-only)
@@ -409,6 +694,14 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
       .use(gfm)
       .use(math)
       .use(history)
+      .use(directiveRemark)
+      .use(colorMarkSchema)
+      .use(highlightMarkSchema)
+      .use(setTextColorCommand)
+      .use(setHighlightCommand)
+      .use(youtubeSchema)
+      .use(youtubeNodeViewPlugin)
+      .use(createYoutubeAutoEmbed(applyingExternal))
       .use(markdownClipboard)
       .use(codeBlockView)
       .use(imageDeleteView)
@@ -446,6 +739,71 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
         code: toggleInlineCodeCommand,
       }[action]
       if (cmd) getInstance()?.action(callCommand(cmd.key))
+    },
+    // Sets (or, for a falsy `hex`, clears) the text-color / highlight mark
+    // across the current selection. Requires a non-empty selection — see
+    // applyColorLikeMark.
+    setTextColor(hex) {
+      getInstance()?.action(callCommand(setTextColorCommand.key, hex || null))
+    },
+    setHighlight(hex) {
+      getInstance()?.action(callCommand(setHighlightCommand.key, hex || null))
+    },
+    // Generic Markdown-text insert at the current selection — used for the
+    // formula and social-link toolbar actions, which only ever hand this a
+    // markdown-ish snippet (`$x^2$`, a `<RichPopover/>` tag) rather than
+    // something that needs its own dedicated command.
+    insertMarkdown(markdown) {
+      getInstance()?.action((ctx) => {
+        const view = ctx.get(editorViewCtx)
+        let slice
+        try {
+          slice = markdownToSlice(markdown)(ctx)
+        } catch {
+          return
+        }
+        if (!slice || typeof slice === 'string') return
+        view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView())
+        view.focus()
+      })
+    },
+    // Insert a YouTube embed at the current cursor position. `videoId` must
+    // already be a validated 11-char id (see lib/youtube.js) — this never
+    // fetches anything, the thumbnail is derived from the id alone.
+    insertYouTube(videoId) {
+      if (!YOUTUBE_ID_RE.test(videoId)) return
+      getInstance()?.action((ctx) => {
+        ctx.get(editorViewCtx).focus()
+      })
+      getInstance()?.action((ctx) => {
+        const view = ctx.get(editorViewCtx)
+        const node = youtubeSchema.type(ctx).create({ videoId })
+        view.dispatch(view.state.tr.replaceSelectionWith(node).scrollIntoView())
+      })
+      // Same "land the caret below" treatment as insertImage, adapted for a
+      // block-level (rather than inline) atom: resolve just past the node's
+      // end position instead of walking up from an inline $from.
+      getInstance()?.action((ctx) => {
+        const view = ctx.get(editorViewCtx)
+        const { state } = view
+        const end = state.selection.to
+        const paragraph = state.schema.nodes.paragraph
+        if (!paragraph) return
+        const $end = state.doc.resolve(end)
+        const next = state.doc.nodeAt(end)
+        const parent = $end.parent
+        const index = $end.index()
+        const reusable = next?.type === paragraph && next.content.size === 0
+        if (!reusable && !parent.canReplaceWith(index, index, paragraph)) {
+          view.focus()
+          return
+        }
+        let tr = state.tr
+        if (!reusable) tr = tr.insert(end, paragraph.create())
+        const $target = tr.doc.resolve(Math.min(end + 1, tr.doc.content.size))
+        view.dispatch(tr.setSelection(TextSelection.near($target)).scrollIntoView())
+        view.focus()
+      })
     },
     // Insert an image node at the current cursor position. `src` may be a
     // real path or a `draft://<key>` marker (the node view previews it via a

@@ -178,6 +178,66 @@
   border-radius: 8px;
 }
 
+/* YouTube embed (T-055) — thumbnail + play button until clicked, then a
+   lazy-mounted iframe. Matches the editor's own node view treatment. */
+.videoWrapper {
+  position: relative;
+  max-width: 100%;
+  margin: 1.5rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  aspect-ratio: 16 / 9;
+}
+
+.videoThumbButton {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.videoThumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.videoPlayIcon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  color: #fff;
+  background: rgba(28, 22, 20, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 10px rgba(0, 0, 0, 0.25);
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.videoThumbButton:hover .videoPlayIcon {
+  background: rgba(139, 92, 246, 0.85);
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+.videoFrame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
 /* Math formulas - KaTeX styling adjustments */
 .markdownContainer :global(.katex) {
   font-size: 1.1em;

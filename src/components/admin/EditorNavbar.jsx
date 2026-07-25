@@ -15,6 +15,8 @@ import {
   TextB,
   TextItalic,
   TextStrikethrough,
+  TextAUnderline,
+  Highlighter,
   Code,
   Image,
   CaretDown,
@@ -22,7 +24,9 @@ import {
   ShareNetwork
 } from '@phosphor-icons/react'
 import StyleDropdown from './StyleDropdown'
+import ColorPickerPopover from './ColorPickerPopover'
 import Loading from '../ui/Loading'
+import { TEXT_COLOR_SWATCHES, HIGHLIGHT_SWATCHES } from '../../constants/noteColors'
 import styles from './EditorNavbar.module.css'
 
 export default function EditorNavbar({
@@ -51,6 +55,8 @@ export default function EditorNavbar({
   onInsertImage,
   onInsertFormula,
   onInsertSocialLink,
+  onSetTextColor,
+  onSetHighlight,
   currentStyle,
   onStyleChange,
 }) {
@@ -261,6 +267,24 @@ export default function EditorNavbar({
               </Tooltip.Content>
             </Tooltip.Portal>
           </Tooltip.Root>
+
+          <ColorPickerPopover
+            icon={<TextAUnderline size={18} />}
+            tooltip="Text color"
+            kind="color"
+            swatches={TEXT_COLOR_SWATCHES}
+            onPick={onSetTextColor}
+            onRemove={() => onSetTextColor(null)}
+          />
+
+          <ColorPickerPopover
+            icon={<Highlighter size={18} />}
+            tooltip="Highlight"
+            kind="highlight"
+            swatches={HIGHLIGHT_SWATCHES}
+            onPick={onSetHighlight}
+            onRemove={() => onSetHighlight(null)}
+          />
 
           <Tooltip.Root>
             <Tooltip.Trigger asChild>

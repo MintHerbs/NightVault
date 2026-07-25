@@ -491,7 +491,17 @@ function AdminEditorContent() {
     setUnsaved(true)
   }
 
+  // Insert helpers below all route through the live Milkdown editor
+  // (`noteEditorRef`) under `USE_WYSIWYG`, falling back to Monaco
+  // `executeEdits` otherwise. Previously the Formula and Social Link modals
+  // both called a single Monaco-only handler here, which silently no-op'd
+  // under WYSIWYG since `editorRef` (Monaco) is never populated when Monaco
+  // isn't mounted — see T-055.
   const handleInsertFormula = (formula) => {
+    if (USE_WYSIWYG) {
+      noteEditorRef.current?.insertMarkdown(formula)
+      return
+    }
     if (!editorRef.current) return
 
     const editor = editorRef.current
@@ -503,6 +513,50 @@ function AdminEditorContent() {
     }])
 
     editor.focus()
+  }
+
+  const handleInsertSocialLink = (markdown) => {
+    if (USE_WYSIWYG) {
+      noteEditorRef.current?.insertMarkdown(markdown)
+      return
+    }
+    if (!editorRef.current) return
+
+    const editor = editorRef.current
+    const selection = editor.getSelection()
+
+    editor.executeEdits('', [{
+      range: selection,
+      text: markdown,
+    }])
+
+    editor.focus()
+  }
+
+  const handleInsertYouTube = (videoId) => {
+    if (USE_WYSIWYG) {
+      noteEditorRef.current?.insertYouTube(videoId)
+      return
+    }
+    if (!editorRef.current) return
+
+    const editor = editorRef.current
+    const selection = editor.getSelection()
+
+    editor.executeEdits('', [{
+      range: selection,
+      text: `::youtube{id="${videoId}"}`,
+    }])
+
+    editor.focus()
+  }
+
+  const onSetTextColor = (hex) => {
+    if (USE_WYSIWYG) noteEditorRef.current?.setTextColor(hex)
+  }
+
+  const onSetHighlight = (hex) => {
+    if (USE_WYSIWYG) noteEditorRef.current?.setHighlight(hex)
   }
 
   // Dropzone for canvas
@@ -630,7 +684,8 @@ function AdminEditorContent() {
       <SocialLinkModal
         open={socialLinkModalOpen}
         onClose={() => setSocialLinkModalOpen(false)}
-        onInsert={handleInsertFormula}
+        onInsert={handleInsertSocialLink}
+        onInsertVideo={handleInsertYouTube}
       />
 
       {/* Navbar Row 1 + Row 2 */}
@@ -660,6 +715,8 @@ function AdminEditorContent() {
         onInsertImage={() => fileInputRef.current?.click()}
         onInsertFormula={() => setFormulaModalOpen(true)}
         onInsertSocialLink={() => setSocialLinkModalOpen(true)}
+        onSetTextColor={onSetTextColor}
+        onSetHighlight={onSetHighlight}
         currentStyle={currentStyle}
         onStyleChange={onStyle}
       />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Link as LinkIcon } from '@phosphor-icons/react'
 import { isSafeUrl } from '../../lib/url'
+import { extractYouTubeId, youtubeThumbnailSrc } from '../../lib/youtube'
 import styles from './SocialLinkModal.module.css'
 
 function escapeAttr(value) {
@@ -13,7 +14,7 @@ const PLATFORMS = [
   { id: 'linkedin', label: 'LinkedIn', icon: '💼', color: '#0A66C2' },
 ]
 
-export default function SocialLinkModal({ open, onClose, onInsert }) {
+export default function SocialLinkModal({ open, onClose, onInsert, onInsertVideo }) {
   const [platform, setPlatform] = useState('youtube')
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
@@ -21,6 +22,11 @@ export default function SocialLinkModal({ open, onClose, onInsert }) {
   const [meta, setMeta] = useState('')
   const [actionLabel, setActionLabel] = useState('')
   const [urlError, setUrlError] = useState('')
+
+  // YouTube gets a playable embed (T-055), not the static link chip — no
+  // Title/Description/etc. needed, the video ID is enough to render it.
+  const isVideoEmbed = platform === 'youtube'
+  const videoId = isVideoEmbed ? extractYouTubeId(url.trim()) : null
 
   useEffect(() => {
     if (!open) {
@@ -44,12 +50,24 @@ export default function SocialLinkModal({ open, onClose, onInsert }) {
   }, [open, platform])
 
   const handleInsert = () => {
-    if (!url.trim() || !title.trim()) return
+    if (!url.trim()) return
 
     if (!isSafeUrl(url.trim())) {
       setUrlError('Enter a valid http(s):// or mailto: link')
       return
     }
+
+    if (isVideoEmbed) {
+      if (!videoId) {
+        setUrlError('Enter a valid YouTube video link')
+        return
+      }
+      onInsertVideo(videoId)
+      onClose()
+      return
+    }
+
+    if (!title.trim()) return
 
     // Generate the rich popover markdown syntax
     const richPopover = `<RichPopover
@@ -117,69 +135,84 @@ export default function SocialLinkModal({ open, onClose, onInsert }) {
             {urlError && <div className={styles.errorText}>{urlError}</div>}
           </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Title *</label>
-            <input
-              type="text"
-              className={styles.input}
-              placeholder="e.g., My YouTube Channel"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Description (optional)</label>
-            <textarea
-              className={styles.textarea}
-              placeholder="Brief description of the link..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Meta (optional)</label>
-              <input
-                type="text"
-                className={styles.input}
-                placeholder={platform === 'youtube' ? 'e.g., 5:30' : 'e.g., 1.2M followers'}
-                value={meta}
-                onChange={(e) => setMeta(e.target.value)}
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Action Label (optional)</label>
-              <input
-                type="text"
-                className={styles.input}
-                placeholder="e.g., Watch now"
-                value={actionLabel}
-                onChange={(e) => setActionLabel(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className={styles.preview}>
-            <div className={styles.previewLabel}>Preview:</div>
-            <div className={styles.previewBox}>
-              <div className={styles.previewPlatform} style={{ backgroundColor: selectedPlatform?.color }}>
-                {selectedPlatform?.icon}
+          {isVideoEmbed ? (
+            videoId && (
+              <div className={styles.preview}>
+                <div className={styles.previewLabel}>Preview:</div>
+                <img
+                  className={styles.videoPreviewThumb}
+                  src={youtubeThumbnailSrc(videoId)}
+                  alt="Video thumbnail preview"
+                />
               </div>
-              <div className={styles.previewContent}>
-                <div className={styles.previewTitle}>{title || 'Title'}</div>
-                {description && <div className={styles.previewDescription}>{description}</div>}
-                <div className={styles.previewMeta}>
-                  {meta && <span className={styles.previewMetaText}>{meta}</span>}
-                  {actionLabel && <span className={styles.previewAction}>{actionLabel}</span>}
+            )
+          ) : (
+            <>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Title *</label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  placeholder="e.g., My YouTube Channel"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Description (optional)</label>
+                <textarea
+                  className={styles.textarea}
+                  placeholder="Brief description of the link..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Meta (optional)</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    placeholder="e.g., 1.2M followers"
+                    value={meta}
+                    onChange={(e) => setMeta(e.target.value)}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Action Label (optional)</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    placeholder="e.g., Watch now"
+                    value={actionLabel}
+                    onChange={(e) => setActionLabel(e.target.value)}
+                  />
                 </div>
               </div>
-            </div>
-          </div>
+
+              <div className={styles.preview}>
+                <div className={styles.previewLabel}>Preview:</div>
+                <div className={styles.previewBox}>
+                  <div className={styles.previewPlatform} style={{ backgroundColor: selectedPlatform?.color }}>
+                    {selectedPlatform?.icon}
+                  </div>
+                  <div className={styles.previewContent}>
+                    <div className={styles.previewTitle}>{title || 'Title'}</div>
+                    {description && <div className={styles.previewDescription}>{description}</div>}
+                    <div className={styles.previewMeta}>
+                      {meta && <span className={styles.previewMetaText}>{meta}</span>}
+                      {actionLabel && <span className={styles.previewAction}>{actionLabel}</span>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <div className={styles.footer}>
@@ -189,9 +222,9 @@ export default function SocialLinkModal({ open, onClose, onInsert }) {
           <button
             className={styles.insertButton}
             onClick={handleInsert}
-            disabled={!url.trim() || !title.trim()}
+            disabled={isVideoEmbed ? !url.trim() : !url.trim() || !title.trim()}
           >
-            Insert Link
+            {isVideoEmbed ? 'Insert Video' : 'Insert Link'}
           </button>
         </div>
       </div>

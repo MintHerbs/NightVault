@@ -177,6 +177,14 @@
   color: var(--text);
 }
 
+.videoPreviewThumb {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
 .previewBox {
   background: var(--color-input);
   border: 1px solid var(--border);
