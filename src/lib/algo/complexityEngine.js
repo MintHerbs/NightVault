@@ -403,6 +403,29 @@ function analyzeDefBlock(lines, idx, ctx, steps, annotations, depth, fctx) {
     steps.push(makeStep('⚠ recursive call pattern not recognised → complexity unknown', 'special', 'unknown', depth));
   }
 
+  // Bracket the whole function with its total. Without this the derivation is
+  // invisible for recursive functions: the inner brackets only show the work
+  // done in ONE call (often O(1)), and the step that multiplies it by the number
+  // of levels happens here, at the def, where nothing was being drawn.
+  if (complexity !== '1') {
+    const lineEnd = bodyResult.nextIdx > 0 ? lines[bodyResult.nextIdx - 1].lineNum : line.lineNum;
+    let label = `${funcName}(): O(${shortComplexity(complexity)})`;
+    if (recursion && memo) {
+      label = `${funcName}(): memoized on ${memo.cache}[${memo.keyParam}] → O(${shortComplexity(bodyResult.complexity)}) per state × O(${memo.keyParam}) states = O(${shortComplexity(complexity)})`;
+    } else if (recursion && recursion.kind !== 'unknown') {
+      label = `${funcName}(): ${describeRecursion(recursion)} with f(n) = O(${shortComplexity(bodyResult.complexity)}) → O(${shortComplexity(complexity)})`;
+    } else if (recursion) {
+      label = `${funcName}(): recursive, call pattern not recognised → O(?)`;
+    }
+    const isDuplicate = annotations.some(
+      a => a.lineStart === line.lineNum && a.lineEnd === lineEnd
+        && JSON.stringify(a.complexity) === JSON.stringify(complexity)
+    );
+    if (!isDuplicate) {
+      annotations.push(makeAnnotation(`a${annotationCounter++}`, line.lineNum, lineEnd, complexity, label, depth, 'def'));
+    }
+  }
+
   return { complexity, nextIdx: bodyResult.nextIdx, name: funcName };
 }
 

@@ -95,6 +95,9 @@ export default function ComplexityCodeView({ code, annotations }) {
                   
                   return (
                     <g key={`${ann.id}-${idx}`}>
+                      {/* Hover explanation: how this group's complexity was derived */}
+                      {ann.label && <title>{ann.label}</title>}
+
                       {/* Vertical line */}
                       <line
                         x1={x}
