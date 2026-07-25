@@ -363,8 +363,8 @@ function NewCourseButton({ onCreated, showToast }) {
     if (!name.trim()) return
     setCreating(true)
     try {
-      const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-      const created = await createCourse({ name: name.trim(), slug })
+      const id = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      const created = await createCourse({ id, name: name.trim() })
       onCreated(created)
       showToast(`${created.name} created`, 'success')
       setOpen(false)
