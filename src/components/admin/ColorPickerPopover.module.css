@@ -1,0 +1,123 @@
+.trigger {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.trigger:hover {
+  background: var(--color-hover);
+}
+
+.tooltip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--text);
+  box-shadow: var(--shadow-md);
+  z-index: 10000;
+}
+
+.content {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  width: 216px;
+  box-shadow: var(--shadow-md);
+  z-index: 10000;
+}
+
+.removeOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 150ms ease;
+  font-family: inherit;
+}
+
+.removeOption:hover {
+  background: var(--color-hover);
+  color: var(--text);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-subtle, var(--border));
+  cursor: pointer;
+  transition: transform 150ms ease;
+}
+
+.swatch:hover {
+  transform: scale(1.08);
+}
+
+.hexRow {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.hexInput {
+  flex: 1;
+  min-width: 0;
+  background: var(--color-input, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: var(--text);
+}
+
+.hexInput:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.hexApply {
+  background: var(--color-accent-soft, rgba(139, 92, 246, 0.15));
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.hexApply:hover {
+  background: var(--color-accent-muted, rgba(139, 92, 246, 0.25));
+}
+
+.hexError {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--error);
+}
