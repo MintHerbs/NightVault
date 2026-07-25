@@ -27,3 +27,10 @@ export function useActiveCourse(profile, isPrimaryOwner) {
 
   return [activeCourseId, setActiveCourseId]
 }
+
+/** Call on sign-out — otherwise the next login on this browser (possibly a
+ * different account entirely) inherits whatever course the previous primary
+ * owner session last switched to, which may be empty or not theirs. */
+export function clearActiveCourse() {
+  if (typeof window !== 'undefined') window.localStorage.removeItem(STORAGE_KEY)
+}

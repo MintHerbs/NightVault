@@ -15,7 +15,7 @@ import ToastNotification, { useToast } from '../../components/admin/ToastNotific
 import { ADMIN_ICON_OPTIONS, getIconNameForComponent } from '../../components/admin/adminIconOptions'
 import { displaySubfolder } from '../../lib/notesApi'
 import { listCourses } from '../../lib/coursesApi'
-import { useActiveCourse } from '../../hooks/useActiveCourse'
+import { useActiveCourse, clearActiveCourse } from '../../hooks/useActiveCourse'
 import '../../styles/adminTokens.css'
 import styles from './AdminBrowser.module.css'
 
@@ -448,6 +448,7 @@ function AdminBrowserContent() {
   if (subfolder) crumbs.push({ key: 'folder', label: subfolder })
 
   const handleSignOut = async () => {
+    clearActiveCourse()
     await supabase.auth.signOut()
     window.location.href = '/admin'
   }

@@ -24,6 +24,7 @@ import { useAdminModulesRegistry } from '../../hooks/useAdminModulesRegistry'
 import { useEditorFormatting, renderInlineLaTeX } from '../../hooks/useEditorFormatting'
 import { useEditorFiles } from '../../hooks/useEditorFiles'
 import { useEditorDrafts } from '../../hooks/useEditorDrafts'
+import { clearActiveCourse } from '../../hooks/useActiveCourse'
 
 // Feature flag for the WYSIWYG migration (T-036). While true the Milkdown
 // NoteEditor replaces Monaco; Monaco stays importable behind the flag until
@@ -571,6 +572,7 @@ function AdminEditorContent() {
   }, [unsaved])
 
   const handleSignOut = async () => {
+    clearActiveCourse()
     await supabase.auth.signOut()
     window.location.href = '/admin'
   }
