@@ -4,7 +4,7 @@ import * as Popover from '@radix-ui/react-popover'
 import {
   ArrowUp, ArrowDown, CaretDown, CaretRight, DotsThreeVertical, EyeSlash,
   Folder, FileText, ListBullets, MagnifyingGlass, Monitor, Plus, SignOut,
-  SquaresFour, Warning,
+  SquaresFour, Users, Warning,
 } from '@phosphor-icons/react'
 import { colors } from '../../constants/colors'
 import { supabase } from '../../lib/supabaseClient'
@@ -14,14 +14,9 @@ import { useEditorModules } from '../../hooks/useEditorModules'
 import ToastNotification, { useToast } from '../../components/admin/ToastNotification'
 import { ADMIN_ICON_OPTIONS, getIconNameForComponent } from '../../components/admin/adminIconOptions'
 import { displaySubfolder } from '../../lib/notesApi'
+import { listCourses } from '../../lib/coursesApi'
 import '../../styles/adminTokens.css'
 import styles from './AdminBrowser.module.css'
-
-// Delete is locked to one account (T-045 phase B) regardless of how many
-// accounts hold the `owner` role — see docs/specs/admin-drive-navigation.md §6.
-// This client check is a UX short-circuit; admin-github-write and RLS are the
-// actual security boundary.
-const DELETE_AUTHORIZED_EMAIL = 'moon@mooner.dev'
 
 function formatDate(iso) {
   if (!iso) return '—'
@@ -173,11 +168,23 @@ function DeleteConfirm({ deleteConfirm, onCancel, onConfirm }) {
 function AdminBrowserContent() {
   const navigate = useNavigate()
   const { moduleId, subfolder } = useParams()
-  const { user, profile, loading: authLoading } = useAdmin()
+  const { user, profile, loading: authLoading, isPrimaryOwner } = useAdmin()
   const { showToast } = useToast()
   const {
     modules, setModules, folders, hiddenModuleIds, loading: modulesLoading, reload,
   } = useAdminModulesRegistry()
+
+  // Course switcher (T-051, primary owner only) — everyone else is locked to
+  // their own admin_users.course_id, so activeCourseId just mirrors it and
+  // there's nothing to fetch/switch.
+  const [courses, setCourses] = useState([])
+  const [activeCourseId, setActiveCourseId] = useState(null)
+  useEffect(() => {
+    if (!profile) return
+    if (!isPrimaryOwner) { setActiveCourseId(profile.course_id); return }
+    listCourses().then(setCourses).catch(() => {})
+    setActiveCourseId(prev => prev ?? profile.course_id)
+  }, [profile, isPrimaryOwner])
 
   const [isTooNarrow, setIsTooNarrow] = useState(() => (
     typeof window !== 'undefined' ? window.innerWidth < 820 : false
@@ -190,7 +197,14 @@ function AdminBrowserContent() {
   }, [])
 
   const isOwner = profile?.role === 'owner'
-  const canDelete = user?.email === DELETE_AUTHORIZED_EMAIL
+  const isAdmin = profile?.role === 'admin'
+  // Content write-scope (T-051 role matrix): owner/admin write anywhere in
+  // their course; contributor stays directory-scoped, unchanged from today.
+  const canManageStructure = isOwner || isAdmin
+  // Whole-Subject delete stays narrow — this course's own owner, or the
+  // primary owner (spec §7); admins/contributors get delete on notes/folders
+  // via admin_can_write_module (0024), not this.
+  const canDeleteModule = isOwner || isPrimaryOwner
   const username = profile?.username || user?.email || 'me'
 
   const unusedIconOptions = useMemo(() => getUnusedIconOptions(modules), [modules])
@@ -200,8 +214,8 @@ function AdminBrowserContent() {
     handleNewSubfolder, handleRenameSubfolder, handleDeleteSubfolder, handleHideSubfolder,
     handleNewFile, handleDeleteFile, handleRenameFile, handleHideFile, handleMoveFile,
   } = useEditorModules({
-    showToast, setModules, setSelectedPath: () => {}, unusedIconOptions, isOwner, canDelete,
-    reloadModules: reload,
+    showToast, setModules, setSelectedPath: () => {}, unusedIconOptions, isOwner, canDeleteModule,
+    courseId: activeCourseId, reloadModules: reload,
   })
 
   // View / filter / sort state (Drive parity)
@@ -225,9 +239,13 @@ function AdminBrowserContent() {
     }
   }, [unusedIconOptions, createIcon])
 
-  const visibleModules = isOwner
-    ? modules
-    : modules.filter(m => profile?.allowed_directories?.includes(m.id))
+  // Course first (T-051): a course-locked account never sees another
+  // course's Subjects; the primary owner sees whichever course the switcher
+  // has active. Within that course, owner/admin see everything, contributor
+  // stays restricted to allowed_directories — unchanged from today.
+  const visibleModules = modules
+    .filter(m => !activeCourseId || m.courseId === activeCourseId)
+    .filter(m => canManageStructure || profile?.allowed_directories?.includes(m.id))
 
   const activeModule = moduleId ? visibleModules.find(m => m.id === moduleId) : null
   const level = subfolder ? 'files' : moduleId ? 'folders' : 'subjects'
@@ -281,7 +299,10 @@ function AdminBrowserContent() {
   // clicking it afterwards opens it for editing. This applies to files too —
   // a "New file" no longer jumps straight into the editor for a note that
   // doesn't exist yet.
-  const canCreate = level === 'files' ? true : isOwner
+  // Subject creation stays owner-only (sidebar_modules insert RLS, 0023/0024
+  // unchanged); folder creation extends to admin, matching note_folders'
+  // actual write scope (admin_can_write_module already included admin).
+  const canCreate = level === 'files' ? true : level === 'folders' ? canManageStructure : isOwner
   const openCreate = () => {
     setCreateValue('')
     setCreating(true)
@@ -338,33 +359,38 @@ function AdminBrowserContent() {
     })
   }
 
+  // File and folder delete are scoped by write-access (admin_can_write_module,
+  // 0020/0024) — the same server-side check that already gates rename/hide, so
+  // no extra client-side lock: if the row is visible, it's writable. Only
+  // whole-Subject delete stays narrowly gated (canDeleteModule).
   const menuFor = (item) => {
     if (item.kind === 'file') {
       return [
         { label: 'Rename', onSelect: () => startRename(item) },
         { label: 'Move to…', onSelect: () => openMove(item) },
         { label: item.hidden ? 'Unhide' : 'Hide on live site', onSelect: () => handleHideFile(moduleId, item.path, !item.hidden) },
-        ...(canDelete ? [{ label: 'Delete', onSelect: () => setDeleteConfirm({ kind: 'file', key: item.path, name: item.name }) }] : []),
+        { label: 'Delete', onSelect: () => setDeleteConfirm({ kind: 'file', key: item.path, name: item.name }) },
       ]
     }
-    if (!isOwner) return []
     if (item.kind === 'folder') {
       return [
         { label: 'Rename', onSelect: () => startRename(item) },
         { label: item.hidden ? 'Unhide' : 'Hide on live site', onSelect: () => handleHideSubfolder(moduleId, item.subfolder, !item.hidden) },
-        ...(canDelete ? [{
+        {
           label: 'Delete',
           onSelect: () => setDeleteConfirm({
             kind: 'folder', key: item.subfolder, name: item.name,
             fileCount: filesForFolder(activeModule, item.subfolder).length,
           }),
-        }] : []),
+        },
       ]
     }
+    // Subject (module / rail-module) — structural, owner-only.
+    if (!isOwner) return []
     return [
       { label: 'Rename', onSelect: () => startRename(item) },
       { label: item.hidden ? 'Unhide' : 'Hide on live site', onSelect: () => handleHideModule(item.id, !item.hidden) },
-      ...(canDelete ? [{
+      ...(canDeleteModule ? [{
         label: 'Delete',
         onSelect: () => {
           const target = visibleModules.find(m => m.id === item.id)
@@ -388,7 +414,7 @@ function AdminBrowserContent() {
       const hidden = hiddenModuleIds.has(activeModule.id)
       return [
         { label: hidden ? 'Unhide subject' : 'Hide on live site', onSelect: () => handleHideModule(activeModule.id, !hidden) },
-        ...(canDelete ? [{
+        ...(canDeleteModule ? [{
           label: 'Delete subject',
           onSelect: () => setDeleteConfirm({
             kind: 'module', key: activeModule.id, name, then: () => navigate('/admin/editor'),
@@ -398,22 +424,25 @@ function AdminBrowserContent() {
         }] : []),
       ]
     }
-    if (level === 'files' && isOwner) {
+    // Folder-level actions are write-access-scoped, not owner-only (matches
+    // menuFor's folder case) — a contributor/admin browsing their own folder
+    // gets the same hide/delete here as from the parent listing's row menu.
+    if (level === 'files') {
       const hidden = folderHidden(subfolder)
       return [
         { label: hidden ? 'Unhide folder' : 'Hide on live site', onSelect: () => handleHideSubfolder(moduleId, subfolder, !hidden) },
-        ...(canDelete ? [{
+        {
           label: 'Delete folder',
           onSelect: () => setDeleteConfirm({
             kind: 'folder', key: subfolder, name: subfolder, then: () => navigate(`/admin/editor/${moduleId}`),
             fileCount: filesForFolder(activeModule, subfolder).length,
           }),
-        }] : []),
+        },
       ]
     }
     return []
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level, activeModule, subfolder, isOwner, canDelete, hiddenModuleIds, folders])
+  }, [level, activeModule, subfolder, isOwner, canDeleteModule, hiddenModuleIds, folders])
 
   const crumbs = [{ key: 'root', label: 'Subjects', to: () => navigate('/admin/editor') }]
   if (moduleId && activeModule) crumbs.push({ key: 'module', label: activeModule.label, to: () => navigate(`/admin/editor/${moduleId}`) })
@@ -468,7 +497,27 @@ function AdminBrowserContent() {
       <header className={styles.topbar}>
         <div className={styles.brand}>
           <Folder size={22} weight="fill" className={styles.brandIcon} />
-          <span className={styles.brandName}>Content</span>
+          {isPrimaryOwner && courses.length > 0 ? (
+            <Popover.Root>
+              <Popover.Trigger asChild>
+                <button className={styles.courseSwitcherButton} title="Switch course">
+                  <span>{courses.find(c => c.id === activeCourseId)?.name || 'Select course'}</span>
+                  <CaretDown size={14} weight="bold" />
+                </button>
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Content className={styles.menuContent} sideOffset={8} align="start">
+                  {courses.map(c => (
+                    <button key={c.id} className={styles.menuItem} onClick={() => setActiveCourseId(c.id)}>
+                      {c.name}
+                    </button>
+                  ))}
+                </Popover.Content>
+              </Popover.Portal>
+            </Popover.Root>
+          ) : (
+            <span className={styles.brandName}>Content</span>
+          )}
         </div>
         <div className={styles.searchWrap}>
           <MagnifyingGlass size={18} className={styles.searchIcon} />
@@ -480,6 +529,11 @@ function AdminBrowserContent() {
           />
         </div>
         <div className={styles.topRight}>
+          {(isOwner || isAdmin) && (
+            <button className={styles.manageUsersButton} onClick={() => navigate('/admin/users')} title="Manage users">
+              <Users size={20} weight="regular" />
+            </button>
+          )}
           <Popover.Root>
             <Popover.Trigger asChild>
               <button className={styles.avatarButton} title={username}>
@@ -490,7 +544,9 @@ function AdminBrowserContent() {
               <Popover.Content className={styles.menuContent} sideOffset={8} align="end">
                 <div className={styles.userInfo}>
                   <span className={styles.userName}>{username}</span>
-                  <span className={styles.userRole}>{isOwner ? 'Owner' : 'Contributor'}</span>
+                  <span className={styles.userRole}>
+                    {isPrimaryOwner ? 'Primary owner' : isOwner ? 'Owner' : isAdmin ? 'Admin' : 'Contributor'}
+                  </span>
                 </div>
                 <div className={styles.menuDivider} />
                 <button className={styles.menuItem} onClick={handleSignOut}>

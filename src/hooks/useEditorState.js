@@ -6,7 +6,6 @@ export function useEditorState() {
   const [unsaved, setUnsaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
-  const [usersOpen, setUsersOpen] = useState(false)
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
   const [formulaModalOpen, setFormulaModalOpen] = useState(false)
   const [socialLinkModalOpen, setSocialLinkModalOpen] = useState(false)
@@ -26,7 +25,6 @@ export function useEditorState() {
     unsaved, setUnsaved,
     saving, setSaving,
     previewOpen, setPreviewOpen,
-    usersOpen, setUsersOpen,
     changePasswordOpen, setChangePasswordOpen,
     formulaModalOpen, setFormulaModalOpen,
     socialLinkModalOpen, setSocialLinkModalOpen,

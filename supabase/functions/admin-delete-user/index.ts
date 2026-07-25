@@ -38,12 +38,12 @@ serve(async (req) => {
 
     const { data: profile, error: profileError } = await adminClient
       .from('admin_users')
-      .select('role')
+      .select('role, course_id')
       .eq('id', callerData.user.id)
       .single()
 
-    if (profileError || profile?.role !== 'owner') {
-      return json({ error: 'Only owners can delete users' }, 403)
+    if (profileError || !profile) {
+      return json({ error: 'Not an admin account' }, 403)
     }
 
     const { userId } = await req.json()
@@ -53,6 +53,31 @@ serve(async (req) => {
 
     if (userId === callerData.user.id) {
       return json({ error: 'You cannot delete yourself' }, 400)
+    }
+
+    const isPrimaryOwner = callerData.user.email === 'moon@mooner.dev'
+
+    const { data: target, error: targetError } = await adminClient
+      .from('admin_users')
+      .select('role, course_id')
+      .eq('id', userId)
+      .single()
+
+    if (targetError || !target) {
+      return json({ error: 'User not found' }, 404)
+    }
+
+    // T-051 role matrix: the primary owner can remove anyone; a course owner
+    // can remove an admin/contributor in their own course (never another
+    // owner); an admin can remove a contributor in their own course only; a
+    // contributor can't remove anyone.
+    const sameCourse = target.course_id === profile.course_id
+    const authorized = isPrimaryOwner
+      || (profile.role === 'owner' && sameCourse && target.role !== 'owner')
+      || (profile.role === 'admin' && sameCourse && target.role === 'contributor')
+
+    if (!authorized) {
+      return json({ error: 'You are not authorized to delete this user' }, 403)
     }
 
     const { error: authError } = await adminClient.auth.admin.deleteUser(userId)

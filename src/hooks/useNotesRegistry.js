@@ -26,6 +26,7 @@ export function toStructuralModules(dbModules) {
     id: m.id,
     label: m.label,
     Icon: getIconOptionByName(m.iconName).Icon,
+    courseId: m.courseId,
     ...(MODULE_TOOLS[m.id] ? { tools: MODULE_TOOLS[m.id] } : {}),
   }))
 }

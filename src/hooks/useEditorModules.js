@@ -32,12 +32,14 @@ function refreshModuleState(setModules, updater) {
   setModules(prev => updater(prev))
 }
 
-export function useEditorModules({ showToast, setModules, setSelectedPath, unusedIconOptions, isOwner, canDelete, reloadModules }) {
+export function useEditorModules({ showToast, setModules, setSelectedPath, unusedIconOptions, isOwner, canDeleteModule, courseId, reloadModules }) {
   // ── Subjects (sidebar_modules table) ─────────────────────────────────────────
   // A Subject carries a live React Icon component, so `Icon` in local state is
   // still resolved client-side (getIconOptionByName) — only id/label/icon_name
   // are DB rows now. tools[] stays code-defined (MODULE_TOOLS in modules.js);
-  // a brand-new Subject never has any.
+  // a brand-new Subject never has any. courseId (T-051) is required — the
+  // owner-insert RLS policy (0024) rejects a row whose course doesn't match
+  // the caller's own.
   const handleNewModule = async (name, iconName = unusedIconOptions[0]?.name || 'FileCode') => {
     const problem = nameError(name)
     if (problem) { showToast(problem, 'error'); return }
@@ -47,9 +49,9 @@ export function useEditorModules({ showToast, setModules, setSelectedPath, unuse
     showToast(`Creating subject ${moduleId}...`, 'success')
     try {
       const iconOption = getIconOptionByName(iconName)
-      await createModule({ id: moduleId, label: name.trim(), iconName: iconOption.name })
+      await createModule({ id: moduleId, label: name.trim(), iconName: iconOption.name, courseId })
 
-      const newModule = { id: moduleId, label: name.trim(), iconName: iconOption.name, Icon: iconOption.Icon, tools: [] }
+      const newModule = { id: moduleId, label: name.trim(), iconName: iconOption.name, Icon: iconOption.Icon, courseId, tools: [] }
       refreshModuleState(setModules, prev => [...prev, newModule])
       showToast(`Subject ${newModule.label} created`, 'success')
     } catch (error) {
@@ -57,12 +59,12 @@ export function useEditorModules({ showToast, setModules, setSelectedPath, unuse
     }
   }
 
-  // Delete is locked to one account (T-045 phase B) — server-side enforced via
-  // sidebar_modules' delete-locked RLS policy (admin_is_delete_authorized()),
-  // matching notes/note_folders. This client check is a UX short-circuit, not
-  // the security boundary.
+  // Whole-Subject delete stays narrowly gated (T-051 spec §7) — the primary
+  // owner, or this course's own owner — server-side enforced via
+  // sidebar_modules' delete-locked RLS policy (admin_is_delete_authorized(),
+  // 0024). This client check is a UX short-circuit, not the security boundary.
   const handleDeleteModule = async (moduleId) => {
-    if (!canDelete) { showToast('Only the site owner can delete a subject', 'error'); return }
+    if (!canDeleteModule) { showToast('Only this course\'s owner can delete a subject', 'error'); return }
     showToast(`Removing subject ${moduleId}...`, 'success')
     try {
       await deleteModuleInDb(moduleId)
@@ -135,8 +137,10 @@ export function useEditorModules({ showToast, setModules, setSelectedPath, unuse
     }
   }
 
+  // Delete is scoped by write-access (admin_can_write_module, 0020/0024),
+  // same as rename/hide — T-051 extends contributors'/admins' existing
+  // write access to include delete, no separate lock.
   const handleDeleteSubfolder = async (moduleId, subfolderName) => {
-    if (!canDelete) { showToast('Only the site owner can delete a folder', 'error'); return }
     showToast(`Deleting subfolder ${subfolderName}...`, 'success')
     try {
       const removed = await deleteFolder(moduleId, subfolderName)
@@ -215,7 +219,6 @@ export function useEditorModules({ showToast, setModules, setSelectedPath, unuse
   }
 
   const handleDeleteFile = async (moduleId, path) => {
-    if (!canDelete) { showToast('Only the site owner can delete a file', 'error'); return }
     try {
       await deleteNote(moduleId, path)
       invalidateNotesRegistry()

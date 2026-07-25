@@ -10,7 +10,6 @@ import '../../styles/adminTokens.css'
 import { useAdmin } from './useAdmin'
 import EditorNavbar from '../../components/admin/EditorNavbar'
 import PreviewModal from '../../components/admin/PreviewModal'
-import UsersDrawer from '../../components/admin/UsersDrawer'
 import ImageCleanupDrawer from '../../components/admin/ImageCleanupDrawer'
 import ChangePasswordModal from '../../components/admin/ChangePasswordModal'
 import FormulaModal from '../../components/admin/FormulaModal'
@@ -203,14 +202,14 @@ function createMenuOption(text, onClick, color = colors.text) {
 function AdminEditorContent() {
   const navigate = useNavigate()
   const { moduleId, subfolder, slug } = useParams()
-  const { user, profile, loading } = useAdmin()
+  const { user, profile, loading, isPrimaryOwner } = useAdmin()
   const { showToast } = useToast()
 
   const {
     title, setTitle, content, setContent,
     unsaved, setUnsaved, saving, setSaving,
     previewOpen, setPreviewOpen,
-    usersOpen, setUsersOpen, changePasswordOpen, setChangePasswordOpen,
+    changePasswordOpen, setChangePasswordOpen,
     formulaModalOpen, setFormulaModalOpen, socialLinkModalOpen, setSocialLinkModalOpen,
     selectedPath, setSelectedPath, originalPath, setOriginalPath,
     currentStyle, setCurrentStyle,
@@ -604,15 +603,6 @@ function AdminEditorContent() {
       />
 
       {profile?.role === 'owner' && (
-        <UsersDrawer
-          open={usersOpen}
-          onClose={() => setUsersOpen(false)}
-          currentUserId={user?.id}
-          isOwner={profile?.role === 'owner'}
-        />
-      )}
-
-      {profile?.role === 'owner' && (
         <ImageCleanupDrawer
           open={cleanupOpen}
           onClose={() => setCleanupOpen(false)}
@@ -652,10 +642,12 @@ function AdminEditorContent() {
         onSave={handleSave}
         onBackupToGithub={handleBackupToGithub}
         saving={saving}
-        onToggleUsers={() => setUsersOpen(!usersOpen)}
+        onToggleUsers={() => navigate('/admin/users')}
         onToggleCleanup={() => setCleanupOpen(o => !o)}
         cleanupOpen={cleanupOpen}
         isOwner={profile?.role === 'owner'}
+        canManageUsers={profile?.role === 'owner' || profile?.role === 'admin'}
+        roleLabel={isPrimaryOwner ? 'Primary owner' : profile?.role === 'owner' ? 'Owner' : profile?.role === 'admin' ? 'Admin' : 'Contributor'}
         username={profile?.username}
         onSignOut={handleSignOut}
         onChangePassword={() => setChangePasswordOpen(true)}

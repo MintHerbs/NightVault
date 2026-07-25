@@ -38,23 +38,44 @@ serve(async (req) => {
 
     const { data: profile, error: profileError } = await adminClient
       .from('admin_users')
-      .select('role')
+      .select('role, course_id')
       .eq('id', callerData.user.id)
       .single()
 
+    // Only an 'owner' can create accounts (matches T-051's role matrix — an
+    // 'admin' can remove a contributor but never create anyone). Whether
+    // that owner is course-locked or the primary owner is resolved below via
+    // the verified JWT email, not this role check alone.
     if (profileError || profile?.role !== 'owner') {
       return json({ error: 'Only owners can create users' }, 403)
     }
 
-    const { email, password, username, role, allowedDirectories } = await req.json()
+    // Verified identity claim, not the editable admin_users.email column —
+    // same distinction 0022/0024 draw for the delete lockdown.
+    const isPrimaryOwner = callerData.user.email === 'moon@mooner.dev'
+
+    const { email, password, username, role, allowedDirectories, courseId } = await req.json()
 
     if (!email || !password || !username || !role) {
       return json({ error: 'Missing required fields' }, 400)
     }
 
-    if (!['owner', 'contributor'].includes(role)) {
+    if (!['owner', 'admin', 'contributor'].includes(role)) {
       return json({ error: 'Invalid role' }, 400)
     }
+
+    // Only the primary owner creates an 'owner' (T-051 spec §5) — a
+    // course-locked owner creates admins/contributors for their own course
+    // only.
+    if (role === 'owner' && !isPrimaryOwner) {
+      return json({ error: 'Only the primary owner can create an owner' }, 403)
+    }
+
+    // The primary owner may target any course (e.g. a brand-new course's
+    // first owner); every other caller is forced onto their own course_id
+    // regardless of what the request body claims, so an owner can never
+    // plant an account in a course they don't own.
+    const targetCourseId = isPrimaryOwner && courseId ? courseId : profile.course_id
 
     if (role === 'contributor' && (!Array.isArray(allowedDirectories) || allowedDirectories.length === 0)) {
       return json({ error: 'Contributors must have at least one allowed directory' }, 400)
@@ -76,7 +97,8 @@ serve(async (req) => {
         id: authData.user.id,
         username,
         role,
-        allowed_directories: role === 'owner' ? [] : allowedDirectories,
+        course_id: targetCourseId,
+        allowed_directories: role === 'contributor' ? allowedDirectories : [],
       })
 
     if (insertError) {
@@ -90,7 +112,8 @@ serve(async (req) => {
         email: authData.user.email,
         username,
         role,
-        allowed_directories: role === 'owner' ? [] : allowedDirectories,
+        course_id: targetCourseId,
+        allowed_directories: role === 'contributor' ? allowedDirectories : [],
       },
     })
   } catch (error) {

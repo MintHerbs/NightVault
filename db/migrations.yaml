@@ -19,7 +19,7 @@
 # See db/README.md for how to apply migrations against a Supabase project.
 
 project: b-tree
-schema_version: 22
+schema_version: 23
 
 migrations:
   - id: "0001"
@@ -201,6 +201,14 @@ migrations:
   - id: "0023"
     file: sql/0023_sidebar_modules_and_images.sql
     description: "Move Subjects and note images off GitHub onto Supabase: new sidebar_modules table (id/label/icon_name/sort_order/hidden, owner-write, delete-locked) replaces the modules.js-on-GitHub write path and supersedes module_visibility (dropped, superseded); new public note-images Storage bucket with admin_can_write_module-scoped insert/update and owner-only delete replaces the GitHub uploadImage path."
+
+  - id: "0024"
+    file: sql/0024_course_scoped_roles.sql
+    description: "T-051: new courses table (replaces the dead subjects table, T-030); admin_users gains course_id and an 'admin' role tier; sidebar_modules gains course_id; admin_can_write_module and the delete-lock helpers become course/role-aware instead of hardcoded to one email/allowed_directories-only."
+    author: agent
+    created: 2026-07-25
+    applied_envs: []
+    related_issues: ["T-051"]
     author: agent
     created: 2026-07-24
     applied_envs: []

@@ -12,7 +12,7 @@ import { supabase } from './supabaseClient'
 export async function listModules() {
   const { data, error } = await supabase
     .from('sidebar_modules')
-    .select('id, label, icon_name, sort_order, hidden')
+    .select('id, label, icon_name, sort_order, hidden, course_id')
     .order('sort_order', { ascending: true })
   if (error) throw new Error(error.message)
   return (data ?? []).map((r) => ({
@@ -21,11 +21,14 @@ export async function listModules() {
     iconName: r.icon_name,
     sortOrder: r.sort_order,
     hidden: !!r.hidden,
+    courseId: r.course_id,
   }))
 }
 
-/** Create a new Subject, appended after the current highest sort_order. */
-export async function createModule({ id, label, iconName }) {
+/** Create a new Subject, appended after the current highest sort_order.
+ * `courseId` is required (T-051) — the owner insert RLS policy (0024)
+ * rejects a row whose course_id doesn't match the caller's own course. */
+export async function createModule({ id, label, iconName, courseId }) {
   const { data: maxRows, error: maxErr } = await supabase
     .from('sidebar_modules')
     .select('sort_order')
@@ -36,7 +39,7 @@ export async function createModule({ id, label, iconName }) {
 
   const { error } = await supabase
     .from('sidebar_modules')
-    .insert({ id, label, icon_name: iconName, sort_order: nextOrder })
+    .insert({ id, label, icon_name: iconName, sort_order: nextOrder, course_id: courseId })
   if (error) throw new Error(error.message)
 }
 

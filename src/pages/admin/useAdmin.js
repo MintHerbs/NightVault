@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
-import { getAdminProfile } from '../../lib/adminSupabase'
+import { getAdminProfile, PRIMARY_OWNER_EMAIL } from '../../lib/adminSupabase'
 
 export function useAdmin() {
   const navigate = useNavigate()
@@ -35,5 +35,7 @@ export function useAdmin() {
     checkAuth()
   }, [navigate])
 
-  return { user, profile, loading }
+  const isPrimaryOwner = user?.email === PRIMARY_OWNER_EMAIL
+
+  return { user, profile, loading, isPrimaryOwner }
 }

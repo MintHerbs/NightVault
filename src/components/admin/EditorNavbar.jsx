@@ -40,6 +40,8 @@ export default function EditorNavbar({
   onToggleCleanup,
   cleanupOpen,
   isOwner,
+  canManageUsers,
+  roleLabel,
   username,
   onSignOut,
   onChangePassword,
@@ -169,7 +171,7 @@ export default function EditorNavbar({
             </Tooltip.Root>
           )}
 
-          {isOwner && (
+          {canManageUsers && (
             <Tooltip.Root>
               <Tooltip.Trigger asChild>
                 <button className={styles.iconButton} onClick={onToggleUsers}>
@@ -194,7 +196,7 @@ export default function EditorNavbar({
               <Popover.Content className={styles.popoverContent} sideOffset={5}>
                 <div className={styles.userInfo}>
                   <span className={styles.username}>{username}</span>
-                  <span className={styles.role}>{isOwner ? 'Owner' : 'Contributor'}</span>
+                  <span className={styles.role}>{roleLabel}</span>
                 </div>
                 <div className={styles.divider} />
                 <button className={styles.menuItem} onClick={onChangePassword}>
