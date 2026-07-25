@@ -15,9 +15,13 @@
 import { supabase } from '../lib/supabaseClient'
 import { NOTE_IMAGES_BUCKET, noteImageFallbackSrc } from '../lib/noteImageSrc'
 
-// Extract all image paths from a markdown string
+// Extract all image paths from a markdown string. The path ends at whitespace
+// or the closing paren, never swallowing an optional title — `![a](/notes/img/x
+// "w=480")` (the width marker a resize writes, see lib/noteImageWidth.js) must
+// still yield the bare `/notes/img/x`, or the referenced image would look
+// unreferenced here and be offered up as an orphan to delete.
 function extractImages(markdown) {
-  return [...String(markdown || '').matchAll(/!\[.*?\]\((\/notes\/img\/.*?)\)/g)]
+  return [...String(markdown || '').matchAll(/!\[.*?\]\((\/notes\/img\/[^\s)]+)/g)]
     .map(m => m[1])
 }
 

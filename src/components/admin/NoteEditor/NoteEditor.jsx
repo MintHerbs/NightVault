@@ -1,10 +1,11 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Editor, rootCtx, defaultValueCtx, editorViewCtx, schemaCtx, serializerCtx } from '@milkdown/kit/core'
-import { Plugin, PluginKey } from '@milkdown/kit/prose/state'
+import { Plugin, PluginKey, TextSelection } from '@milkdown/kit/prose/state'
 import CodeBlock from '../../social/CodeBlock/CodeBlock'
 import { resolveDraftSrc } from '../../../lib/draftImagePreviews'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../../lib/noteImageSrc'
+import { parseImageTitle, formatImageTitle, MIN_IMAGE_WIDTH } from '../../../lib/noteImageWidth'
 import {
   commonmark,
   codeBlockSchema,
@@ -88,12 +89,20 @@ const codeBlockView = $view(codeBlockSchema, () => (node) => {
   }
 })
 
-// Image node view: renders the image with a Material You hover control — a
-// translucent circular "×" at the top-right — that removes the image from the
-// note after a warn-before-remove confirm. Removal is an editor edit (undoable
-// with Ctrl+Z); the underlying file in the repo is untouched and can still be
-// swept later by Image Cleanup. Rendering matches the default (src as-is), so
-// Markdown round-trip is unaffected — this only adds the overlay controls.
+// Image node view: renders the image with Material You hover controls —
+//   • a translucent circular "×" at the top-right that removes the image after a
+//     warn-before-remove confirm. Removal is an editor edit (undoable with
+//     Ctrl+Z); the underlying file is untouched and can still be swept later by
+//     Image Cleanup.
+//   • a grip on each vertical edge that scales the image down (or back up to the
+//     column width) by dragging, with a live px readout. Width-only, so the
+//     aspect ratio is preserved; double-clicking a grip resets to the default
+//     width.
+//
+// The chosen width persists in the Markdown image title as `w=<px>` (see
+// lib/noteImageWidth.js), which is why Markdown round-trip stays intact: the src
+// never changes, so the save path's `draft://` rewrite and Image Cleanup's path
+// matching are unaffected.
 //
 // Registered via $prose (a real ProseMirror plugin prop), not $view: $view's
 // nodeViewCtx registration is async (gated on SchemaReady) and races the
@@ -109,6 +118,12 @@ const imageNodeView = (node, view, getPos) => {
 
   const img = document.createElement('img')
   img.className = styles.image
+  // PM's own image drag would fight the resize handles' pointer capture.
+  img.draggable = false
+  let currentTitle = ''
+  // Live resize state (set while a handle is being dragged), declared up here so
+  // applyAttrs can leave the in-progress width alone.
+  let drag = null
   const applyAttrs = (n) => {
     // draft://<key> (not-yet-uploaded) resolves to a blob URL for preview;
     // saved /notes/img/… paths try the same-origin static path first (works
@@ -121,7 +136,13 @@ const imageNodeView = (node, view, getPos) => {
       if (img.src !== fallback) img.src = fallback
     }
     img.alt = n.attrs.alt || ''
-    if (n.attrs.title) img.title = n.attrs.title
+    // The title doubles as the width carrier — only the human part belongs on
+    // the DOM node (and on its tooltip).
+    const { title, width } = parseImageTitle(n.attrs.title)
+    currentTitle = title
+    if (title) img.title = title
+    else img.removeAttribute('title')
+    if (!drag) img.style.width = width ? `${width}px` : ''
   }
   applyAttrs(node)
   wrap.appendChild(img)
@@ -151,6 +172,90 @@ const imageNodeView = (node, view, getPos) => {
   confirm.append(label, cancelBtn, removeBtn)
   wrap.appendChild(confirm)
 
+  // ── Resize handles + live size readout ──────────────────────────────────
+  const sizePill = document.createElement('span')
+  sizePill.className = styles.imageSizePill
+  wrap.appendChild(sizePill)
+
+  const handles = ['left', 'right'].map((side) => {
+    const h = document.createElement('span')
+    h.className = `${styles.imageHandle} ${side === 'left' ? styles.imageHandleLeft : styles.imageHandleRight}`
+    h.dataset.side = side
+    wrap.appendChild(h)
+    return h
+  })
+
+  // Widest the image may become: the editing column, so it can always be
+  // dragged back out to the default full-width look but never overflow it.
+  const maxWidth = () => {
+    const parentWidth = wrap.parentElement?.getBoundingClientRect().width || 0
+    return Math.max(parentWidth || img.naturalWidth || MIN_IMAGE_WIDTH, MIN_IMAGE_WIDTH)
+  }
+
+  const commitWidth = (width) => {
+    const pos = typeof getPos === 'function' ? getPos() : null
+    if (typeof pos !== 'number') return
+    const target = view.state.doc.nodeAt(pos)
+    if (!target || target.type.name !== 'image') return
+    // At (or past) the column width the image is "default" again — drop the
+    // marker so it stays responsive instead of pinned to today's column width.
+    const title = formatImageTitle(currentTitle, width && width < maxWidth() - 1 ? width : null)
+    if (title === (target.attrs.title || '')) return
+    view.dispatch(view.state.tr.setNodeMarkup(pos, undefined, { ...target.attrs, title }))
+  }
+
+  const onPointerMove = (e) => {
+    if (!drag) return
+    const delta = (e.clientX - drag.startX) * (drag.side === 'left' ? -1 : 1)
+    const width = Math.round(Math.min(Math.max(drag.startWidth + delta, MIN_IMAGE_WIDTH), drag.max))
+    drag.width = width
+    img.style.width = `${width}px`
+    sizePill.textContent = `${width} px`
+  }
+
+  const stopDrag = () => {
+    if (!drag) return null
+    const { width } = drag
+    drag = null
+    window.removeEventListener('pointermove', onPointerMove)
+    window.removeEventListener('pointerup', endDrag)
+    window.removeEventListener('pointercancel', endDrag)
+    wrap.classList.remove(styles.resizing)
+    return width
+  }
+
+  function endDrag() {
+    const width = stopDrag()
+    if (width != null) commitWidth(width)
+  }
+
+  for (const handle of handles) {
+    handle.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return
+      e.preventDefault()
+      e.stopPropagation()
+      drag = {
+        side: handle.dataset.side,
+        startX: e.clientX,
+        startWidth: img.getBoundingClientRect().width,
+        max: maxWidth(),
+      }
+      drag.width = Math.round(drag.startWidth)
+      sizePill.textContent = `${drag.width} px`
+      wrap.classList.add(styles.resizing)
+      window.addEventListener('pointermove', onPointerMove)
+      window.addEventListener('pointerup', endDrag)
+      window.addEventListener('pointercancel', endDrag)
+    })
+    // Double-click a handle → back to the default (column) width.
+    handle.addEventListener('dblclick', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      img.style.width = ''
+      commitWidth(null)
+    })
+  }
+
   const swallow = (e) => { e.preventDefault(); e.stopPropagation() }
   for (const btn of [del, cancelBtn, removeBtn]) btn.addEventListener('mousedown', swallow)
 
@@ -172,14 +277,57 @@ const imageNodeView = (node, view, getPos) => {
     ignoreMutation: () => true,
     // Let PM handle clicks on the image itself (selection); intercept only
     // our own control clicks so they don't reach the editor.
-    stopEvent: (e) => del.contains(e.target) || confirm.contains(e.target),
+    stopEvent: (e) => del.contains(e.target)
+      || confirm.contains(e.target)
+      || handles.some((h) => h.contains(e.target)),
     update: (updated) => {
       if (updated.type !== node.type) return false
       applyAttrs(updated)
       return true
     },
+    // A drag can outlive the node view (undo/redo, note switch) — never leave
+    // window listeners behind, and don't write a width through a stale position.
+    destroy: () => stopDrag(),
   }
 }
+
+// Click-below-the-last-block → keep writing. The editable area carries a tall
+// bottom padding (NoteEditor.module.css) purely as a click target, because a
+// note ending in a tall image or a code block otherwise leaves nowhere to put
+// the caret. ProseMirror's own handling would drop the caret at the end of the
+// last block — i.e. *inside* the image's paragraph — so a click in that padding
+// gets a fresh trailing paragraph instead.
+//
+// A mousedown whose target is the editable element itself (rather than any
+// rendered child) is exactly a click in that padding, which is what keys this
+// off. Doing it on click, not via a doc-normalising appendTransaction, keeps
+// note loading from inventing an edit and marking a pristine note unsaved.
+const trailingClickTarget = $prose(() => new Plugin({
+  key: new PluginKey('NOTE_EDITOR_TRAILING_CLICK'),
+  props: {
+    handleDOMEvents: {
+      mousedown: (view, event) => {
+        if (event.target !== view.dom || event.button !== 0) return false
+        const last = view.dom.lastElementChild
+        if (last && event.clientY < last.getBoundingClientRect().bottom) return false
+
+        const { doc, schema } = view.state
+        const paragraph = schema.nodes.paragraph
+        if (!paragraph) return false
+        const lastNode = doc.lastChild
+        // An empty paragraph is already there — let ProseMirror land in it.
+        if (lastNode?.type === paragraph && lastNode.content.size === 0) return false
+
+        event.preventDefault()
+        const end = doc.content.size
+        const tr = view.state.tr.insert(end, paragraph.create())
+        view.dispatch(tr.setSelection(TextSelection.near(tr.doc.resolve(end + 1))).scrollIntoView())
+        view.focus()
+        return true
+      },
+    },
+  },
+}))
 
 const imageDeleteView = $prose(() => new Plugin({
   key: new PluginKey('NOTE_EDITOR_IMAGE_VIEW'),
@@ -264,6 +412,7 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
       .use(markdownClipboard)
       .use(codeBlockView)
       .use(imageDeleteView)
+      .use(trailingClickTarget)
       .use(listener)
   )
 
@@ -306,6 +455,38 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
         ctx.get(editorViewCtx).focus()
       })
       getInstance()?.action(callCommand(insertImageCommand.key, { src, alt }))
+      // Images are inline nodes rendered as a full-width block, so a freshly
+      // inserted one leaves the caret pinned beside it with nothing below to
+      // click — you couldn't keep typing after an image. Land the caret on an
+      // empty paragraph under it instead (reusing one if it's already there).
+      getInstance()?.action((ctx) => {
+        const view = ctx.get(editorViewCtx)
+        const { state } = view
+        const $from = state.selection.$from
+        if ($from.depth < 1) return
+        const after = $from.after($from.depth)
+        const next = state.doc.nodeAt(after)
+        const paragraph = state.schema.nodes.paragraph
+        if (!paragraph) return
+
+        // Not every parent takes a second block: a GFM table cell holds exactly
+        // one paragraph, so there's nowhere to put one after the image. Leave
+        // the caret beside the image in that case rather than inserting nothing
+        // and then resolving a position that lands in the next cell.
+        const parent = $from.node($from.depth - 1)
+        const index = $from.index($from.depth - 1) + 1
+        const reusable = next?.type === paragraph && next.content.size === 0
+        if (!reusable && !parent.canReplaceWith(index, index, paragraph)) {
+          view.focus()
+          return
+        }
+
+        let tr = state.tr
+        if (!reusable) tr = tr.insert(after, paragraph.create())
+        const $target = tr.doc.resolve(Math.min(after + 1, tr.doc.content.size))
+        view.dispatch(tr.setSelection(TextSelection.near($target)).scrollIntoView())
+        view.focus()
+      })
     },
     // Retarget an image node's src (used to swap a transient draft://<key>
     // preview for the real /notes/img/… path once its upload resolves, T-050).

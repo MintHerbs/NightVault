@@ -6,6 +6,7 @@ import 'katex/dist/katex.min.css'
 import CodeBlock from '../social/CodeBlock/CodeBlock'
 import RichTooltip, { YouTubeIcon, InstagramIcon, LinkedInIcon } from '../ui/smoothui/rich-popover/index.tsx'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../lib/noteImageSrc'
+import { parseImageTitle } from '../../lib/noteImageWidth'
 import styles from './MarkdownRenderer.module.css'
 
 // Milkdown serialises blank-line spacing as literal `<br />` HTML. react-markdown
@@ -160,12 +161,17 @@ const markdownComponents = {
   li({ children }) {
     return <li className={styles.li}>{children}</li>
   },
-  img({ src, alt }) {
+  img({ src, alt, title }) {
+    // The image title carries the width chosen in the editor (`w=<px>`), so the
+    // reader shows the same size the author saw. See lib/noteImageWidth.js.
+    const { title: caption, width } = parseImageTitle(title)
     return (
       <img
         className={styles.image}
         src={resolveNoteImageSrc(src)}
         alt={alt || ''}
+        title={caption || undefined}
+        style={width ? { width: `${width}px` } : undefined}
         loading="lazy"
         onError={(e) => {
           const fallback = noteImageFallbackSrc(src)
