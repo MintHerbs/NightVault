@@ -12,6 +12,7 @@ import atishPhoto from '../../img/team/atish.png'
 import nooriePhoto from '../../img/team/noorie.png'
 import nusaibahPhoto from '../../img/team/nusaibah.png'
 import nahlaPhoto from '../../img/team/nahla.png'
+import ismailPhoto from '../../img/team/ismail.png'
 import styles from './AboutPage.module.css'
 
 // `photoFocus` re-frames a photo onto the face inside the circular crop:
@@ -77,6 +78,14 @@ const CONTRIBUTORS = [
     socials: {
       instagram: 'https://www.instagram.com/nahla.dna',
       linkedin: 'https://www.linkedin.com/in/nahla-aalyah-dinmahamed-76712b319/',
+    },
+  },
+  {
+    name: 'Mohammad Ismail Iftikhar Oozeerally',
+    photo: ismailPhoto,
+    socials: {
+      instagram: 'https://instagram.com/urhomeboyismail',
+      linkedin: 'https://mu.linkedin.com/in/mohammad-ismail-oozeerally-31b8a334b',
     },
   },
 ]
