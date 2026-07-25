@@ -11,6 +11,7 @@ import tanooPhoto from '../../img/team/tanoo.png'
 import atishPhoto from '../../img/team/atish.png'
 import nooriePhoto from '../../img/team/noorie.png'
 import nusaibahPhoto from '../../img/team/nusaibah.png'
+import nahlaPhoto from '../../img/team/nahla.png'
 import styles from './AboutPage.module.css'
 
 // `photoFocus` re-frames a photo onto the face inside the circular crop:
@@ -67,6 +68,15 @@ const CONTRIBUTORS = [
     role: 'Wrote the Maths semester 2 notes',
     socials: {
       instagram: 'https://www.instagram.com/nusaibah_2205',
+    },
+  },
+  {
+    name: 'Nahla Aalyah Dinmahamed',
+    photo: nahlaPhoto,
+    role: 'Lead Coordinator',
+    socials: {
+      instagram: 'https://www.instagram.com/nahla.dna',
+      linkedin: 'https://www.linkedin.com/in/nahla-aalyah-dinmahamed-76712b319/',
     },
   },
 ]
