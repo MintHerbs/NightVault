@@ -75,4 +75,25 @@ You using the tokens and component patterns already shipped in
 
 - [docs/specs/course-roles-and-user-management.md](../docs/specs/course-roles-and-user-management.md) — full spec, including the role/permission matrix and 6 open questions
 - [docs/specs/admin-drive-navigation.md](../docs/specs/admin-drive-navigation.md) — T-045, prior art for the M3 patterns and the delete-lock mechanism this ticket generalizes
-- [T-030](T-030-subjects-table-dead-schema.md) — dead `subjects` table this ticket's `courses` table replaces
+- [T-030](T-030-subjects-table-dead-schema.md) — dead `subjects` table this ticket's `courses` table replaces (in local dev only — see below)
+
+## Known issue: prod has a different, pre-existing `courses` table
+
+Discovered 2026-07-25 while fixing a prod outage caused by shipping this
+ticket's code without its migration: prod already has a `courses` table
+(`id` text, `display_name`, `created_by`, `description`) and a populated
+`admin_users.course_id`, created 2026-05-31 — over a month before this
+ticket — with no migration file or application code ever referencing it
+before now. It is **not** the `courses` table this ticket's migration
+(`db/sql/0024_course_scoped_roles.sql`) creates (that one is `uuid`-based
+and only exists in local dev).
+
+`db/sql/0025_hotfix_prod_sidebar_modules_course_id.sql` is a minimal,
+additive prod hotfix (adds `sidebar_modules.course_id` as `text`,
+referencing prod's existing table, backfilled to `'computer-science'`) —
+enough to stop the outage, not a reconciliation. The full role/course
+hierarchy this ticket built (the `admin` role, `is_primary_owner()`,
+course-scoped RLS, the course switcher) has only ever been applied to
+local dev. Reconciling the two `courses` tables — and figuring out what
+prod's pre-existing one was originally for — is follow-up work, not done
+here.

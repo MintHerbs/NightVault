@@ -19,7 +19,7 @@
 # See db/README.md for how to apply migrations against a Supabase project.
 
 project: b-tree
-schema_version: 23
+schema_version: 24
 
 migrations:
   - id: "0001"
@@ -208,8 +208,16 @@ migrations:
 
   - id: "0024"
     file: sql/0024_course_scoped_roles.sql
-    description: "T-051: new courses table (replaces the dead subjects table, T-030); admin_users gains course_id and an 'admin' role tier; sidebar_modules gains course_id; admin_can_write_module and the delete-lock helpers become course/role-aware instead of hardcoded to one email/allowed_directories-only."
+    description: "T-051: new courses table (replaces the dead subjects table, T-030); admin_users gains course_id and an 'admin' role tier; sidebar_modules gains course_id; admin_can_write_module and the delete-lock helpers become course/role-aware instead of hardcoded to one email/allowed_directories-only. NOT applied to prod — see 0025, prod already had a different, pre-existing, undocumented courses table this doesn't reconcile with yet."
     author: agent
     created: 2026-07-25
-    applied_envs: []
+    applied_envs: ["dev"]
+    related_issues: ["T-051"]
+
+  - id: "0025"
+    file: sql/0025_hotfix_prod_sidebar_modules_course_id.sql
+    description: "Prod hotfix, applied directly via Supabase MCP execute_sql on 2026-07-25 (recorded here after the fact): adds sidebar_modules.course_id (text, referencing prod's pre-existing courses table — NOT 0024's uuid-based one) and backfills it to 'computer-science', fixing a public-site outage where every listModules() call errored. Does not reconcile with 0024; see the file header for the full picture (prod's courses/admin_users schema predates and diverges from this repo's migrations)."
+    author: agent
+    created: 2026-07-25
+    applied_envs: ["prod"]
     related_issues: ["T-051"]
