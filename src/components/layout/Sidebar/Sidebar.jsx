@@ -1,23 +1,22 @@
 /**
- * Sidebar — collapsed activity bar OR expanded side panel.
- *
- * Module definitions live in modules.js; CollapsedView and ExpandedView
- * both read from that single source so they cannot drift in content.
+ * Sidebar — a static activity bar (T-049): no hover/click expand into a file
+ * tree anymore, Academia navigates straight to /home. On mobile it's still an
+ * off-canvas drawer toggled by the hamburger (content pages assume the
+ * sidebar isn't docked below the 968px breakpoint — see PageShell), but the
+ * drawer is the same static bar, never a wider expanded panel.
  */
 import { memo, useCallback, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './Sidebar.module.css'
 import CollapsedView from './CollapsedView/CollapsedView'
-import ExpandedView from './ExpandedView/ExpandedView'
 
 function Sidebar({ activeChild, onChildSelect, isChatOpen, setIsChatOpen, unreadCount = 0 }) {
   const navigate  = useNavigate()
   const location  = useLocation()
   const sessionId = localStorage.getItem('session_id') || 'anonymous'
   const [mode, setMode] = useState('academia')
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [isPackageJsonOpen, setIsPackageJsonOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
 
   const path = location.pathname
 
@@ -25,17 +24,12 @@ function Sidebar({ activeChild, onChildSelect, isChatOpen, setIsChatOpen, unread
     setIsChatOpen?.(false)
     onChildSelect?.(childId)
     navigate(route)
-    // Close sidebar on mobile after navigation
-    if (isMobile) {
-      setIsExpanded(false)
-    }
+    if (isMobile) setIsOpen(false)
   }, [navigate, onChildSelect, setIsChatOpen, isMobile])
 
-  // Detect mobile
+  // Detect mobile, for the off-canvas drawer toggle below.
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 968)
-    }
+    const checkMobile = () => setIsMobile(window.innerWidth <= 968)
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
@@ -49,36 +43,13 @@ function Sidebar({ activeChild, onChildSelect, isChatOpen, setIsChatOpen, unread
     setMode(path.startsWith('/social') ? 'social' : 'academia')
   }, [path])
 
-  useEffect(() => {
-    if (!isExpanded) setIsPackageJsonOpen(false)
-  }, [isExpanded])
-
-  useEffect(() => {
-    if (mode !== 'academia') setIsExpanded(false)
-  }, [mode])
-
-  const handleMouseEnter = () => {
-    if (mode === 'academia' && !isMobile) {
-      setIsExpanded(true)
-    }
-  }
-
-  const handleMouseLeave = () => {
-    if (mode === 'academia' && !isMobile) {
-      setIsExpanded(false)
-    }
-  }
-
   const handleOverlayClick = (e) => {
-    if (isMobile && isExpanded && e.target === e.currentTarget) {
-      setIsExpanded(false)
-    }
+    if (isMobile && isOpen && e.target === e.currentTarget) setIsOpen(false)
   }
 
   return (
     <>
-      {/* Overlay for mobile */}
-      {isMobile && isExpanded && (
+      {isMobile && isOpen && (
         <div
           style={{
             position: 'fixed',
@@ -88,59 +59,37 @@ function Sidebar({ activeChild, onChildSelect, isChatOpen, setIsChatOpen, unread
             bottom: 0,
             background: 'rgba(0, 0, 0, 0.5)',
             backdropFilter: 'blur(2px)',
-            zIndex: 59
+            zIndex: 59,
           }}
           onClick={handleOverlayClick}
         />
       )}
 
-      {/* Mobile hamburger toggle */}
       {isMobile && (
         <button
           type="button"
           className={styles.hamburgerButton}
-          onClick={() => setIsExpanded(!isExpanded)}
-          aria-label={isExpanded ? 'Close navigation' : 'Open navigation'}
-          aria-expanded={isExpanded}
+          onClick={() => setIsOpen((p) => !p)}
+          aria-label={isOpen ? 'Close navigation' : 'Open navigation'}
+          aria-expanded={isOpen}
         >
           <span className={styles.hamburgerBars} />
         </button>
       )}
 
-      <aside
-        className={`${styles.sidebar} ${isExpanded ? styles.sidebarExpanded : ''}`}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        style={{ width: mode === 'academia' && isExpanded ? (isMobile ? '280px' : '240px') : '56px' }}
-      >
-        {mode === 'academia' && isExpanded ? (
-          <ExpandedView
-            path={path}
-            go={go}
-            isPackageJsonOpen={isPackageJsonOpen}
-            onOpenPackageJson={() => setIsPackageJsonOpen(true)}
-            onClosePackageJson={() => setIsPackageJsonOpen(false)}
-            mode={mode}
-            setMode={setMode}
-            sessionId={sessionId}
-            unreadCount={unreadCount}
-          />
-        ) : (
-          <CollapsedView
-            path={path}
-            go={go}
-            activeChild={activeChild}
-            onChildSelect={onChildSelect}
-            isChatOpen={isChatOpen}
-            setIsChatOpen={setIsChatOpen}
-            unreadCount={unreadCount}
-            mode={mode}
-            setMode={setMode}
-            sessionId={sessionId}
-            onOpenPackageJson={() => setIsPackageJsonOpen(true)}
-            setIsExpanded={setIsExpanded}
-          />
-        )}
+      <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
+        <CollapsedView
+          path={path}
+          go={go}
+          activeChild={activeChild}
+          onChildSelect={onChildSelect}
+          isChatOpen={isChatOpen}
+          setIsChatOpen={setIsChatOpen}
+          unreadCount={unreadCount}
+          mode={mode}
+          setMode={setMode}
+          sessionId={sessionId}
+        />
       </aside>
     </>
   )
