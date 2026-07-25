@@ -35,13 +35,13 @@ function CollapsedView({
 }) {
   const handleMoonClick = useCallback((e) => {
     e.preventDefault()
-    go('/tree', 'btree')
+    go('/home', 'Home')
   }, [go])
 
   return (
     <div className="flex flex-col items-center justify-between h-full">
 
-      <a href="/tree" onClick={handleMoonClick} className={styles.moonLink}>
+      <a href="/home" onClick={handleMoonClick} className={styles.moonLink}>
         <img src={moonLogo} alt="Home" className={styles.moonLogo} />
       </a>
 
