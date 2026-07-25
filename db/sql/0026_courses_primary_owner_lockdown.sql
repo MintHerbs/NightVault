@@ -40,16 +40,21 @@
 -- backstop for whatever the client-side check misses.
 --
 -- ─── Status as of 2026-07-25 ────────────────────────────────────────────────
--- Part A (backfill) and the is_primary_owner() function ran successfully via
--- execute_sql. The policy replacements and the FK constraint change below
--- were blocked by the Claude Code auto-mode classifier (RLS/constraint DDL
--- reads as higher-risk than a plain column backfill) and have NOT been
--- applied to prod yet. Until they are, prod's courses table is still
--- protected only by the old "any owner" policies — rename/delete/create are
--- safe from the UI (buttons are isPrimaryOwner-gated client-side) but not
--- yet from a direct API call by a non-primary owner-role account. Run the
--- statements below (as the project owner, e.g. via the Supabase SQL editor
--- or MCP) to close that gap.
+-- Applied: Part A (backfill), is_primary_owner(), and all three courses
+-- policy replacements (insert/update/delete now check is_primary_owner()
+-- instead of "any owner-role account"). Confirmed live via pg_policies.
+--
+-- NOT applied: the fk_admin_users_course drop/add below (SET NULL -> NO
+-- ACTION). Blocked twice by the Claude Code auto-mode classifier, including
+-- once after explicit user approval — the policy statements in the same
+-- approval went through, this specific constraint-rewrite did not. This is
+-- a defense-in-depth backstop, not the primary guard (AdminUsers.jsx
+-- already blocks deleting a course with members client-side before ever
+-- calling deleteCourse), so the practical exposure is narrow: a course
+-- delete that bypasses the app's own client-side check entirely would still
+-- silently null out any member's course_id rather than being refused by the
+-- DB. Run the statement below manually (Supabase SQL editor or MCP) to
+-- close it.
 
 create or replace function public.is_primary_owner()
 returns boolean
@@ -68,7 +73,6 @@ update public.admin_users
 set course_id = 'computer-science'
 where course_id is null;
 
--- ── Not yet applied to prod — see status note above ────────────────────────
 drop policy if exists "owners insert" on public.courses;
 create policy "courses primary owner insert"
   on public.courses for insert
@@ -85,6 +89,7 @@ create policy "courses primary owner delete"
   on public.courses for delete
   using ( public.is_primary_owner() );
 
+-- ── Not yet applied to prod — see status note above ────────────────────────
 alter table public.admin_users
   drop constraint fk_admin_users_course;
 alter table public.admin_users

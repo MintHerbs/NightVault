@@ -149,14 +149,16 @@ etc.) should be visible under Computer Science with its correct title, and
   `NO ACTION` so a course delete can never silently orphan a member's
   `course_id` — matching how `sidebar_modules_course_id_fkey` already
   behaves.
-- **Part B is NOT applied to prod yet** — blocked by the Claude Code
-  auto-mode classifier (policy/constraint DDL reads as higher-risk than the
-  plain-column backfill in Part A, which went through). The buttons
-  themselves are still safe (client-side `isPrimaryOwner`-gated, same as
-  every other primary-owner-only control in this UI), but until Part B
-  runs, prod's actual enforcement for course insert/update/delete is still
-  the old "any owner" policy. Needs a manual run (SQL in the migration
-  file) or a retry with an approved permission rule.
+- **Part B is applied except for one piece.** The `is_primary_owner()`
+  helper and all three `courses` policies (insert/update/delete) went live
+  2026-07-25 — confirmed via `pg_policies`. The `fk_admin_users_course`
+  constraint change (`ON DELETE SET NULL` → `NO ACTION`) is still blocked
+  by the Claude Code auto-mode classifier, including once after explicit
+  user approval — the policy statements in the same approved batch went
+  through, this specific constraint rewrite didn't. Low practical exposure:
+  it's a defense-in-depth backstop, and the app already blocks deleting a
+  course with members client-side before ever calling `deleteCourse`. Needs
+  a manual run — SQL is in the migration file's final statement.
 - Delete itself is guarded client-side (`AdminUsers.jsx`): blocked with a
   toast (not even offered a confirm dialog) unless the course has zero
   members and zero Subjects. `chemistry` and `computer-with-mathematics`
