@@ -97,3 +97,26 @@ course-scoped RLS, the course switcher) has only ever been applied to
 local dev. Reconciling the two `courses` tables — and figuring out what
 prod's pre-existing one was originally for — is follow-up work, not done
 here.
+
+`src/lib/coursesApi.js` was updated to query prod's real columns
+(`display_name`, no `slug`) — it was originally written against 0024's
+local-only shape and silently failed against prod (`listCourses()`'s
+error was swallowed by its own `.catch(() => {})`), leaving the primary
+owner's course-cards list empty. Fixed 2026-07-25; local dev's `courses`
+table now no longer matches this module until it gets its own follow-up.
+
+**Also found during self-review, 2026-07-25:**
+
+- `admin-create-user`/`admin-delete-user` had never been redeployed since
+  creation — prod was serving the pre-T-051 code (no `admin` role, no
+  course_id, no primary-owner check) despite the repo having the updated
+  source all along. Deployed both; prod is now running the current code
+  (version 8).
+- Prod's `admin_users` SELECT RLS (`"Owners can view all admin users"`,
+  `is_owner(auth.uid())`) only grants full visibility to `role='owner'`
+  accounts. An `'admin'`-role account (a real one exists: "nahla") can
+  currently only see their own row, not their course's team, when they
+  open "Manage users" — RLS silently returns just that one row rather
+  than erroring. **Not fixed** — this table already has one recursion
+  incident (T-006) and one drift incident (T-014) in its history, so I'm
+  not editing its RLS without being asked to.
