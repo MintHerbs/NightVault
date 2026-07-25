@@ -1,9 +1,6 @@
 import { commitFileWithRetry } from '../lib/githubApi'
 import { upsertNote, moveNote, baseName } from '../lib/notesApi'
-import { revokeDraftPreview } from '../lib/draftImagePreviews'
 import { invalidateNotesRegistry } from './useNotesRegistry'
-import { supabase } from '../lib/supabaseClient'
-import { NOTE_IMAGES_BUCKET } from '../lib/noteImageSrc'
 
 // Title to filename conversion
 function titleToFilename(title) {
@@ -16,39 +13,9 @@ function titleToFilename(title) {
     .replace(/(^-|-$)/g, '')
 }
 
-// Resolves the `draft://` image queue: uploads each queued image to the
-// `note-images` Supabase Storage bucket and rewrites its draft URL to the
-// uploaded path. Storage serves a new upload instantly (no GitHub-commit /
-// Vercel-redeploy lag), matching the instant-publish property note text
-// already has via the `notes` table.
-//
-// Filenames are random (crypto.randomUUID()), not a sequential per-module
-// counter like the old GitHub-numbered scheme (1.png, 2.png, ...). A counter
-// seeded from Storage alone would collide with pre-migration on-disk images
-// under public/notes/img/<module>/ the first time a module gets a new
-// upload — Storage starts empty regardless of what already exists in the
-// repo from before this migration, so "next number" there isn't actually
-// next. Confirmed by testing: a fresh upload to `database` computed `1.png`
-// from an empty Storage listing and silently landed on top of an unrelated
-// pre-existing public/notes/img/database/1.png once pulled to disk.
-async function resolveImageQueue(content, moduleId, imageQueueRef) {
-  let finalContent = content
-  for (const [draftKey, { file, ext }] of Object.entries(imageQueueRef.current)) {
-    const imgName = `${crypto.randomUUID()}.${ext}`
-    const { error: uploadError } = await supabase.storage
-      .from(NOTE_IMAGES_BUCKET)
-      .upload(`${moduleId}/${imgName}`, file, { contentType: file.type })
-    if (uploadError) throw new Error(uploadError.message)
-    finalContent = finalContent.replaceAll(`draft://${draftKey}`, `/notes/img/${moduleId}/${imgName}`)
-    revokeDraftPreview(draftKey)
-  }
-  imageQueueRef.current = {}
-  return { finalContent }
-}
-
 export function useEditorSave({
   title, content, selectedPath, showToast, setSaving, setUnsaved, setTitle, setContent,
-  imageQueueRef, originalPath, setOriginalPath, isOwner, clearDraft, reloadModules,
+  originalPath, setOriginalPath, isOwner, clearDraft, reloadModules,
 }) {
   // Primary save: note CONTENT goes to Supabase (source of truth), so the note
   // is live on the reader's next load with no rebuild. Images still upload to
@@ -66,6 +33,14 @@ export function useEditorSave({
     const filename = titleToFilename(title)
     if (!filename) {
       showToast('Invalid title - could not generate filename', 'error')
+      return
+    }
+
+    // An image is still uploading: its `draft://` marker has not yet been
+    // swapped for the real /notes/img/… path (T-050). Publishing now would
+    // persist an unresolvable reference, so ask the user to retry in a moment.
+    if (/draft:\/\//.test(content)) {
+      showToast('An image is still uploading. Please wait a moment, then save.', 'error')
       return
     }
 
@@ -90,7 +65,9 @@ export function useEditorSave({
     setSaving(true)
 
     try {
-      const { finalContent } = await resolveImageQueue(content, moduleId, imageQueueRef)
+      // Images are uploaded to Storage at insert time (T-050), so `content`
+      // already carries real /notes/img/… paths, nothing to resolve here.
+      const finalContent = content
 
       if (original && !isSamePath) {
         // Rename and/or move: a single UPDATE that rewrites identity + label +

@@ -307,6 +307,42 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
       })
       getInstance()?.action(callCommand(insertImageCommand.key, { src, alt }))
     },
+    // Retarget an image node's src (used to swap a transient draft://<key>
+    // preview for the real /notes/img/… path once its upload resolves, T-050).
+    // Image nodes are leaves (size unchanged), so positions stay valid across
+    // the setNodeMarkup calls within one transaction.
+    updateImageSrc(fromSrc, toSrc) {
+      getInstance()?.action((ctx) => {
+        const view = ctx.get(editorViewCtx)
+        let tr = view.state.tr
+        let changed = false
+        view.state.doc.descendants((node, pos) => {
+          if (node.type.name === 'image' && node.attrs.src === fromSrc) {
+            tr = tr.setNodeMarkup(pos, undefined, { ...node.attrs, src: toSrc })
+            changed = true
+          }
+        })
+        if (changed) view.dispatch(tr)
+      })
+    },
+    // Remove image node(s) with the given src (used to clean up a draft://
+    // preview when its upload fails, so no dead marker survives). Deletes from
+    // the end so earlier positions stay valid.
+    removeImageBySrc(src) {
+      getInstance()?.action((ctx) => {
+        const view = ctx.get(editorViewCtx)
+        const targets = []
+        view.state.doc.descendants((node, pos) => {
+          if (node.type.name === 'image' && node.attrs.src === src) {
+            targets.push({ from: pos, to: pos + node.nodeSize })
+          }
+        })
+        if (!targets.length) return
+        let tr = view.state.tr
+        for (const t of targets.reverse()) tr = tr.delete(t.from, t.to)
+        view.dispatch(tr)
+      })
+    },
     setStyle(style) {
       const level = HEADING_LEVEL[style]
       const inst = getInstance()

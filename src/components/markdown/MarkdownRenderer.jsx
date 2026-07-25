@@ -8,6 +8,26 @@ import RichTooltip, { YouTubeIcon, InstagramIcon, LinkedInIcon } from '../ui/smo
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../lib/noteImageSrc'
 import styles from './MarkdownRenderer.module.css'
 
+// Milkdown serialises blank-line spacing as literal `<br />` HTML. react-markdown
+// renders raw HTML as text (there is deliberately no rehype-raw, since arbitrary HTML
+// from contributor-authored notes would be an XSS surface), so those tags would
+// otherwise show as the characters "<br />". This remark plugin converts ONLY a
+// standalone <br> HTML node into a real hard-break, leaving every other raw HTML
+// node untouched (still inert, still rendered as text). See T-050.
+function remarkBrToBreak() {
+  const BR = /^<\s*\/?\s*br\s*\/?\s*>$/i
+  const walk = (node) => {
+    if (!node || !Array.isArray(node.children)) return
+    for (const child of node.children) walk(child)
+    node.children = node.children.map((child) =>
+      child.type === 'html' && BR.test((child.value || '').trim())
+        ? { type: 'break' }
+        : child
+    )
+  }
+  return (tree) => walk(tree)
+}
+
 function parseRichPopoverProps(attrString) {
   const props = {}
   const attrRegex = /(\w+)="((?:[^"\\]|\\.)*)"/g
@@ -172,7 +192,7 @@ function MarkdownRenderer({ content }) {
         return (
           <ReactMarkdown
             key={i}
-            remarkPlugins={[remarkGfm, remarkMath]}
+            remarkPlugins={[remarkGfm, remarkMath, remarkBrToBreak]}
             rehypePlugins={[rehypeKatex]}
             components={markdownComponents}
           >

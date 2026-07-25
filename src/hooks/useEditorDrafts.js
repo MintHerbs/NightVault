@@ -38,6 +38,13 @@ export function useEditorDrafts({
     if (!userId || !selectedPath || !filename) return
     if (lastSavedRef.current.title === title && lastSavedRef.current.content === content) return
 
+    // A `draft://` marker is a not-yet-uploaded image being swapped to its real
+    // path in the background (T-050). Don't persist it; the file behind it only
+    // exists in this session, so a restored draft with `draft://` would render
+    // as broken alt text. Skip this tick (don't update lastSavedRef); the next
+    // one, after the swap completes, persists the real /notes/img/… path.
+    if (/draft:\/\//.test(content)) return
+
     lastSavedRef.current = { title, content }
 
     try {
@@ -86,6 +93,21 @@ export function useEditorDrafts({
         .maybeSingle()
 
       if (error || !data) return false
+
+      // A draft still carrying a `draft://` marker predates upload-on-insert
+      // (T-050): the image it references was never uploaded and its file is
+      // gone, so restoring it would show the image as its alt text. Drop the
+      // stale draft and keep the already-loaded published content instead.
+      if (data.content && /draft:\/\//.test(data.content)) {
+        await supabase
+          .from('admin_note_drafts')
+          .delete()
+          .eq('user_id', userId)
+          .eq('module_id', moduleId)
+          .eq('subfolder', subfolder)
+          .eq('filename', filename)
+        return false
+      }
 
       setTitle(data.title)
       setContent(data.content)
