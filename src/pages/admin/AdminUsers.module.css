@@ -149,6 +149,70 @@
   margin: 0 auto;
 }
 
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--color-text);
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viewContentButton {
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: transparent;
+  color: var(--color-text-strong);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.viewContentButton:hover { background: var(--color-hover); border-color: var(--color-accent); }
+
+/* ── Course cards (primary owner landing view) ─────────────────────────── */
+.courseGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.courseCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 20px;
+  border: none;
+  border-radius: 16px;
+  background: var(--md-surface-container);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms ease, box-shadow 150ms ease;
+}
+
+.courseCard:hover { background: var(--md-surface-container-high); box-shadow: var(--shadow-md); }
+
+.courseCardName { font-size: 16px; font-weight: 500; }
+.courseCardMeta { font-size: 13px; color: var(--color-text-muted); }
+
 .table {
   display: flex;
   flex-direction: column;
@@ -157,7 +221,7 @@
 .tableHead,
 .row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 130px 150px minmax(0, 1fr) 48px;
+  grid-template-columns: minmax(0, 1fr) 130px minmax(0, 1fr) 48px;
   align-items: center;
   gap: 8px;
   padding: 0 8px 0 16px;
@@ -181,6 +245,16 @@
 }
 
 .row:hover { background: var(--color-hover); }
+
+/* The primary owner's pinned entry at the top of every course's team —
+   distinct from a real course member row, so it reads as "always here",
+   not as one more person in the list. */
+.pinnedRow {
+  background: var(--color-accent-barely);
+  border-bottom: 1px solid var(--color-accent-soft);
+}
+
+.pinnedRow:hover { background: var(--color-accent-soft); }
 
 .cellName {
   display: flex;
@@ -231,6 +305,7 @@
   font-weight: 500;
 }
 
+.roleChip.primary { background: var(--color-accent); color: #fff; }
 .roleChip.owner { background: var(--color-accent-badge); color: var(--color-accent-bright); }
 .roleChip.admin { background: var(--color-success-badge); color: var(--color-success-bright); }
 .roleChip.contributor { background: var(--color-hover-strong); color: var(--color-text-muted); }

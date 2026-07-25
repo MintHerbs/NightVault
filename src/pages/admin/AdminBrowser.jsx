@@ -15,6 +15,7 @@ import ToastNotification, { useToast } from '../../components/admin/ToastNotific
 import { ADMIN_ICON_OPTIONS, getIconNameForComponent } from '../../components/admin/adminIconOptions'
 import { displaySubfolder } from '../../lib/notesApi'
 import { listCourses } from '../../lib/coursesApi'
+import { useActiveCourse } from '../../hooks/useActiveCourse'
 import '../../styles/adminTokens.css'
 import styles from './AdminBrowser.module.css'
 
@@ -175,16 +176,14 @@ function AdminBrowserContent() {
   } = useAdminModulesRegistry()
 
   // Course switcher (T-051, primary owner only) — everyone else is locked to
-  // their own admin_users.course_id, so activeCourseId just mirrors it and
-  // there's nothing to fetch/switch.
+  // their own admin_users.course_id. activeCourseId is shared with the Team
+  // page (useActiveCourse) so picking a course there and jumping here (or
+  // vice versa) land on the same course instead of resetting to your own.
   const [courses, setCourses] = useState([])
-  const [activeCourseId, setActiveCourseId] = useState(null)
+  const [activeCourseId, setActiveCourseId] = useActiveCourse(profile, isPrimaryOwner)
   useEffect(() => {
-    if (!profile) return
-    if (!isPrimaryOwner) { setActiveCourseId(profile.course_id); return }
-    listCourses().then(setCourses).catch(() => {})
-    setActiveCourseId(prev => prev ?? profile.course_id)
-  }, [profile, isPrimaryOwner])
+    if (isPrimaryOwner) listCourses().then(setCourses).catch(() => {})
+  }, [isPrimaryOwner])
 
   const [isTooNarrow, setIsTooNarrow] = useState(() => (
     typeof window !== 'undefined' ? window.innerWidth < 820 : false

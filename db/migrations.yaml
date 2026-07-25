@@ -201,6 +201,10 @@ migrations:
   - id: "0023"
     file: sql/0023_sidebar_modules_and_images.sql
     description: "Move Subjects and note images off GitHub onto Supabase: new sidebar_modules table (id/label/icon_name/sort_order/hidden, owner-write, delete-locked) replaces the modules.js-on-GitHub write path and supersedes module_visibility (dropped, superseded); new public note-images Storage bucket with admin_can_write_module-scoped insert/update and owner-only delete replaces the GitHub uploadImage path."
+    author: agent
+    created: 2026-07-24
+    applied_envs: []
+    related_issues: []
 
   - id: "0024"
     file: sql/0024_course_scoped_roles.sql
@@ -209,7 +213,3 @@ migrations:
     created: 2026-07-25
     applied_envs: []
     related_issues: ["T-051"]
-    author: agent
-    created: 2026-07-24
-    applied_envs: []
-    related_issues: []
