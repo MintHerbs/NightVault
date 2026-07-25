@@ -172,8 +172,6 @@
 
 .newButton svg { color: var(--color-accent); }
 
-.newButtonPlaceholder { height: 48px; }
-
 .nav {
   display: flex;
   flex-direction: column;
@@ -677,6 +675,36 @@
 
 .createInput:focus { border-color: var(--color-accent); }
 .createInput::placeholder { color: var(--color-text-muted); }
+
+/* Which-kind-to-create toggle at the top of the "New" popover, shown only
+   when a level offers more than one kind (e.g. root: Subject or File). */
+.kindToggle {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+}
+
+.kindButton {
+  flex: 1;
+  height: 28px;
+  border: none;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.kindButton:hover { color: var(--color-text); }
+
+.kindButtonActive {
+  background: var(--color-accent-selected);
+  color: var(--color-accent-bright);
+}
 
 .iconPicker {
   display: grid;

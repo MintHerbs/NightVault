@@ -213,8 +213,14 @@ function AdminBrowserContent() {
   // Interaction state
   const [renaming, setRenaming] = useState(null) // { kind, key, value }
   const [creating, setCreating] = useState(false)
+  const [createKind, setCreateKind] = useState('subject') // 'subject' | 'folder' | 'file' — which of this level's create options is active
   const [createValue, setCreateValue] = useState('')
   const [createIcon, setCreateIcon] = useState(unusedIconOptions[0]?.name || '')
+  // Only used when createKind === 'file' and the popover was opened above the
+  // 'files' level, where a file's subject/folder aren't already implied by
+  // the URL — see "Create" below.
+  const [createFileModule, setCreateFileModule] = useState('')
+  const [createFileFolder, setCreateFileFolder] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [movingFile, setMovingFile] = useState(null)
   const [moveTarget, setMoveTarget] = useState({ moduleId: '', subfolder: '' })
@@ -281,16 +287,37 @@ function AdminBrowserContent() {
   // clicking it afterwards opens it for editing. This applies to files too —
   // a "New file" no longer jumps straight into the editor for a note that
   // doesn't exist yet.
-  const canCreate = level === 'files' ? true : isOwner
+  //
+  // Each level's *primary* kind (subject at the root, folder inside a
+  // subject) stays owner-gated, same as before. "File" is now offered at
+  // every level — including root and folders-of-a-subject — since file
+  // creation was already open to contributors; the popover just also asks
+  // for whichever of subject/folder isn't implied by the current URL.
+  // Folder names here are free text, same as "New folder" always was: a
+  // subfolder is just the first path segment of a note, not a table row that
+  // has to exist first.
+  const primaryKind = level === 'subjects' ? 'subject' : level === 'folders' ? 'folder' : 'file'
+  const availableKinds = level === 'files' ? ['file'] : isOwner ? [primaryKind, 'file'] : ['file']
   const openCreate = () => {
     setCreateValue('')
+    setCreateKind(availableKinds[0])
+    setCreateFileModule(moduleId || visibleModules[0]?.id || '')
+    setCreateFileFolder('')
     setCreating(true)
   }
   const submitCreate = async () => {
     if (!createValue.trim()) return
-    if (level === 'subjects') await handleNewModule(createValue.trim(), createIcon)
-    else if (level === 'folders') await handleNewSubfolder(moduleId, createValue.trim())
-    else if (level === 'files') await handleNewFile(moduleId, subfolder, createValue.trim())
+    if (createKind === 'subject') {
+      await handleNewModule(createValue.trim(), createIcon)
+    } else if (createKind === 'folder') {
+      await handleNewSubfolder(moduleId, createValue.trim())
+    } else {
+      const targetModuleId = level === 'subjects' ? createFileModule : moduleId
+      const targetSubfolder = level === 'files' ? subfolder : createFileFolder.trim()
+      if (!targetModuleId) { showToast('Choose a subject', 'error'); return }
+      if (!targetSubfolder) { showToast('Enter a folder name', 'error'); return }
+      await handleNewFile(targetModuleId, targetSubfolder, createValue.trim())
+    }
     setCreating(false)
     setCreateValue('')
   }
@@ -505,50 +532,85 @@ function AdminBrowserContent() {
       <div className={styles.body}>
         {/* Left rail */}
         <aside className={styles.sidebar}>
-          {canCreate ? (
-            <Popover.Root open={creating} onOpenChange={(open) => (open ? openCreate() : setCreating(false))}>
-              <Popover.Trigger asChild>
-                <button className={styles.newButton}>
-                  <Plus size={20} weight="bold" />
-                  <span>New</span>
-                </button>
-              </Popover.Trigger>
-              <Popover.Portal>
-                <Popover.Content className={styles.createPopover} align="start" sideOffset={8}>
+          <Popover.Root open={creating} onOpenChange={(open) => (open ? openCreate() : setCreating(false))}>
+            <Popover.Trigger asChild>
+              <button className={styles.newButton}>
+                <Plus size={20} weight="bold" />
+                <span>New</span>
+              </button>
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content className={styles.createPopover} align="start" sideOffset={8}>
+                {availableKinds.length > 1 && (
+                  <div className={styles.kindToggle}>
+                    <button
+                      type="button"
+                      className={`${styles.kindButton} ${createKind === primaryKind ? styles.kindButtonActive : ''}`}
+                      onClick={() => setCreateKind(primaryKind)}
+                    >
+                      {primaryKind === 'subject' ? 'Subject' : 'Folder'}
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.kindButton} ${createKind === 'file' ? styles.kindButtonActive : ''}`}
+                      onClick={() => setCreateKind('file')}
+                    >
+                      File
+                    </button>
+                  </div>
+                )}
+
+                {createKind === 'file' && level === 'subjects' && (
+                  <select
+                    className={styles.moveSelect}
+                    value={createFileModule}
+                    onChange={(e) => setCreateFileModule(e.target.value)}
+                  >
+                    {visibleModules.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+                  </select>
+                )}
+
+                {createKind === 'file' && level !== 'files' && (
                   <input
                     className={styles.createInput}
-                    autoFocus
-                    placeholder={level === 'subjects' ? 'Subject name' : level === 'folders' ? 'Folder name' : 'File name'}
-                    value={createValue}
-                    onChange={(e) => setCreateValue(e.target.value)}
+                    placeholder="Folder (e.g. notes)"
+                    value={createFileFolder}
+                    onChange={(e) => setCreateFileFolder(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') submitCreate(); if (e.key === 'Escape') setCreating(false) }}
                   />
-                  {level === 'subjects' && unusedIconOptions.length > 0 && (
-                    <div className={styles.iconPicker}>
-                      {unusedIconOptions.map(option => (
-                        <button
-                          key={option.name}
-                          type="button"
-                          className={`${styles.iconChoice} ${createIcon === option.name ? styles.iconChoiceSelected : ''}`}
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => setCreateIcon(option.name)}
-                          title={option.label}
-                        >
-                          <option.Icon size={18} />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <div className={styles.confirmActions}>
-                    <button className={styles.btnText} onClick={() => setCreating(false)}>Cancel</button>
-                    <button className={styles.btnPrimary} onClick={submitCreate}>Create</button>
+                )}
+
+                <input
+                  className={styles.createInput}
+                  autoFocus
+                  placeholder={createKind === 'subject' ? 'Subject name' : createKind === 'folder' ? 'Folder name' : 'File name'}
+                  value={createValue}
+                  onChange={(e) => setCreateValue(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') submitCreate(); if (e.key === 'Escape') setCreating(false) }}
+                />
+                {createKind === 'subject' && unusedIconOptions.length > 0 && (
+                  <div className={styles.iconPicker}>
+                    {unusedIconOptions.map(option => (
+                      <button
+                        key={option.name}
+                        type="button"
+                        className={`${styles.iconChoice} ${createIcon === option.name ? styles.iconChoiceSelected : ''}`}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => setCreateIcon(option.name)}
+                        title={option.label}
+                      >
+                        <option.Icon size={18} />
+                      </button>
+                    ))}
                   </div>
-                </Popover.Content>
-              </Popover.Portal>
-            </Popover.Root>
-          ) : (
-            <div className={styles.newButtonPlaceholder} />
-          )}
+                )}
+                <div className={styles.confirmActions}>
+                  <button className={styles.btnText} onClick={() => setCreating(false)}>Cancel</button>
+                  <button className={styles.btnPrimary} onClick={submitCreate}>Create</button>
+                </div>
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
 
           <nav className={styles.nav}>
             <button
