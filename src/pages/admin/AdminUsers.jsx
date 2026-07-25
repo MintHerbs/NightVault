@@ -12,6 +12,7 @@ import { useActiveCourse } from '../../hooks/useActiveCourse'
 import { listCourses, createCourse, updateCourse, deleteCourse } from '../../lib/coursesApi'
 import { listModules } from '../../lib/modulesApi'
 import ToastNotification, { useToast } from '../../components/admin/ToastNotification'
+import Loading from '../../components/ui/Loading'
 import '../../styles/adminTokens.css'
 import styles from './AdminUsers.module.css'
 
@@ -197,7 +198,7 @@ function AdminUsersContent() {
   }
 
   if (authLoading) {
-    return <div className={styles.fullLoading}>Loading…</div>
+    return <div className={styles.fullLoading}><Loading color="var(--accent)" /></div>
   }
 
   if (!canManage) {

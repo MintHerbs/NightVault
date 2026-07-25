@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Editor from '@monaco-editor/react'
 import NoteEditor from '../../components/admin/NoteEditor'
+import Loading from '../../components/ui/Loading'
 import { resolveNoteImageSrc } from '../../lib/noteImageSrc'
 import { segmentToSubfolder } from '../../lib/notesApi'
 import { useDropzone } from 'react-dropzone'
@@ -581,7 +582,7 @@ function AdminEditorContent() {
   if (loading) {
     return (
       <div className={styles.loading}>
-        <div className={styles.loadingSpinner}>Loading...</div>
+        <Loading color="var(--accent)" />
       </div>
     )
   }

@@ -1,0 +1,10 @@
+.loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.staticDot {
+  border-radius: 50%;
+  transform: scale(0.35);
+}

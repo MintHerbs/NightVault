@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import ChatBubble from '../ChatBubble/ChatBubble'
 import ChatInput from '../ChatInput/ChatInput'
 import Starfield from '../../../../components/effects/Starfield/Starfield'
+import Loading from '../../../../components/ui/Loading'
 import useChat from '../../../../hooks/useChat'
 import styles from './ChatPanel.module.css'
 
@@ -28,7 +29,7 @@ export default function ChatPanel({ isOpen, onClose, sessionId }) {
       <div className={styles.messagesArea}>
         {isLoading && messages.length === 0 ? (
           <div className={styles.loadingContainer}>
-            <div className={styles.spinner} />
+            <Loading />
           </div>
         ) : messages.length === 0 ? (
           <div className={styles.emptyState}>
