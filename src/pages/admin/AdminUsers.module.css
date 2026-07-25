@@ -193,25 +193,43 @@
 }
 
 .courseCard {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 20px;
-  border: none;
+  position: relative;
   border-radius: 16px;
   background: var(--md-surface-container);
   box-shadow: var(--shadow-sm);
-  color: var(--color-text);
-  text-align: left;
-  cursor: pointer;
   transition: background 150ms ease, box-shadow 150ms ease;
 }
 
 .courseCard:hover { background: var(--md-surface-container-high); box-shadow: var(--shadow-md); }
 
+/* Fills the card so clicking anywhere on it opens the course; the kebab
+   (.courseCardMenu) is a sibling absolutely-positioned on top, not nested
+   inside this button — nesting would be invalid HTML (button-in-button)
+   and would fire this button's onClick on every kebab click too. */
+.courseCardMain {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 20px;
+  border: none;
+  border-radius: inherit;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .courseCardName { font-size: 16px; font-weight: 500; }
 .courseCardMeta { font-size: 13px; color: var(--color-text-muted); }
+
+.courseCardMenu {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
 
 .table {
   display: flex;

@@ -39,3 +39,29 @@ export async function createCourse({ id, name }) {
   if (error) throw new Error(error.message)
   return { id: data.id, name: data.display_name, createdAt: data.created_at }
 }
+
+/** Rename a course (display name only — `id` is a stable key referenced by
+ * sidebar_modules.course_id and admin_users.course_id, so it's never
+ * rewritten here). Primary-owner-only server-side (RLS, 0026). */
+export async function updateCourse({ id, name }) {
+  const { data, error } = await supabase
+    .from('courses')
+    .update({ display_name: name })
+    .eq('id', id)
+    .select('id, display_name, created_at')
+    .single()
+  if (error) throw new Error(error.message)
+  return { id: data.id, name: data.display_name, createdAt: data.created_at }
+}
+
+/** Delete a course. Primary-owner-only server-side (RLS, 0026). The DB
+ * itself refuses this while any sidebar_modules row still references the
+ * course (fk default NO ACTION) or any admin_users row still does (fk
+ * tightened from SET NULL to NO ACTION in 0026, specifically so this never
+ * silently orphans a person's course_id) — callers should still check and
+ * surface a friendlier message before calling this, rather than relying on
+ * the raw FK-violation error text. */
+export async function deleteCourse(id) {
+  const { error } = await supabase.from('courses').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}

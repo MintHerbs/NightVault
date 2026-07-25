@@ -9,7 +9,7 @@ import { colors } from '../../constants/colors'
 import { supabase } from '../../lib/supabaseClient'
 import { useAdmin } from './useAdmin'
 import { useActiveCourse } from '../../hooks/useActiveCourse'
-import { listCourses, createCourse } from '../../lib/coursesApi'
+import { listCourses, createCourse, updateCourse, deleteCourse } from '../../lib/coursesApi'
 import { listModules } from '../../lib/modulesApi'
 import ToastNotification, { useToast } from '../../components/admin/ToastNotification'
 import '../../styles/adminTokens.css'
@@ -68,6 +68,9 @@ function AdminUsersContent() {
   const [roleFilter, setRoleFilter] = useState('all')
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [courseRename, setCourseRename] = useState(null)
+  const [courseDeleteConfirm, setCourseDeleteConfirm] = useState(null)
+  const [deletingCourse, setDeletingCourse] = useState(false)
 
   // Primary owner lands on a "which course" picker; everyone else has only
   // ever one course, so there's nothing to pick. activeCourseId is shared
@@ -103,6 +106,7 @@ function AdminUsersContent() {
 
   const courseName = (courseId) => courses.find((c) => c.id === courseId)?.name
   const memberCount = (courseId) => users.filter((u) => u.course_id === courseId).length
+  const moduleCount = (courseId) => modules.filter((m) => m.courseId === courseId).length
 
   // The primary owner isn't necessarily a real row in whichever course is
   // being viewed (their own admin_users row only ever belongs to one course),
@@ -134,6 +138,44 @@ function AdminUsersContent() {
       ? [{ label: 'Remove', onSelect: () => setDeleteConfirm(target) }]
       : []
   )
+
+  // Rename/delete are primary-owner-only server-side (RLS, 0026) — this menu
+  // only ever renders inside the cards view, which is already
+  // primary-owner-gated, but the real boundary is the DB policy, not this.
+  const courseMenuFor = (c) => [
+    { label: 'Rename', onSelect: () => setCourseRename({ id: c.id, name: c.name }) },
+    {
+      label: 'Delete',
+      onSelect: () => {
+        const blockers = []
+        const members = memberCount(c.id)
+        const mods = moduleCount(c.id)
+        if (members > 0) blockers.push(`${members} ${members === 1 ? 'person' : 'people'}`)
+        if (mods > 0) blockers.push(`${mods} ${mods === 1 ? 'subject' : 'subjects'}`)
+        if (blockers.length > 0) {
+          showToast(`Move or remove ${blockers.join(' and ')} first`, 'error')
+          return
+        }
+        setCourseDeleteConfirm(c)
+      },
+    },
+  ]
+
+  const runDeleteCourse = async () => {
+    if (!courseDeleteConfirm) return
+    setDeletingCourse(true)
+    try {
+      await deleteCourse(courseDeleteConfirm.id)
+      showToast(`${courseDeleteConfirm.name} deleted`, 'success')
+      setCourses((prev) => prev.filter((c) => c.id !== courseDeleteConfirm.id))
+      if (activeCourseId === courseDeleteConfirm.id) setActiveCourseId(null)
+      setCourseDeleteConfirm(null)
+    } catch (error) {
+      showToast(`Failed to delete course: ${error.message}`, 'error')
+    } finally {
+      setDeletingCourse(false)
+    }
+  }
 
   const runDelete = async () => {
     if (!deleteConfirm) return
@@ -234,16 +276,22 @@ function AdminUsersContent() {
             </div>
             <div className={styles.courseGrid}>
               {courses.map((c) => (
-                <button
-                  key={c.id}
-                  className={styles.courseCard}
-                  onClick={() => { setActiveCourseId(c.id); setShowCards(false) }}
-                >
-                  <span className={styles.courseCardName}>{c.name}</span>
-                  <span className={styles.courseCardMeta}>
-                    {memberCount(c.id)} {memberCount(c.id) === 1 ? 'person' : 'people'}
-                  </span>
-                </button>
+                <div key={c.id} className={styles.courseCard}>
+                  <button
+                    className={styles.courseCardMain}
+                    onClick={() => { setActiveCourseId(c.id); setShowCards(false) }}
+                  >
+                    <span className={styles.courseCardName}>{c.name}</span>
+                    <span className={styles.courseCardMeta}>
+                      {memberCount(c.id)} {memberCount(c.id) === 1 ? 'person' : 'people'}
+                    </span>
+                  </button>
+                  {isPrimaryOwner && (
+                    <div className={styles.courseCardMenu}>
+                      <RowMenu items={courseMenuFor(c)} />
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </>
@@ -348,7 +396,88 @@ function AdminUsersContent() {
           </Popover.Portal>
         </Popover.Root>
       )}
+
+      {courseDeleteConfirm && (
+        <Popover.Root open onOpenChange={(open) => !open && setCourseDeleteConfirm(null)}>
+          <Popover.Anchor className={styles.centerAnchor} />
+          <Popover.Portal>
+            <Popover.Content className={styles.confirmPopover} sideOffset={5}>
+              <div className={styles.confirmHeader}>
+                <Warning size={20} weight="fill" style={{ color: colors.warning }} />
+                <span className={styles.confirmTitle}>Delete {courseDeleteConfirm.name}?</span>
+              </div>
+              <p className={styles.confirmMessage}>This can't be undone.</p>
+              <div className={styles.confirmActions}>
+                <button className={styles.btnText} onClick={() => setCourseDeleteConfirm(null)}>Cancel</button>
+                <button className={styles.btnDanger} onClick={runDeleteCourse} disabled={deletingCourse}>
+                  {deletingCourse ? 'Deleting…' : 'Delete'}
+                </button>
+              </div>
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover.Root>
+      )}
+
+      {courseRename && (
+        <CourseRenameDialog
+          course={courseRename}
+          onClose={() => setCourseRename(null)}
+          onRenamed={(updated) => setCourses((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))}
+          showToast={showToast}
+        />
+      )}
     </div>
+  )
+}
+
+// ── Rename-course dialog (primary owner only) ───────────────────────────────
+function CourseRenameDialog({ course, onClose, onRenamed, showToast }) {
+  const [name, setName] = useState(course.name)
+  const [saving, setSaving] = useState(false)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    if (!name.trim()) return
+    setSaving(true)
+    try {
+      const updated = await updateCourse({ id: course.id, name: name.trim() })
+      onRenamed(updated)
+      showToast(`Renamed to ${updated.name}`, 'success')
+      onClose()
+    } catch (error) {
+      showToast(`Failed to rename course: ${error.message}`, 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Popover.Root open onOpenChange={(open) => !open && onClose()}>
+      <Popover.Anchor className={styles.centerAnchor} />
+      <Popover.Portal>
+        <Popover.Content className={styles.createPopover} sideOffset={5}>
+          <form className={styles.form} onSubmit={submit}>
+            <label className={styles.formGroup}>
+              <span className={styles.label}>Course name</span>
+              <input
+                className={styles.input}
+                type="text"
+                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </label>
+            <div className={styles.confirmActions}>
+              <button type="button" className={styles.btnText} onClick={onClose}>Cancel</button>
+              <button type="submit" className={styles.btnPrimary} disabled={saving}>
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </form>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   )
 }
 

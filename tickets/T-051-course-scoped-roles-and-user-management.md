@@ -120,3 +120,44 @@ table now no longer matches this module until it gets its own follow-up.
   than erroring. **Not fixed** — this table already has one recursion
   incident (T-006) and one drift incident (T-014) in its history, so I'm
   not editing its RLS without being asked to.
+
+## Course rename/delete, and a second RLS gap, 2026-07-25
+
+Two follow-up requests: (1) every real account (zak, tanoo, nahla, maisara,
+etc.) should be visible under Computer Science with its correct title, and
+(2) only the primary owner should be able to rename or delete a course.
+
+- **Root cause of (1)**: 8 of the 9 prod `admin_users` rows had
+  `course_id = null` (only nahla's was set). The Team page's member list
+  filters by exact `course_id` match with no "null means unrestricted"
+  fallback (unlike `sidebar_modules`, which the app already treats that
+  way), so those 8 accounts were invisible in every course's list,
+  including Computer Science. Role titles themselves needed no UI change —
+  `RoleChip`/`ROLE_LABEL` already renders `owner`/`admin`/`contributor`
+  correctly; they were just never reached. Fixed by backfilling
+  `course_id = 'computer-science'` for all null rows (`db/sql/0026_courses_primary_owner_lockdown.sql`,
+  Part A — applied).
+- **Found while building (2)**: prod's `courses` table (pre-existing, see
+  above) already had `insert`/`update`/`delete` RLS policies gated to *any*
+  `admin_users` row with `role = 'owner'` — 5 accounts today, not just the
+  primary owner. Anyone in that set could already create, rename, or delete
+  a course via a direct Supabase client call, independent of what the UI
+  exposed. Since the ask was explicitly "only i should be able to do that,"
+  fixed it: `0026`'s Part B recreates `is_primary_owner()` for prod (mirrors
+  0024's local-only helper) and repoints all three `courses` policies at it,
+  plus tightens `fk_admin_users_course` from `ON DELETE SET NULL` to
+  `NO ACTION` so a course delete can never silently orphan a member's
+  `course_id` — matching how `sidebar_modules_course_id_fkey` already
+  behaves.
+- **Part B is NOT applied to prod yet** — blocked by the Claude Code
+  auto-mode classifier (policy/constraint DDL reads as higher-risk than the
+  plain-column backfill in Part A, which went through). The buttons
+  themselves are still safe (client-side `isPrimaryOwner`-gated, same as
+  every other primary-owner-only control in this UI), but until Part B
+  runs, prod's actual enforcement for course insert/update/delete is still
+  the old "any owner" policy. Needs a manual run (SQL in the migration
+  file) or a retry with an approved permission rule.
+- Delete itself is guarded client-side (`AdminUsers.jsx`): blocked with a
+  toast (not even offered a confirm dialog) unless the course has zero
+  members and zero Subjects. `chemistry` and `computer-with-mathematics`
+  both qualify today (0 members, 0 modules) — `computer-science` does not.

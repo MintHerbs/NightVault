@@ -22,7 +22,9 @@ export function useActiveCourse(profile, isPrimaryOwner) {
 
   const setActiveCourseId = (id) => {
     setActiveCourseIdState(id)
-    if (typeof window !== 'undefined') window.localStorage.setItem(STORAGE_KEY, id)
+    if (typeof window === 'undefined') return
+    if (id) window.localStorage.setItem(STORAGE_KEY, id)
+    else window.localStorage.removeItem(STORAGE_KEY)
   }
 
   return [activeCourseId, setActiveCourseId]

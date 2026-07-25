@@ -19,7 +19,7 @@
 # See db/README.md for how to apply migrations against a Supabase project.
 
 project: b-tree
-schema_version: 24
+schema_version: 26
 
 migrations:
   - id: "0001"
@@ -220,4 +220,12 @@ migrations:
     author: agent
     created: 2026-07-25
     applied_envs: ["prod"]
+    related_issues: ["T-051"]
+
+  - id: "0026"
+    file: sql/0026_courses_primary_owner_lockdown.sql
+    description: "Prod-only, T-051 follow-up. Part A (applied): backfills the 8 of 9 admin_users rows that had course_id = null to 'computer-science' — they were invisible in the Team page's per-course member list. Part B (NOT yet applied — blocked by the Claude Code auto-mode classifier, needs manual run): recreates is_primary_owner() for prod and points courses insert/update/delete policies at it instead of the pre-existing 'any owner-role account' check; tightens fk_admin_users_course from ON DELETE SET NULL to NO ACTION so deleting a course can never silently orphan a person's course_id. See file header for exact status."
+    author: agent
+    created: 2026-07-25
+    applied_envs: []
     related_issues: ["T-051"]
