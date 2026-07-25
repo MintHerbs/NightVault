@@ -4,7 +4,7 @@ import {
 } from '../lib/modulesApi'
 import {
   createFolder, renameFolder, deleteFolder, moveNote, deleteNote, deleteModuleNotes, baseName,
-  setFolderHidden, setNoteHidden, upsertNote, noteExists,
+  setFolderHidden, setNoteHidden, upsertNote, noteExists, buildNotePath, ROOT_SEGMENT,
 } from '../lib/notesApi'
 import { invalidateNotesRegistry } from './useNotesRegistry'
 
@@ -25,6 +25,9 @@ function nameError(name, { allowSlash = true } = {}) {
   if (/['"\\]/.test(trimmed)) return 'Name cannot contain quotes or backslashes'
   if (/[\n\r\t]/.test(trimmed)) return 'Name cannot contain line breaks or tabs'
   if (!allowSlash && trimmed.includes('/')) return 'Name cannot contain a slash'
+  // ROOT_SEGMENT is the URL stand-in for "no folder" (T-053); a folder
+  // actually named '~' would make /:moduleId/~/:slug ambiguous.
+  if (trimmed === ROOT_SEGMENT) return `"${ROOT_SEGMENT}" is reserved`
   return null
 }
 
@@ -32,7 +35,7 @@ function refreshModuleState(setModules, updater) {
   setModules(prev => updater(prev))
 }
 
-export function useEditorModules({ showToast, setModules, setSelectedPath, unusedIconOptions, isOwner, canDeleteModule, courseId, reloadModules }) {
+export function useEditorModules({ showToast, setModules, setSelectedPath, unusedIconOptions, isOwner, canDelete, courseId, reloadModules }) {
   // ── Subjects (sidebar_modules table) ─────────────────────────────────────────
   // A Subject carries a live React Icon component, so `Icon` in local state is
   // still resolved client-side (getIconOptionByName) — only id/label/icon_name
@@ -59,12 +62,12 @@ export function useEditorModules({ showToast, setModules, setSelectedPath, unuse
     }
   }
 
-  // Whole-Subject delete stays narrowly gated (T-051 spec §7) — the primary
-  // owner, or this course's own owner — server-side enforced via
-  // sidebar_modules' delete-locked RLS policy (admin_is_delete_authorized(),
-  // 0024). This client check is a UX short-circuit, not the security boundary.
+  // Whole-Subject delete is primary-owner-only, like every other delete
+  // (T-053), server-side enforced by sidebar_modules' delete-locked policy
+  // (is_owner() AND admin_is_delete_authorized(), 0022). This client check is
+  // a UX short-circuit, not the security boundary.
   const handleDeleteModule = async (moduleId) => {
-    if (!canDeleteModule) { showToast('Only this course\'s owner can delete a subject', 'error'); return }
+    if (!canDelete) { showToast('Only the primary owner can delete a subject', 'error'); return }
     showToast(`Removing subject ${moduleId}...`, 'success')
     try {
       await deleteModuleInDb(moduleId)
@@ -137,10 +140,11 @@ export function useEditorModules({ showToast, setModules, setSelectedPath, unuse
     }
   }
 
-  // Delete is scoped by write-access (admin_can_write_module, 0020/0024),
-  // same as rename/hide — T-051 extends contributors'/admins' existing
-  // write access to include delete, no separate lock.
+  // Delete is primary-owner-only for every content kind (T-053), enforced by
+  // `note_folders delete locked` server-side. This client check only keeps the
+  // toast honest; it is not the security boundary.
   const handleDeleteSubfolder = async (moduleId, subfolderName) => {
+    if (!canDelete) { showToast('Only the primary owner can delete a folder', 'error'); return }
     showToast(`Deleting subfolder ${subfolderName}...`, 'success')
     try {
       const removed = await deleteFolder(moduleId, subfolderName)
@@ -176,12 +180,15 @@ export function useEditorModules({ showToast, setModules, setSelectedPath, unuse
   // pattern as New Subject / New Folder) rather than jumping straight into the
   // editor for a note that doesn't exist yet — the file appears in the list
   // immediately, and only opens for writing once the admin clicks it.
+  // `subfolder` is the real folder name, or null for a file sitting directly
+  // under the Subject (T-053). Callers holding a route segment convert with
+  // segmentToSubfolder first.
   const handleNewFile = async (moduleId, subfolder, title) => {
     const problem = nameError(title, { allowSlash: false })
     if (problem) { showToast(`Failed to create file: ${problem}`, 'error'); return }
     const filename = titleToFilename(title)
     if (!filename) { showToast('Please enter a file name', 'error'); return }
-    const path = `${subfolder}/${filename}`
+    const path = buildNotePath(subfolder, filename)
     try {
       if (await noteExists(moduleId, path)) {
         showToast(`A file named "${filename}" already exists in this folder`, 'error')
@@ -198,8 +205,8 @@ export function useEditorModules({ showToast, setModules, setSelectedPath, unuse
 
   const handleMoveFile = async ({ fromModule, fromSubfolder, fromPath, toModule, toSubfolder }) => {
     const base = baseName(fromPath)
-    const newPath = `${toSubfolder}/${base}`
-    if (fromModule === toModule && fromSubfolder === toSubfolder) return
+    const newPath = buildNotePath(toSubfolder, base)
+    if (fromModule === toModule && (fromSubfolder ?? null) === (toSubfolder ?? null)) return
 
     const isCrossSubject = fromModule !== toModule
     if (isCrossSubject && !isOwner) {
@@ -212,13 +219,14 @@ export function useEditorModules({ showToast, setModules, setSelectedPath, unuse
       await moveNote({ fromModuleId: fromModule, fromPath, toModuleId: toModule, toPath: newPath })
       invalidateNotesRegistry()
       await reloadModules?.()
-      showToast(`Moved ${base} to ${toModule}/${toSubfolder}`, 'success')
+      showToast(`Moved ${base} to ${toModule}${toSubfolder ? `/${toSubfolder}` : ''}`, 'success')
     } catch (error) {
       showToast(`Failed to move file: ${error.message}`, 'error')
     }
   }
 
   const handleDeleteFile = async (moduleId, path) => {
+    if (!canDelete) { showToast('Only the primary owner can delete a file', 'error'); return }
     try {
       await deleteNote(moduleId, path)
       invalidateNotesRegistry()

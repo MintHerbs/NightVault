@@ -22,19 +22,39 @@ export function stripMd(path) {
   return String(path || '').replace(/\.md$/i, '')
 }
 
-/** First path segment, or null when the note sits at the module root. */
+/**
+ * First path segment, or null when the note sits at the module root.
+ *
+ * `null` means "directly under the Subject, in no folder" and is a real,
+ * displayable location (T-053). It used to be coerced to the string 'notes'
+ * by a `displaySubfolder` wrapper, which put root notes in the same bucket as
+ * notes genuinely prefixed `notes/` and left no surface on which a root file
+ * could be created. That wrapper is gone; callers branch on null instead.
+ */
 export function deriveSubfolder(path) {
   const i = String(path || '').indexOf('/')
   return i === -1 ? null : path.slice(0, i)
 }
 
 /**
- * The subfolder a note is *displayed* under: root-level notes (no "/") are
- * grouped into "notes", matching the old DirectoryDrawer / useEditorModules
- * behaviour.
+ * URL segment standing in for "no folder", so the file route can keep its
+ * fixed /:moduleId/:subfolder/:slug shape. Reserved as a folder name by
+ * nameError in useEditorModules, so a real folder can never collide with it.
  */
-export function displaySubfolder(path) {
-  return deriveSubfolder(path) ?? 'notes'
+export const ROOT_SEGMENT = '~'
+
+/** Route segment <-> subfolder value. `null` is the Subject root. */
+export function subfolderToSegment(subfolder) {
+  return subfolder ?? ROOT_SEGMENT
+}
+
+export function segmentToSubfolder(segment) {
+  return !segment || segment === ROOT_SEGMENT ? null : segment
+}
+
+/** Join a folder (or null for the Subject root) and a bare filename. */
+export function buildNotePath(subfolder, filename) {
+  return subfolder ? `${subfolder}/${filename}` : filename
 }
 
 /** The basename (last path segment) without extension. */
@@ -84,6 +104,46 @@ export function mergeNotesIntoModules(modules, notes, folders = []) {
     }
     return next
   })
+}
+
+// ─── Tree shape (pure, over an already-merged module) ─────────────────────
+// Hoisted out of AdminBrowser and NotesBrowserPage, which each carried their
+// own copy (T-053). Both pages render the same tree, so a divergence between
+// the two copies showed up as content visible in the admin panel but missing
+// from the live site.
+
+/**
+ * Every named subfolder a Subject has: derived from its notes, plus any
+ * explicit (possibly empty) folder rows. Root-level notes contribute no
+ * folder — they sit alongside these, not inside one.
+ */
+export function subfoldersForModule(module) {
+  const derived = (module.notes ?? [])
+    .map((n) => deriveSubfolder(n.filename))
+    .filter((name) => name !== null)
+  const explicit = module.subfolders ?? []
+  return [...new Set([...derived, ...explicit])]
+}
+
+/**
+ * Notes displayed inside `subfolder`, or directly under the Subject when
+ * `subfolder` is null.
+ */
+export function filesForFolder(module, subfolder) {
+  return (module.notes ?? [])
+    .filter((n) => deriveSubfolder(n.filename) === (subfolder ?? null))
+    .map((n) => ({
+      name: n.label || `${baseName(n.filename)}.md`,
+      path: n.filename,
+      moduleId: module.id,
+      hidden: n.hidden,
+      updatedAt: n.updatedAt,
+    }))
+}
+
+/** Notes sitting directly under the Subject, in no folder. */
+export function rootFilesForModule(module) {
+  return filesForFolder(module, null)
 }
 
 // ─── Reads ─────────────────────────────────────────────────────────────────
@@ -149,10 +209,10 @@ export async function noteExists(moduleId, path) {
   return !!data
 }
 
-/** Notes whose display subfolder is `subfolder` within a module. */
+/** Notes in `subfolder` within a module, or at its root when null. */
 export async function listNotesInFolder(moduleId, subfolder) {
   const all = await listNotes()
-  return all.filter((n) => n.moduleId === moduleId && displaySubfolder(n.path) === subfolder)
+  return all.filter((n) => n.moduleId === moduleId && deriveSubfolder(n.path) === (subfolder ?? null))
 }
 
 // ─── Writes ──────────────────────────────────────────────────────────────────
@@ -212,11 +272,9 @@ export async function createFolder(moduleId, name) {
 }
 
 /**
- * Rename a subfolder: rewrite the leading segment of every note whose display
- * subfolder matches, and rename the explicit folder row if present. Root-level
- * notes (displayed under "notes") are only affected when oldName === 'notes'
- * and they actually carry a "notes/" prefix — a bare root note has no prefix
- * to rewrite, matching the old deriveSubfolder-based behaviour.
+ * Rename a subfolder: rewrite the leading segment of every note carrying the
+ * `oldName/` prefix, and rename the explicit folder row if present. Root-level
+ * notes have no prefix and are never touched, whatever the folder is called.
  */
 export async function renameFolder(moduleId, oldName, newName) {
   const notes = await listNotes()
@@ -243,14 +301,20 @@ export async function renameFolder(moduleId, oldName, newName) {
 }
 
 /**
- * Delete a subfolder and every note under it. Owner-only in practice (the UI
- * gates this to owners, and note deletes are owner-only server-side).
- * Returns the number of notes removed.
+ * Delete a named subfolder and every note under it. Primary-owner-only in
+ * practice (the UI gates it, and `notes delete locked` / `note_folders delete
+ * locked` enforce it server-side). Returns the number of notes removed.
+ *
+ * There is deliberately no root case: the Subject root is not a folder and
+ * cannot be deleted as one. Before T-053 this matched on the coerced
+ * 'notes' bucket, so deleting a folder actually named `notes` also destroyed
+ * every root-level note in the Subject.
  */
 export async function deleteFolder(moduleId, subfolder) {
+  if (!subfolder) throw new Error('deleteFolder requires a named subfolder')
   const notes = await listNotes()
   const targets = notes.filter(
-    (n) => n.moduleId === moduleId && displaySubfolder(n.path) === subfolder
+    (n) => n.moduleId === moduleId && deriveSubfolder(n.path) === subfolder
   )
   for (const n of targets) {
     await deleteNote(moduleId, n.path)

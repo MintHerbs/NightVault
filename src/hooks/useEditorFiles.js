@@ -1,4 +1,4 @@
-import { getNote, displaySubfolder, baseName } from '../lib/notesApi'
+import { getNote, deriveSubfolder, subfolderToSegment, baseName } from '../lib/notesApi'
 
 export function useEditorFiles({ showToast, setContent, setTitle, setUnsaved, setSelectedPath, setOriginalPath, restoreDraftIfExists }) {
   // Loads a note's content from Supabase. `file` is { moduleId, path } — the
@@ -19,7 +19,9 @@ export function useEditorFiles({ showToast, setContent, setTitle, setUnsaved, se
         return
       }
 
-      const subfolder = displaySubfolder(path)
+      // Route-segment form ('~' at the Subject root), because this value is
+      // also the drafts key and admin_note_drafts.subfolder is `text not null`.
+      const subfolder = subfolderToSegment(deriveSubfolder(path))
       const fileName = baseName(path)
 
       setContent(note.contentMd)

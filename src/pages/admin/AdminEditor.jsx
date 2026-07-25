@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import Editor from '@monaco-editor/react'
 import NoteEditor from '../../components/admin/NoteEditor'
 import { resolveNoteImageSrc } from '../../lib/noteImageSrc'
+import { segmentToSubfolder } from '../../lib/notesApi'
 import { useDropzone } from 'react-dropzone'
 import { colors } from '../../constants/colors'
 import { supabase } from '../../lib/supabaseClient'
@@ -637,7 +638,7 @@ function AdminEditorContent() {
         onTitleChange={setTitle}
         unsaved={unsaved}
         subjectLabel={subjectLabel}
-        folderLabel={subfolder}
+        folderLabel={segmentToSubfolder(subfolder)}
         onNavigateRoot={() => navigate('/admin/editor')}
         onNavigateSubject={() => navigate(`/admin/editor/${moduleId}`)}
         onPreview={() => setPreviewOpen(true)}

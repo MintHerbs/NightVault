@@ -161,26 +161,35 @@ as $$
   );
 $$;
 
--- ─── Delete: role/course scoping replaces the single hardcoded email ───────
--- 0022 locked all content delete to one email regardless of role, as a
--- stopgap. The new role matrix has contributors and admins deleting within
--- their own scope, same as write — admin_can_write_module (above) already
--- encodes that correctly (role + course + directory), so note/folder delete
--- no longer needs an extra check on top of it.
+-- ─── Delete: still primary-owner-only ──────────────────────────────────────
+-- SUPERSEDED BY T-053 (0027). This section originally dropped 0022's
+-- admin_is_delete_authorized() conjunct from the notes/note_folders delete
+-- policies, on the reasoning that the role matrix should let contributors and
+-- admins delete within the same scope they can write. The owner's rule is the
+-- opposite and explicit: everyone in the admin panel creates and edits, only
+-- the primary owner deletes. Applying the original version to prod would have
+-- handed delete on every note and folder to every contributor.
+--
+-- The policies are restated here rather than removed so that applying this
+-- migration to an environment that already has 0022 is a no-op on delete
+-- rather than a silent relaxation.
 drop policy if exists "notes delete locked" on public.notes;
 create policy "notes delete locked"
   on public.notes for delete
-  using ( public.admin_can_write_module(module_id) );
+  using ( public.admin_can_write_module(module_id) and public.admin_is_delete_authorized() );
 
 drop policy if exists "note_folders delete locked" on public.note_folders;
 create policy "note_folders delete locked"
   on public.note_folders for delete
-  using ( public.admin_can_write_module(module_id) );
+  using ( public.admin_can_write_module(module_id) and public.admin_is_delete_authorized() );
 
 -- Whole-Subject delete stays in the narrower, more-destructive category (it
--- cascades to every note/folder underneath, unchanged) — the hardcoded
--- single email generalizes to "primary owner, or this course's own owner"
--- instead of being dropped outright.
+-- cascades to every note/folder underneath, unchanged). The course-aware
+-- overload below is kept because the course model still needs it, but per
+-- T-053 it is no longer what gates Subject delete: "primary owner, or this
+-- course's own owner" would let any of the six owner-role accounts delete a
+-- Subject, and the rule is primary owner only. The policy below therefore
+-- still uses the zero-arg 0022 check.
 create or replace function public.admin_is_delete_authorized(p_course_id uuid)
 returns boolean
 language sql
@@ -197,10 +206,11 @@ $$;
 drop policy if exists "sidebar_modules delete locked" on public.sidebar_modules;
 create policy "sidebar_modules delete locked"
   on public.sidebar_modules for delete
-  using ( public.is_owner(auth.uid()) and public.admin_is_delete_authorized(course_id) );
+  using ( public.is_owner(auth.uid()) and public.admin_is_delete_authorized() );
 
 revoke execute on function public.admin_is_delete_authorized(uuid) from public;
 grant execute on function public.admin_is_delete_authorized(uuid) to authenticated;
 
--- Superseded by the course-aware version above.
-drop function if exists public.admin_is_delete_authorized();
+-- The zero-arg 0022 version is deliberately NOT dropped here. Three delete
+-- policies (notes, note_folders, sidebar_modules) depend on it; dropping it
+-- was what made this migration's original delete relaxation possible.

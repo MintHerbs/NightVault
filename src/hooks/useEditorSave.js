@@ -1,5 +1,7 @@
 import { commitFileWithRetry } from '../lib/githubApi'
-import { upsertNote, moveNote, baseName } from '../lib/notesApi'
+import {
+  upsertNote, moveNote, baseName, buildNotePath, segmentToSubfolder, ROOT_SEGMENT,
+} from '../lib/notesApi'
 import { invalidateNotesRegistry } from './useNotesRegistry'
 
 // Title to filename conversion
@@ -44,8 +46,10 @@ export function useEditorSave({
       return
     }
 
+    // `subfolder` is the route segment, so ROOT_SEGMENT ('~') here means the
+    // note sits directly under the Subject and its path carries no prefix.
     const { moduleId, subfolder } = selectedPath
-    const newPath = `${subfolder}/${filename}`
+    const newPath = buildNotePath(segmentToSubfolder(subfolder), filename)
     const label = `${filename}.md`
 
     // originalPath is the identity the note was loaded from: { moduleId, path,
@@ -96,7 +100,7 @@ export function useEditorSave({
       if (original && !isSamePath) {
         await clearDraft?.({
           moduleId: original.moduleId,
-          subfolder: original.subfolder ?? 'notes',
+          subfolder: original.subfolder ?? ROOT_SEGMENT,
           filename: baseName(original.path),
         })
       }
@@ -130,10 +134,11 @@ export function useEditorSave({
     }
     const filename = titleToFilename(title)
     const { moduleId, subfolder } = selectedPath
-    const mdPath = `src/content/notes/${moduleId}/${subfolder}/${filename}.md`
+    const relPath = buildNotePath(segmentToSubfolder(subfolder), `${filename}.md`)
+    const mdPath = `src/content/notes/${moduleId}/${relPath}`
     try {
       showToast('Backing up to GitHub…', 'success')
-      await commitFileWithRetry(mdPath, content, `backup: ${moduleId}/${subfolder}/${filename}.md`)
+      await commitFileWithRetry(mdPath, content, `backup: ${moduleId}/${relPath}`)
       showToast('Backed up to GitHub', 'success')
     } catch (error) {
       showToast(`Backup failed (note is still saved): ${error.message}`, 'error')

@@ -19,7 +19,7 @@
 # See db/README.md for how to apply migrations against a Supabase project.
 
 project: b-tree
-schema_version: 26
+schema_version: 27
 
 migrations:
   - id: "0001"
@@ -208,7 +208,7 @@ migrations:
 
   - id: "0024"
     file: sql/0024_course_scoped_roles.sql
-    description: "T-051: new courses table (replaces the dead subjects table, T-030); admin_users gains course_id and an 'admin' role tier; sidebar_modules gains course_id; admin_can_write_module and the delete-lock helpers become course/role-aware instead of hardcoded to one email/allowed_directories-only. NOT applied to prod — see 0025, prod already had a different, pre-existing, undocumented courses table this doesn't reconcile with yet."
+    description: "T-051: new courses table (replaces the dead subjects table, T-030); admin_users gains course_id and an 'admin' role tier; sidebar_modules gains course_id; admin_can_write_module becomes course/role-aware instead of allowed_directories-only. NOT applied to prod — see 0025, prod already had a different, pre-existing, undocumented courses table this doesn't reconcile with yet. AMENDED 2026-07-25 (T-053): the delete section originally dropped 0022's primary-owner conjunct from the notes/note_folders delete policies and dropped the zero-arg admin_is_delete_authorized() outright, which would have granted delete to every contributor if ever applied to prod. It now restates all three delete policies with the lock intact and keeps the zero-arg helper."
     author: agent
     created: 2026-07-25
     applied_envs: ["dev"]
@@ -229,3 +229,11 @@ migrations:
     created: 2026-07-25
     applied_envs: ["prod"]
     related_issues: ["T-051"]
+
+  - id: "0027"
+    file: sql/0027_admin_write_scope_and_delete_lock.sql
+    description: "T-053: redefines admin_can_write_module as 'caller has an admin_users row', so every admin-panel account can create folders/files and edit notes in any Subject; allowed_directories no longer constrains content writes. Signature kept so all 8 dependent policies (notes, note_folders, note-images storage) pick it up without a drop/recreate. Delete is unaffected on notes/note_folders/sidebar_modules (still AND admin_is_delete_authorized()); the note-images delete policy is tightened from is_owner() to is_primary_owner() so it matches every other delete path."
+    author: agent
+    created: 2026-07-25
+    applied_envs: ["prod"]
+    related_issues: ["T-053", "E-001"]

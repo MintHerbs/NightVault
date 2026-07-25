@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import NoteReader from '../../components/markdown/NoteReader'
-import { displaySubfolder, getNote } from '../../lib/notesApi'
+import { deriveSubfolder, getNote } from '../../lib/notesApi'
 import { listModules, isModuleHidden } from '../../lib/modulesApi'
 
 /** "getting-started" / "notes/img-push" → "Getting Started" (last segment, humanised). */
@@ -51,8 +51,12 @@ function NotesPage() {
   const handleBack = () => {
     // Deterministic, not history-based (T-049) — a note reached by direct
     // link or a shared URL has no "back" to fall through to, so back always
-    // returns to the read-only browser at this note's own folder.
-    navigate(`/notes-browser/${section}/${displaySubfolder(subpath)}`)
+    // returns to the read-only browser at this note's own folder, or to the
+    // Subject itself when the note sits at the root (T-053).
+    const folder = deriveSubfolder(subpath)
+    navigate(folder
+      ? `/notes-browser/${section}/${encodeURIComponent(folder)}`
+      : `/notes-browser/${section}`)
   }
 
   useEffect(() => {

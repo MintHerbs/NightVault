@@ -215,6 +215,23 @@
 
 .newButtonPlaceholder { height: 48px; }
 
+/* Reads as unavailable but stays clickable, so the click can explain the rule
+   instead of the button silently doing nothing. */
+.newButtonMuted {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Cancels the base hover's shadow lift, which would otherwise read as
+   "this is ready to go". Declared after .newButton:hover so it wins. */
+.newButtonMuted:hover { box-shadow: var(--shadow-md); }
+
+.createHint {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .nav {
   display: flex;
   flex-direction: column;
@@ -718,6 +735,40 @@
 
 .createInput:focus { border-color: var(--color-accent); }
 .createInput::placeholder { color: var(--color-text-muted); }
+
+/* Folder-or-file switch, shown only inside a Subject where both are
+   creatable. Inside a folder only files exist, so it collapses away. */
+.createKindTabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--color-input);
+  border-radius: 8px;
+}
+
+.createKindTab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.createKindTab:hover { color: var(--color-text); }
+
+.createKindTabActive {
+  background: var(--color-accent-selected);
+  color: var(--color-accent-bright);
+}
 
 .iconPicker {
   display: grid;

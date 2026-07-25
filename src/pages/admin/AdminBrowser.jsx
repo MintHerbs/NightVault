@@ -13,7 +13,10 @@ import { useAdminModulesRegistry } from '../../hooks/useAdminModulesRegistry'
 import { useEditorModules } from '../../hooks/useEditorModules'
 import ToastNotification, { useToast } from '../../components/admin/ToastNotification'
 import { ADMIN_ICON_OPTIONS, getIconNameForComponent } from '../../components/admin/adminIconOptions'
-import { displaySubfolder } from '../../lib/notesApi'
+import {
+  subfoldersForModule, filesForFolder, rootFilesForModule,
+  subfolderToSegment, segmentToSubfolder,
+} from '../../lib/notesApi'
 import { listCourses } from '../../lib/coursesApi'
 import { useActiveCourse, clearActiveCourse } from '../../hooks/useActiveCourse'
 import '../../styles/adminTokens.css'
@@ -35,27 +38,8 @@ function getUnusedIconOptions(modules, selectedIconName = null) {
   ))
 }
 
-/** Every subfolder a Subject has, derived from its notes plus any explicit
- * (possibly empty) folder rows — same merge DirectoryDrawer used to do. */
-function subfoldersForModule(module) {
-  const derived = module.notes ? [...new Set(module.notes.map(n => displaySubfolder(n.filename)))] : []
-  const explicit = module.subfolders ?? []
-  return derived.length > 0 || explicit.length > 0
-    ? [...new Set([...derived, ...explicit])]
-    : []
-}
-
-function filesForFolder(module, subfolder) {
-  return (module.notes ?? [])
-    .filter(n => displaySubfolder(n.filename) === subfolder)
-    .map(n => ({
-      name: n.label || `${n.filename.split('/').pop()}.md`,
-      path: n.filename,
-      moduleId: module.id,
-      hidden: n.hidden,
-      updatedAt: n.updatedAt,
-    }))
-}
+// subfoldersForModule / filesForFolder now live in notesApi (T-053) so this
+// page and the public NotesBrowserPage share one implementation of the tree.
 
 // Drive-style breadcrumb: preceding segments are small muted links, the last
 // (current location) is the large title with a caret dropdown of its actions.
@@ -197,13 +181,11 @@ function AdminBrowserContent() {
 
   const isOwner = profile?.role === 'owner'
   const isAdmin = profile?.role === 'admin'
-  // Content write-scope (T-051 role matrix): owner/admin write anywhere in
-  // their course; contributor stays directory-scoped, unchanged from today.
-  const canManageStructure = isOwner || isAdmin
-  // Whole-Subject delete stays narrow — this course's own owner, or the
-  // primary owner (spec §7); admins/contributors get delete on notes/folders
-  // via admin_can_write_module (0024), not this.
-  const canDeleteModule = isOwner || isPrimaryOwner
+  // T-053: every admin-panel account creates and edits content anywhere, and
+  // only the primary owner deletes anything. Both mirror what the DB now
+  // enforces (0027 for write, 0022's admin_is_delete_authorized for delete);
+  // these are UX short-circuits, not the security boundary.
+  const canDelete = isPrimaryOwner
   const username = profile?.username || user?.email || 'me'
 
   const unusedIconOptions = useMemo(() => getUnusedIconOptions(modules), [modules])
@@ -213,7 +195,7 @@ function AdminBrowserContent() {
     handleNewSubfolder, handleRenameSubfolder, handleDeleteSubfolder, handleHideSubfolder,
     handleNewFile, handleDeleteFile, handleRenameFile, handleHideFile, handleMoveFile,
   } = useEditorModules({
-    showToast, setModules, setSelectedPath: () => {}, unusedIconOptions, isOwner, canDeleteModule,
+    showToast, setModules, setSelectedPath: () => {}, unusedIconOptions, isOwner, canDelete,
     courseId: activeCourseId, reloadModules: reload,
   })
 
@@ -238,34 +220,48 @@ function AdminBrowserContent() {
     }
   }, [unusedIconOptions, createIcon])
 
-  // Course first (T-051): a course-locked account never sees another
-  // course's Subjects; the primary owner sees whichever course the switcher
-  // has active. Within that course, owner/admin see everything, contributor
-  // stays restricted to allowed_directories — unchanged from today.
+  // Course first (T-051): a course-locked account never sees another course's
+  // Subjects; the primary owner sees whichever course the switcher has active.
+  // Within that course everyone sees every Subject — allowed_directories no
+  // longer narrows content access (T-053 / 0027), so filtering by it here
+  // would only hide Subjects the DB would happily let the person write.
   const visibleModules = modules
     .filter(m => !activeCourseId || m.courseId === activeCourseId)
-    .filter(m => canManageStructure || profile?.allowed_directories?.includes(m.id))
 
   const activeModule = moduleId ? visibleModules.find(m => m.id === moduleId) : null
+  // Route segment -> real folder name; ROOT_SEGMENT means the Subject root,
+  // which is a browsable folder level in its own right but holds only files.
+  const activeSubfolder = segmentToSubfolder(subfolder)
   const level = subfolder ? 'files' : moduleId ? 'folders' : 'subjects'
 
   const folderHidden = (name) => folders.find(f => f.moduleId === moduleId && f.name === name)?.hidden
 
   // Unified item model — each level is homogeneous (subjects / folders / files).
+  // `holder` is the folder a file lives in, or null at the Subject root; it
+  // only decides which URL segment the editor link carries.
+  const fileItem = (f, holder) => ({
+    kind: 'file', key: f.path, name: f.name, hidden: !!f.hidden, date: f.updatedAt,
+    onOpen: () => navigate(
+      `/admin/editor/${moduleId}/${subfolderToSegment(holder)}/${encodeURIComponent(f.path)}`
+    ),
+    path: f.path,
+  })
+
   const items = useMemo(() => {
     if (level === 'files' && activeModule) {
-      return filesForFolder(activeModule, subfolder).map(f => ({
-        kind: 'file', key: f.path, name: f.name, hidden: !!f.hidden, date: f.updatedAt,
-        onOpen: () => navigate(`/admin/editor/${moduleId}/${subfolder}/${encodeURIComponent(f.path)}`),
-        path: f.path,
-      }))
+      return filesForFolder(activeModule, activeSubfolder).map(f => fileItem(f, activeSubfolder))
     }
+    // Subject level: folders and root-level files side by side (T-053). Files
+    // here sit directly under the Subject and carry no path prefix.
     if (level === 'folders' && activeModule) {
-      return subfoldersForModule(activeModule).map(name => ({
-        kind: 'folder', key: name, name, hidden: !!folderHidden(name), date: null,
-        onOpen: () => navigate(`/admin/editor/${moduleId}/${name}`),
-        subfolder: name,
-      }))
+      return [
+        ...subfoldersForModule(activeModule).map(name => ({
+          kind: 'folder', key: name, name, hidden: !!folderHidden(name), date: null,
+          onOpen: () => navigate(`/admin/editor/${moduleId}/${encodeURIComponent(name)}`),
+          subfolder: name,
+        })),
+        ...rootFilesForModule(activeModule).map(f => fileItem(f, null)),
+      ]
     }
     return visibleModules.map(m => ({
       kind: 'module', key: m.id, name: m.label, hidden: hiddenModuleIds.has(m.id), date: null,
@@ -273,7 +269,7 @@ function AdminBrowserContent() {
       id: m.id,
     }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level, activeModule, subfolder, moduleId, visibleModules, folders, hiddenModuleIds])
+  }, [level, activeModule, activeSubfolder, moduleId, visibleModules, folders, hiddenModuleIds])
 
   const displayItems = useMemo(() => {
     let arr = items
@@ -298,19 +294,27 @@ function AdminBrowserContent() {
   // clicking it afterwards opens it for editing. This applies to files too —
   // a "New file" no longer jumps straight into the editor for a note that
   // doesn't exist yet.
-  // Subject creation stays owner-only (sidebar_modules insert RLS, 0023/0024
-  // unchanged); folder creation extends to admin, matching note_folders'
-  // actual write scope (admin_can_write_module already included admin).
-  const canCreate = level === 'files' ? true : level === 'folders' ? canManageStructure : isOwner
+  // Subject creation stays owner-only (sidebar_modules insert RLS, unchanged).
+  // Folders and files are open to every admin-panel account (T-053 / 0027).
+  const canCreate = level === 'subjects' ? isOwner : true
+
+  // Inside a Subject you can make either a folder or a file; inside a folder
+  // only files, which is what keeps the tree exactly two levels deep.
+  const createKinds = level === 'folders' ? ['folder', 'file'] : level === 'files' ? ['file'] : ['subject']
+  const [createKind, setCreateKind] = useState(createKinds[0])
+  const activeCreateKind = createKinds.includes(createKind) ? createKind : createKinds[0]
+
   const openCreate = () => {
     setCreateValue('')
+    setCreateKind(createKinds[0])
     setCreating(true)
   }
   const submitCreate = async () => {
     if (!createValue.trim()) return
-    if (level === 'subjects') await handleNewModule(createValue.trim(), createIcon)
-    else if (level === 'folders') await handleNewSubfolder(moduleId, createValue.trim())
-    else if (level === 'files') await handleNewFile(moduleId, subfolder, createValue.trim())
+    if (activeCreateKind === 'subject') await handleNewModule(createValue.trim(), createIcon)
+    else if (activeCreateKind === 'folder') await handleNewSubfolder(moduleId, createValue.trim())
+    // At the Subject level the new file has no folder, hence null.
+    else await handleNewFile(moduleId, level === 'files' ? activeSubfolder : null, createValue.trim())
     setCreating(false)
     setCreateValue('')
   }
@@ -343,45 +347,51 @@ function AdminBrowserContent() {
   }
 
   // ── Move (files only) ─────────────────────────────────────────────────────
+  // moveTarget.subfolder is '' for the Subject root, since a <select> value
+  // has to be a string; it converts back to null at the call boundary.
   const openMove = (item) => {
     setMovingFile(item)
-    setMoveTarget({ moduleId, subfolder })
+    setMoveTarget({ moduleId, subfolder: activeSubfolder ?? '' })
   }
   const submitMove = async () => {
     if (!movingFile) return
     const target = moveTarget
+    const toSubfolder = target.subfolder || null
     setMovingFile(null)
-    if (target.moduleId === moduleId && target.subfolder === subfolder) return
+    if (target.moduleId === moduleId && toSubfolder === activeSubfolder) return
     await handleMoveFile({
-      fromModule: moduleId, fromSubfolder: subfolder, fromPath: movingFile.path,
-      toModule: target.moduleId, toSubfolder: target.subfolder,
+      fromModule: moduleId, fromSubfolder: activeSubfolder, fromPath: movingFile.path,
+      toModule: target.moduleId, toSubfolder,
     })
   }
 
-  // File and folder delete are scoped by write-access (admin_can_write_module,
-  // 0020/0024) — the same server-side check that already gates rename/hide, so
-  // no extra client-side lock: if the row is visible, it's writable. Only
-  // whole-Subject delete stays narrowly gated (canDeleteModule).
+  // Rename/move/hide follow write access, which every admin-panel account now
+  // has everywhere (0027). Delete is the one narrow action: primary owner
+  // only, matching admin_is_delete_authorized() server-side, so the entry is
+  // omitted rather than shown-and-failing for everyone else.
   const menuFor = (item) => {
     if (item.kind === 'file') {
       return [
         { label: 'Rename', onSelect: () => startRename(item) },
         { label: 'Move to…', onSelect: () => openMove(item) },
         { label: item.hidden ? 'Unhide' : 'Hide on live site', onSelect: () => handleHideFile(moduleId, item.path, !item.hidden) },
-        { label: 'Delete', onSelect: () => setDeleteConfirm({ kind: 'file', key: item.path, name: item.name }) },
+        ...(canDelete ? [{
+          label: 'Delete',
+          onSelect: () => setDeleteConfirm({ kind: 'file', key: item.path, name: item.name }),
+        }] : []),
       ]
     }
     if (item.kind === 'folder') {
       return [
         { label: 'Rename', onSelect: () => startRename(item) },
         { label: item.hidden ? 'Unhide' : 'Hide on live site', onSelect: () => handleHideSubfolder(moduleId, item.subfolder, !item.hidden) },
-        {
+        ...(canDelete ? [{
           label: 'Delete',
           onSelect: () => setDeleteConfirm({
             kind: 'folder', key: item.subfolder, name: item.name,
             fileCount: filesForFolder(activeModule, item.subfolder).length,
           }),
-        },
+        }] : []),
       ]
     }
     // Subject (module / rail-module) — structural, owner-only.
@@ -389,7 +399,7 @@ function AdminBrowserContent() {
     return [
       { label: 'Rename', onSelect: () => startRename(item) },
       { label: item.hidden ? 'Unhide' : 'Hide on live site', onSelect: () => handleHideModule(item.id, !item.hidden) },
-      ...(canDeleteModule ? [{
+      ...(canDelete ? [{
         label: 'Delete',
         onSelect: () => {
           const target = visibleModules.find(m => m.id === item.id)
@@ -413,7 +423,7 @@ function AdminBrowserContent() {
       const hidden = hiddenModuleIds.has(activeModule.id)
       return [
         { label: hidden ? 'Unhide subject' : 'Hide on live site', onSelect: () => handleHideModule(activeModule.id, !hidden) },
-        ...(canDeleteModule ? [{
+        ...(canDelete ? [{
           label: 'Delete subject',
           onSelect: () => setDeleteConfirm({
             kind: 'module', key: activeModule.id, name, then: () => navigate('/admin/editor'),
@@ -423,29 +433,27 @@ function AdminBrowserContent() {
         }] : []),
       ]
     }
-    // Folder-level actions are write-access-scoped, not owner-only (matches
-    // menuFor's folder case) — a contributor/admin browsing their own folder
-    // gets the same hide/delete here as from the parent listing's row menu.
-    if (level === 'files') {
-      const hidden = folderHidden(subfolder)
+    // The Subject root is not a folder, so it has no hide/delete of its own.
+    if (level === 'files' && activeSubfolder) {
+      const hidden = folderHidden(activeSubfolder)
       return [
-        { label: hidden ? 'Unhide folder' : 'Hide on live site', onSelect: () => handleHideSubfolder(moduleId, subfolder, !hidden) },
-        {
+        { label: hidden ? 'Unhide folder' : 'Hide on live site', onSelect: () => handleHideSubfolder(moduleId, activeSubfolder, !hidden) },
+        ...(canDelete ? [{
           label: 'Delete folder',
           onSelect: () => setDeleteConfirm({
-            kind: 'folder', key: subfolder, name: subfolder, then: () => navigate(`/admin/editor/${moduleId}`),
-            fileCount: filesForFolder(activeModule, subfolder).length,
+            kind: 'folder', key: activeSubfolder, name: activeSubfolder, then: () => navigate(`/admin/editor/${moduleId}`),
+            fileCount: filesForFolder(activeModule, activeSubfolder).length,
           }),
-        },
+        }] : []),
       ]
     }
     return []
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level, activeModule, subfolder, isOwner, canDeleteModule, hiddenModuleIds, folders])
+  }, [level, activeModule, activeSubfolder, isOwner, canDelete, hiddenModuleIds, folders])
 
   const crumbs = [{ key: 'root', label: 'Subjects', to: () => navigate('/admin/editor') }]
   if (moduleId && activeModule) crumbs.push({ key: 'module', label: activeModule.label, to: () => navigate(`/admin/editor/${moduleId}`) })
-  if (subfolder) crumbs.push({ key: 'folder', label: subfolder })
+  if (activeSubfolder) crumbs.push({ key: 'folder', label: activeSubfolder })
 
   const handleSignOut = async () => {
     clearActiveCourse()
@@ -561,50 +569,81 @@ function AdminBrowserContent() {
       <div className={styles.body}>
         {/* Left rail */}
         <aside className={styles.sidebar}>
-          {canCreate ? (
-            <Popover.Root open={creating} onOpenChange={(open) => (open ? openCreate() : setCreating(false))}>
-              <Popover.Trigger asChild>
-                <button className={styles.newButton}>
-                  <Plus size={20} weight="bold" />
-                  <span>New</span>
-                </button>
-              </Popover.Trigger>
-              <Popover.Portal>
-                <Popover.Content className={styles.createPopover} align="start" sideOffset={8}>
+          {/* The button is always present, even where the account can't create
+              anything here (a non-owner at the Subjects root). Hiding it left a
+              blank gap that read as a broken layout rather than a rule, so it
+              stays put, styled as unavailable, and explains itself on click. */}
+          <Popover.Root open={creating} onOpenChange={(open) => (open ? openCreate() : setCreating(false))}>
+            <Popover.Trigger asChild>
+              <button className={`${styles.newButton} ${canCreate ? '' : styles.newButtonMuted}`}>
+                <Plus size={20} weight="bold" />
+                <span>New</span>
+              </button>
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content className={styles.createPopover} align="start" sideOffset={8}>
+                {!canCreate && (
+                  <>
+                    <div className={styles.createHint}>
+                      Open a subject first. Folders and files are created inside
+                      a subject; adding a new subject here is owner-only.
+                    </div>
+                    <div className={styles.confirmActions}>
+                      <button className={styles.btnPrimary} onClick={() => setCreating(false)}>Got it</button>
+                    </div>
+                  </>
+                )}
+                {canCreate && createKinds.length > 1 && (
+                  <div className={styles.createKindTabs}>
+                    {createKinds.map(kind => (
+                      <button
+                        key={kind}
+                        type="button"
+                        className={`${styles.createKindTab} ${activeCreateKind === kind ? styles.createKindTabActive : ''}`}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => setCreateKind(kind)}
+                      >
+                        {kind === 'folder' ? <Folder size={16} weight="fill" /> : <FileText size={16} />}
+                        <span>{kind === 'folder' ? 'Folder' : 'File'}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {canCreate && (
                   <input
                     className={styles.createInput}
                     autoFocus
-                    placeholder={level === 'subjects' ? 'Subject name' : level === 'folders' ? 'Folder name' : 'File name'}
+                    placeholder={activeCreateKind === 'subject' ? 'Subject name' : activeCreateKind === 'folder' ? 'Folder name' : 'File name'}
                     value={createValue}
                     onChange={(e) => setCreateValue(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') submitCreate(); if (e.key === 'Escape') setCreating(false) }}
                   />
-                  {level === 'subjects' && unusedIconOptions.length > 0 && (
-                    <div className={styles.iconPicker}>
-                      {unusedIconOptions.map(option => (
-                        <button
-                          key={option.name}
-                          type="button"
-                          className={`${styles.iconChoice} ${createIcon === option.name ? styles.iconChoiceSelected : ''}`}
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => setCreateIcon(option.name)}
-                          title={option.label}
-                        >
-                          <option.Icon size={18} />
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                )}
+                {canCreate && activeCreateKind === 'subject' && unusedIconOptions.length > 0 && (
+                  <div className={styles.iconPicker}>
+                    {unusedIconOptions.map(option => (
+                      <button
+                        key={option.name}
+                        type="button"
+                        className={`${styles.iconChoice} ${createIcon === option.name ? styles.iconChoiceSelected : ''}`}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => setCreateIcon(option.name)}
+                        title={option.label}
+                      >
+                        <option.Icon size={18} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {canCreate && (
                   <div className={styles.confirmActions}>
                     <button className={styles.btnText} onClick={() => setCreating(false)}>Cancel</button>
                     <button className={styles.btnPrimary} onClick={submitCreate}>Create</button>
                   </div>
-                </Popover.Content>
-              </Popover.Portal>
-            </Popover.Root>
-          ) : (
-            <div className={styles.newButtonPlaceholder} />
-          )}
+                )}
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
 
           <nav className={styles.nav}>
             <button
@@ -798,13 +837,13 @@ function AdminBrowserContent() {
                   value={moveTarget.subfolder}
                   onChange={(e) => setMoveTarget(t => ({ ...t, subfolder: e.target.value }))}
                 >
-                  <option value="">Select a folder…</option>
+                  <option value="">No folder (top level)</option>
                   {targetSubfolders.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </label>
               <div className={styles.confirmActions}>
                 <button className={styles.btnText} onClick={() => setMovingFile(null)}>Cancel</button>
-                <button className={styles.btnPrimary} onClick={submitMove} disabled={!moveTarget.subfolder}>Move</button>
+                <button className={styles.btnPrimary} onClick={submitMove} disabled={!moveTarget.moduleId}>Move</button>
               </div>
             </Popover.Content>
           </Popover.Portal>

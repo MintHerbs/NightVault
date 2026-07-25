@@ -7,7 +7,9 @@ import {
 } from '@phosphor-icons/react'
 import PageShell from '../../components/layout/PageShell'
 import { useNotesRegistry } from '../../hooks/useNotesRegistry'
-import { displaySubfolder } from '../../lib/notesApi'
+import {
+  subfoldersForModule, filesForFolder, rootFilesForModule, segmentToSubfolder,
+} from '../../lib/notesApi'
 import { noteRoute } from '../../components/layout/Sidebar/modules'
 import styles from './NotesBrowserPage.module.css'
 
@@ -19,25 +21,9 @@ import styles from './NotesBrowserPage.module.css'
  * Subjects/folders/notes before this component ever sees them.
  */
 
-/** Every subfolder a Subject has — derived from its notes plus any explicit
- * (possibly empty) folder rows. Mirrors AdminBrowser's admin-side version. */
-function subfoldersForModule(module) {
-  const derived = module.notes ? [...new Set(module.notes.map((n) => displaySubfolder(n.filename)))] : []
-  const explicit = module.subfolders ?? []
-  return derived.length > 0 || explicit.length > 0
-    ? [...new Set([...derived, ...explicit])]
-    : []
-}
-
-function filesForFolder(module, subfolder) {
-  return (module.notes ?? [])
-    .filter((n) => displaySubfolder(n.filename) === subfolder)
-    .map((n) => ({
-      name: n.label || `${n.filename.split('/').pop()}.md`,
-      path: n.filename,
-      updatedAt: n.updatedAt,
-    }))
-}
+// subfoldersForModule / filesForFolder come from notesApi (T-053); this page
+// used to keep its own copies, which had to stay in step with AdminBrowser's
+// by hand or content would render differently here than in the admin panel.
 
 function formatDate(iso) {
   if (!iso) return '—'
@@ -87,26 +73,35 @@ export default function NotesBrowserPage() {
   const [sort, setSort] = useState({ key: 'name', dir: 'asc' })
 
   const activeModule = moduleId ? modules.find((m) => m.id === moduleId) : null
+  const activeSubfolder = segmentToSubfolder(subfolder)
   const level = subfolder ? 'files' : moduleId ? 'folders' : 'subjects'
+
+  const fileItem = (f) => ({
+    kind: 'file', key: f.path, name: f.name, date: f.updatedAt,
+    onOpen: () => navigate(noteRoute(moduleId, f.path)),
+  })
 
   const items = useMemo(() => {
     if (level === 'files' && activeModule) {
-      return filesForFolder(activeModule, subfolder).map((f) => ({
-        kind: 'file', key: f.path, name: f.name, date: f.updatedAt,
-        onOpen: () => navigate(noteRoute(moduleId, f.path)),
-      }))
+      return filesForFolder(activeModule, activeSubfolder).map(fileItem)
     }
+    // Subject level lists folders and root-level files together, matching the
+    // admin browser (T-053).
     if (level === 'folders' && activeModule) {
-      return subfoldersForModule(activeModule).map((name) => ({
-        kind: 'folder', key: name, name, date: null,
-        onOpen: () => navigate(`/notes-browser/${moduleId}/${encodeURIComponent(name)}`),
-      }))
+      return [
+        ...subfoldersForModule(activeModule).map((name) => ({
+          kind: 'folder', key: name, name, date: null,
+          onOpen: () => navigate(`/notes-browser/${moduleId}/${encodeURIComponent(name)}`),
+        })),
+        ...rootFilesForModule(activeModule).map(fileItem),
+      ]
     }
     return modules.map((m) => ({
       kind: 'module', key: m.id, name: m.label, date: null,
       onOpen: () => navigate(`/notes-browser/${m.id}`),
     }))
-  }, [level, activeModule, subfolder, moduleId, modules, navigate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level, activeModule, activeSubfolder, moduleId, modules, navigate])
 
   const displayItems = useMemo(() => {
     let arr = items
@@ -130,7 +125,7 @@ export default function NotesBrowserPage() {
   if (moduleId && activeModule) {
     crumbs.push({ key: 'module', label: activeModule.label, to: () => navigate(`/notes-browser/${moduleId}`) })
   }
-  if (subfolder) crumbs.push({ key: 'folder', label: subfolder })
+  if (activeSubfolder) crumbs.push({ key: 'folder', label: activeSubfolder })
 
   const toggleSort = (key) => setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }))
   const sortArrow = (key) => (sort.key !== key ? null : (sort.dir === 'asc' ? <ArrowUp size={12} weight="bold" /> : <ArrowDown size={12} weight="bold" />))
