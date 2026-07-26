@@ -69,7 +69,7 @@ export default function MinMaxMode({ reduceMotion }) {
             <div className={styles.inputs}>
               <input
                 type="text"
-                placeholder="Module (optional)"
+                placeholder="Module Name (optional)"
                 className={styles.nameInput}
                 value={row.moduleName}
                 onChange={e => updateRow(index, 'moduleName', e.target.value)}
