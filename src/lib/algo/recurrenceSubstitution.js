@@ -38,6 +38,34 @@ const sub = v => String(v).split('').map(c => SUBSCRIPT[c] ?? c).join('');
 const logOf = (b, x = 'n') => `log${sub(num(b))}(${x})`;
 
 /**
+ * Is there an operator loose at the top level, so that a coefficient written in
+ * front of this would bind to only part of it? Operators nested inside brackets
+ * are already grouped, so log(n−1) counts as one atom while n−1 does not.
+ */
+function hasLooseOperator(body) {
+  let depth = 0;
+  for (const ch of body) {
+    if (ch === '(' || ch === '{') depth += 1;
+    else if (ch === ')' || ch === '}') depth -= 1;
+    else if (depth === 0 && '+-−/ '.includes(ch)) return true;
+  }
+  return false;
+}
+
+/**
+ * A coefficient applied to an f value. The brackets are not decoration: writing
+ * 2·f(n−1) as "2n − 1" states a different quantity from 2(n−1), and "16n/4"
+ * can be read as (16n)/4. They come off when the body is a single atom, so this
+ * still gives "2·1" and "4·n²".
+ */
+function scaleBy(mult, body, { latex = false } = {}) {
+  if (Math.abs(mult - 1) < 1e-9) return body;
+  const dot = latex ? '\\cdot ' : '·';
+  if (!hasLooseOperator(body)) return `${num(mult)}${dot}${body}`;
+  return latex ? `${num(mult)}${dot}\\left(${body}\\right)` : `${num(mult)}${dot}(${body})`;
+}
+
+/**
  * @param {Object} parsed output of parseRecurrence
  * @returns {{ formulas: Array, steps: Array, finalComplexity: string, finalLabel: string }}
  */
@@ -138,18 +166,17 @@ function divideSubstitution(parsed) {
   const A = k => num(Math.pow(a, k));
   const B = k => num(Math.pow(b, k));
   const coef = k => (Math.abs(Math.pow(a, k) - 1) < 1e-9 ? '' : `${A(k)}`);
-  /** "16·(n/4)" rather than "16n/4", which could be read as (16n)/4. */
-  const scaled = k => (Math.abs(Math.pow(a, k) - 1) < 1e-9 ? fAt(k) : `${A(k)}·(${fAt(k)})`);
+  const scaled = (k, latex) => scaleBy(Math.pow(a, k), fAt(k, latex), { latex });
 
   const formulas = [];
   const add = (latex, label) => formulas.push({ latex, label });
 
   add(`T(n) = ${a === 1 ? '' : A(1)}T\\left(\\frac{n}{${num(b)}}\\right) + ${fLatex}`, 'Given');
   add(`T\\left(\\frac{n}{${B(1)}}\\right) = ${a === 1 ? '' : A(1)}T\\left(\\frac{n}{${B(2)}}\\right) + ${fAt(1, true)}`, `Step 1: replace n with n/${num(b)}`);
-  add(`T(n) = ${coef(2)}T\\left(\\frac{n}{${B(2)}}\\right) + ${coef(1)}${fAt(1, true)} + ${fAt(0, true)}`, 'Substitute that back');
+  add(`T(n) = ${coef(2)}T\\left(\\frac{n}{${B(2)}}\\right) + ${scaled(1, true)} + ${fAt(0, true)}`, 'Substitute that back');
   add(`T\\left(\\frac{n}{${B(2)}}\\right) = ${a === 1 ? '' : A(1)}T\\left(\\frac{n}{${B(3)}}\\right) + ${fAt(2, true)}`, `Step 2: replace n with n/${B(2)}`);
   add(
-    `T(n) = ${coef(3)}T\\left(\\frac{n}{${B(3)}}\\right) + ${coef(2)}${fAt(2, true)} + ${coef(1)}${fAt(1, true)} + ${fAt(0, true)}`,
+    `T(n) = ${coef(3)}T\\left(\\frac{n}{${B(3)}}\\right) + ${scaled(2, true)} + ${scaled(1, true)} + ${fAt(0, true)}`,
     'Substitute that back'
   );
   add(`T(n) = a^{k}\\,T\\left(\\frac{n}{b^{k}}\\right) + \\sum_{i=0}^{k-1} a^{i} f\\left(\\frac{n}{b^{i}}\\right)`, 'Pattern after k steps');
@@ -230,8 +257,11 @@ function branchingSubstitution(parsed) {
   if (single) {
     const a = totalBranch;
     add(`T(n-${b}) = ${num(a)}T(n-${2 * b}) + ${fAt(1, true)}`, `Step 1: replace n with n−${b}`);
-    add(`T(n) = ${num(a * a)}T(n-${2 * b}) + ${num(a)}${fAt(1, true)} + ${fAt(0, true)}`, 'Substitute that back');
-    add(`T(n) = ${num(a ** 3)}T(n-${3 * b}) + ${num(a * a)}${fAt(2, true)} + ${num(a)}${fAt(1, true)} + ${fAt(0, true)}`, 'Step 2, same move again');
+    add(`T(n) = ${num(a * a)}T(n-${2 * b}) + ${scaleBy(a, fAt(1, true), { latex: true })} + ${fAt(0, true)}`, 'Substitute that back');
+    add(
+      `T(n) = ${num(a ** 3)}T(n-${3 * b}) + ${scaleBy(a * a, fAt(2, true), { latex: true })} + ${scaleBy(a, fAt(1, true), { latex: true })} + ${fAt(0, true)}`,
+      'Step 2, same move again'
+    );
     add(`T(n) = ${num(a)}^{k}\\,T(n-k${b === 1 ? '' : `\\cdot ${b}`}) + \\sum_{i=0}^{k-1} ${num(a)}^{i} f(n - i${b === 1 ? '' : `\\cdot ${b}`})`, 'Pattern after k steps');
     add(`n - k${b === 1 ? '' : `\\cdot ${b}`} = 0 \\implies k = ${b === 1 ? 'n' : `\\frac{n}{${b}}`}`, 'Stop at the base case');
     add(`T(n) = ${num(a)}^{${b === 1 ? 'n' : `n/${b}`}}\\,T(0) + \\sum_{i=0}^{k-1} ${num(a)}^{i} f(n - i${b === 1 ? '' : `\\cdot ${b}`})`, 'Put k back');
@@ -259,9 +289,9 @@ function branchingSubstitution(parsed) {
     loop(steps, `Replace n with n−${b}:`);
     nest(steps, `T(n−${b}) = ${num(a)}T(n−${2 * b}) + ${fAt(1)}`);
     loop(steps, 'Substitute back into T(n):');
-    nest(steps, `T(n) = ${num(a * a)}T(n−${2 * b}) + ${num(a)}${fAt(1)} + ${fAt(0)}`);
+    nest(steps, `T(n) = ${num(a * a)}T(n−${2 * b}) + ${scaleBy(a, fAt(1))} + ${fAt(0)}`);
     loop(steps, 'Substitute back again:');
-    nest(steps, `T(n) = ${num(a ** 3)}T(n−${3 * b}) + ${num(a * a)}${fAt(2)} + ${num(a)}${fAt(1)} + ${fAt(0)}`);
+    nest(steps, `T(n) = ${num(a ** 3)}T(n−${3 * b}) + ${scaleBy(a * a, fAt(2))} + ${scaleBy(a, fAt(1))} + ${fAt(0)}`);
     divider(steps);
     special(steps, 'Pattern after k steps:');
     special(steps, `  T(n) = ${num(a)}^k T(n−k${b === 1 ? '' : `·${b}`}) + Σ ${num(a)}^i f(n−i${b === 1 ? '' : `·${b}`})`);

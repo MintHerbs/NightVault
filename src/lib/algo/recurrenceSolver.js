@@ -414,7 +414,8 @@ function chainSteps(parsed, series, terms) {
     push(steps, `Level ${k}: 1 node × ${renderF(parsed.fTerms, argK)}`, 'loop');
   }
   push(steps, '⋮', 'info');
-  push(steps, `Depth: n − k·${b} = 0 when k = ${b === 1 ? 'n' : `n/${b}`}, so the chain has ${b === 1 ? 'n' : `n/${b}`} levels`, 'loop');
+  const levels = b === 1 ? 'n' : `n/${b}`;
+  push(steps, `Depth: n − k${b === 1 ? '' : `·${b}`} = 0 when k = ${levels}, so the chain has ${levels} levels`, 'loop');
 
   divider(steps);
   push(steps, `Recognised: ${series.name}`, 'info');
@@ -436,6 +437,9 @@ function branchingTree(parsed) {
 
   // Each child carries its own accumulated shift, so T(n−1) + T(n−2) expands
   // into T(n−2), T(n−3) under the first child and T(n−3), T(n−4) under the second.
+  // The shift also fixes the cost label, which is why an uneven recurrence shows
+  // f(n−1) and f(n−2) on the same row rather than one shared level cost.
+  const sizeArg = shift => (shift === 0 ? arg.symbol('n') : arg.minus('n', shift));
   const root = buildBranchingSpecs({
     levelsShown,
     rootState: { shift: 0 },
@@ -444,6 +448,7 @@ function branchingTree(parsed) {
         Array.from({ length: Math.round(t.coef) }, () => ({ shift: s.shift + t.shift }))
       ),
     labelOf: s => (s.shift === 0 ? 'T(n)' : `T(n−${s.shift})`),
+    costOf: s => renderF(fTerms, sizeArg(s.shift)),
   });
 
   const totalBranch = recTerms.reduce((s, t) => s + t.coef, 0);
@@ -466,7 +471,7 @@ function branchingTree(parsed) {
   const derivation =
     recTerms.length === 1
       ? [
-          `Total = ${counts.join(' + ')} + … + ${num(totalBranch)}^(n/${b})`,
+          `Total = ${counts.join(' + ')} + … + ${num(totalBranch)}^${b === 1 ? 'n' : `(n/${b})`}`,
           `geometric with ratio ${num(totalBranch)}, so the last level dominates`,
           `= ${theta(growth)}`,
         ]
@@ -509,7 +514,7 @@ function branchingSteps(parsed, rootBase, growth, counts) {
     push(steps, `Level ${k}: ${count} node${count === 1 ? '' : 's'} × ${fText === '1' ? '1' : renderF(parsed.fTerms, k === 0 ? arg.symbol('n') : arg.minus('n', b * k))}`, 'loop');
   });
   push(steps, '⋮', 'info');
-  push(steps, `Depth: n/${b} levels before reaching the base case`, 'loop');
+  push(steps, `Depth: ${b === 1 ? 'n' : `n/${b}`} levels before reaching the base case`, 'loop');
 
   divider(steps);
   push(steps, 'Summing the levels:', 'info');
@@ -632,8 +637,14 @@ function buildChainSpecs(levelsShown, labelAt, costAt) {
  * Children are derived from their own parent's state rather than from the
  * depth alone, so T(n−1) + T(n−2) correctly draws T(n−3), T(n−4) under its
  * second child instead of repeating the first subtree.
+ *
+ * @param {(state: Object) => string} [costOf] when given, every node that gets
+ *   expanded also gets a leftmost cost child holding f at that node's own size.
+ *   That is the sum the tree is being drawn to build, so a lecturer writes it
+ *   into the tree. A node on the last drawn row is not expanded and so gets no
+ *   cost child, because its own work belongs to the part still to come.
  */
-function buildBranchingSpecs({ levelsShown, rootState, expand, labelOf, budget = BREADTH_BUDGET }) {
+function buildBranchingSpecs({ levelsShown, rootState, expand, labelOf, costOf, budget = BREADTH_BUDGET }) {
   const root = { id: 'n0', kind: 'recursive', label: labelOf(rootState), state: rootState, children: [] };
   let frontier = [root];
 
@@ -643,6 +654,15 @@ function buildBranchingSpecs({ levelsShown, rootState, expand, labelOf, budget =
     for (const parent of frontier) {
       const childStates = expand(parent.state);
       const room = budget - next.length;
+
+      if (costOf) {
+        parent.children.push({
+          id: `c${parent.id}`,
+          kind: 'cost',
+          label: costOf(parent.state),
+          children: [],
+        });
+      }
 
       // No room left for a whole sibling group: mark and stop.
       if (room < 1) {

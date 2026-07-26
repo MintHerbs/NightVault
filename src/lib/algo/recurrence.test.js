@@ -304,6 +304,76 @@ for (const [input, levels] of [
   check(`chain cost nodes  ${input}`, costs.join(' | '), levels.join(' | '));
 }
 
+// T-061: branching subtract trees must put the work in the tree too, since the
+// sum being built is the sum of the node labels. Any node that was expanded
+// carries exactly one cost child; a node on the last drawn row was not
+// expanded, so its own work belongs to the elided part and must not appear.
+console.log('=== 3d. Branching trees carry their work as a leftmost child ===');
+for (const input of [
+  'T(n) = 2T(n-1) + 1',
+  'T(n) = 3T(n-1) + n',
+  'T(n) = T(n-1) + T(n-2)',
+  'T(n) = 2T(n-2) + 1',
+]) {
+  const { tree } = solveByTree(parseRecurrence(input));
+  const byId = new Map(tree.nodes.map(n => [n.id, n]));
+  const kids = new Map();
+  tree.edges.forEach(e => kids.set(e.from, [...(kids.get(e.from) ?? []), byId.get(e.to)]));
+
+  const expanded = tree.nodes.filter(n => n.kind === 'recursive' && kids.has(n.id));
+  const offenders = expanded.filter(
+    n => (kids.get(n.id) ?? []).filter(k => k?.kind === 'cost').length !== 1
+  );
+  checkThat(
+    `every expanded node has one cost child  ${input}`,
+    offenders.length === 0 && expanded.length > 0,
+    `${offenders.length} of ${expanded.length} expanded nodes lack exactly one cost child`
+  );
+
+  // Leftmost, the way it is written on the board.
+  const notFirst = expanded.filter(n => (kids.get(n.id) ?? [])[0]?.kind !== 'cost');
+  checkThat(
+    `cost child is drawn first  ${input}`,
+    notFirst.length === 0,
+    `${notFirst.length} nodes put a call before their work`
+  );
+}
+
+// An uneven recurrence has different sizes on one row, so the work drawn there
+// has to differ too. One shared level cost would be the wrong reading.
+check(
+  'T(n-1)+T(n-2) costs follow each branch',
+  solveByTree(parseRecurrence('T(n) = T(n-1) + T(n-2) + n'))
+    .tree.nodes.filter(n => n.kind === 'cost')
+    .map(n => n.label)
+    .join(' | '),
+  'n | n−1 | n−2'
+);
+
+// T-061: b = 1 must never render as a division or a multiplication by one.
+console.log('=== 3e. b = 1 renders without /1 or ·1 ===');
+for (const input of [
+  'T(n) = 2T(n-1) + 1',
+  'T(n) = T(n-1) + n',
+  'T(n) = T(n-1) + log(n)',
+  'T(n) = T(n-1) + T(n-2)',
+  'T(n) = 3T(n-1) + n',
+]) {
+  const parsed = parseRecurrence(input);
+  for (const [method, solve] of [['tree', solveByTree], ['substitution', solveBySubstitution]]) {
+    const r = solve(parsed);
+    const rendered = [
+      ...(r.steps ?? []).map(s => s.text ?? ''),
+      ...(r.tree?.derivation?.lines ?? []),
+      ...(r.formulas ?? []).map(f => f.latex ?? f.text ?? ''),
+    ];
+    // "k·1" and "n/1" are the unit-step artefacts. A digit before the dot is a
+    // real coefficient (2·1 is 2 times f(n) = 1), so it must not be caught here.
+    const bad = rendered.filter(t => /\/1\b/.test(t) || /[a-z]·1\b/.test(t) || /[a-z]\\cdot 1\b/.test(t));
+    checkThat(`no unit step  ${method}  ${input}`, bad.length === 0, bad.join(' // '));
+  }
+}
+
 console.log('=== 3b. Drawn levels are fully expanded ===');
 for (const [input] of CASES) {
   const parsed = parseRecurrence(input);
@@ -500,6 +570,64 @@ for (const [input, expected] of CASES) {
       lines.length > 0 && lines[lines.length - 1].includes(`Θ(${expected})`),
       `last Θ line was "${lines[lines.length - 1] ?? '(none)'}", expected Θ(${expected})`
     );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 8. A coefficient in front of an f value must bind to all of it
+// ---------------------------------------------------------------------------
+
+// T-061: the expansion wrote a·f(n−1) by putting the two strings side by side,
+// which produced "2n − 1" for 2(n−1) and "21" for 2·1. The first is a different
+// quantity, not just harder to read.
+console.log('=== 8. Coefficients bind to the whole f value ===');
+{
+  const rendered = input => {
+    const r = solveBySubstitution(parseRecurrence(input));
+    return [...r.steps.map(s => s.text ?? ''), ...r.formulas.map(f => f.latex ?? '')].join('\n');
+  };
+
+  for (const [input, wanted, forbidden] of [
+    ['T(n) = 2T(n-1) + n', ['2·(n−1)', '4·(n−2)'], ['+ 2n−1', '+ 2n − 1', '+ 4n−2']],
+    ['T(n) = 2T(n-1) + 1', ['2·1', '4·1'], ['+ 21', '+ 41']],
+    ['T(n) = 2T(n/2) + 1', ['2\\cdot 1'], ['+ 21']],
+    ['T(n) = 4T(n/2) + n', ['4·(n/2)', '16·(n/4)'], ['+ 4n/2', '+ 16n/4']],
+    // Already grouped by its own brackets, so no second pair is added.
+    ['T(n) = 3T(n-1) + log n', ['3·log(n−1)'], ['3·(log(n−1))']],
+  ]) {
+    const text = rendered(input);
+    for (const w of wanted) {
+      checkThat(`expansion writes ${w}  ${input}`, text.includes(w), `"${w}" is missing`);
+    }
+    for (const f of forbidden) {
+      checkThat(`expansion avoids ${f}  ${input}`, !text.includes(f), `"${f}" was rendered`);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 9. Every LaTeX string the substitution panel emits must actually render
+// ---------------------------------------------------------------------------
+
+// The panel renders with throwOnError, so a malformed string is a red error box
+// where a step should be. Escaping is easy to get wrong by hand, and nothing
+// else in this suite would notice.
+console.log('=== 9. Substitution LaTeX renders ===');
+{
+  const { default: katex } = await import('katex');
+  for (const [input] of CASES) {
+    const parsed = parseRecurrence(input);
+    if (parsed.error) continue;
+    const { formulas = [] } = solveBySubstitution(parsed);
+    const broken = [];
+    for (const f of formulas) {
+      try {
+        katex.renderToString(f.latex, { throwOnError: true, displayMode: true });
+      } catch (e) {
+        broken.push(`${f.latex} → ${e.message.split('\n')[0]}`);
+      }
+    }
+    checkThat(`LaTeX renders  ${input}`, broken.length === 0, broken.join(' // '));
   }
 }
 

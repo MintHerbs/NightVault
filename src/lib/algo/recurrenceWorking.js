@@ -32,6 +32,16 @@ const times = (coef, body) => (Math.abs(coef - 1) < 1e-9 ? body : `${num(coef)}�
 /** n^q using the same formatting as every other power in the app: n, n², n^0.58. */
 const powerOfN = q => formatGrowth(polylog(q, 0));
 
+/**
+ * How many levels a subtract recurrence has. b = 1 is by far the common case
+ * and "n/1 levels" reads as a rendering bug rather than as arithmetic.
+ */
+const levelsOf = b => (b === 1 ? 'n' : `n/${b}`);
+/** The same count as an exponent, bracketed only when it is a fraction. */
+const levelsExpOf = b => (b === 1 ? 'n' : `(n/${b})`);
+/** The "·b" in f(n − k·b), dropped when b = 1 for the same reason. */
+const stepOf = b => (b === 1 ? '' : `·${b}`);
+
 // ---------------------------------------------------------------------------
 // Divide and conquer: the level sum is geometric in ρ = a/b^q
 // ---------------------------------------------------------------------------
@@ -128,11 +138,11 @@ export function chainWorking(parsed, series) {
   const q = d.exp;
   const r = d.logExp;
   const c = d.coef;
-  const levels = b === 1 ? 'n' : `n/${b}`;
+  const levels = levelsOf(b);
   const lines = [];
 
   lines.push(`Every level holds one node, so the total is a plain sum over the ${levels} levels:`);
-  lines.push(`Total = Σ(k=0..${levels}−1) f(n − k${b === 1 ? '' : `·${b}`})`);
+  lines.push(`Total = Σ(k=0..${levels}−1) f(n − k${stepOf(b)})`);
   lines.push(`      = ${renderF(fTerms, arg.symbol('n'), { inSum: true })} + ${renderF(fTerms, arg.minus('n', b), { inSum: true })} + … + ${renderF(fTerms, arg.literal(String(b)))}`);
 
   // Reindexing to count upward is what turns it into a textbook identity.
@@ -196,13 +206,14 @@ export function exponentialWorking(parsed, base, growth) {
 
   if (single) {
     const a = recTerms[0].coef;
-    lines.push(`Level k holds ${num(a)}^k nodes, and the depth is n/${b}.`);
-    lines.push(`Total = Σ(k=0..n/${b}) ${num(a)}^k · f(n − k·${b})`);
+    const levels = levelsOf(b);
+    lines.push(`Level k holds ${num(a)}^k nodes, and the depth is ${levels}.`);
+    lines.push(`Total = Σ(k=0..${levels}) ${num(a)}^k · f(n − k${stepOf(b)})`);
     lines.push(`Every f value is at most f(n) = ${fText}, so the node count sets the order:`);
     lines.push(`  Σ(k=0..m) ${num(a)}^k = (${num(a)}^(m+1) − 1)/(${num(a)} − 1) = Θ(${num(a)}^m)`);
-    lines.push(`With m = n/${b}:  = Θ(${num(a)}^(n/${b}))`);
+    lines.push(`With m = ${levels}:  = Θ(${num(a)}^${levelsExpOf(b)})`);
     if (b > 1) {
-      lines.push(`  ${num(a)}^(n/${b}) = (${num(a)}^(1/${b}))^n = ${num(base)}^n`);
+      lines.push(`  ${num(a)}^${levelsExpOf(b)} = (${num(a)}^(1/${b}))^n = ${num(base)}^n`);
     }
     lines.push(`      = ${theta(growth)}`);
     return lines;
