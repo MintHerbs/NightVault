@@ -450,6 +450,34 @@ function wrap(a, latex) {
   return latex ? `\\left(${a.latex}\\right)` : `(${a.text})`;
 }
 
+/**
+ * Is there an operator loose at the top level, so that a coefficient written in
+ * front of this would bind to only part of it? Operators nested inside brackets
+ * are already grouped, so log(n−1) counts as one atom while n−1 does not.
+ */
+function hasLooseOperator(body) {
+  let depth = 0;
+  for (const ch of body) {
+    if (ch === '(' || ch === '{') depth += 1;
+    else if (ch === ')' || ch === '}') depth -= 1;
+    else if (depth === 0 && '+-−/ '.includes(ch)) return true;
+  }
+  return false;
+}
+
+/**
+ * A count or coefficient applied to an already-rendered f value. The brackets
+ * are not decoration: writing 2·f(n−1) as "2·n−1" states a different quantity
+ * from 2(n−1), and "16n/4" can be read as (16n)/4. They come off when the body
+ * is a single atom, so this still gives "2·1", "4·n²" and "3·log(n−1)".
+ */
+export function scaleBy(mult, body, { latex = false } = {}) {
+  if (Math.abs(mult - 1) < EPS) return body;
+  const dot = latex ? '\\cdot ' : '·';
+  if (!hasLooseOperator(body)) return `${num(mult)}${dot}${body}`;
+  return latex ? `${num(mult)}${dot}\\left(${body}\\right)` : `${num(mult)}${dot}(${body})`;
+}
+
 /** Render a full f(argument), e.g. renderF(terms, arg.minus('n', 2)) -> "(n−2)²". */
 export function renderF(terms, a, { latex = false, inSum = false } = {}) {
   const parts = terms.map((t, idx) => {

@@ -23,6 +23,7 @@ import {
   bigO,
   num,
   renderF,
+  scaleBy,
   arg,
   divideLevelSum,
   sumSubtractSeries,
@@ -154,8 +155,9 @@ function divideTree(parsed) {
 /** "4·(n−2)" for a level of 4 nodes, but just "4" when each costs a constant. */
 function levelCostText(count, fAtLevel) {
   if (count === 1) return fAtLevel;
+  // count × 1 is just the count, which reads better than "4·1".
   if (fAtLevel === '1') return String(count);
-  return `${count}·${fAtLevel}`;
+  return scaleBy(count, fAtLevel);
 }
 
 /**
@@ -451,14 +453,22 @@ function branchingTree(parsed) {
     costOf: s => renderF(fTerms, sizeArg(s.shift)),
   });
 
+  // Several shifts means one row holds several different sizes, which the tree
+  // now shows node by node. Claiming "2 × f(n−1)" for a row that really holds
+  // f(n−1) + f(n−2) would contradict the drawing, so state it as the bound it
+  // is: b is the smallest shift and f grows with n, so f(n−k·b) is the largest
+  // value on the row.
+  const mixedSizes = recTerms.length > 1;
   const totalBranch = recTerms.reduce((s, t) => s + t.coef, 0);
   const annotations = [];
   for (let k = 0; k < levelsShown; k++) {
     const count = Math.round(Math.pow(totalBranch, k));
+    const fHere = renderF(fTerms, k === 0 ? arg.symbol('n') : arg.minus('n', b * k));
+    const bounded = mixedSizes && k > 0;
     annotations.push({
       depth: k,
-      countText: `${count} × ${renderF(fTerms, k === 0 ? arg.symbol('n') : arg.minus('n', b * k))}`,
-      costText: levelCostText(count, renderF(fTerms, k === 0 ? arg.symbol('n') : arg.minus('n', b * k))),
+      countText: bounded ? `${count} nodes` : `${count} × ${fHere}`,
+      costText: bounded ? `≤ ${levelCostText(count, fHere)}` : levelCostText(count, fHere),
     });
   }
 

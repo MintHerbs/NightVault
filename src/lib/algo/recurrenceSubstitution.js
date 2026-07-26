@@ -20,6 +20,7 @@ import {
   bigO,
   num,
   renderF,
+  scaleBy,
   arg,
   divideLevelSum,
   sumSubtractSeries,
@@ -36,34 +37,6 @@ import {
 const SUBSCRIPT = { 0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉' };
 const sub = v => String(v).split('').map(c => SUBSCRIPT[c] ?? c).join('');
 const logOf = (b, x = 'n') => `log${sub(num(b))}(${x})`;
-
-/**
- * Is there an operator loose at the top level, so that a coefficient written in
- * front of this would bind to only part of it? Operators nested inside brackets
- * are already grouped, so log(n−1) counts as one atom while n−1 does not.
- */
-function hasLooseOperator(body) {
-  let depth = 0;
-  for (const ch of body) {
-    if (ch === '(' || ch === '{') depth += 1;
-    else if (ch === ')' || ch === '}') depth -= 1;
-    else if (depth === 0 && '+-−/ '.includes(ch)) return true;
-  }
-  return false;
-}
-
-/**
- * A coefficient applied to an f value. The brackets are not decoration: writing
- * 2·f(n−1) as "2n − 1" states a different quantity from 2(n−1), and "16n/4"
- * can be read as (16n)/4. They come off when the body is a single atom, so this
- * still gives "2·1" and "4·n²".
- */
-function scaleBy(mult, body, { latex = false } = {}) {
-  if (Math.abs(mult - 1) < 1e-9) return body;
-  const dot = latex ? '\\cdot ' : '·';
-  if (!hasLooseOperator(body)) return `${num(mult)}${dot}${body}`;
-  return latex ? `${num(mult)}${dot}\\left(${body}\\right)` : `${num(mult)}${dot}(${body})`;
-}
 
 /**
  * @param {Object} parsed output of parseRecurrence
