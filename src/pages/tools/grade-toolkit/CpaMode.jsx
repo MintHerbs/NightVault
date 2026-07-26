@@ -1,11 +1,7 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
 import { gradeForMark, toneForMark } from './gradeScale'
 import styles from './CpaMode.module.css'
 
-// Credit weightings preserved from the original CPA calculator:
-//   modules carry 12 credits, the final-year project carries 18,
-//   and each year is scaled ×1 / ×3 / ×5.
 const MODULE_CREDITS = 12
 const PROJECT_CREDITS = 18
 
@@ -17,29 +13,30 @@ const YEARS = [
 
 const newRow = () => ({ name: '', percentage: '' })
 
-export default function CpaMode({ reduceMotion }) {
+export default function CpaMode() {
   const [rowsByYear, setRowsByYear] = useState({
     year1: [newRow()],
     year2: [newRow()],
     year3: [newRow()],
   })
   const [projectMark, setProjectMark] = useState('')
-  const [activeYear, setActiveYear] = useState('year1')
 
   const updateRow = (yearId, index, field, value) => {
-    setRowsByYear(prev => {
-      const rows = [...prev[yearId]]
+    setRowsByYear(previous => {
+      const rows = [...previous[yearId]]
       rows[index] = { ...rows[index], [field]: value }
-      return { ...prev, [yearId]: rows }
+      return { ...previous, [yearId]: rows }
     })
   }
 
   const addRow = yearId => {
-    setRowsByYear(prev => ({ ...prev, [yearId]: [...prev[yearId], newRow()] }))
+    setRowsByYear(previous => ({
+      ...previous,
+      [yearId]: [...previous[yearId], newRow()],
+    }))
   }
 
-  // Sum of (mark × credits × yearWeight) and the matching weighted-credit total.
-  const tally = (rows, weight, includeProject) => {
+  const tally = (rows, weight, includeProject = false) => {
     let score = 0
     let credits = 0
 
@@ -51,76 +48,49 @@ export default function CpaMode({ reduceMotion }) {
       }
     }
 
-    for (const row of rows) {
+    rows.forEach(row => {
       const mark = parseFloat(row.percentage)
-      if (Number.isNaN(mark)) continue
+      if (Number.isNaN(mark)) return
       score += mark * MODULE_CREDITS * weight
       credits += MODULE_CREDITS * weight
-    }
+    })
 
     return { score, credits }
   }
 
   const perYear = YEARS.map(year => {
-    const { score, credits } = tally(
-      rowsByYear[year.id],
-      year.weight,
-      year.hasProject
-    )
-    const lpa = credits > 0 ? score / credits : 0
-    return { ...year, score, credits, lpa }
+    const totals = tally(rowsByYear[year.id], year.weight, year.hasProject)
+    return {
+      ...year,
+      ...totals,
+      lpa: totals.credits > 0 ? totals.score / totals.credits : 0,
+    }
   })
 
-  const totalScore = perYear.reduce((acc, y) => acc + y.score, 0)
-  const totalCredits = perYear.reduce((acc, y) => acc + y.credits, 0)
+  const totalScore = perYear.reduce((sum, year) => sum + year.score, 0)
+  const totalCredits = perYear.reduce((sum, year) => sum + year.credits, 0)
   const cpa = totalCredits > 0 ? totalScore / totalCredits : 0
 
-  const activeIndex = YEARS.findIndex(y => y.id === activeYear)
-  const year = YEARS[activeIndex]
-  const activeLpa = perYear[activeIndex].lpa
+  const markLabel = mark => {
+    if (mark === '' || Number(mark) === 0) return `${mark || 0}%`
+    return `${mark}%: ${gradeForMark(mark)}`
+  }
 
-  const renderMarkRow = (mark, onMark, name, onName, isProject = false) => {
+  const renderMarkControl = (mark, onChange, label) => {
     const tone = toneForMark(mark)
     return (
-      <div className={styles.row}>
-        {isProject ? (
-          <span className={styles.projectTag}>Final Year Project</span>
-        ) : (
-          <input
-            type="text"
-            value={name}
-            placeholder="Module (optional)"
-            onChange={e => onName(e.target.value)}
-            className={styles.nameInput}
-          />
-        )}
-
+      <div className={styles.markControl}>
         <input
           type="range"
           min="0"
           max="100"
           value={Number(mark) || 0}
-          onChange={e => onMark(e.target.value)}
+          onChange={event => onChange(event.target.value)}
           className={`${styles.slider} ${styles[`slider_${tone}`]}`}
-          aria-label="Mark percentage"
+          aria-label={label}
         />
-
-        <div className={styles.markField}>
-          <input
-            type="number"
-            min="0"
-            max="100"
-            inputMode="numeric"
-            value={mark}
-            placeholder="0"
-            onChange={e => onMark(e.target.value)}
-            className={styles.markInput}
-          />
-          <span className={styles.markSuffix}>%</span>
-        </div>
-
-        <span className={`${styles.gradeChip} ${styles[`chip_${tone}`]}`}>
-          {gradeForMark(mark)}
+        <span className={`${styles.markLabel} ${styles[`label_${tone}`]}`}>
+          {markLabel(mark)}
         </span>
       </div>
     )
@@ -128,59 +98,62 @@ export default function CpaMode({ reduceMotion }) {
 
   return (
     <div className={styles.mode}>
-      <p className={styles.hint}>
-        <strong>LPA</strong> is one year; <strong>CPA</strong> is cumulative
-        (years weighted&nbsp;×1&nbsp;/&nbsp;×3&nbsp;/&nbsp;×5). Fill in every
-        module for accuracy.
-      </p>
+      {/* <div className={styles.introduction}>
+        <p>
+          <strong>You know your marks and want to see what your future CPA may
+          look like</strong>
+        </p>
+        <p>
+          <strong>LPA</strong> can be considered to be your performance for
+          that year only.
+        </p>
+        <p>
+          <strong>CPA</strong> is cumulative, meaning the previous year(s) will
+          affect your current CPA. It updates as you enter marks.
+        </p>
+        <p>Weightages are Year 1 ×1, Year 2 ×3, and Year 3 ×5.</p>
+        <p>
+          For the highest accuracy, enter marks for <strong>all</strong> your
+          modules.
+        </p>
+      </div> */}
 
-      {/* Year tabs - only the active year is shown, so the page stays short. */}
-      <div className={styles.yearTabs} role="tablist" aria-label="Year">
-        {YEARS.map(y => {
-          const selected = y.id === activeYear
-          return (
-            <button
-              key={y.id}
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              onClick={() => setActiveYear(y.id)}
-              className={`${styles.yearTab} ${selected ? styles.yearTabActive : ''}`}
-            >
-              {selected && !reduceMotion && (
-                <motion.span
-                  layoutId="yearTabIndicator"
-                  className={styles.yearTabIndicator}
-                  transition={{ duration: 0.3, ease: [0.2, 0, 0, 1] }}
-                />
+      {perYear.map(year => (
+        <section className={styles.yearCard} key={year.id}>
+          <div className={styles.yearHeader}>
+            <h2>{year.label}</h2>
+            <div className={styles.badges}>
+              <span>LPA: {year.lpa.toFixed(2)}</span>
+              <span>CPA: {cpa.toFixed(2)}</span>
+            </div>
+          </div>
+
+          {year.hasProject && (
+            <div className={styles.row}>
+              <span className={styles.projectTag}>Final Year Project</span>
+              {renderMarkControl(
+                projectMark,
+                setProjectMark,
+                'Final Year Project mark'
               )}
-              <span className={styles.yearTabLabel}>
-                {y.label} <em>×{y.weight}</em>
-              </span>
-            </button>
-          )
-        })}
-      </div>
-
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.section
-          key={activeYear}
-          className={styles.yearCard}
-          initial={reduceMotion ? false : { opacity: 0, x: 8 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={reduceMotion ? undefined : { opacity: 0, x: -8 }}
-          transition={{ duration: 0.18 }}
-        >
-          {year.hasProject &&
-            renderMarkRow(projectMark, setProjectMark, null, null, true)}
+            </div>
+          )}
 
           {rowsByYear[year.id].map((row, index) => (
-            <div key={index}>
-              {renderMarkRow(
+            <div className={styles.row} key={index}>
+              <input
+                type="text"
+                value={row.name}
+                placeholder="Module Name"
+                onChange={event =>
+                  updateRow(year.id, index, 'name', event.target.value)
+                }
+                className={styles.nameInput}
+              />
+              {renderMarkControl(
                 row.percentage,
                 value => updateRow(year.id, index, 'percentage', value),
-                row.name,
-                value => updateRow(year.id, index, 'name', value)
+                `${year.label} module ${index + 1} mark`
               )}
             </div>
           ))}
@@ -190,21 +163,13 @@ export default function CpaMode({ reduceMotion }) {
             onClick={() => addRow(year.id)}
             className={styles.addButton}
           >
-            + Add module
+            + Add Module
           </button>
-        </motion.section>
-      </AnimatePresence>
+        </section>
+      ))}
 
       <div className={styles.summary}>
-        <div className={styles.summaryStat}>
-          <span className={styles.summaryLabel}>{year.label} LPA</span>
-          <span className={styles.summaryLpa}>{activeLpa.toFixed(2)}</span>
-        </div>
-        <div className={styles.summaryDivider} />
-        <div className={styles.summaryStat}>
-          <span className={styles.summaryLabel}>Projected CPA</span>
-          <span className={styles.summaryValue}>{cpa.toFixed(2)}</span>
-        </div>
+        <p>CPA: {cpa.toFixed(2)}</p>
       </div>
     </div>
   )
