@@ -24,7 +24,7 @@ const cn = (...classes) => classes.filter(Boolean).join(' ');
 
 function getGitColor(gitStatus) {
   if (gitStatus === 'untracked') return '#22c55e';
-  if (gitStatus === 'modified') return '#EA6C0A';
+  if (gitStatus === 'modified') return 'var(--color-accent-alt)';
   if (gitStatus === 'deleted') return '#ef4444';
   return undefined;
 }

@@ -103,7 +103,7 @@ export default function FlagConfirmDialog({ open, onClose, onConfirm, isFlagged 
                 tapScale={0.98}
               >
                 Cancel
-                <RippleButtonRipples color="rgba(255, 255, 255, 0.2)" />
+                <RippleButtonRipples color="rgba(var(--color-fg-rgb), 0.2)" />
               </RippleButton>
               <RippleButton 
                 className={isFlagged ? styles.unflagBtn : styles.flagBtn}
@@ -112,7 +112,7 @@ export default function FlagConfirmDialog({ open, onClose, onConfirm, isFlagged 
                 tapScale={0.98}
               >
                 {isFlagged ? 'Unflag Post' : 'Flag Post'}
-                <RippleButtonRipples color="rgba(255, 255, 255, 0.3)" />
+                <RippleButtonRipples color="rgba(var(--color-fg-rgb), 0.3)" />
               </RippleButton>
             </div>
           </motion.div>

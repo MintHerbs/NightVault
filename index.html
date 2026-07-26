@@ -8,6 +8,36 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nexus</title>
+    <script>
+      // Apply the stored theme before paint (T-062) — otherwise there's a
+      // flash of the default theme every load while React boots and
+      // src/hooks/useTheme.jsx's effect runs. Keep the fallback values here
+      // in sync with DEFAULT_COLOR_THEME/DEFAULT_MODE in that file.
+      (function () {
+        try {
+          var colorTheme = localStorage.getItem('theme-color') || 'hub';
+          var mode = localStorage.getItem('theme-mode') || 'dark';
+          var resolvedMode = mode === 'system'
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : mode;
+          document.documentElement.dataset.colorTheme = colorTheme;
+          document.documentElement.dataset.mode = resolvedMode;
+          // A custom colour has no CSS block — apply its cached derived
+          // tokens inline. ThemeProvider re-derives and re-writes these on
+          // mount, so a stale cache self-corrects within one frame.
+          if (colorTheme === 'custom') {
+            var cached = JSON.parse(localStorage.getItem('theme-custom-tokens') || 'null');
+            if (cached) {
+              for (var token in cached) {
+                document.documentElement.style.setProperty(token, cached[token]);
+              }
+            }
+          }
+        } catch (e) {
+          // localStorage unavailable — CSS :root fallback (hub/dark) applies.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

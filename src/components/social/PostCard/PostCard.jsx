@@ -316,7 +316,7 @@ const PostCard = forwardRef(function PostCard({ post, sessionId, onVote, onFlag,
                 tapScale={0.95}
               >
                 Save
-                <RippleButtonRipples color="rgba(255, 255, 255, 0.3)" />
+                <RippleButtonRipples color="rgba(var(--color-fg-rgb), 0.3)" />
               </RippleButton>
             </div>
           </motion.div>
@@ -349,7 +349,7 @@ const PostCard = forwardRef(function PostCard({ post, sessionId, onVote, onFlag,
                 tapScale={0.95}
               >
                 Delete
-                <RippleButtonRipples color="rgba(255, 255, 255, 0.3)" />
+                <RippleButtonRipples color="rgba(var(--color-fg-rgb), 0.3)" />
               </RippleButton>
             </div>
           </motion.div>
@@ -394,7 +394,7 @@ const PostCard = forwardRef(function PostCard({ post, sessionId, onVote, onFlag,
                 tapScale={0.98}
               >
                 {opt}
-                <RippleButtonRipples color="rgba(255, 163, 26, 0.3)" />
+                <RippleButtonRipples color="rgba(var(--color-accent-rgb), 0.3)" />
               </RippleButton>
             ))}
 

@@ -12,7 +12,7 @@
 
 .instruction {
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--color-fg-rgb), 0.5);
   text-align: center;
   line-height: 1.6;
   margin: 0;
@@ -21,8 +21,8 @@
 
 .codeBlock {
   width: 100%;
-  background: #0a0a0a;
-  border: 1px solid #222;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -32,8 +32,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid #222;
+  background: rgba(var(--color-fg-rgb), 0.02);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .codeLabel {
@@ -46,7 +46,7 @@
 .codeContent {
   font-family: monospace;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--color-fg-rgb), 0.85);
   white-space: pre-wrap;
   padding: 16px;
   max-height: 320px;
@@ -65,23 +65,23 @@
 .copyButton {
   padding: 6px 14px;
   background-color: transparent;
-  color: #ffa31a;
+  color: var(--color-accent);
   font-size: 12px;
   font-weight: 500;
-  border: 1px solid #ffa31a;
+  border: 1px solid var(--color-accent);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .copyButton:hover {
-  background-color: rgba(255, 163, 26, 0.15);
+  background-color: rgba(var(--color-accent-rgb), 0.15);
 }
 
 .nextButton {
   padding: 10px 20px;
-  background-color: #ffa31a;
-  color: #ffffff;
+  background-color: var(--color-accent);
+  color: var(--color-text);
   font-size: 14px;
   font-weight: 500;
   border: none;
@@ -91,7 +91,7 @@
 }
 
 .nextButton:hover {
-  background-color: #e68a00;
+  background-color: var(--color-accent-hover);
 }
 
 .nextButton:active,
@@ -102,7 +102,7 @@
 .backButton {
   padding: 8px 16px;
   background-color: transparent;
-  color: #ffa31a;
+  color: var(--color-accent);
   font-size: 14px;
   font-weight: 500;
   border: none;
@@ -111,14 +111,14 @@
 }
 
 .backButton:hover {
-  color: #e68a00;
+  color: var(--color-accent-hover);
   text-decoration: underline;
 }
 
 .title {
   font-size: clamp(2.2rem, 5vw, 3.8rem);
   font-weight: 700;
-  color: #ffa31a;
+  color: var(--color-accent);
   margin: 0;
   min-height: 1.2em;
   display: flex;
@@ -129,7 +129,7 @@
 .subtitle {
   font-size: clamp(0.9rem, 2vw, 1.15rem);
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(var(--color-fg-rgb), 0.55);
   margin: 0;
   min-height: 1.5em;
   display: flex;

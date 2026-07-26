@@ -125,7 +125,7 @@ export default function ComponentShowcase() {
               onClick={() => success('Action completed successfully!')}
             >
               Show Success Toast
-              <RippleButtonRipples color="rgba(255, 255, 255, 0.3)" />
+              <RippleButtonRipples color="rgba(var(--color-fg-rgb), 0.3)" />
             </RippleButton>
             
             <RippleButton
@@ -133,7 +133,7 @@ export default function ComponentShowcase() {
               onClick={() => error('Something went wrong!')}
             >
               Show Error Toast
-              <RippleButtonRipples color="rgba(255, 255, 255, 0.3)" />
+              <RippleButtonRipples color="rgba(var(--color-fg-rgb), 0.3)" />
             </RippleButton>
             
             <RippleButton
@@ -141,7 +141,7 @@ export default function ComponentShowcase() {
               onClick={() => info('Here is some information')}
             >
               Show Info Toast
-              <RippleButtonRipples color="rgba(255, 255, 255, 0.3)" />
+              <RippleButtonRipples color="rgba(var(--color-fg-rgb), 0.3)" />
             </RippleButton>
             
             <RippleButton
@@ -149,7 +149,7 @@ export default function ComponentShowcase() {
               onClick={() => warning('Please be careful!')}
             >
               Show Warning Toast
-              <RippleButtonRipples color="rgba(255, 255, 255, 0.3)" />
+              <RippleButtonRipples color="rgba(var(--color-fg-rgb), 0.3)" />
             </RippleButton>
           </div>
         </motion.section>

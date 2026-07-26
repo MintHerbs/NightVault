@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import * as Popover from '@radix-ui/react-popover'
 import {
@@ -13,6 +13,7 @@ import {
   subfoldersForModule, filesForFolder, rootFilesForModule, segmentToSubfolder,
 } from '../../lib/notesApi'
 import { noteRoute } from '../../components/layout/Sidebar/modules'
+import { prefetchNote } from '../../lib/noteCache'
 import styles from './NotesBrowserPage.module.css'
 
 /**
@@ -86,9 +87,45 @@ export default function NotesBrowserPage() {
     else navigate('/home')
   }
 
+  // Opening a note costs a Supabase round trip plus, for a maths note, the
+  // KaTeX chunk. Both start on hover instead of on click, so by the time the
+  // reader mounts the content is usually already in hand.
+  //
+  // The delay matters: a note's `content_md` is the whole document (the
+  // largest here is ~380 KB), so firing on raw mouseenter meant a mouse
+  // sweeping down a listing pulled every note in the folder — 600 KB for one
+  // idle gesture. HOVER_INTENT_MS is long enough that only a deliberate pause
+  // on a row triggers the fetch, short enough to still beat the click.
+  const HOVER_INTENT_MS = 120
+  const warmTimer = useRef(null)
+
+  const cancelWarm = () => {
+    if (warmTimer.current) clearTimeout(warmTimer.current)
+    warmTimer.current = null
+  }
+
+  const warmNote = (path) => () => {
+    cancelWarm()
+    warmTimer.current = setTimeout(() => {
+      Promise.all([
+        prefetchNote(moduleId, path),
+        // Importing the renderer also pulls in the reader's chunk, which the
+        // route would otherwise only start fetching after the click.
+        import('../../components/markdown/MarkdownRenderer'),
+      ])
+        .then(([note, renderer]) => renderer.prefetchKatex(note?.contentMd))
+        .catch(() => {})
+    }, HOVER_INTENT_MS)
+  }
+
+  // A pending prefetch must not outlive the page.
+  useEffect(() => cancelWarm, [])
+
   const fileItem = (f) => ({
     kind: 'file', key: f.path, name: f.name, date: f.updatedAt,
     onOpen: () => navigate(noteRoute(moduleId, f.path)),
+    onWarm: warmNote(f.path),
+    onWarmCancel: cancelWarm,
   })
 
   const items = useMemo(() => {
@@ -235,7 +272,13 @@ export default function NotesBrowserPage() {
               </div>
             ) : (
               displayItems.map((item) => (
-                <div key={item.key} className={styles.row} onClick={item.onOpen}>
+                <div
+                  key={item.key}
+                  className={styles.row}
+                  onClick={item.onOpen}
+                  onMouseEnter={item.onWarm}
+                  onMouseLeave={item.onWarmCancel}
+                >
                   <div className={styles.cellName}>
                     <RowIcon kind={item.kind} />
                     <span className={styles.name}>{item.name}</span>
@@ -253,7 +296,13 @@ export default function NotesBrowserPage() {
               </div>
             ) : (
               displayItems.map((item) => (
-                <div key={item.key} className={styles.card} onClick={item.onOpen}>
+                <div
+                  key={item.key}
+                  className={styles.card}
+                  onClick={item.onOpen}
+                  onMouseEnter={item.onWarm}
+                  onMouseLeave={item.onWarmCancel}
+                >
                   <RowIcon kind={item.kind} />
                   <span className={styles.cardName} title={item.name}>{item.name}</span>
                 </div>

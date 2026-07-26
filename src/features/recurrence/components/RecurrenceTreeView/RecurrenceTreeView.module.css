@@ -4,8 +4,8 @@
   position: relative;
   width: 100%;
   height: 100%;
-  background: var(--color-surface, #0a0a0a);
-  border: 1px solid var(--color-border, #1f1f1f);
+  background: var(--color-surface, var(--color-bg));
+  border: 1px solid var(--color-border, var(--color-border));
   border-radius: 14px;
   overflow: hidden;
   display: flex;
@@ -17,7 +17,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-family: 'JetBrains Mono', monospace;
   font-size: 14px;
 }
@@ -50,10 +50,10 @@
 .zoomButton {
   width: 36px;
   height: 36px;
-  background-color: rgba(15, 15, 15, 0.9);
-  border: 1px solid #333;
+  background-color: rgba(var(--color-bg-rgb), 0.9);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  color: #e2e8f0;
+  color: var(--color-text);
   font-size: 20px;
   font-weight: 600;
   font-family: 'JetBrains Mono', monospace;
@@ -66,9 +66,9 @@
 }
 
 .zoomButton:hover {
-  border-color: #ffa31a;
-  background-color: rgba(255, 163, 26, 0.1);
-  box-shadow: 0 0 0 2px rgba(255, 163, 26, 0.2);
+  border-color: var(--color-accent);
+  background-color: rgba(var(--color-accent-rgb), 0.1);
+  box-shadow: 0 0 0 2px rgba(var(--color-accent-rgb), 0.2);
 }
 
 .zoomButton:active {
@@ -76,16 +76,16 @@
 }
 
 .zoomButton:focus-visible {
-  outline: 2px solid #ffa31a;
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
 /* Formula display at bottom */
 .formulaDisplay {
   padding: 12px 16px;
-  background-color: rgba(15, 15, 15, 0.8);
-  border-top: 1px solid #1f1f1f;
-  color: #9ca3af;
+  background-color: rgba(var(--color-bg-rgb), 0.8);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
   font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
   text-align: center;

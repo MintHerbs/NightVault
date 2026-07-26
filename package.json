@@ -13,11 +13,13 @@
     "test:tree": "node src/test/tree/test-library-integration.js && node src/lib/treeLayout.test.js && node src/test/tree/test-fuzz.js",
     "db:migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/db-migrate.mjs",
     "notes:sync-to-disk": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/sync-notes-to-disk.mjs",
+    "images:convert-to-webp": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/convert-images-to-webp.mjs",
     "images:pull-from-supabase": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/pull-images-from-supabase.mjs",
     "images:prune-from-supabase": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/prune-images-from-supabase.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@headlessui/react": "^2.2.10",
     "@milkdown/kit": "^7.21.3",
     "@milkdown/plugin-math": "^7.5.9",
     "@milkdown/react": "^7.21.3",
@@ -51,6 +53,7 @@
     "js-yaml": "^4.1.1",
     "pg": "^8.20.0",
     "postcss": "^8.5.13",
+    "sharp": "^0.33.5",
     "stylelint": "^17.14.1",
     "supabase": "^2.98.2",
     "tailwindcss": "^4.2.4",

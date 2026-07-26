@@ -1,4 +1,4 @@
 hello chum
 
-![image](/notes/img/computer-vision/4.png)
+![image](/notes/img/computer-vision/4.webp)
 

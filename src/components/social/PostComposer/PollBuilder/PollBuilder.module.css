@@ -13,9 +13,9 @@
 .input {
   flex: 1;
   width: 100%;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.88);
+  background: rgba(var(--color-fg-rgb), 0.035);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.08);
+  color: rgba(var(--color-fg-rgb), 0.88);
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 0.86rem;
@@ -33,7 +33,7 @@
 .addBtn {
   align-self: flex-start;
   background: transparent;
-  color: #ffb84d;
+  color: var(--color-accent-bright);
   border: 0;
   padding: 4px 0;
   font-size: 0.78rem;

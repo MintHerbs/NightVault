@@ -87,7 +87,7 @@
 .hexInput {
   flex: 1;
   min-width: 0;
-  background: var(--color-input, rgba(255, 255, 255, 0.05));
+  background: var(--color-input, rgba(var(--color-fg-rgb), 0.05));
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 6px 8px;
@@ -102,7 +102,7 @@
 }
 
 .hexApply {
-  background: var(--color-accent-soft, rgba(255, 163, 26, 0.15));
+  background: var(--color-accent-soft, rgba(var(--color-accent-rgb), 0.15));
   border: 1px solid var(--accent);
   border-radius: 6px;
   padding: 6px 10px;
@@ -113,7 +113,7 @@
 }
 
 .hexApply:hover {
-  background: var(--color-accent-muted, rgba(255, 163, 26, 0.25));
+  background: var(--color-accent-muted, rgba(var(--color-accent-rgb), 0.25));
 }
 
 .hexError {

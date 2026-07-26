@@ -128,7 +128,7 @@ function Edges({ steps, positions }) {
             y1={edge.y1 + 10}
             x2={edge.x2}
             y2={edge.y2 - 10}
-            stroke="rgba(255, 255, 255, 0.2)"
+            style={{ stroke: 'rgba(var(--color-fg-rgb), 0.2)' }}
             strokeWidth={4}
             filter="url(#glow)"
           />
@@ -138,7 +138,7 @@ function Edges({ steps, positions }) {
             y1={edge.y1 + 10}
             x2={edge.x2}
             y2={edge.y2 - 10}
-            stroke="rgba(255, 255, 255, 0.4)"
+            style={{ stroke: 'rgba(var(--color-fg-rgb), 0.4)' }}
             strokeWidth={2}
           />
           {edge.rule && edge.rule !== 'Premise' && (
@@ -194,9 +194,14 @@ function FormulaNodes({ steps, positions, floatOffsets, conclusionId, onNodeDrag
               rx={8}
               ry={8}
               fill="transparent"
-              stroke="#ffa31a"
               strokeWidth={1.5}
-              style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+              style={{
+                // stroke via style, not the SVG attribute — var() only
+                // resolves in CSS declarations (T-062).
+                stroke: 'var(--color-accent)',
+                cursor: isDragging ? 'grabbing' : 'grab',
+                touchAction: 'none',
+              }}
               onMouseDown={(e) => onNodeDragStart(e, step.id)}
               onTouchStart={(e) => onNodeTouchStart(e, step.id)}
             />

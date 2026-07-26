@@ -5,38 +5,38 @@
 }
 
 .nodeRect {
-  fill: #0d0d0d;
-  stroke: #ffa31a;
+  fill: var(--color-bg);
+  stroke: var(--color-accent);
   stroke-width: 2;
-  filter: drop-shadow(0 0 8px rgba(255, 163, 26, 0.6));
+  filter: drop-shadow(0 0 8px rgba(var(--color-accent-rgb), 0.6));
   animation: orangeGlow 4s ease-in-out infinite;
   transition: all 0.3s ease;
 }
 
 @keyframes orangeGlow {
   0%, 100% {
-    filter: drop-shadow(0 0 8px rgba(255, 163, 26, 0.5));
+    filter: drop-shadow(0 0 8px rgba(var(--color-accent-rgb), 0.5));
   }
   50% {
-    filter: drop-shadow(0 0 14px rgba(255, 163, 26, 0.8));
+    filter: drop-shadow(0 0 14px rgba(var(--color-accent-rgb), 0.8));
   }
 }
 
 .nodeRect.highlighted {
-  stroke: #ffa31a;
+  stroke: var(--color-accent);
   stroke-width: 3;
-  filter: drop-shadow(0 0 20px rgba(255, 163, 26, 1));
+  filter: drop-shadow(0 0 20px rgba(var(--color-accent-rgb), 1));
 }
 
 .keySlot {
-  fill: #0d0d0d;
-  stroke: #2a2a3a;
+  fill: var(--color-bg);
+  stroke: var(--color-border);
   stroke-width: 1;
 }
 
 .pointerSlot {
-  fill: #111128;
-  stroke: #2a2a3a;
+  fill: var(--md-surface-container-low);
+  stroke: var(--color-border);
   stroke-width: 1;
 }
 

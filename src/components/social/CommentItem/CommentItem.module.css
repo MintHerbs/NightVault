@@ -5,7 +5,7 @@
 
 .threadLine {
   width: 2px;
-  background: rgba(255, 163, 26, 0.15);
+  background: rgba(var(--color-accent-rgb), 0.15);
   flex-shrink: 0;
   border-radius: 1px;
 }
@@ -39,7 +39,7 @@
 .text {
   font-size: 0.875rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(var(--color-fg-rgb), 0.88);
   white-space: pre-wrap;
 }
 
@@ -66,7 +66,7 @@
 
 .actionBtn {
   background: transparent;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--color-fg-rgb), 0.5);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -77,16 +77,16 @@
 }
 
 .actionBtn:hover {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--color-fg-rgb), 0.85);
   transform: translateY(-1px);
 }
 
 .activeUp {
-  color: #EA6C0A;
+  color: var(--color-accent-alt);
 }
 
 .activeDown {
-  color: #ffa31a;
+  color: var(--color-accent);
 }
 
 .indentReply {
@@ -103,9 +103,9 @@
 
 .replyTextarea {
   width: 100%;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.9);
+  background: rgba(var(--color-fg-rgb), 0.03);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.1);
+  color: rgba(var(--color-fg-rgb), 0.9);
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 0.85rem;
@@ -116,7 +116,7 @@
 }
 
 .replyTextarea:focus {
-  border-color: rgba(255, 163, 26, 0.4);
+  border-color: rgba(var(--color-accent-rgb), 0.4);
 }
 
 .replyTextarea::placeholder {
@@ -130,9 +130,9 @@
 }
 
 .btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.9);
+  background: rgba(var(--color-fg-rgb), 0.05);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.1);
+  color: rgba(var(--color-fg-rgb), 0.9);
   border-radius: 20px;
   padding: 7px 14px;
   font-size: 0.8rem;
@@ -141,14 +141,14 @@
 }
 
 .btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(var(--color-fg-rgb), 0.08);
   transform: translateY(-1px);
 }
 
 .btnPrimary {
-  background: #EA6C0A;
-  border-color: #EA6C0A;
-  color: white;
+  background: var(--color-accent-alt);
+  border-color: var(--color-accent-alt);
+  color: var(--color-text);
 }
 
 .btnPrimary:hover {
@@ -159,7 +159,7 @@
 .btnDanger {
   background: #dc2626;
   border-color: #dc2626;
-  color: white;
+  color: var(--color-text);
 }
 
 .btnDanger:hover {
@@ -181,7 +181,7 @@
 
 .deleteConfirmText {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(var(--color-fg-rgb), 0.9);
   font-weight: 500;
 }
 

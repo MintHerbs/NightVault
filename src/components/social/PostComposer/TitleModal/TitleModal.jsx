@@ -138,7 +138,7 @@ export default function TitleModal({ open, onClose, onSubmit }) {
                   tapScale={0.98}
                 >
                   Skip & post
-                  <RippleButtonRipples color="rgba(255, 255, 255, 0.2)" />
+                  <RippleButtonRipples color="rgba(var(--color-fg-rgb), 0.2)" />
                 </RippleButton>
                 <RippleButton 
                   className={styles.primaryBtn} 
@@ -147,7 +147,7 @@ export default function TitleModal({ open, onClose, onSubmit }) {
                   tapScale={0.98}
                 >
                   {title.trim() ? 'Post with title' : 'Post without title'}
-                  <RippleButtonRipples color="rgba(255, 255, 255, 0.3)" />
+                  <RippleButtonRipples color="rgba(var(--color-fg-rgb), 0.3)" />
                 </RippleButton>
               </div>
             </form>

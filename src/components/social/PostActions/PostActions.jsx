@@ -54,7 +54,7 @@ export default function PostActions({
             whileHover={{ scale: 1.15, y: -2 }}
             whileTap={{ scale: 0.9 }}
             animate={{ 
-              color: userVote === 'up' ? '#22c55e' : 'rgba(255, 255, 255, 0.6)',
+              color: userVote === 'up' ? '#22c55e' : 'rgba(var(--color-fg-rgb), 0.6)',
               y: userVote === 'up' ? -2 : 0
             }}
             transition={{ duration: 0.2 }}
@@ -67,8 +67,8 @@ export default function PostActions({
           <motion.span 
             className={styles.voteCount}
             key={netScore}
-            initial={{ scale: 1.2, color: netScore > 0 ? '#22c55e' : netScore < 0 ? '#ef4444' : 'rgba(255, 255, 255, 0.8)' }}
-            animate={{ scale: 1, color: 'rgba(255, 255, 255, 0.8)' }}
+            initial={{ scale: 1.2, color: netScore > 0 ? '#22c55e' : netScore < 0 ? '#ef4444' : 'rgba(var(--color-fg-rgb), 0.8)' }}
+            animate={{ scale: 1, color: 'rgba(var(--color-fg-rgb), 0.8)' }}
             transition={{ duration: 0.3 }}
           >
             {netScore}
@@ -84,7 +84,7 @@ export default function PostActions({
             whileHover={{ scale: 1.15, y: 2 }}
             whileTap={{ scale: 0.9 }}
             animate={{ 
-              color: userVote === 'down' ? '#ef4444' : 'rgba(255, 255, 255, 0.6)',
+              color: userVote === 'down' ? '#ef4444' : 'rgba(var(--color-fg-rgb), 0.6)',
               y: userVote === 'down' ? 2 : 0
             }}
             transition={{ duration: 0.2 }}
@@ -124,7 +124,7 @@ export default function PostActions({
           whileTap={{ scale: 0.9 }}
           animate={{ 
             rotate: isFlagged ? [0, -10, 10, -10, 0] : 0,
-            color: isFlagged ? '#ef4444' : 'rgba(255, 255, 255, 0.5)'
+            color: isFlagged ? '#ef4444' : 'rgba(var(--color-fg-rgb), 0.5)'
           }}
           transition={{ duration: 0.3 }}
         >

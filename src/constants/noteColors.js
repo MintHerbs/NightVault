@@ -10,6 +10,9 @@
 // unreadable there.
 
 export const TEXT_COLOR_SWATCHES = [
+  // Literal hex on purpose: these are written into stored note content, so
+  // they must not follow the app theme (T-062) — a themed value would
+  // change the colour of text an author already published.
   { label: 'Orange (brand)', hex: '#ffa31a' },
   { label: 'Orange (brand)', hex: '#EA6C0A' },
   { label: 'Red', hex: '#EF4444' },

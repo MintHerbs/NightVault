@@ -3,6 +3,7 @@ import { BrowserRouter, useLocation } from 'react-router-dom'
 import { createContext, useRef, useState, Suspense, useEffect } from 'react'
 import { usePresence } from './hooks/usePresence'
 import useChat from './hooks/useChat'
+import { ThemeProvider } from './hooks/useTheme'
 import MusicPlayer from './components/layout/MusicPlayer/MusicPlayer'
 import DynamicIsland from './components/layout/DynamicIsland'
 import Sidebar from './components/layout/Sidebar'
@@ -115,9 +116,11 @@ function AppContent() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 

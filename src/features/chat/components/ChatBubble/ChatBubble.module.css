@@ -19,19 +19,19 @@
 
 .bubble {
   padding: 10px 14px;
-  color: #fff;
+  color: var(--color-text);
   font-size: 14px;
   line-height: 1.4;
   word-wrap: break-word;
 }
 
 .ownBubble {
-  background: #1A1A1A;
+  background: var(--md-surface-container-low);
   border-radius: 18px 18px 4px 18px;
 }
 
 .otherBubble {
-  background: #21180d;
+  background: var(--md-surface-container-low);
   border-radius: 18px 18px 18px 4px;
 }
 

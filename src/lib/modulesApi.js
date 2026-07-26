@@ -80,3 +80,31 @@ export async function isModuleHidden(id) {
   if (error) throw new Error(error.message)
   return !!data?.hidden
 }
+
+// ─── Cached read ─────────────────────────────────────────────────────────────
+
+/**
+ * `listModules` with a module-scope stale-while-revalidate cache, for readers
+ * that need the Subject list on a hot path.
+ *
+ * The reader used to make TWO requests against this table per note open — one
+ * `listModules` for the breadcrumb label and one `isModuleHidden` for the
+ * visibility gate — even though the first response already contains the
+ * second's answer, and even though the sidebar had usually just fetched the
+ * same rows. This collapses that to one cached read; the answer is small,
+ * changes only when an admin edits a Subject, and is revalidated in the
+ * background on every call.
+ */
+let cachedModules = null
+
+export function listModulesCached() {
+  const refresh = listModules()
+    .then((rows) => { cachedModules = rows; return rows })
+    .catch((e) => { if (!cachedModules) throw e; return cachedModules })
+  return cachedModules ? Promise.resolve(cachedModules) : refresh
+}
+
+/** Drop the cache so the next read repaints from a fresh fetch. */
+export function invalidateModulesCache() {
+  cachedModules = null
+}

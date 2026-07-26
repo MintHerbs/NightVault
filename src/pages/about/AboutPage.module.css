@@ -234,7 +234,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(var(--color-bg-rgb), 0.8);
   backdrop-filter: blur(4px);
 }
 

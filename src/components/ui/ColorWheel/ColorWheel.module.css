@@ -1,0 +1,139 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.wheel {
+  position: relative;
+  border-radius: 50%;
+  cursor: crosshair;
+  touch-action: none;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px var(--md-outline-variant);
+}
+
+/* Hue around the circumference. The 90deg offset makes 0deg point up, which
+   is what the atan2 maths in ColorWheel.jsx assumes. */
+.wheelHue,
+.wheelSaturation,
+.wheelLightness {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.wheelHue {
+  background: conic-gradient(
+    from 90deg,
+    hsl(0deg 100% 50%),
+    hsl(60deg 100% 50%),
+    hsl(120deg 100% 50%),
+    hsl(180deg 100% 50%),
+    hsl(240deg 100% 50%),
+    hsl(300deg 100% 50%),
+    hsl(0deg 100% 50%)
+  );
+}
+
+/* Saturation falls off toward the centre */
+.wheelSaturation {
+  background: radial-gradient(circle closest-side, #fff, transparent);
+}
+
+.thumb {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.sliderRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.sliderLabel {
+  font-size: 0.72rem;
+  color: var(--md-on-surface-variant);
+  white-space: nowrap;
+}
+
+.slider {
+  flex: 1;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--md-surface-container-high);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--md-surface-container-high);
+  cursor: pointer;
+}
+
+.hexRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.preview {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--md-shape-sm);
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px var(--md-outline-variant);
+}
+
+.hexInput {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-sm);
+  background: var(--md-surface-container);
+  color: var(--md-on-surface);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.hexInput:focus {
+  border-color: var(--md-primary);
+}
+
+.hexInputError {
+  border-color: var(--color-error);
+}
+
+.hexError {
+  width: 100%;
+  font-size: 0.72rem;
+  color: var(--color-error);
+}

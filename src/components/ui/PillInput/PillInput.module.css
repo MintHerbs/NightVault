@@ -4,8 +4,8 @@
   position: relative;
   width: min(680px, 90vw);
   height: 56px;
-  background-color: #0f0f0f;
-  border: 1px solid #222222;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: 9999px;
   padding: 14px 20px;
   display: flex;
@@ -15,8 +15,8 @@
 }
 
 .container:focus-within {
-  border-color: #ffa31a;
-  box-shadow: 0 0 0 2px rgba(255, 163, 26, 0.25);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(var(--color-accent-rgb), 0.25);
 }
 
 .input {
@@ -24,10 +24,10 @@
   background: transparent;
   border: none;
   outline: none;
-  color: #ffffff;
+  color: var(--color-text);
   font-size: 15px;
   font-family: inherit;
-  caret-color: #ffa31a;
+  caret-color: var(--color-accent);
 }
 
 .input::placeholder {
@@ -40,7 +40,7 @@
   height: 32px;
   min-width: 32px;
   min-height: 32px;
-  background-color: #ffa31a;
+  background-color: var(--color-accent);
   border: none;
   border-radius: 50%;
   display: flex;
@@ -53,7 +53,7 @@
 }
 
 .sendButton:hover {
-  background-color: #e68a00;
+  background-color: var(--color-accent-hover);
   transform: scale(1.05);
 }
 
@@ -65,7 +65,7 @@
 .arrow {
   width: 16px;
   height: 16px;
-  color: #ffffff;
+  color: var(--color-text);
 }
 
 /* Scale-in animation for send button */

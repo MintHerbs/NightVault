@@ -38,8 +38,8 @@
   left: 60px;
   top: 50%;
   transform: translateY(-50%);
-  background-color: #1c1c1c;
-  color: #ffffff;
+  background-color: var(--md-surface-container-low);
+  color: var(--color-text);
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 13px;

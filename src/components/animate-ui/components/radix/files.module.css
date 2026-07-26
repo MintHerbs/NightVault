@@ -5,7 +5,7 @@
 }
 
 .highlight {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(var(--color-fg-rgb), 0.05);
   border-radius: 4px;
   pointer-events: none;
 }
@@ -34,7 +34,7 @@
   cursor: pointer;
   font-size: 12px;
   font-family: monospace;
-  color: #cbd5e1;
+  color: var(--color-text);
   transition: color 0.15s ease, background 0.15s ease;
   background: transparent;
   min-width: max-content;
@@ -79,7 +79,7 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background: #222222;
+  background: var(--md-surface-container-low);
 }
 
 .statusLetter {
@@ -90,7 +90,7 @@
 
 :global([data-slot="folder-trigger"]:hover) .row,
 :global([data-slot="motion-highlight-item-container"]:hover) .row {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(var(--color-fg-rgb), 0.05);
 }
 
 :global([data-slot="folder-row"][data-variant="parent"]) {
@@ -110,46 +110,46 @@
 }
 
 :global([data-slot="file-item"][data-variant="tool"]) {
-  color: #EA6C0A;
+  color: var(--color-accent-alt);
 }
 
 :global([data-slot="file-item"][data-variant="package"]) {
-  color: #EA6C0A;
+  color: var(--color-accent-alt);
 }
 
 :global([data-slot="motion-highlight-item-container"]:hover) :global([data-slot="file-item"][data-variant="tool"]) {
-  color: #EA6C0A;
+  color: var(--color-accent-alt);
   background: rgba(234, 108, 10, 0.12);
 }
 
 :global([data-slot="motion-highlight-item-container"]:hover) :global([data-slot="file-item"][data-variant="package"]) {
-  color: #EA6C0A;
+  color: var(--color-accent-alt);
   background: rgba(234, 108, 10, 0.12);
 }
 
 :global([data-slot="motion-highlight-item-container"][data-active="true"]) .row {
-  color: #ffa31a;
-  background: rgba(255, 163, 26, 0.1);
+  color: var(--color-accent);
+  background: rgba(var(--color-accent-rgb), 0.1);
 }
 
 :global([data-slot="motion-highlight-item-container"][data-active="true"]) .row svg {
-  color: #ffa31a;
+  color: var(--color-accent);
 }
 
 :global([data-slot="motion-highlight-item-container"][data-active="true"]) :global([data-slot="file-item"][data-variant="tool"]) {
-  color: #EA6C0A;
+  color: var(--color-accent-alt);
   background: rgba(234, 108, 10, 0.16);
 }
 
 :global([data-slot="motion-highlight-item-container"][data-active="true"]) :global([data-slot="file-item"][data-variant="tool"]) svg {
-  color: #EA6C0A;
+  color: var(--color-accent-alt);
 }
 
 :global([data-slot="motion-highlight-item-container"][data-active="true"]) :global([data-slot="file-item"][data-variant="package"]) {
-  color: #EA6C0A;
+  color: var(--color-accent-alt);
   background: rgba(234, 108, 10, 0.16);
 }
 
 :global([data-slot="motion-highlight-item-container"][data-active="true"]) :global([data-slot="file-item"][data-variant="package"]) svg {
-  color: #EA6C0A;
+  color: var(--color-accent-alt);
 }

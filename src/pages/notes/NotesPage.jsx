@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import NoteReader from '../../components/markdown/NoteReader'
 import Loading from '../../components/ui/Loading'
-import { deriveSubfolder, getNote } from '../../lib/notesApi'
-import { listModules, isModuleHidden } from '../../lib/modulesApi'
+import { deriveSubfolder } from '../../lib/notesApi'
+import { loadNote } from '../../lib/noteCache'
+import { listModulesCached } from '../../lib/modulesApi'
 
 /** "getting-started" / "notes/img-push" → "Getting Started" (last segment, humanised). */
 function humaniseFilename(subpath) {
@@ -31,12 +32,6 @@ function NotesPage() {
   const [content, setContent] = useState('')
   const [status, setStatus] = useState('idle')
   const [modules, setModules] = useState([])
-
-  useEffect(() => {
-    let cancelled = false
-    listModules().then((m) => { if (!cancelled) setModules(m) }).catch(() => {})
-    return () => { cancelled = true }
-  }, [])
 
   const noteKey = useMemo(() => {
     if (!section || !subpath) return null
@@ -68,14 +63,20 @@ function NotesPage() {
 
       setStatus('loading')
       try {
-        const [note, subjectHidden] = await Promise.all([
-          getNote(section, subpath),
-          isModuleHidden(section),
+        // One request for the Subject list (cached across notes — it also
+        // supplies the breadcrumb label below, and carries the `hidden` flag
+        // the visibility gate used to fetch separately) and one for the note,
+        // served instantly from noteCache when the listing prefetched it.
+        const [{ note }, allModules] = await Promise.all([
+          loadNote(section, subpath),
+          listModulesCached(),
         ])
         if (cancelled) return
+        setModules(allModules)
         // A hidden note, or a note under a hidden Subject (T-045 phase C), is
         // treated as absent for public visitors — including by direct URL,
         // not just from the listing.
+        const subjectHidden = !!allModules.find((m) => m.id === section)?.hidden
         if (!note || note.hidden || subjectHidden) {
           setStatus('not_found')
           setContent('')

@@ -14,8 +14,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { MODULE_TOOLS } from '../components/layout/Sidebar/modules'
 import { getIconOptionByName } from '../components/admin/adminIconOptions'
-import { listModules } from '../lib/modulesApi'
+import { listModules, invalidateModulesCache } from '../lib/modulesApi'
 import { listNotes, listNoteFolders, mergeNotesIntoModules } from '../lib/notesApi'
+import { invalidateNote } from '../lib/noteCache'
 
 let lastModules = null
 
@@ -73,7 +74,17 @@ export function useNotesRegistry() {
   return { modules, loading, error, reload: load }
 }
 
-/** Drop the cached registry so the next mount repaints from a fresh fetch. */
+/**
+ * Drop the cached registry so the next mount repaints from a fresh fetch.
+ *
+ * Also clears the reader's note-content and Subject-list caches: every editor
+ * mutation already calls this, and a save that updated the listing but left
+ * the reader serving its own cached copy of the note would be a confusing
+ * half-refresh. (Both caches revalidate in the background anyway, so this is
+ * belt-and-braces, not the only thing keeping them honest.)
+ */
 export function invalidateNotesRegistry() {
   lastModules = null
+  invalidateNote()
+  invalidateModulesCache()
 }

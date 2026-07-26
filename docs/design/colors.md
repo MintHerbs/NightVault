@@ -1,5 +1,16 @@
 # Colors
 
+> **Known stale spot (T-062):** the brand accent below is documented as
+> `#8B5CF6` ("Ghost Purple"). The live default since commit `8ea7614`
+> ("Alternative theme #ffa31a") is `#ffa31a` ("Hub Orange") — Ghost Purple
+> is now one of 8 selectable themes, not the default. See
+> [docs/design.md](../design.md#appearance-system---color-accent--md--per-theme-x-lightdark)
+> for the current, authoritative token/theme system and
+> `src/styles/global.css` for the real values; the specific hex mentions
+> throughout this page haven't all been swept yet — that's bundled with
+> the Phase 2+ retrofit of `colors.js` itself (T-062), since the format
+> changes there too (static hex → CSS var references).
+
 The app is a near-black, purple/orange-accented dark theme. Color tokens
 currently live in **three separate places** — this page is the full
 inventory of all three, because they don't perfectly overlap.

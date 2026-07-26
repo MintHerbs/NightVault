@@ -12,11 +12,11 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #333333;
+  background-color: var(--md-surface-container);
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .dot.active {
-  background-color: #ffa31a;
-  box-shadow: 0 0 6px rgba(255, 163, 26, 0.6);
+  background-color: var(--color-accent);
+  box-shadow: 0 0 6px rgba(var(--color-accent-rgb), 0.6);
 }

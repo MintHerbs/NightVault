@@ -23,7 +23,7 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-muted, #8a8580);
+  color: var(--text-muted, var(--color-text-muted));
   margin: 0 0 20px 0;
 }
 

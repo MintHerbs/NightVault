@@ -6,33 +6,51 @@
 @tailwind utilities;
 
 :root {
-  /* Grok-inspired landing page colors */
-  --color-bg: #000000;
+  /* Pre-JS fallback — mirrors [data-color-theme="hub"][data-mode="dark"]
+     below. Hub Orange is the primary/default theme (T-062), so a first
+     paint before the no-flash script runs looks exactly right. */
   --color-accent: #ffa31a;
-  --color-orange: #EA6C0A;
+  --color-accent-rgb: 255, 163, 26;
+  --color-accent-hover: #dc8300;
+  --color-accent-bright: #ffbc57;
+  --color-accent-alt: #dd5309;
+  /* Legacy alias — was a fixed #EA6C0A for nav group active states, now
+     follows the selected theme via --color-accent-alt (T-062). */
+  --color-orange: var(--color-accent-alt);
+
+  /* Foreground. --color-fg-rgb is the bare "r, g, b" of the text colour,
+     so the app's many rgba(255,255,255,α) washes became
+     rgba(var(--color-fg-rgb), α) and invert with the mode. */
+  --color-fg-rgb: 255, 255, 255;
+  --color-text: #f5f5f4;
+  --color-text-muted: #bfb9b0;
+  --color-bg: #0b0a0a;
+  --color-bg-rgb: 8, 8, 7;
+  --color-surface: #181716;
+  --color-border: #38342e;
+  --color-muted: #6b6357;
   --color-star: #ffffff;
-  --color-muted: #555555;
-  --color-surface: #0f0f0f;
-  --color-border: #222222;
 
   /* Chat colors */
-  --color-chat-own: #1A1A1A;
-  --color-chat-other: #21180d;
+  --color-chat-own: #1b1a18;
+  --color-chat-other: #1c1811;
 
   /* Tree page colors */
   --bg-dark: #0d0d0d;
-  --bg-card: #21180d;
-  --bg-panel: #171109;
-  --bg-controls: #111;
-  --border-subtle: #3a2b19;
+  --bg-card: #1c1812;
+  --bg-panel: #16130e;
+  --bg-controls: #100f0e;
+  --border-subtle: #342b1d;
   --border-highlight: #4f8ef7;
-  --text-primary: #ffffff;
-  --text-muted: #999;
-  --pointer-slot: #302414;
+  --text-primary: #f5f5f4;
+  --text-muted: #bfb9b0;
+  --pointer-slot: #2b2317;
+  /* Fixed data-viz colours — deliberately NOT themed: these encode meaning
+     on the tree/ERD canvases, not brand. See docs/design/colors.md. */
   --accent-blue: #4f8ef7;
   --accent-orange: #ff9f43;
   --accent-green: #26de81;
-  --edge-color: #555;
+  --edge-color: #5f584e;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -53,25 +71,25 @@
   --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   --font-mono: 'Courier New', Courier, monospace;
 
-  /* Material You (M3) — dark scheme, seeded from --color-accent (#ffa31a),
-     with warm neutral surfaces so tonal roles stay on-brand.
-     Consumed by the landing page tool cards; see docs/design/colors.md. */
+  /* Material You (M3) roles — these mirror the generated
+     [data-color-theme="hub"][data-mode="dark"] block below exactly. Keep
+     them in sync if the palette maths changes; see docs/design/colors.md. */
 
   /* Surface container tones — M3 elevation is tonal, not shadow-based */
-  --md-surface-container-low:  #17140f;
-  --md-surface-container:      #1f1a13;
-  --md-surface-container-high: #2b2419;
+  --md-surface-container-low:  #161513;
+  --md-surface-container:      #1e1c1a;
+  --md-surface-container-high: #292724;
 
   /* Primary + tonal container */
   --md-primary:              #ffa31a;  /* same value as --color-accent */
-  --md-on-primary:           #241600;
-  --md-primary-container:    #4a2a00;
-  --md-on-primary-container: #ffd9a3;
+  --md-on-primary:           #000000;
+  --md-primary-container:    #463720;
+  --md-on-primary-container: #f4e6d2;
 
   /* Text on surfaces */
-  --md-on-surface:         #f2eadf;
-  --md-on-surface-variant: #d2c6b5;
-  --md-outline-variant:    #3a3023;
+  --md-on-surface:         #ecebe9;
+  --md-on-surface-variant: #cdc8c1;
+  --md-outline-variant:    #3e3932;
 
   /* State layer opacities — M3 spec values */
   --md-state-hover:   0.08;
@@ -88,6 +106,709 @@
   --md-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
   --md-duration-short:    200ms;  /* Fast band: 150–250ms */
   --md-duration-medium:   350ms;  /* Medium band: 300–500ms */
+}
+
+/* ------------------------------------------------------------------------
+   Appearance system (T-062) — 9 named color themes × {light, dark}, picked
+   via the sidebar avatar's Appearance dialog and applied as
+   [data-color-theme]/[data-mode] attributes on <html> (see
+   src/hooks/useTheme.jsx). The :root block above is the pre-JS fallback and
+   is intentionally identical to [data-color-theme="hub"][data-mode="dark"]
+   — the site's current look (post "Alternative theme #ffa31a") is theme
+   "hub" and stays the default with zero visual regression.
+
+   THESE BLOCKS ARE GENERATED. Every value below comes from
+   derivePalette() in src/lib/theme/palette.js, which is also what runs at
+   runtime when a user picks a custom colour — so presets and custom
+   colours can never drift apart. To change the colour maths, edit that
+   file and re-emit these blocks; don't hand-tune hexes here.
+
+   --color-accent-rgb / --color-fg-rgb are bare "r, g, b" triplets, so
+   components can write rgba(var(--color-accent-rgb), 0.3) for the many
+   translucent washes this app uses and have them follow the theme.
+
+   Neutrals are emitted per-theme, not from one shared light block: M3
+   tints surfaces with a trace of the seed hue, so Hub's light grey is
+   faintly warm where Nebula's is faintly cool. Light surfaces sit at tone
+   92-98 (never #ffffff) and body text at tone ~10, which is what keeps
+   light-mode text from washing out. ------------------------------------ */
+
+[data-color-theme="hub"][data-mode="dark"] {
+  --color-accent: #ffa31a;
+  --color-accent-rgb: 255, 163, 26;
+  --color-accent-hover: #dc8300;
+  --color-accent-bright: #ffbc57;
+  --color-accent-alt: #dd5309;
+  --color-fg-rgb: 255, 255, 255;
+  --color-text: #f5f5f4;
+  --color-text-muted: #bfb9b0;
+  --color-bg: #0b0a0a;
+  --color-bg-rgb: 8, 8, 7;
+  --color-surface: #181716;
+  --color-border: #38342e;
+  --color-muted: #6b6357;
+  --color-star: #ffffff;
+  --bg-dark: #0d0d0d;
+  --bg-card: #1c1812;
+  --bg-panel: #16130e;
+  --bg-controls: #100f0e;
+  --border-subtle: #342b1d;
+  --text-primary: #f5f5f4;
+  --text-muted: #bfb9b0;
+  --pointer-slot: #2b2317;
+  --edge-color: #5f584e;
+  --color-chat-own: #1b1a18;
+  --color-chat-other: #1c1811;
+  --md-primary: #ffa31a;
+  --md-on-primary: #000000;
+  --md-primary-container: #463720;
+  --md-on-primary-container: #f4e6d2;
+  --md-surface-container-low: #161513;
+  --md-surface-container: #1e1c1a;
+  --md-surface-container-high: #292724;
+  --md-on-surface: #ecebe9;
+  --md-on-surface-variant: #cdc8c1;
+  --md-outline-variant: #3e3932;
+}
+[data-color-theme="hub"][data-mode="light"] {
+  --color-accent: #9c691c;
+  --color-accent-rgb: 156, 105, 28;
+  --color-accent-hover: #795116;
+  --color-accent-bright: #d09439;
+  --color-accent-alt: #9e481a;
+  --color-fg-rgb: 27, 26, 24;
+  --color-text: #201f1d;
+  --color-text-muted: #70685c;
+  --color-bg: #fafafa;
+  --color-bg-rgb: 250, 250, 250;
+  --color-surface: #f1f0ef;
+  --color-border: #dad7d2;
+  --color-muted: #81786a;
+  --color-star: #363430;
+  --bg-dark: #f8f7f7;
+  --bg-card: #f1f0ef;
+  --bg-panel: #ecebe9;
+  --bg-controls: #f3f2f1;
+  --border-subtle: #dfdcd8;
+  --text-primary: #201f1d;
+  --text-muted: #70685c;
+  --pointer-slot: #e7e6e4;
+  --edge-color: #b1aaa0;
+  --color-chat-own: #eeedec;
+  --color-chat-other: #f5f5f4;
+  --md-primary: #9c691c;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #f4e8d7;
+  --md-on-primary-container: #433219;
+  --md-surface-container-low: #f5f5f4;
+  --md-surface-container: #f1f0ef;
+  --md-surface-container-high: #ecebe9;
+  --md-on-surface: #1b1a18;
+  --md-on-surface-variant: #544e45;
+  --md-outline-variant: #d1cdc7;
+}
+
+[data-color-theme="ghost"][data-mode="dark"] {
+  --color-accent: #8b5cf6;
+  --color-accent-rgb: 139, 92, 246;
+  --color-accent-hover: #6222f3;
+  --color-accent-bright: #b496f9;
+  --color-accent-alt: #372cf3;
+  --color-fg-rgb: 255, 255, 255;
+  --color-text: #f5f4f5;
+  --color-text-muted: #b5b0bf;
+  --color-bg: #0a0a0b;
+  --color-bg-rgb: 7, 7, 8;
+  --color-surface: #161618;
+  --color-border: #312e38;
+  --color-muted: #5d576b;
+  --color-star: #ffffff;
+  --bg-dark: #0d0d0d;
+  --bg-card: #15121c;
+  --bg-panel: #100e16;
+  --bg-controls: #0f0e10;
+  --border-subtle: #241d34;
+  --text-primary: #f5f4f5;
+  --text-muted: #b5b0bf;
+  --pointer-slot: #1d172b;
+  --edge-color: #534e5f;
+  --color-chat-own: #19181b;
+  --color-chat-other: #15111c;
+  --md-primary: #8b5cf6;
+  --md-on-primary: #000000;
+  --md-primary-container: #2c2046;
+  --md-on-primary-container: #dcd2f4;
+  --md-surface-container-low: #141316;
+  --md-surface-container: #1b1a1e;
+  --md-surface-container-high: #252429;
+  --md-on-surface: #eae9ec;
+  --md-on-surface-variant: #c5c1cd;
+  --md-outline-variant: #36323e;
+}
+[data-color-theme="ghost"][data-mode="light"] {
+  --color-accent: #5222bf;
+  --color-accent-rgb: 82, 34, 191;
+  --color-accent-hover: #431c9c;
+  --color-accent-bright: #6739d0;
+  --color-accent-alt: #211a9e;
+  --color-fg-rgb: 25, 24, 27;
+  --color-text: #1e1d20;
+  --color-text-muted: #625c70;
+  --color-bg: #fafafa;
+  --color-bg-rgb: 250, 250, 250;
+  --color-surface: #efeff1;
+  --color-border: #d5d2da;
+  --color-muted: #716a81;
+  --color-star: #323036;
+  --bg-dark: #f7f7f8;
+  --bg-card: #efeff1;
+  --bg-panel: #eae9ec;
+  --bg-controls: #f2f1f3;
+  --border-subtle: #dad8df;
+  --text-primary: #1e1d20;
+  --text-muted: #625c70;
+  --pointer-slot: #e5e4e7;
+  --edge-color: #a5a0b1;
+  --color-chat-own: #edecee;
+  --color-chat-other: #f5f4f5;
+  --md-primary: #5222bf;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #e0d7f4;
+  --md-on-primary-container: #261943;
+  --md-surface-container-low: #f5f4f5;
+  --md-surface-container: #efeff1;
+  --md-surface-container-high: #eae9ec;
+  --md-on-surface: #19181b;
+  --md-on-surface-variant: #4a4554;
+  --md-outline-variant: #cac7d1;
+}
+
+[data-color-theme="supabase"][data-mode="dark"] {
+  --color-accent: #3ecf8e;
+  --color-accent-rgb: 62, 207, 142;
+  --color-accent-hover: #29a66e;
+  --color-accent-bright: #6fdbab;
+  --color-accent-alt: #2baf53;
+  --color-fg-rgb: 255, 255, 255;
+  --color-text: #f4f5f5;
+  --color-text-muted: #b0bfb8;
+  --color-bg: #0a0b0a;
+  --color-bg-rgb: 7, 8, 8;
+  --color-surface: #161817;
+  --color-border: #2e3834;
+  --color-muted: #576b62;
+  --color-star: #ffffff;
+  --bg-dark: #0d0d0d;
+  --bg-card: #121c17;
+  --bg-panel: #0e1612;
+  --bg-controls: #0e100f;
+  --border-subtle: #1d342a;
+  --text-primary: #f4f5f5;
+  --text-muted: #b0bfb8;
+  --pointer-slot: #172b22;
+  --edge-color: #4e5f58;
+  --color-chat-own: #181b1a;
+  --color-chat-other: #111c18;
+  --md-primary: #3ecf8e;
+  --md-on-primary: #000000;
+  --md-primary-container: #204635;
+  --md-on-primary-container: #d2f4e5;
+  --md-surface-container-low: #131615;
+  --md-surface-container: #1a1e1c;
+  --md-surface-container-high: #242926;
+  --md-on-surface: #e9eceb;
+  --md-on-surface-variant: #c1cdc7;
+  --md-outline-variant: #323e39;
+}
+[data-color-theme="supabase"][data-mode="light"] {
+  --color-accent: #178352;
+  --color-accent-rgb: 23, 131, 82;
+  --color-accent-hover: #11603d;
+  --color-accent-bright: #39d08c;
+  --color-accent-alt: #1a9e42;
+  --color-fg-rgb: 24, 27, 26;
+  --color-text: #1d201f;
+  --color-text-muted: #5c7067;
+  --color-bg: #fafafa;
+  --color-bg-rgb: 250, 250, 250;
+  --color-surface: #eff1f0;
+  --color-border: #d2dad7;
+  --color-muted: #6a8177;
+  --color-star: #303633;
+  --bg-dark: #f7f8f7;
+  --bg-card: #eff1f0;
+  --bg-panel: #e9eceb;
+  --bg-controls: #f1f3f2;
+  --border-subtle: #d8dfdc;
+  --text-primary: #1d201f;
+  --text-muted: #5c7067;
+  --pointer-slot: #e4e7e6;
+  --edge-color: #a0b1a9;
+  --color-chat-own: #eceeed;
+  --color-chat-other: #f4f5f5;
+  --md-primary: #178352;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #d7f4e7;
+  --md-on-primary-container: #194330;
+  --md-surface-container-low: #f4f5f5;
+  --md-surface-container: #eff1f0;
+  --md-surface-container-high: #e9eceb;
+  --md-on-surface: #181b1a;
+  --md-on-surface-variant: #45544d;
+  --md-outline-variant: #c7d1cd;
+}
+
+[data-color-theme="hotpink"][data-mode="dark"] {
+  --color-accent: #ff69b4;
+  --color-accent-rgb: 255, 105, 180;
+  --color-accent-hover: #ff2c95;
+  --color-accent-bright: #ffa6d3;
+  --color-accent-alt: #f73ec9;
+  --color-fg-rgb: 255, 255, 255;
+  --color-text: #f5f4f5;
+  --color-text-muted: #bfb0b8;
+  --color-bg: #0b0a0a;
+  --color-bg-rgb: 8, 7, 8;
+  --color-surface: #181617;
+  --color-border: #382e33;
+  --color-muted: #6b5761;
+  --color-star: #ffffff;
+  --bg-dark: #0d0d0d;
+  --bg-card: #1c1217;
+  --bg-panel: #160e12;
+  --bg-controls: #100e0f;
+  --border-subtle: #341d29;
+  --text-primary: #f5f4f5;
+  --text-muted: #bfb0b8;
+  --pointer-slot: #2b1721;
+  --edge-color: #5f4e57;
+  --color-chat-own: #1b181a;
+  --color-chat-other: #1c1117;
+  --md-primary: #ff69b4;
+  --md-on-primary: #000000;
+  --md-primary-container: #462033;
+  --md-on-primary-container: #f4d2e3;
+  --md-surface-container-low: #161314;
+  --md-surface-container: #1e1a1c;
+  --md-surface-container-high: #292426;
+  --md-on-surface: #ece9eb;
+  --md-on-surface-variant: #cdc1c7;
+  --md-outline-variant: #3e3238;
+}
+[data-color-theme="hotpink"][data-mode="light"] {
+  --color-accent: #bf2270;
+  --color-accent-rgb: 191, 34, 112;
+  --color-accent-hover: #9c1c5c;
+  --color-accent-bright: #d03985;
+  --color-accent-alt: #9e1a7d;
+  --color-fg-rgb: 27, 24, 26;
+  --color-text: #201d1f;
+  --color-text-muted: #705c66;
+  --color-bg: #fafafa;
+  --color-bg-rgb: 250, 250, 250;
+  --color-surface: #f1eff0;
+  --color-border: #dad2d6;
+  --color-muted: #816a75;
+  --color-star: #363033;
+  --bg-dark: #f8f7f7;
+  --bg-card: #f1eff0;
+  --bg-panel: #ece9eb;
+  --bg-controls: #f3f1f2;
+  --border-subtle: #dfd8db;
+  --text-primary: #201d1f;
+  --text-muted: #705c66;
+  --pointer-slot: #e7e4e6;
+  --edge-color: #b1a0a8;
+  --color-chat-own: #eeeced;
+  --color-chat-other: #f5f4f5;
+  --md-primary: #bf2270;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #f4d7e6;
+  --md-on-primary-container: #43192e;
+  --md-surface-container-low: #f5f4f5;
+  --md-surface-container: #f1eff0;
+  --md-surface-container-high: #ece9eb;
+  --md-on-surface: #1b181a;
+  --md-on-surface-variant: #54454d;
+  --md-outline-variant: #d1c7cc;
+}
+
+[data-color-theme="nebula"][data-mode="dark"] {
+  --color-accent: #3b82f6;
+  --color-accent-rgb: 59, 130, 246;
+  --color-accent-hover: #0b5fe9;
+  --color-accent-bright: #76a7f9;
+  --color-accent-alt: #0b9df3;
+  --color-fg-rgb: 255, 255, 255;
+  --color-text: #f4f5f5;
+  --color-text-muted: #b0b6bf;
+  --color-bg: #0a0a0b;
+  --color-bg-rgb: 7, 8, 8;
+  --color-surface: #161718;
+  --color-border: #2e3238;
+  --color-muted: #575f6b;
+  --color-star: #ffffff;
+  --bg-dark: #0d0d0d;
+  --bg-card: #12161c;
+  --bg-panel: #0e1116;
+  --bg-controls: #0e0f10;
+  --border-subtle: #1d2634;
+  --text-primary: #f4f5f5;
+  --text-muted: #b0b6bf;
+  --pointer-slot: #171f2b;
+  --edge-color: #4e555f;
+  --color-chat-own: #18191b;
+  --color-chat-other: #11161c;
+  --md-primary: #3b82f6;
+  --md-on-primary: #000000;
+  --md-primary-container: #202e46;
+  --md-on-primary-container: #d2dff4;
+  --md-surface-container-low: #131416;
+  --md-surface-container: #1a1c1e;
+  --md-surface-container-high: #242629;
+  --md-on-surface: #e9eaec;
+  --md-on-surface-variant: #c1c6cd;
+  --md-outline-variant: #32373e;
+}
+[data-color-theme="nebula"][data-mode="light"] {
+  --color-accent: #225dbf;
+  --color-accent-rgb: 34, 93, 191;
+  --color-accent-hover: #1c4d9c;
+  --color-accent-bright: #3972d0;
+  --color-accent-alt: #1a6d9e;
+  --color-fg-rgb: 24, 25, 27;
+  --color-text: #1d1e20;
+  --color-text-muted: #5c6470;
+  --color-bg: #fafafa;
+  --color-bg-rgb: 250, 250, 250;
+  --color-surface: #efeff1;
+  --color-border: #d2d5da;
+  --color-muted: #6a7281;
+  --color-star: #303236;
+  --bg-dark: #f7f7f8;
+  --bg-card: #efeff1;
+  --bg-panel: #e9eaec;
+  --bg-controls: #f1f2f3;
+  --border-subtle: #d8dadf;
+  --text-primary: #1d1e20;
+  --text-muted: #5c6470;
+  --pointer-slot: #e4e5e7;
+  --edge-color: #a0a6b1;
+  --color-chat-own: #ecedee;
+  --color-chat-other: #f4f5f5;
+  --md-primary: #225dbf;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #d7e2f4;
+  --md-on-primary-container: #192943;
+  --md-surface-container-low: #f4f5f5;
+  --md-surface-container: #efeff1;
+  --md-surface-container-high: #e9eaec;
+  --md-on-surface: #18191b;
+  --md-on-surface-variant: #454b54;
+  --md-outline-variant: #c7cbd1;
+}
+
+[data-color-theme="crimson"][data-mode="dark"] {
+  --color-accent: #df3c3c;
+  --color-accent-rgb: 223, 60, 60;
+  --color-accent-hover: #a91b1b;
+  --color-accent-bright: #e55b5b;
+  --color-accent-alt: #b21d42;
+  --color-fg-rgb: 255, 255, 255;
+  --color-text: #f5f4f4;
+  --color-text-muted: #bfb0b0;
+  --color-bg: #0b0a0a;
+  --color-bg-rgb: 8, 7, 7;
+  --color-surface: #181616;
+  --color-border: #382e2e;
+  --color-muted: #6b5757;
+  --color-star: #ffffff;
+  --bg-dark: #0d0d0d;
+  --bg-card: #1c1212;
+  --bg-panel: #160e0e;
+  --bg-controls: #100e0e;
+  --border-subtle: #341d1d;
+  --text-primary: #f5f4f4;
+  --text-muted: #bfb0b0;
+  --pointer-slot: #2b1717;
+  --edge-color: #5f4e4e;
+  --color-chat-own: #1b1818;
+  --color-chat-other: #1c1111;
+  --md-primary: #df3c3c;
+  --md-on-primary: #000000;
+  --md-primary-container: #462020;
+  --md-on-primary-container: #f4d2d2;
+  --md-surface-container-low: #161313;
+  --md-surface-container: #1e1a1a;
+  --md-surface-container-high: #292424;
+  --md-on-surface: #ece9e9;
+  --md-on-surface-variant: #cdc1c1;
+  --md-outline-variant: #3e3232;
+}
+[data-color-theme="crimson"][data-mode="light"] {
+  --color-accent: #bf2222;
+  --color-accent-rgb: 191, 34, 34;
+  --color-accent-hover: #9c1c1c;
+  --color-accent-bright: #d03939;
+  --color-accent-alt: #9e1a3b;
+  --color-fg-rgb: 27, 24, 24;
+  --color-text: #201d1d;
+  --color-text-muted: #705c5c;
+  --color-bg: #fafafa;
+  --color-bg-rgb: 250, 250, 250;
+  --color-surface: #f1efef;
+  --color-border: #dad2d2;
+  --color-muted: #816a6a;
+  --color-star: #363030;
+  --bg-dark: #f8f7f7;
+  --bg-card: #f1efef;
+  --bg-panel: #ece9e9;
+  --bg-controls: #f3f1f1;
+  --border-subtle: #dfd8d8;
+  --text-primary: #201d1d;
+  --text-muted: #705c5c;
+  --pointer-slot: #e7e4e4;
+  --edge-color: #b1a0a0;
+  --color-chat-own: #eeecec;
+  --color-chat-other: #f5f4f4;
+  --md-primary: #bf2222;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #f4d7d7;
+  --md-on-primary-container: #431919;
+  --md-surface-container-low: #f5f4f4;
+  --md-surface-container: #f1efef;
+  --md-surface-container-high: #ece9e9;
+  --md-on-surface: #1b1818;
+  --md-on-surface-variant: #544545;
+  --md-outline-variant: #d1c7c7;
+}
+
+[data-color-theme="cyan"][data-mode="dark"] {
+  --color-accent: #06b6d4;
+  --color-accent-rgb: 6, 182, 212;
+  --color-accent-hover: #048398;
+  --color-accent-bright: #1fd9f9;
+  --color-accent-alt: #07a090;
+  --color-fg-rgb: 255, 255, 255;
+  --color-text: #f4f5f5;
+  --color-text-muted: #b0bdbf;
+  --color-bg: #0a0b0b;
+  --color-bg-rgb: 7, 8, 8;
+  --color-surface: #161818;
+  --color-border: #2e3738;
+  --color-muted: #57686b;
+  --color-star: #ffffff;
+  --bg-dark: #0d0d0d;
+  --bg-card: #121b1c;
+  --bg-panel: #0e1516;
+  --bg-controls: #0e1010;
+  --border-subtle: #1d3134;
+  --text-primary: #f4f5f5;
+  --text-muted: #b0bdbf;
+  --pointer-slot: #17282b;
+  --edge-color: #4e5d5f;
+  --color-chat-own: #181b1b;
+  --color-chat-other: #111b1c;
+  --md-primary: #06b6d4;
+  --md-on-primary: #000000;
+  --md-primary-container: #204046;
+  --md-on-primary-container: #d2eff4;
+  --md-surface-container-low: #131516;
+  --md-surface-container: #1a1d1e;
+  --md-surface-container-high: #242829;
+  --md-on-surface: #e9ebec;
+  --md-on-surface-variant: #c1cbcd;
+  --md-outline-variant: #323c3e;
+}
+[data-color-theme="cyan"][data-mode="light"] {
+  --color-accent: #1a7e8f;
+  --color-accent-rgb: 26, 126, 143;
+  --color-accent-hover: #14606c;
+  --color-accent-bright: #39bad0;
+  --color-accent-alt: #1a9e90;
+  --color-fg-rgb: 24, 27, 27;
+  --color-text: #1d2020;
+  --color-text-muted: #5c6d70;
+  --color-bg: #fafafa;
+  --color-bg-rgb: 250, 250, 250;
+  --color-surface: #eff0f1;
+  --color-border: #d2d9da;
+  --color-muted: #6a7e81;
+  --color-star: #303536;
+  --bg-dark: #f7f8f8;
+  --bg-card: #eff0f1;
+  --bg-panel: #e9ebec;
+  --bg-controls: #f1f3f3;
+  --border-subtle: #d8dedf;
+  --text-primary: #1d2020;
+  --text-muted: #5c6d70;
+  --pointer-slot: #e4e7e7;
+  --edge-color: #a0aeb1;
+  --color-chat-own: #eceeee;
+  --color-chat-other: #f4f5f5;
+  --md-primary: #1a7e8f;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #d7eff4;
+  --md-on-primary-container: #193d43;
+  --md-surface-container-low: #f4f5f5;
+  --md-surface-container: #eff0f1;
+  --md-surface-container-high: #e9ebec;
+  --md-on-surface: #181b1b;
+  --md-on-surface-variant: #455254;
+  --md-outline-variant: #c7d0d1;
+}
+
+[data-color-theme="rose"][data-mode="dark"] {
+  --color-accent: #ec4899;
+  --color-accent-rgb: 236, 72, 153;
+  --color-accent-hover: #e0177a;
+  --color-accent-bright: #f27fb8;
+  --color-accent-alt: #e71ab3;
+  --color-fg-rgb: 255, 255, 255;
+  --color-text: #f5f4f5;
+  --color-text-muted: #bfb0b8;
+  --color-bg: #0b0a0a;
+  --color-bg-rgb: 8, 7, 8;
+  --color-surface: #181617;
+  --color-border: #382e33;
+  --color-muted: #6b5761;
+  --color-star: #ffffff;
+  --bg-dark: #0d0d0d;
+  --bg-card: #1c1217;
+  --bg-panel: #160e12;
+  --bg-controls: #100e0f;
+  --border-subtle: #341d29;
+  --text-primary: #f5f4f5;
+  --text-muted: #bfb0b8;
+  --pointer-slot: #2b1721;
+  --edge-color: #5f4e57;
+  --color-chat-own: #1b1819;
+  --color-chat-other: #1c1117;
+  --md-primary: #ec4899;
+  --md-on-primary: #000000;
+  --md-primary-container: #462033;
+  --md-on-primary-container: #f4d2e3;
+  --md-surface-container-low: #161314;
+  --md-surface-container: #1e1a1c;
+  --md-surface-container-high: #292426;
+  --md-on-surface: #ece9eb;
+  --md-on-surface-variant: #cdc1c7;
+  --md-outline-variant: #3e3238;
+}
+[data-color-theme="rose"][data-mode="light"] {
+  --color-accent: #bf226f;
+  --color-accent-rgb: 191, 34, 111;
+  --color-accent-hover: #9c1c5b;
+  --color-accent-bright: #d03984;
+  --color-accent-alt: #9e1a7c;
+  --color-fg-rgb: 27, 24, 25;
+  --color-text: #201d1f;
+  --color-text-muted: #705c66;
+  --color-bg: #fafafa;
+  --color-bg-rgb: 250, 250, 250;
+  --color-surface: #f1eff0;
+  --color-border: #dad2d6;
+  --color-muted: #816a75;
+  --color-star: #363033;
+  --bg-dark: #f8f7f7;
+  --bg-card: #f1eff0;
+  --bg-panel: #ece9eb;
+  --bg-controls: #f3f1f2;
+  --border-subtle: #dfd8db;
+  --text-primary: #201d1f;
+  --text-muted: #705c66;
+  --pointer-slot: #e7e4e5;
+  --edge-color: #b1a0a8;
+  --color-chat-own: #eeeced;
+  --color-chat-other: #f5f4f5;
+  --md-primary: #bf226f;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #f4d7e5;
+  --md-on-primary-container: #43192e;
+  --md-surface-container-low: #f5f4f5;
+  --md-surface-container: #f1eff0;
+  --md-surface-container-high: #ece9eb;
+  --md-on-surface: #1b1819;
+  --md-on-surface-variant: #54454c;
+  --md-outline-variant: #d1c7cc;
+}
+
+/* Slate is intentionally achromatic (neutral gray), not just low-chroma
+   blue — derivePalette() flattens its chroma to zero so it reads as "no
+   accent" next to Nebula. */
+[data-color-theme="slate"][data-mode="dark"] {
+  --color-accent: #6a7b94;
+  --color-accent-rgb: 106, 123, 148;
+  --color-accent-hover: #4a5667;
+  --color-accent-bright: #8593a7;
+  --color-accent-alt: #5e5e5e;
+  --color-fg-rgb: 255, 255, 255;
+  --color-text: #f5f5f5;
+  --color-text-muted: #b8b8b8;
+  --color-bg: #0a0a0a;
+  --color-bg-rgb: 8, 8, 8;
+  --color-surface: #171717;
+  --color-border: #333333;
+  --color-muted: #616161;
+  --color-star: #ffffff;
+  --bg-dark: #0d0d0d;
+  --bg-card: #171717;
+  --bg-panel: #121212;
+  --bg-controls: #0f0f0f;
+  --border-subtle: #292929;
+  --text-primary: #f5f5f5;
+  --text-muted: #b8b8b8;
+  --pointer-slot: #212121;
+  --edge-color: #575757;
+  --color-chat-own: #1a1a1a;
+  --color-chat-other: #171717;
+  --md-primary: #6a7b94;
+  --md-on-primary: #000000;
+  --md-primary-container: #333333;
+  --md-on-primary-container: #e3e3e3;
+  --md-surface-container-low: #141414;
+  --md-surface-container: #1c1c1c;
+  --md-surface-container-high: #262626;
+  --md-on-surface: #ebebeb;
+  --md-on-surface-variant: #c7c7c7;
+  --md-outline-variant: #383838;
+}
+[data-color-theme="slate"][data-mode="light"] {
+  --color-accent: #676f79;
+  --color-accent-rgb: 103, 111, 121;
+  --color-accent-hover: #545a63;
+  --color-accent-bright: #788291;
+  --color-accent-alt: #545e63;
+  --color-fg-rgb: 26, 26, 26;
+  --color-text: #1f1f1f;
+  --color-text-muted: #666666;
+  --color-bg: #fafafa;
+  --color-bg-rgb: 250, 250, 250;
+  --color-surface: #f0f0f0;
+  --color-border: #d6d6d6;
+  --color-muted: #757575;
+  --color-star: #333333;
+  --bg-dark: #f7f7f7;
+  --bg-card: #f0f0f0;
+  --bg-panel: #ebebeb;
+  --bg-controls: #f2f2f2;
+  --border-subtle: #dbdbdb;
+  --text-primary: #1f1f1f;
+  --text-muted: #666666;
+  --pointer-slot: #e6e6e6;
+  --edge-color: #a8a8a8;
+  --color-chat-own: #ededed;
+  --color-chat-other: #f5f5f5;
+  --md-primary: #676f79;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #e2e5e9;
+  --md-on-primary-container: #292d32;
+  --md-surface-container-low: #f5f5f5;
+  --md-surface-container: #f0f0f0;
+  --md-surface-container-high: #ebebeb;
+  --md-on-surface: #1a1a1a;
+  --md-on-surface-variant: #4d4d4d;
+  --md-outline-variant: #cccccc;
 }
 
 * {

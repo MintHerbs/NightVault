@@ -41,8 +41,8 @@
   top: 70px;
   width: 40px;
   height: 40px;
-  background: rgba(22, 19, 17, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(var(--color-bg-rgb), 0.95);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.08);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -54,8 +54,8 @@
 }
 
 .tocButton:hover {
-  color: #ffa31a;
-  border-color: rgba(255, 163, 26, 0.4);
+  color: var(--color-accent);
+  border-color: rgba(var(--color-accent-rgb), 0.4);
 }
 
 /* Drawer — slides in from right via transform only */
@@ -65,8 +65,8 @@
   top: 0;
   width: 280px;
   height: 100vh;
-  background: rgba(16, 14, 12, 0.97);
-  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(var(--color-bg-rgb), 0.97);
+  border-left: 1px solid rgba(var(--color-fg-rgb), 0.06);
   z-index: 54;
   padding: 80px 1.5rem 2rem;
   overflow-y: auto;
@@ -84,7 +84,7 @@
   position: fixed;
   inset: 0;
   z-index: 53;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(var(--color-bg-rgb), 0.3);
   backdrop-filter: blur(2px);
 }
 
@@ -95,7 +95,7 @@
   justify-content: center;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(var(--color-fg-rgb), 0.08);
 }
 
 .tocTitle {
@@ -142,8 +142,8 @@
   width: 1px;
   background: linear-gradient(
     to bottom,
-    rgba(255, 163, 26, 0.15),
-    rgba(255, 163, 26, 0.05)
+    rgba(var(--color-accent-rgb), 0.15),
+    rgba(var(--color-accent-rgb), 0.05)
   );
   transform: translateX(-50%);
 }
@@ -153,8 +153,8 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(var(--color-fg-rgb), 0.2);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.1);
   transition: all 0.2s ease;
   position: relative;
   z-index: 1;
@@ -163,9 +163,9 @@
 .tocDotActive {
   width: 8px;
   height: 8px;
-  background: #ffa31a;
-  border-color: #ffa31a;
-  box-shadow: 0 0 12px rgba(255, 163, 26, 0.6);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 12px rgba(var(--color-accent-rgb), 0.6);
 }
 
 /* Navigation items */
@@ -177,7 +177,7 @@
   font-size: 0.9375rem;
   font-weight: 500;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--color-fg-rgb), 0.5);
   background: transparent;
   border: none;
   border-radius: 6px;
@@ -190,13 +190,13 @@
 }
 
 .tocItem:hover {
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.04);
+  color: rgba(var(--color-fg-rgb), 0.85);
+  background: rgba(var(--color-fg-rgb), 0.04);
 }
 
 .tocItemActive {
-  color: rgba(255, 255, 255, 0.95);
-  background: rgba(255, 163, 26, 0.12);
+  color: rgba(var(--color-fg-rgb), 0.95);
+  background: rgba(var(--color-accent-rgb), 0.12);
   font-weight: 600;
 }
 
@@ -210,12 +210,12 @@
 }
 
 .tocDrawer::-webkit-scrollbar-thumb {
-  background: rgba(255, 163, 26, 0.3);
+  background: rgba(var(--color-accent-rgb), 0.3);
   border-radius: 2px;
 }
 
 .tocDrawer::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 163, 26, 0.5);
+  background: rgba(var(--color-accent-rgb), 0.5);
 }
 
 /* Responsive adjustments */

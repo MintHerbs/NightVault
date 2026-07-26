@@ -30,8 +30,8 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(var(--color-fg-rgb), 0.08);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.12);
 }
 
 .content {
@@ -46,26 +46,26 @@
   font-size: 0.9rem;
   font-weight: 700;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(var(--color-fg-rgb), 0.95);
   letter-spacing: 0.01em;
 }
 
 .body {
   font-size: 0.85rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(var(--color-fg-rgb), 0.8);
 }
 
 /* Tip variant - brand orange */
 .tip {
-  background: rgba(255, 163, 26, 0.08);
-  border-color: rgba(255, 163, 26, 0.3);
-  color: #ffb84d;
+  background: rgba(var(--color-accent-rgb), 0.08);
+  border-color: rgba(var(--color-accent-rgb), 0.3);
+  color: var(--color-accent-bright);
 }
 
 .tip .iconWrapper {
-  background: rgba(255, 163, 26, 0.15);
-  border-color: rgba(255, 163, 26, 0.3);
+  background: rgba(var(--color-accent-rgb), 0.15);
+  border-color: rgba(var(--color-accent-rgb), 0.3);
   color: #ffd08a;
 }
 

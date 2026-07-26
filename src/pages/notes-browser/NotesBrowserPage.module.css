@@ -48,7 +48,7 @@
   cursor: pointer;
   transition: background 120ms ease, color 120ms ease;
 }
-.crumbLink:hover { background: rgba(255, 255, 255, 0.06); color: var(--md-on-surface); }
+.crumbLink:hover { background: rgba(var(--color-fg-rgb), 0.06); color: var(--md-on-surface); }
 
 .crumbTitle {
   font-size: 22px;
@@ -82,7 +82,7 @@
   cursor: pointer;
   transition: background 120ms ease, color 120ms ease;
 }
-.viewButton:hover { background: rgba(255, 255, 255, 0.06); }
+.viewButton:hover { background: rgba(var(--color-fg-rgb), 0.06); }
 .viewButtonActive { background: var(--md-surface-container-high); color: var(--md-on-surface); }
 
 .toolbar {
@@ -143,9 +143,9 @@
   transition: background 120ms ease, border-color 120ms ease;
   white-space: nowrap;
 }
-.chip:hover { background: rgba(255, 255, 255, 0.06); }
+.chip:hover { background: rgba(var(--color-fg-rgb), 0.06); }
 .chipActive {
-  background: rgba(255, 163, 26, 0.12);
+  background: rgba(var(--color-accent-rgb), 0.12);
   border-color: var(--color-accent);
   color: var(--md-on-surface);
 }
@@ -172,7 +172,7 @@
   font-size: 14px;
   cursor: pointer;
 }
-.menuItem:hover { background: rgba(255, 255, 255, 0.08); }
+.menuItem:hover { background: rgba(var(--color-fg-rgb), 0.08); }
 
 .emptyState {
   padding: 48px 16px;

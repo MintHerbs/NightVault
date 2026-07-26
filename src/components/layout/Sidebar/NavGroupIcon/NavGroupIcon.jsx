@@ -2,7 +2,7 @@
  * NavGroupIcon - Primary parent navigation icon with open/close state
  * 
  * Displays a group icon (Lucide or SVG) that toggles a navigation group.
- * When open, icon color changes to orange (#EA6C0A) and a horizontal line
+ * When open, icon color changes to orange (var(--color-accent-alt)) and a horizontal line
  * appears below the icon as a visual indicator.
  * Tooltip appears on hover to the right of the icon.
  * 
@@ -25,7 +25,7 @@ export default function NavGroupIcon({
 
   // Determine opacity and color based on open state
   const opacity = isOpen ? 1.0 : 0.5
-  const iconColor = isOpen ? '#EA6C0A' : '#555555'
+  const iconColor = isOpen ? 'var(--color-accent-alt)' : '#555555'
 
   // Check if icon is an img element (SVG file) vs Lucide icon
   const isImgElement = icon?.type === 'img'
