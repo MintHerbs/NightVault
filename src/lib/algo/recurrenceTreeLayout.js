@@ -33,7 +33,7 @@ export function textWidth(text) {
 
 /** Box size for a label. */
 export function measureNode(label, kind) {
-  if (kind === 'ellipsis' || kind === 'dots') return { w: ELLIPSIS_W, h: NODE_H };
+  if (kind === 'ellipsis' || kind === 'dots' || kind === 'continues') return { w: ELLIPSIS_W, h: NODE_H };
   const text = String(label ?? '');
   return { w: Math.max(MIN_W, text.length * CHAR_W + PAD_X), h: NODE_H };
 }
@@ -92,7 +92,8 @@ export function collectEdges(root) {
   const edges = [];
   const walk = node => {
     (node.children ?? []).forEach(kid => {
-      edges.push({ from: node.id, to: kid.id, kind: kid.kind === 'ellipsis' ? 'dashed' : 'solid' });
+      const dashed = kid.kind === 'ellipsis' || kid.kind === 'continues';
+      edges.push({ from: node.id, to: kid.id, kind: dashed ? 'dashed' : 'solid' });
       walk(kid);
     });
   };
@@ -123,13 +124,51 @@ export function nodesAtDepth(nodes, depth) {
 }
 
 /**
+ * Report node boxes that the "recursion continues" tail is drawn through.
+ * A dashed line crossing a label is as broken as two overlapping boxes, and it
+ * is easy to introduce by moving where the tail hangs from, so it is checked
+ * rather than eyeballed.
+ * @returns {Array} ids of nodes the tail passes through
+ */
+export function findTailCollisions(nodes, tail, { inset = 3, samples = 80 } = {}) {
+  if (!tail) return [];
+  const segments = [
+    ...tail.from.map(p => [p.x, p.y, tail.x, tail.dotsY - 16]),
+    [tail.x, tail.dotsY + 16, tail.x, tail.toY],
+  ];
+  const hits = new Set();
+
+  for (const [x0, y0, x1, y1] of segments) {
+    for (let i = 0; i <= samples; i++) {
+      const t = i / samples;
+      const px = x0 + (x1 - x0) * t;
+      const py = y0 + (y1 - y0) * t;
+      for (const n of nodes) {
+        if (n.kind === 'dots' || n.kind === 'continues') continue;
+        // The tail legitimately starts at a node's edge and ends at the base.
+        const startsHere = Math.abs(px - n.x) < 1 && Math.abs(py - (n.y + n.h / 2)) < 2;
+        if (startsHere || n.kind === 'base') continue;
+        if (
+          px > n.x - n.w / 2 + inset && px < n.x + n.w / 2 - inset &&
+          py > n.y - n.h / 2 + inset && py < n.y + n.h / 2 - inset
+        ) {
+          hits.add(n.id);
+        }
+      }
+    }
+  }
+  return [...hits];
+}
+
+/**
  * Report every pair of node boxes that overlap. Used by the test suite to
  * check the drawing rather than trusting it.
  * @returns {Array} list of { a, b, overlapX, overlapY }
  */
 export function findOverlaps(nodes, { gap = 2 } = {}) {
   const clashes = [];
-  const boxes = nodes.filter(n => n.kind !== 'dots');
+  // 'dots' and 'continues' draw as three small circles, not a labelled box.
+  const boxes = nodes.filter(n => n.kind !== 'dots' && n.kind !== 'continues');
   for (let i = 0; i < boxes.length; i++) {
     for (let j = i + 1; j < boxes.length; j++) {
       const a = boxes[i];

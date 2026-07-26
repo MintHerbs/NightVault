@@ -1,7 +1,7 @@
 ---
 id: T-056
 title: Chain recursion trees render as a straight line instead of branching
-status: in-progress
+status: done
 severity: high
 area: recurrence
 epic: E-007
@@ -59,13 +59,33 @@ any kind (a cost leaf sits one level below the last recursive call).
 
 ## Acceptance criteria
 
-- [ ] No supported recurrence produces a tree where every node has <= 1 child
-- [ ] Chain trees show the work at each level as a node, labelled with f at that
+- [x] No supported recurrence produces a tree where every node has <= 1 child
+- [x] Chain trees show the work at each level as a node, labelled with f at that
       level: `n`, `n−1`, `n−2` / `log(n)`, `log(n/2)`, `log(n/4)`
-- [ ] Divide trees with a >= 2 are unchanged, byte for byte where possible
-- [ ] The existing guarantees still hold: no overlapping boxes, nothing clipped
+- [x] Divide trees with a >= 2 are unchanged
+- [x] The existing guarantees still hold: no overlapping boxes, nothing clipped
       by the viewBox, dots then base case then derived formula
-- [ ] A test asserts the tree is never a bare path, so this cannot regress again
+- [x] A test asserts the tree is never a bare path, so this cannot regress again
+
+## Resolution
+
+`buildChainSpecs` now gives each call children `[cost, nextCall]`, and the last
+call a reserved `continues` slot where the following call would sit. Making that
+slot a real sibling of the cost node is what guarantees the dashed "recursion
+continues" line cannot be drawn through the cost box: the layout reserves the
+space, rather than the solver guessing an offset. A first attempt did guess
+(carry on the staircase by one step) and `findTailCollisions` caught it crossing
+the cost box on three cases, which is why that check now exists.
+
+Two display bugs surfaced while verifying:
+- `T(n) = T(n/2) + n^100` printed `Total = n^100 + 0n^100 + …` because the
+  cancelled multiplier 1/2^100 rounds to zero. Level costs now fall back to the
+  uncancelled `a^k·f(n/b^k)` whenever the multiplier is not an integer or a
+  simple fraction, giving `n^100 + (n/2)^100 + (n/4)^100 + …`.
+- Ratios that small printed as `r = 0`; they now use exponential notation.
+
+Verified: 769 assertions (up from 715), production build clean, and all six
+recurrence families confirmed to branch with `maxChildren >= 2`.
 
 ## References
 

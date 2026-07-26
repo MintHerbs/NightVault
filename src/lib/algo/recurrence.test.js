@@ -12,7 +12,7 @@
 import { parseRecurrence } from './recurrenceParser.js';
 import { solveByTree, solveBySubstitution, annotationRightEdge, BREADTH_BUDGET } from './recurrenceSolver.js';
 import { formatGrowth } from './recurrenceMath.js';
-import { findOverlaps } from './recurrenceTreeLayout.js';
+import { findOverlaps, findTailCollisions } from './recurrenceTreeLayout.js';
 
 let passed = 0;
 const failures = [];
@@ -178,6 +178,14 @@ for (const [input] of CASES) {
     clashes.length === 0,
     clashes.length ? `${clashes.length} overlapping pair(s), e.g. ${clashes[0].a} / ${clashes[0].b}` : ''
   );
+
+  // The dashed "continues" tail must not be drawn through a label either.
+  const throughNodes = findTailCollisions(tree.nodes, tree.tail);
+  checkThat(
+    `tail clears every box  ${input}`,
+    throughNodes.length === 0,
+    throughNodes.length ? `tail crosses ${throughNodes.join(', ')}` : ''
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -231,10 +239,24 @@ for (const [input] of CASES) {
 const drawnCosts = input =>
   solveByTree(parseRecurrence(input)).tree.annotations.filter(a => a.countText).map(a => a.costText);
 
+/** Cost labels drawn inside the tree, used by chains since T-056. */
+const chainCosts = input =>
+  solveByTree(parseRecurrence(input)).tree.nodes.filter(n => n.kind === 'cost').map(n => n.label);
+
+/** Every user-visible cost string, wherever the shape happens to put it. */
+const allCostText = input => {
+  const { tree } = solveByTree(parseRecurrence(input));
+  return [
+    ...tree.nodes.filter(n => n.kind === 'cost').map(n => n.label),
+    ...tree.annotations.map(a => `${a.countText} ${a.costText}`),
+  ].join(' ; ');
+};
+
 check('4T(n/2)+n level costs grow', drawnCosts('T(n) = 4T(n/2) + n').join(' | '), 'n | 2n');
 check('2T(n/2)+n level costs are equal', drawnCosts('T(n) = 2T(n/2) + n').join(' | '), 'n | n | n');
 check('2T(n/2)+n^2 level costs shrink', drawnCosts('T(n) = 2T(n/2) + n^2').join(' | '), 'n² | (1/2)n² | (1/4)n²');
-check('T(n-1)+n level costs', drawnCosts('T(n) = T(n-1) + n').join(' | '), 'n | n−1 | n−2');
+// Chains carry their cost in the tree now, not the column (T-056).
+check('T(n-1)+n level costs', chainCosts('T(n) = T(n-1) + n').join(' | '), 'n | n−1 | n−2');
 
 // The derivation must still show the level the drawing elided.
 {
@@ -250,6 +272,30 @@ check('T(n-1)+n level costs', drawnCosts('T(n) = T(n-1) + n').join(' | '), 'n | 
 // siblings and the tree reads as broken. The exception is a branching factor
 // too large to draw at all (a = 1000), where a single ellipsis is the honest
 // fallback and the annotation must still report the true count.
+// T-056: a tree where every node has at most one child is a vertical line, not
+// a recursion tree. Chains must branch into [work, next call].
+console.log('=== 3c. No tree is a bare vertical line ===');
+for (const [input] of CASES) {
+  const parsed = parseRecurrence(input);
+  if (parsed.error) continue;
+  const { tree } = solveByTree(parsed);
+  const childCount = new Map();
+  tree.edges.forEach(e => childCount.set(e.from, (childCount.get(e.from) ?? 0) + 1));
+  const maxChildren = Math.max(0, ...childCount.values());
+  checkThat(`tree branches  ${input}`, maxChildren >= 2, `every node has <= 1 child (max ${maxChildren})`);
+}
+
+// Chains must show the work at each level as a labelled node.
+for (const [input, levels] of [
+  ['T(n) = T(n-1) + n', ['n', 'n−1', 'n−2']],
+  ['T(n) = T(n/2) + log(n)', ['log(n)', 'log(n/2)', 'log(n/4)']],
+  ['T(n) = T(n-2) + n^2', ['n²', '(n−2)²', '(n−4)²']],
+]) {
+  const { tree } = solveByTree(parseRecurrence(input));
+  const costs = tree.nodes.filter(n => n.kind === 'cost').map(n => n.label);
+  check(`chain cost nodes  ${input}`, costs.join(' | '), levels.join(' | '));
+}
+
 console.log('=== 3b. Drawn levels are fully expanded ===');
 for (const [input] of CASES) {
   const parsed = parseRecurrence(input);
@@ -283,17 +329,16 @@ console.log('=== 4. Substituted f(n) labels are correctly bracketed ===');
     ['T(n) = 2T(n/2) + n*log(n)', 'log(n/2)'],
   ];
   for (const [input, expectedFragment] of cases) {
-    const { tree } = solveByTree(parseRecurrence(input));
-    // Both columns are user-visible, so either may carry the substituted form.
-    const all = tree.annotations.map(a => `${a.countText} ${a.costText}`).join(' ; ');
+    // A chain puts the cost in the tree, a divide tree in the column; either is
+    // user-visible, so check both places.
+    const all = allCostText(input);
     checkThat(`label  ${input}`, all.includes(expectedFragment), `expected to find "${expectedFragment}" in: ${all}`);
   }
   // The old bug produced "n−1^2"; make sure that shape never comes back.
   for (const [input] of CASES) {
     const parsed = parseRecurrence(input);
     if (parsed.error) continue;
-    const { tree } = solveByTree(parsed);
-    const text = tree.annotations.map(a => `${a.countText} ${a.costText}`).join(' ');
+    const text = allCostText(input);
     checkThat(`no unbracketed power  ${input}`, !/n−\d\^/.test(text), `found in: ${text}`);
   }
 }

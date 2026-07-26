@@ -558,7 +558,7 @@ export function divideLevelSum(a, b, terms) {
       logba,
       dominatedBy: 'root',
       growth: polylog(p, q),
-      reason: `r = a/b^p = ${num(ratio)} < 1, so level costs shrink geometrically and the root dominates`,
+      reason: `r = a/b^p < 1, so level costs shrink geometrically and the root dominates`,
       seriesNote: 'a decreasing geometric series sums to a constant times its first term',
     };
   }

@@ -11,6 +11,9 @@ import styles from './RecurrenceTreeView.module.css'
 
 const COLORS = {
   recursive: { fill: 'rgba(139,92,246,0.15)', stroke: '#8B5CF6', text: '#c4b5fd' },
+  // Work done at a node, drawn as its own branch on chains. Green matches the
+  // per-level cost boxes so the same colour always means "this is the cost".
+  cost: { fill: 'rgba(34,197,94,0.14)', stroke: '#22c55e', text: '#86efac' },
   base: { fill: 'rgba(107,114,128,0.15)', stroke: '#6b7280', text: '#9ca3af' },
   ellipsis: { fill: 'transparent', stroke: 'transparent', text: '#6b7280' },
 }
@@ -84,6 +87,10 @@ function RecurrenceTreeView({ tree, formula }) {
   }
 
   const renderNode = node => {
+    // The reserved slot where the recursion continues: the tail's dots are
+    // drawn there by the tail block below, so the node itself draws nothing.
+    if (node.kind === 'continues') return null
+
     if (node.kind === 'ellipsis') {
       return (
         <text

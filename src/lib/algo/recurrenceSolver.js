@@ -91,22 +91,33 @@ function divideTree(parsed) {
   const analysis = divideLevelSum(a, b, fTerms);
   const levelsShown = levelsFor(a);
 
-  const root = buildBranchingSpecs({
-    levelsShown,
-    rootState: { depth: 0 },
-    expand: s => Array.from({ length: Math.round(a) }, () => ({ depth: s.depth + 1 })),
-    labelOf: s => (s.depth === 0 ? 'T(n)' : `T(n/${num(Math.pow(b, s.depth))})`),
-  });
+  // With a = 1 there is one call per level, so the recursion is a path and the
+  // work has to be drawn as a branch for the tree to have any shape at all.
+  // With a >= 2 the recursive fan-out already provides the shape, and the cost
+  // stays in the annotation column rather than multiplying the width by a + 1.
+  const isChain = Math.abs(a - 1) < 1e-9;
+  const sizeLabel = depth => (depth === 0 ? 'T(n)' : `T(n/${num(Math.pow(b, depth))})`);
+  const levelArg = k => (k === 0 ? arg.symbol('n') : arg.over('n', num(Math.pow(b, k))));
+
+  const root = isChain
+    ? buildChainSpecs(levelsShown, sizeLabel, depth => renderF(fTerms, levelArg(depth)))
+    : buildBranchingSpecs({
+        levelsShown,
+        rootState: { depth: 0 },
+        expand: s => Array.from({ length: Math.round(a) }, () => ({ depth: s.depth + 1 })),
+        labelOf: s => sizeLabel(s.depth),
+      });
 
   const annotations = [];
-  for (let k = 0; k < levelsShown; k++) {
-    const argK = k === 0 ? arg.symbol('n') : arg.over('n', num(Math.pow(b, k)));
-    const count = Math.round(Math.pow(a, k));
-    annotations.push({
-      depth: k,
-      countText: `${count} × ${renderF(fTerms, argK)}`,
-      costText: divideLevelCost(parsed, k),
-    });
+  if (!isChain) {
+    for (let k = 0; k < levelsShown; k++) {
+      const count = Math.round(Math.pow(a, k));
+      annotations.push({
+        depth: k,
+        countText: `${count} × ${renderF(fTerms, levelArg(k))}`,
+        costText: divideLevelCost(parsed, k),
+      });
+    }
   }
 
   const leafCount = formatGrowth(polylog(analysis.logba, 0));
@@ -135,15 +146,44 @@ function levelCostText(count, fAtLevel) {
   return `${count}·${fAtLevel}`;
 }
 
+/**
+ * Is a cancelled multiplier worth showing as a number? Integers and the simple
+ * fractions read fine (2n, (3/2)n, (1/4)n^2); anything else does not, and
+ * 1/2^100 rounds to a bare "0", which is worse than not cancelling at all.
+ */
+function isCleanMultiplier(m) {
+  if (!Number.isFinite(m) || m === 0) return false;
+  if (Number.isInteger(m)) return Math.abs(m) <= 1e6;
+  // Round(m * den) must be non-zero, or a vanishing multiplier like 1/2^100
+  // "matches" 0/2 and renders as the bare "0" this guard exists to avoid.
+  return [2, 3, 4, 6, 8].some(
+    den => Math.round(m * den) !== 0 && Math.abs(m * den - Math.round(m * den)) < 1e-9
+  );
+}
+
 /** Cost of one whole level: a^k · f(n/b^k), with the powers cancelled. */
 function divideLevelCost(parsed, k) {
-  const { a, b, fDominant: d } = parsed;
+  const { a, b, fTerms, fDominant: d } = parsed;
   const mult = d.coef * Math.pow(a, k) / Math.pow(b, k * d.exp);
+  const argK = k === 0 ? arg.symbol('n') : arg.over('n', num(Math.pow(b, k)));
+
+  // Fall back to the uncancelled a^k · f(n/b^k), which is exact and shorter.
+  if (!isCleanMultiplier(mult)) {
+    const count = Math.round(Math.pow(a, k));
+    const at = renderF(fTerms, argK);
+    return count === 1 ? at : `${count}·${at}`;
+  }
+
   const poly = renderF([{ coef: mult, exp: d.exp, logExp: 0 }], arg.symbol('n'));
   if (Math.abs(d.logExp) < 1e-9) return poly;
-  const argK = k === 0 ? arg.symbol('n') : arg.over('n', num(Math.pow(b, k)));
   const logPart = renderF([{ coef: 1, exp: 0, logExp: d.logExp }], argK);
   return poly === '1' ? logPart : `${poly} ${logPart}`;
+}
+
+/** Compact text for a ratio that may be astronomically small or large. */
+function ratioText(r) {
+  if (r !== 0 && (Math.abs(r) < 0.01 || Math.abs(r) > 1e6)) return r.toExponential(1);
+  return num(r);
 }
 
 function derivationLines(parsed, analysis) {
@@ -154,11 +194,11 @@ function derivationLines(parsed, analysis) {
     return [`Total = ${sum}`, `= ${costs[0]} × (${logOf(b)} + 1)`, `= ${theta(analysis.growth)}`];
   }
   if (analysis.caseNum === 1) {
-    return [`Total = ${sum}`, `geometric, ratio r = ${num(analysis.ratio)} < 1, so the root dominates`, `= ${theta(analysis.growth)}`];
+    return [`Total = ${sum}`, `geometric, ratio r = ${ratioText(analysis.ratio)} < 1, so the root dominates`, `= ${theta(analysis.growth)}`];
   }
   return [
     `Total = ${sum}`,
-    `geometric, ratio r = ${num(analysis.ratio)} > 1, so the leaves dominate`,
+    `geometric, ratio r = ${ratioText(analysis.ratio)} > 1, so the leaves dominate`,
     `= ${theta(analysis.growth)}`,
   ];
 }
@@ -188,7 +228,7 @@ function divideSteps(parsed, analysis) {
 
   divider(steps);
   push(steps, 'Summing the levels:', 'info');
-  push(steps, `each level is ${num(analysis.ratio)}× the one above it, since r = a/b^p = ${num(a)}/${num(b)}^${num(d.exp)}`, 'special');
+  push(steps, `each level is ${ratioText(analysis.ratio)}× the one above it, since r = a/b^p = ${num(a)}/${num(b)}^${num(d.exp)}`, 'special');
   push(steps, analysis.reason, 'special');
   push(steps, analysis.seriesNote, 'special');
 
@@ -207,17 +247,15 @@ function chainTree(parsed) {
   const series = sumSubtractSeries(fTerms, b);
   const levelsShown = 3;
 
-  const root = buildChainSpecs(levelsShown, depth => `T(n${depth === 0 ? '' : `−${b * depth}`})`);
+  const costAt = depth => renderF(fTerms, depth === 0 ? arg.symbol('n') : arg.minus('n', b * depth));
+  const root = buildChainSpecs(
+    levelsShown,
+    depth => `T(n${depth === 0 ? '' : `−${b * depth}`})`,
+    costAt
+  );
 
-  const annotations = [];
-  for (let k = 0; k < levelsShown; k++) {
-    annotations.push({
-      depth: k,
-      countText: '1 ×',
-      costText: renderF(fTerms, k === 0 ? arg.symbol('n') : arg.minus('n', b * k)),
-    });
-  }
-
+  // The work is drawn in the tree now, so the annotation column would only
+  // repeat it. One node per level means the level cost is the node cost.
   const terms = [
     renderF(fTerms, arg.symbol('n'), { inSum: true }),
     renderF(fTerms, arg.minus('n', b), { inSum: true }),
@@ -231,7 +269,7 @@ function chainTree(parsed) {
 
   const tree = assemble({
     root,
-    annotations,
+    annotations: [],
     baseLabel: 'T(0)',
     baseNote: b === 1 ? 'n levels' : `n/${b} levels`,
     derivation,
@@ -389,15 +427,12 @@ function sqrtTree(parsed) {
   const growth = sqrtGrowth(d);
   const levelsShown = 3;
 
-  const root = buildChainSpecs(levelsShown, depth =>
-    depth === 0 ? 'T(n)' : `T(n^(1/${Math.pow(2, depth)}))`
+  const sqrtArg = k => (k === 0 ? arg.symbol('n') : arg.literal(`n^(1/${Math.pow(2, k)})`, `n^{1/${Math.pow(2, k)}}`));
+  const root = buildChainSpecs(
+    levelsShown,
+    depth => (depth === 0 ? 'T(n)' : `T(n^(1/${Math.pow(2, depth)}))`),
+    depth => renderF(fTerms, sqrtArg(depth))
   );
-
-  const annotations = [];
-  for (let k = 0; k < levelsShown; k++) {
-    const argK = k === 0 ? arg.symbol('n') : arg.literal(`n^(1/${Math.pow(2, k)})`, `n^{1/${Math.pow(2, k)}}`);
-    annotations.push({ depth: k, countText: '1 ×', costText: renderF(fTerms, argK) });
-  }
 
   const derivation =
     d.exp > 1e-9
@@ -410,7 +445,7 @@ function sqrtTree(parsed) {
 
   const tree = assemble({
     root,
-    annotations,
+    annotations: [],
     baseLabel: 'T(2)',
     baseNote: 'log log n levels',
     derivation,
@@ -462,14 +497,32 @@ function sqrtSteps(parsed, growth, derivation) {
 // Spec building and assembly
 // ---------------------------------------------------------------------------
 
-/** A single spine of nodes, one per level. */
-function buildChainSpecs(levelsShown, labelAt) {
+/**
+ * A chain, where each call branches into the work it does and the one call it
+ * makes. When a = 1 the recursion itself is a path, so the work branch is what
+ * makes the drawing a tree rather than a vertical line. Left child is the cost,
+ * right child continues the recursion, which produces the staircase a lecturer
+ * draws for T(n) = T(n−1) + f(n).
+ *
+ * @param {number} levelsShown how many recursive calls to draw
+ * @param {(depth: number) => string} labelAt   label for the call at a depth
+ * @param {(depth: number) => string} costAt    label for the work at a depth
+ */
+function buildChainSpecs(levelsShown, labelAt, costAt) {
   const root = { id: 'n0', kind: 'recursive', label: labelAt(0), children: [] };
   let current = root;
-  for (let depth = 1; depth < levelsShown; depth++) {
-    const kid = { id: `n${depth}`, kind: 'recursive', label: labelAt(depth), children: [] };
-    current.children.push(kid);
-    current = kid;
+  for (let depth = 0; depth < levelsShown; depth++) {
+    current.children.push({ id: `c${depth}`, kind: 'cost', label: costAt(depth), children: [] });
+    if (depth < levelsShown - 1) {
+      const kid = { id: `n${depth + 1}`, kind: 'recursive', label: labelAt(depth + 1), children: [] };
+      current.children.push(kid);
+      current = kid;
+    } else {
+      // Where the next call would go. Making it a real sibling of the cost lets
+      // the layout reserve the space, so the "continues" dots cannot be drawn
+      // through the cost box no matter how wide its label is.
+      current.children.push({ id: 'continues', kind: 'continues', label: '', children: [] });
+    }
   }
   return root;
 }
@@ -540,13 +593,26 @@ function assemble({ root, annotations, baseLabel, baseNote, derivation }) {
   normalize(nodes, 0);
 
   const deepest = Math.max(...nodes.map(n => n.depth));
-  const lastRow = nodesAtDepth(nodes, deepest);
-  const spanLeft = Math.min(...lastRow.map(n => n.x));
-  const spanRight = Math.max(...lastRow.map(n => n.x));
-  const centerX = (spanLeft + spanRight) / 2;
-  const lastY = deepest * LEVEL_HEIGHT;
 
-  const dotsY = lastY + 58;
+  // The recursion continues from the deepest *call*, not the deepest node: in a
+  // chain the work leaf hangs one level below the last call, and dangling the
+  // dots off it would imply the work recurses.
+  const calls = nodes.filter(n => n.kind === 'recursive');
+  const deepestCallDepth = Math.max(...calls.map(n => n.depth));
+  const lastRow = nodesAtDepth(nodes, deepestCallDepth).filter(n => n.kind === 'recursive');
+
+  // Chains reserve a slot for the call that would come next, so the dots have
+  // somewhere to go that the layout has already kept clear of the cost box.
+  // Branching trees have no such slot and converge on the centre of the row.
+  const slot = nodes.find(n => n.kind === 'continues');
+  const centerX = slot
+    ? slot.x
+    : (Math.min(...lastRow.map(n => n.x)) + Math.max(...lastRow.map(n => n.x))) / 2;
+
+  // Clear the whole drawing, including any cost leaf below the last call.
+  const lastY = Math.max(...nodes.map(n => n.y + n.h / 2)) - NODE_H / 2;
+
+  const dotsY = slot ? slot.y : lastY + 58;
   const baseY = dotsY + 66;
   const baseSize = measureNode(baseLabel, 'base');
   nodes.push({
@@ -564,8 +630,9 @@ function assemble({ root, annotations, baseLabel, baseNote, derivation }) {
     x: centerX,
     dotsY,
     toY: baseY - NODE_H / 2,
-    // One dashed line per node that keeps expanding, converging on the dots.
-    from: lastRow.map(n => ({ x: n.x, y: n.y + n.h / 2 })),
+    // Branching trees converge one dashed line per still-expanding node. On a
+    // chain the parent-to-slot edge already draws that link.
+    from: slot ? [] : lastRow.map(n => ({ x: n.x, y: n.y + n.h / 2 })),
   };
 
   // Annotation column sits clear of the widest node, so it cannot collide.
