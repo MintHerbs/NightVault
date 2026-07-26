@@ -71,13 +71,20 @@ export default function RecurrencePage({ onAIStateChange }) {
     }
   };
 
-  const handleReset = () => {
+  /**
+   * Back to the input view.
+   * @param {boolean} keepFormula true when the user is correcting a rejected
+   *   formula, where wiping the field would mean retyping the whole thing.
+   */
+  const handleReset = (keepFormula = false) => {
     setView('input');
-    setFormula('');
-    setMethod('tree');
     setResult(null);
     setIsAnimating(false);
-    
+    if (!keepFormula) {
+      setFormula('');
+      setMethod('tree');
+    }
+
     if (onAIStateChange) {
       onAIStateChange('idle');
     }
@@ -101,9 +108,11 @@ export default function RecurrencePage({ onAIStateChange }) {
               </ScrambleText>
             </p>
           </div>
-          <RecurrenceInput 
-            onSubmit={handleSubmit} 
-            onAIStateChange={onAIStateChange} 
+          <RecurrenceInput
+            onSubmit={handleSubmit}
+            onAIStateChange={onAIStateChange}
+            initialFormula={formula}
+            initialMethod={method}
           />
         </main>
       </div>
@@ -118,7 +127,7 @@ export default function RecurrencePage({ onAIStateChange }) {
         showTitle 
         title="Recurrence Relation" 
         showNewFormula 
-        onNewFormula={handleReset}
+        onNewFormula={() => handleReset(false)}
         newFormulaText="New Formula"
       />
       
@@ -129,8 +138,8 @@ export default function RecurrencePage({ onAIStateChange }) {
                 family needs a method the solver does not implement". */}
             <h3 className={styles.errorTitle}>Cannot solve this one</h3>
             <p className={styles.errorMessage}>{result.error}</p>
-            <button className={styles.retryButton} onClick={handleReset}>
-              ← Try Again
+            <button className={styles.retryButton} onClick={() => handleReset(true)}>
+              ← Edit this formula
             </button>
           </div>
         </div>

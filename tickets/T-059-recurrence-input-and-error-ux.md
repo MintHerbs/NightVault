@@ -1,7 +1,7 @@
 ---
 id: T-059
 title: Recurrence input and error-state UX pass
-status: backlog
+status: done
 severity: low
 area: recurrence
 epic: E-007
@@ -38,9 +38,32 @@ guess both the syntax and what the tool is for.
 
 ## Acceptance criteria
 
-- [ ] An unsupported input can be corrected without retyping it
-- [ ] Examples are one click from the landing view and populate the input
-- [ ] No regression to the existing submit and animation flow
+- [x] An unsupported input can be corrected without retyping it
+- [x] Examples are one click from the landing view and populate the input
+- [x] No regression to the existing submit and animation flow
+
+## Resolution
+
+`handleReset` takes a `keepFormula` flag. The error screen's button is now
+"Edit this formula" and passes `true`, so a rejected input comes back editable
+with its text and chosen method intact; the navbar's "New Formula" passes
+`false` and still clears. `RecurrenceInput` accepts `initialFormula` and
+`initialMethod` to seed itself.
+
+Six example chips on the landing view, one per distinct behaviour rather than six
+variations of the same one: merge sort (case 2), binary search (a = 1 chain),
+quicksort worst case (subtract chain), Karatsuba (case 3, non-integer exponent),
+Fibonacci (exponential via characteristic root), and median of medians
+(Akra-Bazzi, which only became solvable in T-058). They are hidden once the field
+has content so they never compete with the KaTeX preview.
+
+Verified every chip solves, both methods agree, and each tree branches with no
+overlaps or tail collisions.
+
+Not done: the substitution panel's scroll affordance. The derivation running
+below the fold is a symptom of the panel not stacking, which is
+[T-020](T-020-split-panel-pages-force-unstackable-two-columns.md); fixing it here
+would conflict with that work.
 
 ## References
 

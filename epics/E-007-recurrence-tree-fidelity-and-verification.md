@@ -1,7 +1,7 @@
 ---
 id: E-007
 title: Recurrence tool — tree fidelity, self-verification, and the last unsupported family
-status: in-progress
+status: done
 created: 2026-07-26
 ---
 
@@ -32,7 +32,7 @@ refuses, and does the UX pass the feature has never had.
 - [x] T-056 — Chain recursion trees render as a straight line instead of branching (high)
 - [x] T-057 — Verify solver output against the numerically evaluated recurrence (high)
 - [x] T-058 — Support unequal subproblem splits via Akra-Bazzi (medium)
-- [ ] T-059 — Recurrence input and error-state UX pass (low)
+- [x] T-059 — Recurrence input and error-state UX pass (low)
 
 ## Non-goals
 
