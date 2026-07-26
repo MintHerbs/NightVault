@@ -19,7 +19,7 @@ export default function CpaMode() {
     year2: [newRow()],
     year3: [newRow()],
   })
-  const [projectMark, setProjectMark] = useState('')
+  const [projectMarks, setProjectMarks] = useState([''])
 
   const updateRow = (yearId, index, field, value) => {
     setRowsByYear(previous => {
@@ -36,16 +36,27 @@ export default function CpaMode() {
     }))
   }
 
+  const removeRow = (yearId, index) => {
+    setRowsByYear(previous => {
+      if (previous[yearId].length === 1) return previous
+      return {
+        ...previous,
+        [yearId]: previous[yearId].filter((_, rowIndex) => rowIndex !== index),
+      }
+    })
+  }
+
   const tally = (rows, weight, includeProject = false) => {
     let score = 0
     let credits = 0
 
     if (includeProject) {
-      const mark = parseFloat(projectMark)
-      if (!Number.isNaN(mark)) {
+      projectMarks.forEach(projectMark => {
+        const mark = parseFloat(projectMark)
+        if (Number.isNaN(mark)) return
         score += mark * PROJECT_CREDITS * weight
         credits += PROJECT_CREDITS * weight
-      }
+      })
     }
 
     rows.forEach(row => {
@@ -74,6 +85,19 @@ export default function CpaMode() {
   const markLabel = mark => {
     if (mark === '' || Number(mark) === 0) return `${mark || 0}%`
     return `${mark}%: ${gradeForMark(mark)}`
+  }
+
+  const updateProjectMark = (index, value) => {
+    setProjectMarks(previous =>
+      previous.map((mark, markIndex) => (markIndex === index ? value : mark))
+    )
+  }
+
+  const removeProjectMark = index => {
+    setProjectMarks(previous => {
+      if (previous.length === 1) return previous
+      return previous.filter((_, projectIndex) => projectIndex !== index)
+    })
   }
 
   const renderMarkControl = (mark, onChange, label) => {
@@ -129,13 +153,40 @@ export default function CpaMode() {
           </div>
 
           {year.hasProject && (
-            <div className={styles.row}>
-              <span className={styles.projectTag}>Final Year Project</span>
-              {renderMarkControl(
-                projectMark,
-                setProjectMark,
-                'Final Year Project mark'
-              )}
+            <div className={styles.projectRows}>
+              {projectMarks.map((projectMark, index) => (
+                <div className={styles.row} key={index}>
+                  <span className={styles.projectTag}>
+                    Final Year Project
+                    {projectMarks.length > 1 ? ` ${index + 1}` : ''}
+                  </span>
+                  {renderMarkControl(
+                    projectMark,
+                    value => updateProjectMark(index, value),
+                    `Final Year Project ${index + 1} mark`
+                  )}
+                  {projectMarks.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeProjectMark(index)}
+                      className={styles.removeButton}
+                      aria-label={`Remove Final Year Project ${index + 1}`}
+                      title="Remove final project"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setProjectMarks(previous => [...previous, ''])
+                }
+                className={styles.addProjectButton}
+              >
+                + Add another final project
+              </button>
             </div>
           )}
 
@@ -154,6 +205,17 @@ export default function CpaMode() {
                 row.percentage,
                 value => updateRow(year.id, index, 'percentage', value),
                 `${year.label} module ${index + 1} mark`
+              )}
+              {rowsByYear[year.id].length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeRow(year.id, index)}
+                  className={styles.removeButton}
+                  aria-label={`Remove ${row.name || `module ${index + 1}`} from ${year.label}`}
+                  title="Remove module"
+                >
+                  ×
+                </button>
               )}
             </div>
           ))}
