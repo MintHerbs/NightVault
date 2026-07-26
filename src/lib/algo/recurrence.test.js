@@ -421,6 +421,89 @@ for (const [input] of CASES) {
 }
 
 // ---------------------------------------------------------------------------
+// 7. The step panel shows the working, not just the conclusion (T-060)
+// ---------------------------------------------------------------------------
+
+console.log('=== 7. Derivations show their working ===');
+
+const panelText = (input, method) => {
+  const parsed = parseRecurrence(input);
+  const solve = method === 'tree' ? solveByTree : solveBySubstitution;
+  return solve(parsed).steps.map(s => s.text).join('\n');
+};
+
+// [ input, fragments that must appear, why it matters ]
+const WORKING = [
+  // A named identity is useless without its general formula.
+  ['T(n) = T(n-1) + n', ['Σ(i=1..m) i = m(m+1)/2', 'With m = n', 'n(n+1)/2', 'n²/2 + n/2', 'Θ(n²)']],
+  ['T(n) = T(n-1) + n^2', ['Σ(i=1..m) i² = m(m+1)(2m+1)/6', 'With m = n']],
+  ['T(n) = T(n-1) + log(n)', ['log(1 · 2 · … · m) = log(m!)', 'Stirling', 'log(n!)']],
+  ['T(n) = T(n-1) + 1', ['Σ(i=1..m) c = c·m']],
+
+  // The geometric sum formula, for each of the three cases.
+  ['T(n) = 4T(n/2) + n', ['Σ(k=0..m) ρ^k = (ρ^(m+1) − 1)/(ρ − 1)', 'ρ = 2 > 1', 'Check the leaves']],
+  ['T(n) = 2T(n/2) + n', ['ρ = 1 exactly', 'Σ(k=0..m) 1 = m + 1', 'Drop the lower-order term']],
+  ['T(n) = 2T(n/2) + n^2', ['Σ(k≥0) ρ^k = 1/(1 − ρ)', 'the bound is tight']],
+
+  // Σ notation and the factoring step that makes the series geometric.
+  ['T(n) = 3T(n/2) + n', ['Total = Σ(k=0..log₂(n))', 'factor out n', 'where ρ = a/b^q']],
+
+  // The exponential base must be derived, not asserted.
+  ['T(n) = T(n-1) + T(n-2)', ['Try T(n) = x^n', 'x² = x + 1', 'dominant root']],
+  ['T(n) = 2T(n-1) + 1', ['Σ(k=0..m) 2^k = (2^(m+1) − 1)/(2 − 1)']],
+
+  // Akra-Bazzi shows the equation, the formula and the integral.
+  ['T(n) = T(n/3) + T(2n/3) + n', ['Σ aᵢ·bᵢ^p = 1', '(1/3)^p + (2/3)^p = 1', '∫(1..n) du/u = log n']],
+  ['T(n) = T(n/5) + T(7n/10) + n', ['the integral grows', 'T(n) = Θ(n^0.84']],
+
+  // The n = 2^m substitution has to be spelled out.
+  ['T(n) = T(sqrt(n)) + 1', ['Substitute n = 2^m', 'S(m) = S(m/2) + f(2^m)', 'depth log m']],
+];
+
+for (const [input, fragments] of WORKING) {
+  for (const method of ['tree', 'substitution']) {
+    const text = panelText(input, method);
+    for (const fragment of fragments) {
+      checkThat(
+        `${method} working  ${input}  contains "${fragment}"`,
+        text.includes(fragment),
+        `not found in the ${method} panel`
+      );
+    }
+  }
+}
+
+// Both methods must explain a shared identity with the same words, or the two
+// panels teach subtly different things.
+for (const input of ['T(n) = T(n-1) + n', 'T(n) = 4T(n/2) + n', 'T(n) = T(n/3) + T(2n/3) + n']) {
+  const treeLines = new Set(panelText(input, 'tree').split('\n'));
+  const substShared = panelText(input, 'substitution')
+    .split('\n')
+    .filter(l => l.includes('Σ(') || l.includes('ρ^k') || l.includes('aᵢ·bᵢ'));
+  checkThat(
+    `both methods share the identity wording  ${input}`,
+    substShared.length > 0 && substShared.every(l => treeLines.has(l)),
+    `substitution-only identity lines: ${substShared.filter(l => !treeLines.has(l)).join(' | ')}`
+  );
+}
+
+// Every derivation must end at the same complexity it reports.
+for (const [input, expected] of CASES) {
+  const parsed = parseRecurrence(input);
+  if (parsed.error) continue;
+  for (const method of ['tree', 'substitution']) {
+    const solve = method === 'tree' ? solveByTree : solveBySubstitution;
+    const { steps, growth } = solve(parsed);
+    const lines = steps.map(s => s.text).filter(t => t.trim().startsWith('= Θ('));
+    checkThat(
+      `${method} working ends at the reported answer  ${input}`,
+      lines.length > 0 && lines[lines.length - 1].includes(`Θ(${expected})`),
+      `last Θ line was "${lines[lines.length - 1] ?? '(none)'}", expected Θ(${expected})`
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 
 console.log('');
 if (failures.length === 0) {

@@ -29,6 +29,13 @@ import {
   dominantRoot,
 } from './recurrenceMath.js';
 import {
+  divideWorking,
+  chainWorking,
+  exponentialWorking,
+  akraWorking,
+  sqrtWorking,
+} from './recurrenceWorking.js';
+import {
   layoutTree,
   collectEdges,
   normalize,
@@ -229,16 +236,11 @@ function divideSteps(parsed, analysis) {
   }
   push(steps, '⋮', 'info');
   push(steps, `Depth: n/b^k = 1 when k = ${logOf(b)}, so the tree has ${logOf(b)} + 1 levels`, 'loop');
-  push(steps, `Leaves: a^${logOf(b)} = n^${num(analysis.logba)}, each costing T(1)`, 'loop');
+  push(steps, `Leaves: a^${logOf(b)} = ${formatGrowth(polylog(analysis.logba, 0))}, each costing T(1)`, 'loop');
 
   divider(steps);
   push(steps, 'Summing the levels:', 'info');
-  push(steps, `each level is ${ratioText(analysis.ratio)}× the one above it, since r = a/b^p = ${num(a)}/${num(b)}^${num(d.exp)}`, 'special');
-  push(steps, analysis.reason, 'special');
-  push(steps, analysis.seriesNote, 'special');
-
-  divider(steps);
-  derivationLines(parsed, analysis).forEach(line => push(steps, line, 'combine_nested'));
+  pushWorking(steps, divideWorking(parsed, analysis));
   final(steps, analysis.growth);
   return steps;
 }
@@ -336,8 +338,8 @@ function akraSteps(parsed, analysis) {
   push(steps, `Parsed: ${parsed.original}`, 'info');
   push(steps, `Unequal splits: ${parts.map(t => `${t.coef === 1 ? '' : `${num(t.coef)}×`}${fractionText(t)} of n`).join(', ')}`, 'info');
   push(steps, `f(n) = ${fText}`, 'info');
-  push(steps, 'The subproblems differ in size, so the tree is lopsided and no', 'info');
-  push(steps, 'single ratio a/b^p applies. This is the Akra-Bazzi case.', 'info');
+  push(steps, 'The subproblems differ in size, so the tree is lopsided and no single', 'info');
+  push(steps, 'ratio a/b^q applies. That is the Akra-Bazzi case.', 'info');
   divider(steps);
 
   const levelsShown = levelsFor(branching);
@@ -348,15 +350,7 @@ function akraSteps(parsed, analysis) {
   push(steps, '⋮', 'info');
 
   divider(steps);
-  push(steps, 'Find the exponent p of the leaf count:', 'info');
-  push(steps, `  ${akraEquation(parts)}`, 'special');
-  push(steps, `  p = ${num(analysis.p, 4)}`, 'special');
-  push(steps, `Level totals shrink or grow by ρ = Σ aᵢbᵢ^q = ${num(analysis.ratio)}, where q = ${num(d.exp)}`, 'special');
-  push(steps, analysis.reason, 'special');
-  push(steps, analysis.seriesNote, 'special');
-
-  divider(steps);
-  akraDerivation(parsed, analysis).forEach(line => push(steps, line, 'combine_nested'));
+  pushWorking(steps, akraWorking(parsed, analysis));
   final(steps, analysis.growth);
   return steps;
 }
@@ -423,14 +417,8 @@ function chainSteps(parsed, series, terms) {
   push(steps, `Depth: n − k·${b} = 0 when k = ${b === 1 ? 'n' : `n/${b}`}, so the chain has ${b === 1 ? 'n' : `n/${b}`} levels`, 'loop');
 
   divider(steps);
-  push(steps, 'Every level holds exactly one node, so the total is the plain sum:', 'info');
-  push(steps, `${terms.join(' + ')} + … + ${renderF(parsed.fTerms, arg.literal(String(b)))}`, 'combine_nested');
-  push(steps, `Recognised: ${series.name}`, 'special');
-  push(steps, series.note, 'special');
-
-  divider(steps);
-  push(steps, `= ${series.closedText}`, 'combine_nested');
-  push(steps, `= ${theta(series.growth)}`, 'combine_nested');
+  push(steps, `Recognised: ${series.name}`, 'info');
+  pushWorking(steps, chainWorking(parsed, series));
   final(steps, series.growth);
   return steps;
 }
@@ -524,19 +512,8 @@ function branchingSteps(parsed, rootBase, growth, counts) {
   push(steps, `Depth: n/${b} levels before reaching the base case`, 'loop');
 
   divider(steps);
-  push(steps, 'The node count multiplies every level, so this is a geometric series:', 'info');
-  push(steps, `${counts.join(' + ')} + … dominated by its last term`, 'combine_nested');
-
-  if (recTerms.length > 1) {
-    push(steps, `Different shifts, so the growth base solves x^${Math.max(...recTerms.map(t => t.shift))} = ${recTerms.map(t => `${t.coef === 1 ? '' : num(t.coef)}x^${Math.max(...recTerms.map(u => u.shift)) - t.shift}`).join(' + ')}`, 'special');
-    push(steps, `Dominant root ≈ ${num(rootBase)}`, 'special');
-  } else {
-    push(steps, `${num(totalBranch)} branches with the size falling by ${b} gives ${num(totalBranch)}^(n/${b}) = ${formatGrowth(growth)} leaves`, 'special');
-  }
-  push(steps, 'The leaves dominate every level above them', 'special');
-
-  divider(steps);
-  push(steps, `= ${theta(growth)}`, 'combine_nested');
+  push(steps, 'Summing the levels:', 'info');
+  pushWorking(steps, exponentialWorking(parsed, rootBase, growth));
   final(steps, growth);
   return steps;
 }
@@ -608,10 +585,7 @@ function sqrtSteps(parsed, growth, derivation) {
   push(steps, '⋮', 'info');
   push(steps, 'Depth: n^(1/2^k) = 2 when k = log log n', 'loop');
   divider(steps);
-  push(steps, 'Substituting n = 2^m turns the square root into a halving:', 'special');
-  push(steps, 'S(m) = S(m/2) + f(2^m), which is the divide case in m', 'special');
-  divider(steps);
-  derivation.forEach(line => push(steps, line, 'combine_nested'));
+  pushWorking(steps, sqrtWorking(parsed, growth));
   final(steps, growth);
   return steps;
 }
@@ -817,6 +791,18 @@ export function annotationRightEdge(a) {
 
 function push(steps, text, type) {
   steps.push({ text, type });
+}
+
+/**
+ * Emit the detailed algebra. Blank lines become dividers so they do not consume
+ * a line number, and lines that introduce a step get the accent colour.
+ */
+function pushWorking(steps, lines) {
+  for (const line of lines) {
+    if (line === '') steps.push({ text: '', type: 'divider' });
+    else if (line.endsWith(':')) steps.push({ text: line, type: 'special' });
+    else steps.push({ text: line, type: 'combine_nested' });
+  }
 }
 
 function divider(steps) {

@@ -382,7 +382,9 @@ export const arg = {
   minusExpr: (name, kText, kLatex) => ({ text: `${name}−${kText}`, latex: `${name} - ${kLatex ?? kText}`, atomic: false }),
   over: (name, d) => (d === 1 ? arg.symbol(name) : { text: `${name}/${d}`, latex: `\\frac{${name}}{${d}}`, atomic: false }),
   overPow: (name, base, expText) => ({
-    text: `${name}/${base}${toSuperscript(expText)}`,
+    // A symbolic exponent has no superscript glyph, so fall back to a caret:
+    // "n/2^k", never "n/2k".
+    text: `${name}/${base}${/^\d+$/.test(String(expText)) ? toSuperscript(expText) : `^${expText}`}`,
     latex: `\\frac{${name}}{${base}^{${expText}}}`,
     atomic: false,
   }),

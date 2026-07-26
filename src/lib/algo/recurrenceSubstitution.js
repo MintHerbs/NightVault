@@ -17,7 +17,6 @@ import {
   multiplyFraction,
   growthToKey,
   formatGrowthLatex,
-  theta,
   bigO,
   num,
   renderF,
@@ -26,6 +25,13 @@ import {
   sumSubtractSeries,
   dominantRoot,
 } from './recurrenceMath.js';
+import {
+  divideWorking,
+  chainWorking,
+  exponentialWorking,
+  akraWorking,
+  sqrtWorking,
+} from './recurrenceWorking.js';
 
 const SUBSCRIPT = { 0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉' };
 const sub = v => String(v).split('').map(c => SUBSCRIPT[c] ?? c).join('');
@@ -107,10 +113,8 @@ function chainSubstitution(parsed) {
   special(steps, `Base case T(0) is reached when n − k${b === 1 ? '' : `·${b}`} = 0, so k = ${b === 1 ? 'n' : `n/${b}`}`);
   nest(steps, `T(n) = T(0) + ${fAt(0)} + ${fAt(1)} + … + ${renderF(fTerms, arg.literal(String(b)))}`);
   divider(steps);
-  special(steps, `Recognised: ${series.name}`);
-  special(steps, series.note);
-  nest(steps, `= ${series.closedText}`);
-  nest(steps, `= ${theta(series.growth)}`);
+  info(steps, `Recognised: ${series.name}`);
+  pushWorking(steps, chainWorking(parsed, series));
   final(steps, series.growth);
 
   return {
@@ -134,6 +138,8 @@ function divideSubstitution(parsed) {
   const A = k => num(Math.pow(a, k));
   const B = k => num(Math.pow(b, k));
   const coef = k => (Math.abs(Math.pow(a, k) - 1) < 1e-9 ? '' : `${A(k)}`);
+  /** "16·(n/4)" rather than "16n/4", which could be read as (16n)/4. */
+  const scaled = k => (Math.abs(Math.pow(a, k) - 1) < 1e-9 ? fAt(k) : `${A(k)}·(${fAt(k)})`);
 
   const formulas = [];
   const add = (latex, label) => formulas.push({ latex, label });
@@ -166,22 +172,19 @@ function divideSubstitution(parsed) {
   loop(steps, `Replace n with n/${num(b)}:`);
   nest(steps, `T(n/${B(1)}) = ${a === 1 ? '' : A(1)}T(n/${B(2)}) + ${fAt(1)}`);
   loop(steps, 'Substitute back into T(n):');
-  nest(steps, `T(n) = ${coef(2)}T(n/${B(2)}) + ${coef(1)}${fAt(1)} + ${fAt(0)}`);
+  nest(steps, `T(n) = ${coef(2)}T(n/${B(2)}) + ${scaled(1)} + ${fAt(0)}`);
   loop(steps, `Replace n with n/${B(2)}:`);
   nest(steps, `T(n/${B(2)}) = ${a === 1 ? '' : A(1)}T(n/${B(3)}) + ${fAt(2)}`);
   loop(steps, 'Substitute back again:');
-  nest(steps, `T(n) = ${coef(3)}T(n/${B(3)}) + ${coef(2)}${fAt(2)} + ${coef(1)}${fAt(1)} + ${fAt(0)}`);
+  nest(steps, `T(n) = ${coef(3)}T(n/${B(3)}) + ${scaled(2)} + ${scaled(1)} + ${fAt(0)}`);
   divider(steps);
   special(steps, 'Pattern after k steps:');
   special(steps, '  T(n) = a^k T(n/b^k) + Σ a^i f(n/b^i) for i = 0..k−1');
   special(steps, `Base case T(1) is reached when n/b^k = 1, so k = ${logOf(b)}`);
   nest(steps, `T(n) = n^${num(analysis.logba)}·T(1) + Σ a^i f(n/b^i)`);
   divider(steps);
-  special(steps, `Each term is r = a/b^p = ${num(a)}/${num(b)}^${num(d.exp)} = ${num(analysis.ratio)} times the one before it`);
-  special(steps, analysis.reason);
-  special(steps, analysis.seriesNote);
-  divider(steps);
-  nest(steps, `= ${theta(analysis.growth)}`);
+  info(steps, 'Evaluating the sum that is left:');
+  pushWorking(steps, divideWorking(parsed, analysis));
   final(steps, analysis.growth);
 
   return {
@@ -264,23 +267,16 @@ function branchingSubstitution(parsed) {
     special(steps, `  T(n) = ${num(a)}^k T(n−k${b === 1 ? '' : `·${b}`}) + Σ ${num(a)}^i f(n−i${b === 1 ? '' : `·${b}`})`);
     special(steps, `Base case reached when k = ${b === 1 ? 'n' : `n/${b}`}`);
     nest(steps, `T(n) = ${num(a)}^${b === 1 ? 'n' : `n/${b}`}·T(0) + Σ ${num(a)}^i f(n−i${b === 1 ? '' : `·${b}`})`);
-    divider(steps);
-    special(steps, `The ${num(a)}^k term grows faster than the sum beside it`);
-    special(steps, `Geometric series: 1 + ${num(a)} + ${num(a * a)} + … + ${num(a)}^k = Θ(${num(a)}^k)`);
   } else {
     loop(steps, 'Expanding once:');
     nest(steps, `T(n) = ${recTerms.map(t => `T(n−${t.shift})`).join(' + ')} + ${fAt(0)}`);
     loop(steps, 'Expanding again doubles the number of terms:');
     nest(steps, 'T(n) = T(n−2) + 2T(n−3) + T(n−4) + …');
-    divider(steps);
-    special(steps, 'The expansion does not collapse into a single sum, so try T(n) = x^n');
-    const maxShift = Math.max(...recTerms.map(t => t.shift));
-    special(steps, `x^${maxShift} = ${recTerms.map(t => `${t.coef === 1 ? '' : num(t.coef)}x^${maxShift - t.shift}`).join(' + ')}`);
-    special(steps, `Dominant root x ≈ ${num(base)}${Math.abs(base - 1.618) < 0.01 ? ' (the golden ratio φ)' : ''}`);
   }
 
   divider(steps);
-  nest(steps, `= ${theta(growth)}`);
+  info(steps, 'Working out the growth:');
+  pushWorking(steps, exponentialWorking(parsed, base, growth));
   final(steps, growth);
 
   return {
@@ -348,17 +344,10 @@ function akraSubstitution(parsed) {
     nest(steps, `T(${sizeText(t)}) = ${kids} + f(${sizeText(t)})`);
   });
   divider(steps);
-  special(steps, 'Each branch shrinks by a different factor, so the sizes never');
-  special(steps, 'collect into a single n/b^k and the geometric sum does not apply.');
-  special(steps, 'Akra-Bazzi handles exactly this: find p from the leaf count.');
+  info(steps, 'Each branch shrinks by a different factor, so the sizes never collect');
+  info(steps, 'into a single n/b^k and the geometric sum does not apply.');
   divider(steps);
-  special(steps, `  ${akraEquationText(parts)}`);
-  special(steps, `  p = ${num(p, 4)}`);
-  special(steps, `T(n) = Θ(n^p · (1 + ∫₁ⁿ f(u)/u^(p+1) du))`);
-  special(steps, akraIntegralText(q, r, p, analysis));
-  special(steps, analysis.reason);
-  divider(steps);
-  nest(steps, `= ${theta(analysis.growth)}`);
+  pushWorking(steps, akraWorking(parsed, analysis));
   final(steps, analysis.growth);
 
   return {
@@ -370,21 +359,8 @@ function akraSubstitution(parsed) {
   };
 }
 
-const akraEquationText = parts =>
-  parts.map(t => `${t.coef === 1 ? '' : `${num(t.coef)}·`}(${fracText(t)})^p`).join(' + ') + ' = 1';
-
 const akraEquationLatex = parts =>
   parts.map(t => `${t.coef === 1 ? '' : num(t.coef)}\\left(\\tfrac{${t.num ?? 1}}{${t.den ?? 1}}\\right)^{p}`).join(' + ') + ' = 1';
-
-/** The integral is what selects the case, so show which way it went. */
-function akraIntegralText(q, r, p, analysis) {
-  if (analysis.caseNum === 1) return `∫ u^${num(q - p - 1)} log^${num(r)} u du grows like n^${num(q - p)}, so f(n) dominates`;
-  if (analysis.caseNum === 3) return `∫ u^${num(q - p - 1)} log^${num(r)} u du converges, so only n^p survives`;
-  if (Math.abs(r + 1) < 1e-9) return '∫ du/(u log u) = log log n';
-  if (r < -1) return '∫ log^r(u)/u du converges, so only n^p survives';
-  if (Math.abs(r) < 1e-9) return '∫ du/u = log n';
-  return `∫ log^${num(r)}(u)/u du = log^${num(r + 1)}(n)/${num(r + 1)}`;
-}
 
 function akraIntegralLatex(q, r, p, analysis) {
   if (analysis.caseNum === 1) {
@@ -429,10 +405,9 @@ function sqrtSubstitution(parsed) {
   divider(steps);
   special(steps, 'Pattern after k steps:');
   special(steps, '  T(n) = T(n^(1/2^k)) + Σ f(n^(1/2^i))');
-  special(steps, 'Let n = 2^m, so S(m) = S(m/2) + f(2^m), a halving recurrence in m');
   special(steps, 'Base case at n^(1/2^k) = 2, so k = log log n');
   divider(steps);
-  nest(steps, `= ${theta(growth)}`);
+  pushWorking(steps, sqrtWorking(parsed, growth));
   final(steps, growth);
 
   return {
@@ -445,6 +420,18 @@ function sqrtSubstitution(parsed) {
 }
 
 // ---------------------------------------------------------------------------
+
+/**
+ * Emit the detailed algebra. Shared with the tree method, so an identity is
+ * always explained the same way whichever method reached it.
+ */
+function pushWorking(steps, lines) {
+  for (const line of lines) {
+    if (line === '') steps.push({ text: '', type: 'divider' });
+    else if (line.endsWith(':')) steps.push({ text: line, type: 'special' });
+    else steps.push({ text: line, type: 'combine_nested' });
+  }
+}
 
 const info = (steps, text) => steps.push({ text, type: 'info' });
 const loop = (steps, text) => steps.push({ text, type: 'loop' });

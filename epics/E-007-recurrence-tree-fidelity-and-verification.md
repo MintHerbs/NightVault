@@ -33,6 +33,7 @@ refuses, and does the UX pass the feature has never had.
 - [x] T-057 — Verify solver output against the numerically evaluated recurrence (high)
 - [x] T-058 — Support unequal subproblem splits via Akra-Bazzi (medium)
 - [x] T-059 — Recurrence input and error-state UX pass (low)
+- [x] T-060 — Show the full working in the step panel, not just the recognised identity (medium)
 
 ## Non-goals
 
