@@ -1,4 +1,4 @@
-import { ArrowLeft } from '@phosphor-icons/react'
+import BackButton from '../../common/BackButton/BackButton'
 import MarkdownRenderer from '../MarkdownRenderer'
 import styles from './NoteReader.module.css'
 
@@ -19,11 +19,7 @@ import styles from './NoteReader.module.css'
 export default function NoteReader({ content, eyebrow, onBack }) {
   return (
     <div className={styles.scrollContainer}>
-      {onBack && (
-        <button className={styles.backButton} onClick={onBack} aria-label="Back">
-          <ArrowLeft size={20} weight="bold" />
-        </button>
-      )}
+      {onBack && <BackButton onClick={onBack} />}
       <div className={styles.documentContainer}>
         {eyebrow && <div className={styles.eyebrow}>{eyebrow}</div>}
         <MarkdownRenderer content={content} />

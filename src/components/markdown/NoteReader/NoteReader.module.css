@@ -27,47 +27,11 @@
   margin: 0 0 20px 0;
 }
 
-/* Floating back affordance — mirrors PreviewModal's close button. */
-/* Top-right so it clears the global left Sidebar rail (fixed 56px, expands on
-   hover). Mirrors the preview's close affordance. */
-.backButton {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  z-index: 40;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text);
-  cursor: pointer;
-  transition: all 150ms ease;
-  box-shadow: var(--shadow-sm);
-}
-
-.backButton:hover {
-  background: var(--color-hover-strong);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.backButton:active {
-  transform: scale(0.95);
-}
+/* Back button now lives in src/components/common/BackButton (shared across
+   tool pages too) — see NoteReader.jsx. */
 
 @media (max-width: 768px) {
   .scrollContainer {
     padding: 64px 16px 80px;
-  }
-
-  .backButton {
-    top: 16px;
-    right: 16px;
-    width: 36px;
-    height: 36px;
   }
 }

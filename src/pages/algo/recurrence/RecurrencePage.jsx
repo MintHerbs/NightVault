@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../../../components/layout/Navbar/Navbar';
 import Starfield from '../../../components/effects/Starfield/Starfield';
+import BackButton from '../../../components/common/BackButton/BackButton';
 import { ScrambleText } from '../../../components/ui/ScrambleText';
 import RecurrenceInput from '../../../features/recurrence/components/RecurrenceInput/RecurrenceInput';
 import RecurrenceTreeView from '../../../features/recurrence/components/RecurrenceTreeView/RecurrenceTreeView';
@@ -11,6 +13,7 @@ import { solveByTree, solveBySubstitution } from '../../../lib/algo/recurrenceSo
 import styles from './RecurrencePage.module.css';
 
 export default function RecurrencePage({ onAIStateChange }) {
+  const navigate = useNavigate();
   const [view, setView] = useState('input');
   const [formula, setFormula] = useState('');
   const [method, setMethod] = useState('tree');
@@ -94,6 +97,7 @@ export default function RecurrencePage({ onAIStateChange }) {
     return (
       <div className={styles.container}>
         <Starfield />
+        <BackButton onClick={() => navigate('/home')} />
         <Navbar />
         <main className={styles.landingCenter}>
           <div className={styles.heroContainer}>
@@ -123,7 +127,8 @@ export default function RecurrencePage({ onAIStateChange }) {
   return (
     <div className={styles.resultPage}>
       <Starfield />
-      <Navbar 
+      <BackButton onClick={() => navigate('/home')} />
+      <Navbar
         showTitle 
         title="Recurrence Relation" 
         showNewFormula 

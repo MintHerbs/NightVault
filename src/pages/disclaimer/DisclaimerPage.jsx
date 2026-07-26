@@ -1,13 +1,18 @@
 // Disclaimer page with open source info and usage warnings
+import { useNavigate } from 'react-router-dom'
 import Starfield from '../../components/effects/Starfield/Starfield'
+import BackButton from '../../components/common/BackButton/BackButton'
 import styles from './DisclaimerPage.module.css'
 
 function DisclaimerPage() {
+  const navigate = useNavigate()
+
   return (
     <div className={styles.disclaimerPage}>
       {/* Starfield background */}
       <Starfield />
-      
+      <BackButton onClick={() => navigate('/home')} />
+
       {/* Main content */}
       <main className={styles.content}>
         <div className={styles.textContainer}>

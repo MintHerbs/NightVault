@@ -1,0 +1,47 @@
+/* Floating back affordance, anchored top-left. Left offset clears the global
+   fixed 56px Sidebar rail (see src/components/layout/Sidebar/Sidebar.module.css)
+   at desktop widths; the sidebar goes off-canvas at 968px, so the button can
+   sit closer to the edge below that breakpoint. */
+.backButton {
+  position: fixed;
+  top: 24px;
+  left: 80px;
+  z-index: 40;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 150ms ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.backButton:hover {
+  background: var(--color-hover-strong);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.backButton:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 968px) {
+  .backButton {
+    left: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .backButton {
+    top: 16px;
+    left: 16px;
+    width: 36px;
+    height: 36px;
+  }
+}

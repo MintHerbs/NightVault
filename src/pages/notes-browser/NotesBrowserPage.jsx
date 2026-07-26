@@ -6,6 +6,7 @@ import {
   ListBullets, MagnifyingGlass, SquaresFour,
 } from '@phosphor-icons/react'
 import PageShell from '../../components/layout/PageShell'
+import BackButton from '../../components/common/BackButton/BackButton'
 import Loading from '../../components/ui/Loading'
 import { useNotesRegistry } from '../../hooks/useNotesRegistry'
 import {
@@ -77,6 +78,14 @@ export default function NotesBrowserPage() {
   const activeSubfolder = segmentToSubfolder(subfolder)
   const level = subfolder ? 'files' : moduleId ? 'folders' : 'subjects'
 
+  // Discrete "go up one directory" step, distinct from the breadcrumb's jump
+  // to an arbitrary ancestor — mirrors NotesPage's deterministic handleBack.
+  const goUp = () => {
+    if (level === 'files') navigate(`/notes-browser/${moduleId}`)
+    else if (level === 'folders') navigate('/notes-browser')
+    else navigate('/home')
+  }
+
   const fileItem = (f) => ({
     kind: 'file', key: f.path, name: f.name, date: f.updatedAt,
     onOpen: () => navigate(noteRoute(moduleId, f.path)),
@@ -135,6 +144,7 @@ export default function NotesBrowserPage() {
 
   return (
     <PageShell variant="content">
+      <BackButton onClick={goUp} />
       <div className={styles.page}>
         <div className={styles.mainHeader}>
           <Breadcrumb crumbs={crumbs} />
