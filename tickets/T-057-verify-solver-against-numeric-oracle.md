@@ -1,7 +1,7 @@
 ---
 id: T-057
 title: Verify solver output against the numerically evaluated recurrence
-status: backlog
+status: done
 severity: high
 area: recurrence
 epic: E-007
@@ -55,11 +55,36 @@ Report drift per case so a failure says which direction the claim is wrong in.
 
 ## Acceptance criteria
 
-- [ ] Every case in the existing suite is also confirmed numerically
-- [ ] Deliberately feeding a wrong closed form is CONTRADICTED, proving the
+- [x] Every case in the existing suite is also confirmed numerically
+- [x] Deliberately feeding a wrong closed form is CONTRADICTED, proving the
       oracle discriminates rather than rubber-stamping
-- [ ] Runs in the same order of time as the existing suite
-- [ ] Wired into an npm script and documented in the ticket
+- [x] Runs in the same order of time as the existing suite (3.4s)
+- [x] Wired into an npm script and documented in the ticket
+
+## Resolution
+
+`src/lib/algo/recurrence.oracle.test.js`, run by `npm run test:recurrence`
+alongside the assertion suite, or alone via `npm run test:recurrence:oracle`.
+81 checks: 35 recurrences confirmed across all four families, both methods
+asserted to agree, and **11 deliberately wrong closed forms rejected**. That
+second group is the part that matters, since an oracle that accepts everything
+proves nothing. It rejects exactly the mistakes this feature actually made:
+
+```
+T(n) = 2T(n/2) + n/log(n)   Θ(n)        drift 0.456   rejected  (the pre-fix rule)
+T(n) = T(n-1) + n           Θ(n)        drift 7.596   rejected  (the constant-f bug)
+T(n) = 3T(n/2) + n          Θ(n)        drift 161375  rejected  (the enum collapse)
+T(n) = T(n/2) + log(n)      Θ(log n)    drift 5.298   rejected  (the dropped log power)
+T(n) = T(n-1) + T(n-2)      Θ(2ⁿ)       drift 419.6   rejected  (branching factor, not φ)
+```
+
+The oracle also caught a flaw in **itself** during development: it initially
+accepted Θ(n) for `T(n) = T(n-1) + log n` (drift 0.290, under tolerance) because
+the chain ladder only spanned n = 20k..400k, over which log log n barely moves.
+Widening it to n = 2000..4e6 raised the drift to 0.765 and it now rejects.
+The same lesson applies to the divide ladder, which reaches n = b^400000 in log
+space precisely because at n = 2^24 the right and wrong rules are
+indistinguishable.
 
 ## References
 
