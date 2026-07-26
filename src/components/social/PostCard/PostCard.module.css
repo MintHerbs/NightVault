@@ -154,7 +154,7 @@
 .edited {
   margin: 0 0 8px 0;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--md-on-surface-variant);
   letter-spacing: 0.02em;
   font-style: italic;
 }

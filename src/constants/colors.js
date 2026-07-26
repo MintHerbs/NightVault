@@ -14,7 +14,12 @@ export const colors = {
   warning:       '#facc15',
   success:       '#22c55e',
 
-  // Sidebar icon states
+  // Sidebar icon states.
+  //
+  // iconOff is ICON-ONLY and must not be reused for text. At 0.38 alpha on the
+  // page background it measures ~3.4:1 — that clears WCAG's 3:1 bar for
+  // non-text UI components, but is below the 4.5:1 required for text. For
+  // low-emphasis *text*, use --md-on-surface-variant instead (see LT-001).
   iconOff:       'rgba(255,255,255,0.38)',  // inactive — subtle on black
   iconHover:     'rgba(255,255,255,0.75)',  // hover — visible but not full
   iconActive:    '#8B5CF6',                 // active — accent purple

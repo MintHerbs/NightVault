@@ -45,7 +45,7 @@
 
 .removed {
   font-style: italic;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--md-on-surface-variant);
 }
 
 .meta {
@@ -54,7 +54,7 @@
   align-items: center;
   gap: 14px;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--md-on-surface-variant);
 }
 
 .actions {
@@ -120,7 +120,7 @@
 }
 
 .replyTextarea::placeholder {
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--md-on-surface-variant);
 }
 
 .replyActions {

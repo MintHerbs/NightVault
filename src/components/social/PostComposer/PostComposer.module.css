@@ -91,7 +91,7 @@
 }
 
 .textarea::placeholder {
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--md-on-surface-variant);
 }
 
 .textareaExpanded {
@@ -140,7 +140,7 @@
 
 .charCount {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--md-on-surface-variant);
   letter-spacing: 0.01em;
 }
 

@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "lint:css": "stylelint \"src/**/*.css\"",
     "test:recurrence": "node src/lib/algo/recurrence.test.js && node src/lib/algo/recurrence.oracle.test.js",
     "test:recurrence:oracle": "node src/lib/algo/recurrence.oracle.test.js",
     "test:tree": "node src/test/tree/test-library-integration.js && node src/lib/treeLayout.test.js && node src/test/tree/test-fuzz.js",
@@ -50,6 +51,7 @@
     "js-yaml": "^4.1.1",
     "pg": "^8.20.0",
     "postcss": "^8.5.13",
+    "stylelint": "^17.14.1",
     "supabase": "^2.98.2",
     "tailwindcss": "^4.2.4",
     "vite": "^5.0.8"
