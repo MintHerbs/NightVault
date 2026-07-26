@@ -22,8 +22,8 @@
 }
 
 .container:focus-within {
-  border-color: #8B5CF6;
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
+  border-color: #ffa31a;
+  box-shadow: 0 0 0 2px rgba(255, 163, 26, 0.25);
 }
 
 .textarea {
@@ -35,7 +35,7 @@
   font-size: 13px;
   font-family: 'JetBrains Mono', monospace;
   line-height: 1.6;
-  caret-color: #8B5CF6;
+  caret-color: #ffa31a;
   resize: none;
   padding-right: 56px;
   min-height: 28px;
@@ -72,15 +72,15 @@
 }
 
 .textarea::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.3);
+  background: rgba(255, 163, 26, 0.3);
   border-radius: 3px;
 }
 
 .textarea::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.5);
+  background: rgba(255, 163, 26, 0.5);
 }
 
-/* Send button - purple circle with arrow */
+/* Send button - orange circle with arrow */
 .sendButton {
   position: absolute;
   top: 14px;
@@ -89,7 +89,7 @@
   height: 32px;
   min-width: 32px;
   min-height: 32px;
-  background-color: #8B5CF6;
+  background-color: #ffa31a;
   border: none;
   border-radius: 50%;
   display: flex;
@@ -103,7 +103,7 @@
 }
 
 .sendButton:hover {
-  background-color: #7c3aed;
+  background-color: #e68a00;
   transform: scale(1.05);
 }
 

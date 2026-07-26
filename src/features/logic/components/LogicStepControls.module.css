@@ -54,9 +54,9 @@
 
 .button:hover:not(:disabled) {
   background: #222;
-  border-color: #8B5CF6;
-  color: #8B5CF6;
-  box-shadow: 0 0 12px rgba(139, 92, 246, 0.2);
+  border-color: #ffa31a;
+  color: #ffa31a;
+  box-shadow: 0 0 12px rgba(255, 163, 26, 0.2);
 }
 
 .button:disabled {
@@ -65,15 +65,15 @@
 }
 
 .playButton {
-  background: #8B5CF6;
-  border-color: #8B5CF6;
+  background: #ffa31a;
+  border-color: #ffa31a;
   color: #fff;
 }
 
 .playButton:hover:not(:disabled) {
   background: #7c4ee4;
   border-color: #7c4ee4;
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 0 20px rgba(255, 163, 26, 0.4);
 }
 
 .buttonIcon {
@@ -88,7 +88,7 @@
 .stepCounter {
   font-size: 14px;
   font-weight: 700;
-  color: #8B5CF6;
+  color: #ffa31a;
   letter-spacing: 0.05em;
 }
 
@@ -124,21 +124,21 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #8B5CF6;
+  background: #ffa31a;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .slider::-webkit-slider-thumb:hover {
   background: #7c4ee4;
-  box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 12px rgba(255, 163, 26, 0.5);
 }
 
 .slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #8B5CF6;
+  background: #ffa31a;
   cursor: pointer;
   border: none;
   transition: all 0.2s ease;
@@ -146,7 +146,7 @@
 
 .slider::-moz-range-thumb:hover {
   background: #7c4ee4;
-  box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 12px rgba(255, 163, 26, 0.5);
 }
 
 .slider:disabled {

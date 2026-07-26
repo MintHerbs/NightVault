@@ -35,8 +35,8 @@
 }
 
 .headerIcon {
-  color: #8B5CF6;
-  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.4));
+  color: #ffa31a;
+  filter: drop-shadow(0 0 8px rgba(255, 163, 26, 0.4));
 }
 
 .title {
@@ -99,13 +99,13 @@
 }
 
 .inlineLink {
-  color: #a78bfa;
+  color: #ffb84d;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .inlineLink:hover {
-  color: #c4b5fd;
+  color: #ffd08a;
 }
 
 .footer {

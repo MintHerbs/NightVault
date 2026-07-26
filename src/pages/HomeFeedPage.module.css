@@ -64,7 +64,7 @@
 .skeletonCard {
   width: calc(100% - 32px);
   background: #0A0A0C;
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  border: 1px solid rgba(255, 163, 26, 0.25);
   border-radius: 16px;
   padding: 16px 18px;
   margin: 0 16px 12px;
@@ -72,7 +72,7 @@
   position: relative;
   box-shadow: 
     0 1px 3px rgba(0, 0, 0, 0.4),
-    inset 0 0 60px rgba(139, 92, 246, 0.02);
+    inset 0 0 60px rgba(255, 163, 26, 0.02);
 }
 
 .skeletonHeader {
@@ -86,11 +86,11 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(139, 92, 246, 0.12);
+  background: rgba(255, 163, 26, 0.12);
   flex-shrink: 0;
   overflow: hidden;
   position: relative;
-  box-shadow: inset 0 0 10px rgba(139, 92, 246, 0.2);
+  box-shadow: inset 0 0 10px rgba(255, 163, 26, 0.2);
 }
 
 .skeletonMeta {
@@ -117,11 +117,11 @@
 .pulseLine {
   height: 10px;
   border-radius: 9999px;
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(255, 163, 26, 0.1);
   margin-bottom: 10px;
   overflow: hidden;
   position: relative;
-  box-shadow: inset 0 0 10px rgba(139, 92, 246, 0.1);
+  box-shadow: inset 0 0 10px rgba(255, 163, 26, 0.1);
 }
 
 .pulseLine:last-child {
@@ -134,10 +134,10 @@
   transform: translateX(-60%);
   background: linear-gradient(
     90deg,
-    rgba(139, 92, 246, 0) 0%,
-    rgba(139, 92, 246, 0.3) 50%,
-    rgba(201, 160, 255, 0.2) 60%,
-    rgba(139, 92, 246, 0) 100%
+    rgba(255, 163, 26, 0) 0%,
+    rgba(255, 163, 26, 0.3) 50%,
+    rgba(255, 208, 138, 0.2) 60%,
+    rgba(255, 163, 26, 0) 100%
   );
   animation: shimmer 1.2s infinite;
 }

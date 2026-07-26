@@ -13,7 +13,7 @@
  * @param {React.ReactNode} [props.lucideIcon] - Lucide icon component (optional if using SVG paths)
  * @param {string} props.tooltip - Tooltip text to display on hover
  * @param {boolean} props.isActive - Whether this icon is currently active
- * @param {string} [props.activeColor='#8B5CF6'] - Color to apply when active
+ * @param {string} [props.activeColor='#ffa31a'] - Color to apply when active
  * @param {string} [props.hoverColor] - Color to apply on hover (defaults to activeColor)
  * @param {Function} props.onClick - Click handler callback
  */
@@ -27,7 +27,7 @@ export default function NavChildIcon({
   lucideIcon,
   tooltip,
   isActive,
-  activeColor = '#8B5CF6',
+  activeColor = '#ffa31a',
   hoverColor,
   onClick
 }) {

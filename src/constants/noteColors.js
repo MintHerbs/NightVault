@@ -2,7 +2,7 @@
 // Deliberately separate from `colors.js` — these are user-content colors an
 // admin applies to note text, not app-chrome tokens, so the "no new colors
 // without updating a token file" rule in docs/design/colors.md doesn't apply
-// here. Brand purple/orange come first, then a small standard hue set.
+// here. The brand orange comes first, then a small standard hue set.
 //
 // Highlight tones are pre-darkened/desaturated (not a straight port of Google
 // Docs' light-mode pastels) because notes render on `colors.bg` (#000000) —
@@ -10,7 +10,7 @@
 // unreadable there.
 
 export const TEXT_COLOR_SWATCHES = [
-  { label: 'Purple (brand)', hex: '#8B5CF6' },
+  { label: 'Orange (brand)', hex: '#ffa31a' },
   { label: 'Orange (brand)', hex: '#EA6C0A' },
   { label: 'Red', hex: '#EF4444' },
   { label: 'Amber', hex: '#F59E0B' },

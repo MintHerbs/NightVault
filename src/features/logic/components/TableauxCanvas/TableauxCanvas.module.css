@@ -52,7 +52,7 @@
 
 .node:hover {
   fill: #222;
-  stroke: #8B5CF6;
+  stroke: #ffa31a;
 }
 
 .closedNode {
@@ -66,10 +66,10 @@
 }
 
 .highlighted {
-  fill: #2a1a3a !important;
-  stroke: #8B5CF6 !important;
+  fill: #332100 !important;
+  stroke: #ffa31a !important;
   stroke-width: 3 !important;
-  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.5));
+  filter: drop-shadow(0 0 8px rgba(255, 163, 26, 0.5));
 }
 
 /* Text */

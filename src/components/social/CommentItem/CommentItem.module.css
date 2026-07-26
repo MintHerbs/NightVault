@@ -5,7 +5,7 @@
 
 .threadLine {
   width: 2px;
-  background: rgba(139, 92, 246, 0.15);
+  background: rgba(255, 163, 26, 0.15);
   flex-shrink: 0;
   border-radius: 1px;
 }
@@ -86,7 +86,7 @@
 }
 
 .activeDown {
-  color: #8B5CF6;
+  color: #ffa31a;
 }
 
 .indentReply {
@@ -116,7 +116,7 @@
 }
 
 .replyTextarea:focus {
-  border-color: rgba(139, 92, 246, 0.4);
+  border-color: rgba(255, 163, 26, 0.4);
 }
 
 .replyTextarea::placeholder {

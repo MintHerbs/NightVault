@@ -17,6 +17,6 @@
 }
 
 .dot.active {
-  background-color: #8B5CF6;
-  box-shadow: 0 0 6px rgba(139, 92, 246, 0.6);
+  background-color: #ffa31a;
+  box-shadow: 0 0 6px rgba(255, 163, 26, 0.6);
 }

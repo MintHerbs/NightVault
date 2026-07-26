@@ -176,7 +176,7 @@ export default function ComponentShowcase() {
                 <Badge variant="error">Error</Badge>
                 <Badge variant="warning">Warning</Badge>
                 <Badge variant="info">Info</Badge>
-                <Badge variant="purple">Purple</Badge>
+                <Badge variant="orange">Orange</Badge>
               </div>
             </div>
 

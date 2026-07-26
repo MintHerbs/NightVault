@@ -7,7 +7,7 @@
   border-radius: 50%;
   border: 1px solid #222;
   background: #0a0a0a;
-  color: #8B5CF6;
+  color: #ffa31a;
   font-size: 1.25rem;
   font-weight: 700;
   cursor: pointer;
@@ -19,8 +19,8 @@
 }
 
 .toggleButton:hover {
-  background: rgba(139, 92, 246, 0.1);
-  border-color: #8B5CF6;
+  background: rgba(255, 163, 26, 0.1);
+  border-color: #ffa31a;
   transform: scale(1.05);
 }
 
@@ -59,7 +59,7 @@
 .title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #8B5CF6;
+  color: #ffa31a;
   margin: 0;
 }
 
@@ -137,7 +137,7 @@
 }
 
 .ruleName {
-  color: #8B5CF6;
+  color: #ffa31a;
   font-weight: 600;
 }
 
@@ -157,8 +157,8 @@
 }
 
 .note {
-  background: rgba(139, 92, 246, 0.05);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(255, 163, 26, 0.05);
+  border: 1px solid rgba(255, 163, 26, 0.2);
   border-radius: 8px;
   padding: 1rem;
   font-size: 0.875rem;
@@ -167,7 +167,7 @@
 }
 
 .note strong {
-  color: #8B5CF6;
+  color: #ffa31a;
   font-weight: 600;
 }
 

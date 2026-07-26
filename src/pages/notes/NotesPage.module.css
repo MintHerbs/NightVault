@@ -54,8 +54,8 @@
 }
 
 .tocButton:hover {
-  color: #8B5CF6;
-  border-color: rgba(139, 92, 246, 0.4);
+  color: #ffa31a;
+  border-color: rgba(255, 163, 26, 0.4);
 }
 
 /* Drawer — slides in from right via transform only */
@@ -142,8 +142,8 @@
   width: 1px;
   background: linear-gradient(
     to bottom,
-    rgba(139, 92, 246, 0.15),
-    rgba(139, 92, 246, 0.05)
+    rgba(255, 163, 26, 0.15),
+    rgba(255, 163, 26, 0.05)
   );
   transform: translateX(-50%);
 }
@@ -163,9 +163,9 @@
 .tocDotActive {
   width: 8px;
   height: 8px;
-  background: #8B5CF6;
-  border-color: #8B5CF6;
-  box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+  background: #ffa31a;
+  border-color: #ffa31a;
+  box-shadow: 0 0 12px rgba(255, 163, 26, 0.6);
 }
 
 /* Navigation items */
@@ -196,7 +196,7 @@
 
 .tocItemActive {
   color: rgba(255, 255, 255, 0.95);
-  background: rgba(139, 92, 246, 0.12);
+  background: rgba(255, 163, 26, 0.12);
   font-weight: 600;
 }
 
@@ -210,12 +210,12 @@
 }
 
 .tocDrawer::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.3);
+  background: rgba(255, 163, 26, 0.3);
   border-radius: 2px;
 }
 
 .tocDrawer::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.5);
+  background: rgba(255, 163, 26, 0.5);
 }
 
 /* Responsive adjustments */

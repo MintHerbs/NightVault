@@ -56,17 +56,17 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
-/* Tip variant - Purple */
+/* Tip variant - brand orange */
 .tip {
-  background: rgba(139, 92, 246, 0.08);
-  border-color: rgba(139, 92, 246, 0.3);
-  color: #a78bfa;
+  background: rgba(255, 163, 26, 0.08);
+  border-color: rgba(255, 163, 26, 0.3);
+  color: #ffb84d;
 }
 
 .tip .iconWrapper {
-  background: rgba(139, 92, 246, 0.15);
-  border-color: rgba(139, 92, 246, 0.3);
-  color: #c4b5fd;
+  background: rgba(255, 163, 26, 0.15);
+  border-color: rgba(255, 163, 26, 0.3);
+  color: #ffd08a;
 }
 
 /* Highlight variant - Yellow/Gold */

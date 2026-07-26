@@ -1,7 +1,7 @@
 /* Drive-style content browser (T-045). A faithful Google Drive layout —
    top search bar, left rail with elevated "New" button, breadcrumb header,
    filter chips, and a Name/Owner/Date/Size table — in the app's own dark +
-   purple (#8B5CF6) palette instead of Drive's light + blue.
+   orange (#ffa31a) palette instead of Drive's light + blue.
    Tokens: adminTokens.css / global.css. */
 
 .app {

@@ -27,8 +27,8 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin: 2rem 0 1.5rem 0;
-  color: #8b5cf6;
-  border-bottom: 2px solid rgba(139, 92, 246, 0.4);
+  color: #ffa31a;
+  border-bottom: 2px solid rgba(255, 163, 26, 0.4);
   padding-bottom: 0.5rem;
 }
 
@@ -37,7 +37,7 @@
   font-weight: 600;
   margin: 1.8rem 0 1.2rem 0;
   color: #f0eae0;
-  border-bottom: 1px solid rgba(139, 92, 246, 0.4);
+  border-bottom: 1px solid rgba(255, 163, 26, 0.4);
   padding-bottom: 0.4rem;
 }
 
@@ -64,7 +64,7 @@
 }
 
 .editorSurface :global(.ProseMirror blockquote) {
-  border-left: 3px solid rgba(139, 92, 246, 0.5);
+  border-left: 3px solid rgba(255, 163, 26, 0.5);
   margin: 1.5rem 0;
   padding: 0.5rem 0 0.5rem 1.25rem;
   color: #c9c2b8;
@@ -72,7 +72,7 @@
 
 .editorSurface :global(.ProseMirror hr) {
   border: none;
-  border-top: 1px solid rgba(139, 92, 246, 0.3);
+  border-top: 1px solid rgba(255, 163, 26, 0.3);
   margin: 2rem 0;
 }
 
@@ -90,7 +90,7 @@
    view is a follow-up in this ticket). */
 .editorSurface :global(.ProseMirror pre) {
   background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  border: 1px solid rgba(255, 163, 26, 0.25);
   border-radius: 8px;
   padding: 1rem 1.25rem;
   margin: 1.5rem 0;
@@ -108,19 +108,19 @@
   border-collapse: collapse;
   margin: 1.5rem 0;
   font-size: 15px;
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  border: 1px solid rgba(255, 163, 26, 0.3);
   border-radius: 8px;
 }
 
 .editorSurface :global(.ProseMirror th),
 .editorSurface :global(.ProseMirror td) {
   padding: 0.75rem 1rem;
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(255, 163, 26, 0.2);
   text-align: left;
 }
 
 .editorSurface :global(.ProseMirror th) {
-  background: rgba(139, 92, 246, 0.15);
+  background: rgba(255, 163, 26, 0.15);
   font-weight: 600;
   color: #f0eae0;
 }
@@ -132,7 +132,7 @@
 }
 
 .editorSurface :global(.ProseMirror a) {
-  color: #8b5cf6;
+  color: #ffa31a;
   text-decoration: underline;
 }
 
@@ -380,7 +380,7 @@
 }
 
 .videoPlayButton:hover {
-  background: rgba(139, 92, 246, 0.85);
+  background: rgba(255, 163, 26, 0.85);
   transform: translate(-50%, -50%) scale(1.06);
 }
 

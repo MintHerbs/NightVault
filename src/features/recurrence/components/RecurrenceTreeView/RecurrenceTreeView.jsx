@@ -10,7 +10,7 @@ import { useState, useRef } from 'react'
 import styles from './RecurrenceTreeView.module.css'
 
 const COLORS = {
-  recursive: { fill: 'rgba(139,92,246,0.15)', stroke: '#8B5CF6', text: '#c4b5fd' },
+  recursive: { fill: 'rgba(255, 163, 26,0.15)', stroke: '#ffa31a', text: '##ffd08a' },
   // Work done at a node, drawn as its own branch on chains. Green matches the
   // per-level cost boxes so the same colour always means "this is the cost".
   cost: { fill: 'rgba(34,197,94,0.14)', stroke: '#22c55e', text: '#86efac' },

@@ -13,7 +13,7 @@
 .title {
   font-size: clamp(2.2rem, 5vw, 3.8rem);
   font-weight: 700;
-  color: #8B5CF6;
+  color: #ffa31a;
   margin: 0;
   transition: opacity 0.2s ease;
   animation: softGlow 3s ease-in-out infinite;
@@ -24,14 +24,14 @@
 
 @keyframes softGlow {
   0%, 100% {
-    text-shadow: 0 0 10px rgba(139, 92, 246, 0.3),
-                 0 0 20px rgba(139, 92, 246, 0.2),
-                 0 0 30px rgba(139, 92, 246, 0.1);
+    text-shadow: 0 0 10px rgba(255, 163, 26, 0.3),
+                 0 0 20px rgba(255, 163, 26, 0.2),
+                 0 0 30px rgba(255, 163, 26, 0.1);
   }
   50% {
-    text-shadow: 0 0 20px rgba(139, 92, 246, 0.5),
-                 0 0 30px rgba(139, 92, 246, 0.3),
-                 0 0 40px rgba(139, 92, 246, 0.2);
+    text-shadow: 0 0 20px rgba(255, 163, 26, 0.5),
+                 0 0 30px rgba(255, 163, 26, 0.3),
+                 0 0 40px rgba(255, 163, 26, 0.2);
   }
 }
 
@@ -56,7 +56,7 @@
   width: 36px;
   height: 36px;
   border-radius: 6px;
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  border: 1px solid rgba(255, 163, 26, 0.3);
   background: transparent;
   transition: all 0.15s ease;
   cursor: text;
@@ -64,13 +64,13 @@
 }
 
 .orderBox:hover {
-  border-color: #8B5CF6;
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
+  border-color: #ffa31a;
+  box-shadow: 0 0 0 2px rgba(255, 163, 26, 0.25);
 }
 
 .orderBox:focus-within {
-  border-color: #8B5CF6;
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
+  border-color: #ffa31a;
+  box-shadow: 0 0 0 2px rgba(255, 163, 26, 0.25);
 }
 
 /* Error state - red border and text */
@@ -96,7 +96,7 @@
   margin: 0;
   border: none;
   background: transparent;
-  color: #8B5CF6;
+  color: #ffa31a;
   font-size: 1rem;
   font-weight: 600;
   text-align: center;

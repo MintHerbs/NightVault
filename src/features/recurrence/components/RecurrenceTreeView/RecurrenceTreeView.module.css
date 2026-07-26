@@ -66,9 +66,9 @@
 }
 
 .zoomButton:hover {
-  border-color: #8B5CF6;
-  background-color: rgba(139, 92, 246, 0.1);
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+  border-color: #ffa31a;
+  background-color: rgba(255, 163, 26, 0.1);
+  box-shadow: 0 0 0 2px rgba(255, 163, 26, 0.2);
 }
 
 .zoomButton:active {
@@ -76,7 +76,7 @@
 }
 
 .zoomButton:focus-visible {
-  outline: 2px solid #8B5CF6;
+  outline: 2px solid #ffa31a;
   outline-offset: 2px;
 }
 

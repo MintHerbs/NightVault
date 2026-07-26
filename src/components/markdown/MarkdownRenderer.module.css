@@ -16,8 +16,8 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin: 2rem 0 1.5rem 0;
-  color: #8B5CF6;
-  border-bottom: 2px solid rgba(139, 92, 246, 0.4);
+  color: #ffa31a;
+  border-bottom: 2px solid rgba(255, 163, 26, 0.4);
   padding-bottom: 0.5rem;
 }
 
@@ -26,7 +26,7 @@
   font-weight: 600;
   margin: 1.8rem 0 1.2rem 0;
   color: #F0EAE0;
-  border-bottom: 1px solid rgba(139, 92, 246, 0.4);
+  border-bottom: 1px solid rgba(255, 163, 26, 0.4);
   padding-bottom: 0.4rem;
 }
 
@@ -58,7 +58,7 @@
   overflow-x: auto;
   margin: 1.5rem 0;
   border-radius: 8px;
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  border: 1px solid rgba(255, 163, 26, 0.3);
   background: rgba(0, 0, 0, 0.2);
 }
 
@@ -70,8 +70,8 @@
 }
 
 .thead {
-  background: rgba(139, 92, 246, 0.15);
-  border-bottom: 2px solid rgba(139, 92, 246, 0.4);
+  background: rgba(255, 163, 26, 0.15);
+  border-bottom: 2px solid rgba(255, 163, 26, 0.4);
 }
 
 .tbody {
@@ -79,12 +79,12 @@
 }
 
 .tr {
-  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+  border-bottom: 1px solid rgba(255, 163, 26, 0.2);
   transition: background-color 0.2s ease;
 }
 
 .tbody .tr:hover {
-  background: rgba(139, 92, 246, 0.05);
+  background: rgba(255, 163, 26, 0.05);
 }
 
 .tbody .tr:last-child {
@@ -96,7 +96,7 @@
   text-align: left;
   font-weight: 600;
   color: #F0EAE0;
-  border-right: 1px solid rgba(139, 92, 246, 0.2);
+  border-right: 1px solid rgba(255, 163, 26, 0.2);
 }
 
 .th:last-child {
@@ -106,7 +106,7 @@
 .td {
   padding: 0.75rem 1rem;
   color: #E8E0D5;
-  border-right: 1px solid rgba(139, 92, 246, 0.1);
+  border-right: 1px solid rgba(255, 163, 26, 0.1);
   vertical-align: top;
 }
 
@@ -127,10 +127,10 @@
 
 /* Blockquotes */
 .blockquote {
-  border-left: 4px solid rgba(139, 92, 246, 0.5);
+  border-left: 4px solid rgba(255, 163, 26, 0.5);
   padding: 0.5rem 1.5rem;
   margin: 1.5rem 0;
-  background: rgba(139, 92, 246, 0.05);
+  background: rgba(255, 163, 26, 0.05);
   border-radius: 0 8px 8px 0;
   color: rgba(232, 224, 213, 0.85);
   font-style: italic;
@@ -148,7 +148,7 @@
 /* Horizontal rule */
 .hr {
   border: none;
-  border-top: 1px solid rgba(139, 92, 246, 0.4);
+  border-top: 1px solid rgba(255, 163, 26, 0.4);
   margin: 2rem 0;
 }
 
@@ -227,7 +227,7 @@
 }
 
 .videoThumbButton:hover .videoPlayIcon {
-  background: rgba(139, 92, 246, 0.85);
+  background: rgba(255, 163, 26, 0.85);
   transform: translate(-50%, -50%) scale(1.06);
 }
 
@@ -272,14 +272,14 @@
 
 /* Links */
 .markdownContainer a {
-  color: #8B5CF6;
+  color: #ffa31a;
   text-decoration: none;
   border-bottom: 1px solid transparent;
   transition: border-color 0.2s ease;
 }
 
 .markdownContainer a:hover {
-  border-bottom-color: #8B5CF6;
+  border-bottom-color: #ffa31a;
 }
 
 /* Emphasis */

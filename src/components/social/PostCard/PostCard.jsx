@@ -394,7 +394,7 @@ const PostCard = forwardRef(function PostCard({ post, sessionId, onVote, onFlag,
                 tapScale={0.98}
               >
                 {opt}
-                <RippleButtonRipples color="rgba(139, 92, 246, 0.3)" />
+                <RippleButtonRipples color="rgba(255, 163, 26, 0.3)" />
               </RippleButton>
             ))}
 

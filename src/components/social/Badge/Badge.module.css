@@ -69,10 +69,11 @@
   color: #93c5fd;
 }
 
+.orange,
 .purple {
-  background: rgba(139, 92, 246, 0.15);
-  border-color: rgba(139, 92, 246, 0.4);
-  color: #c4b5fd;
+  background: rgba(255, 163, 26, 0.15);
+  border-color: rgba(255, 163, 26, 0.4);
+  color: #ffd08a;
 }
 
 /* Pulse animation */
@@ -149,9 +150,10 @@
   border-color: rgba(59, 130, 246, 0.3);
 }
 
+.dot.orange,
 .dot.purple {
-  background: #8b5cf6;
-  border-color: rgba(139, 92, 246, 0.3);
+  background: #ffa31a;
+  border-color: rgba(255, 163, 26, 0.3);
 }
 
 .dot .pulse {

@@ -28,7 +28,7 @@ export function AttributeEllipse({ x, y, width, height, label }) {
   return (
     <g>
       <ellipse cx={x} cy={y} rx={width / 2} ry={height / 2}
-        fill="#6b21a8" stroke="#d8b4fe" strokeWidth="1.5" />
+        fill="#7a4300" stroke="#ffd08a" strokeWidth="1.5" />
       <text x={x} y={y} fill="#ffffff" fontSize="13" fontWeight="600"
         textAnchor="middle" dominantBaseline="middle">{label}</text>
     </g>
@@ -39,7 +39,7 @@ export function KeyAttributeEllipse({ x, y, width, height, label }) {
   return (
     <g>
       <ellipse cx={x} cy={y} rx={width / 2} ry={height / 2}
-        fill="#6b21a8" stroke="#d8b4fe" strokeWidth="1.5" />
+        fill="#7a4300" stroke="#ffd08a" strokeWidth="1.5" />
       <text x={x} y={y} fill="#ffffff" fontSize="13" fontWeight="600"
         textAnchor="middle" dominantBaseline="middle" textDecoration="underline">{label}</text>
     </g>
@@ -51,7 +51,7 @@ export function PartialKeyAttributeEllipse({ x, y, width, height, label }) {
   return (
     <g>
       <ellipse cx={x} cy={y} rx={width / 2} ry={height / 2}
-        fill="#6b21a8" stroke="#d8b4fe" strokeWidth="1.5" />
+        fill="#7a4300" stroke="#ffd08a" strokeWidth="1.5" />
       <text x={x} y={y} fill="#ffffff" fontSize="13" fontWeight="600"
         textAnchor="middle" dominantBaseline="middle">{label}</text>
       <line x1={x - textW / 2} y1={y + 7} x2={x + textW / 2} y2={y + 7}
@@ -64,9 +64,9 @@ export function MultiValuedAttributeEllipse({ x, y, width, height, label }) {
   return (
     <g>
       <ellipse cx={x} cy={y} rx={width / 2} ry={height / 2}
-        fill="#6b21a8" stroke="#d8b4fe" strokeWidth="1.5" />
+        fill="#7a4300" stroke="#ffd08a" strokeWidth="1.5" />
       <ellipse cx={x} cy={y} rx={width / 2 - 3} ry={height / 2 - 3}
-        fill="none" stroke="#d8b4fe" strokeWidth="1" />
+        fill="none" stroke="#ffd08a" strokeWidth="1" />
       <text x={x} y={y} fill="#ffffff" fontSize="13" fontWeight="600"
         textAnchor="middle" dominantBaseline="middle">{label}</text>
     </g>
@@ -77,7 +77,7 @@ export function DerivedAttributeEllipse({ x, y, width, height, label }) {
   return (
     <g>
       <ellipse cx={x} cy={y} rx={width / 2} ry={height / 2}
-        fill="#6b21a8" stroke="#d8b4fe" strokeWidth="1.5" strokeDasharray="5 3" />
+        fill="#7a4300" stroke="#ffd08a" strokeWidth="1.5" strokeDasharray="5 3" />
       <text x={x} y={y} fill="#ffffff" fontSize="13" fontWeight="600"
         textAnchor="middle" dominantBaseline="middle">{label}</text>
     </g>
