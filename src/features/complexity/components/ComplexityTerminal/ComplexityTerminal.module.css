@@ -121,7 +121,7 @@
   width: 32px;
   text-align: right;
   margin-right: 8px;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--md-on-surface-variant);
   flex-shrink: 0;
 }
 

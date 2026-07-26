@@ -1,0 +1,44 @@
+# CSS contrast guard (LT-001 / issue #50).
+#
+# This is deliberately narrow: it runs the single-rule stylelint config in
+# stylelint.config.mjs, which bans low-alpha white as a text colour. It is not
+# meant to grow into the project's general CI.
+#
+# Broader CI — a real test suite, build verification, GitHub Actions setup — is
+# tracked separately in issue #9 and should be designed there rather than
+# accreted onto this file. Related: issue #10 (require approving review on main).
+name: Lint
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# A newer push to the same branch makes an in-flight run redundant.
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  css:
+    name: CSS contrast guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # package.json declares no `engines` field; Node 20 is the current LTS
+          # and is compatible with Vite 5. Pin here so CI and local agree.
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint CSS
+        run: npm run lint:css

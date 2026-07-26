@@ -39,7 +39,7 @@
 .codeLabel {
   font-family: monospace;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--md-on-surface-variant);
   letter-spacing: 0.05em;
 }
 

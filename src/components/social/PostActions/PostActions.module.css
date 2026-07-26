@@ -110,7 +110,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   padding: 6px 10px;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--md-on-surface-variant);
   cursor: pointer;
   transition: all 0.2s ease;
 }

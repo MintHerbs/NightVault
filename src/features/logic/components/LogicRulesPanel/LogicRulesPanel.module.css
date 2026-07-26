@@ -142,7 +142,7 @@
 }
 
 .ruleAbbr {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--md-on-surface-variant);
   font-size: 0.8125rem;
 }
 

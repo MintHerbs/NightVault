@@ -38,7 +38,7 @@
 
 .credit {
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--md-on-surface-variant);
   margin-top: 16px;
 }
 

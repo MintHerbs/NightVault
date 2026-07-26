@@ -44,7 +44,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--md-on-surface-variant);
   margin: 0 0 4px 0;
 }
 
@@ -73,7 +73,7 @@
 
 .copyright {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--md-on-surface-variant);
   text-decoration: none;
   transition: color 150ms ease;
 }
