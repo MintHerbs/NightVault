@@ -12,8 +12,8 @@
   position: relative;
   width: min(680px, 90vw);
   min-height: 56px;
-  background-color: #0f0f0f;
-  border: 1px solid #222222;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: 9999px;
   padding: 14px 20px;
   display: flex;
@@ -30,8 +30,8 @@
 }
 
 .container:focus-within {
-  border-color: #ffa31a;
-  box-shadow: 0 0 0 2px rgba(255, 163, 26, 0.25);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(var(--color-accent-rgb), 0.25);
 }
 
 .textarea {
@@ -39,11 +39,11 @@
   background: transparent;
   border: none;
   outline: none;
-  color: #e2e8f0;
+  color: var(--color-text);
   font-size: 14px;
   font-family: 'JetBrains Mono', monospace;
   line-height: 1.6;
-  caret-color: #ffa31a;
+  caret-color: var(--color-accent);
   resize: none;
   padding-right: 56px;
   min-height: 28px;
@@ -65,7 +65,7 @@
   height: 32px;
   min-width: 32px;
   min-height: 32px;
-  background-color: #ffa31a;
+  background-color: var(--color-accent);
   border: none;
   border-radius: 50%;
   display: flex;
@@ -79,7 +79,7 @@
 }
 
 .sendButton:hover {
-  background-color: #e68a00;
+  background-color: var(--color-accent-hover);
   transform: scale(1.05);
 }
 
@@ -91,7 +91,7 @@
 .arrow {
   width: 16px;
   height: 16px;
-  color: #ffffff;
+  color: var(--color-text);
 }
 
 /* Scale-in animation for send button */
@@ -129,11 +129,11 @@
 /* KaTeX preview */
 .katexPreview {
   padding: 12px 16px;
-  background-color: rgba(255, 163, 26, 0.05);
-  border: 1px solid rgba(255, 163, 26, 0.2);
+  background-color: rgba(var(--color-accent-rgb), 0.05);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.2);
   border-radius: 8px;
   font-size: 16px;
-  color: #e2e8f0;
+  color: var(--color-text);
   min-height: 40px;
   display: flex;
   align-items: center;
@@ -141,11 +141,11 @@
 
 /* Override KaTeX text color */
 .katexPreview :global(.katex) {
-  color: #e2e8f0;
+  color: var(--color-text);
 }
 
 .katexPreview :global(.katex .mord) {
-  color: #e2e8f0;
+  color: var(--color-text);
 }
 
 /* Method selector - below the pill */
@@ -155,18 +155,18 @@
   align-items: center;
   gap: 4px;
   font-size: 14px;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-family: 'JetBrains Mono', monospace;
 }
 
 .methodLabel {
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 .methodButton {
   background: transparent;
   border: none;
-  color: #e2e8f0;
+  color: var(--color-text);
   font-weight: 600;
   font-size: 14px;
   font-family: 'JetBrains Mono', monospace;
@@ -177,8 +177,8 @@
 }
 
 .methodButton:hover {
-  background-color: rgba(255, 163, 26, 0.1);
-  color: #ffa31a;
+  background-color: rgba(var(--color-accent-rgb), 0.1);
+  color: var(--color-accent);
 }
 
 /* Method dropdown */
@@ -187,8 +187,8 @@
   top: 100%;
   left: 60px;
   margin-top: 4px;
-  background-color: #0f0f0f;
-  border: 1px solid #333;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 4px;
   min-width: 140px;
@@ -212,7 +212,7 @@
   width: 100%;
   background: transparent;
   border: none;
-  color: #e2e8f0;
+  color: var(--color-text);
   font-size: 13px;
   font-family: 'JetBrains Mono', monospace;
   text-align: left;
@@ -223,13 +223,13 @@
 }
 
 .methodOption:hover {
-  background-color: rgba(255, 163, 26, 0.1);
-  color: #ffa31a;
+  background-color: rgba(var(--color-accent-rgb), 0.1);
+  color: var(--color-accent);
 }
 
 .methodOption.selected {
-  background-color: rgba(255, 163, 26, 0.15);
-  color: #ffa31a;
+  background-color: rgba(var(--color-accent-rgb), 0.15);
+  color: var(--color-accent);
   font-weight: 600;
 }
 
@@ -292,12 +292,12 @@
 }
 
 .examplesLabel {
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .exampleChip {
-  background: rgba(139, 92, 246, 0.08);
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  background: rgba(var(--color-accent-rgb), 0.08);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.25);
   border-radius: 999px;
   color: #c4b5fd;
   font-family: 'JetBrains Mono', monospace;
@@ -308,9 +308,9 @@
 }
 
 .exampleChip:hover {
-  background: rgba(139, 92, 246, 0.18);
-  border-color: #8B5CF6;
-  color: #e2e8f0;
+  background: rgba(var(--color-accent-rgb), 0.18);
+  border-color: var(--color-accent);
+  color: var(--color-text);
 }
 
 .exampleChip:active {
@@ -318,7 +318,7 @@
 }
 
 .exampleChip:focus-visible {
-  outline: 2px solid #8B5CF6;
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 

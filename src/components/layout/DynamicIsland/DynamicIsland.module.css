@@ -22,19 +22,30 @@
   pointer-events: auto; /* re-enable clicks on the pill */
 }
 
-/* Pill: NO position, NO left, NO transform */
+/* Pill: NO position, NO left, NO transform
+ *
+ * The pill is DELIBERATELY NOT THEMED — it stays black in every theme and
+ * in both light and dark mode. Long-standing rule in docs/design.md
+ * ("Dynamic Island pill is always #000"), reaffirmed for T-062. Do not
+ * swap these literals for --color-* tokens. */
 .pill {
   background: #000;
-  border: 1px solid #1a1a1a;
+  border: 1px solid #222;
   border-radius: 32px;
   box-shadow:
     0 0 0 1px #222,
     0 8px 32px rgba(0, 0, 0, 0.9),
     0 2px 12px rgba(0, 0, 0, 0.7);
-  
+
   overflow: hidden;
   cursor: pointer;
   user-select: none;
+}
+
+/* On a light background the heavy dark glow reads as grime around the pill
+   rather than depth, so light mode keeps only the hairline edge. */
+:global([data-mode='light']) .pill {
+  box-shadow: 0 0 0 1px #222;
 }
 
 /* State: idle - just the green dot */
@@ -141,7 +152,7 @@
 .albumArt {
   width: 40px;
   height: 40px;
-  background: #111;
+  background: #0a0a0a;
   border-radius: 8px;
   display: flex;
   align-items: center;

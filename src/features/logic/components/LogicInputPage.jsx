@@ -12,10 +12,12 @@
  * @param {Function} props.onAIStateChange - Callback for AI state changes
  */
 import { useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { ScrambleText } from '../../../components/ui/ScrambleText'
 import Starfield from '../../../components/effects/Starfield/Starfield'
 import Navbar from '../../../components/layout/Navbar/Navbar'
+import BackButton from '../../../components/common/BackButton/BackButton'
 import PillInput from '../../../components/ui/PillInput/PillInput'
 import SymbolBar from './SymbolBar'
 import styles from './LogicInputPage.module.css'
@@ -27,13 +29,15 @@ export default function LogicInputPage({
   onSubmit,
   onAIStateChange
 }) {
+  const navigate = useNavigate()
   const inputRef = useRef(null)
 
   return (
     <div className={styles.page}>
       {/* Starfield background */}
       <Starfield />
-      
+      <BackButton onClick={() => navigate('/home')} />
+
       {/* Navbar */}
       <Navbar />
       

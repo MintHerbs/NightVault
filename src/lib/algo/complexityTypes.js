@@ -52,6 +52,9 @@ export const COMPLEXITY_COLORS = {
   'sqrt_n':       '#06b6d4',
   'sqrt_n_log_n': '#06b6d4',
   'n':            '#3b82f6',
+  // Literal, not themed (T-062): this is a semantic growth-rate scale
+  // (log → sqrt → n → n log n → n² → n³), where each step must stay
+  // distinguishable from its neighbours regardless of the app theme.
   'n_log_n':      '#ffa31a',
   'n_sqrt_n':     '#ffa31a',
   'n2':           '#f59e0b',

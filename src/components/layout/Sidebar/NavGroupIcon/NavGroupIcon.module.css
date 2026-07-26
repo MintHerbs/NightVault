@@ -43,7 +43,7 @@
 .activeLine {
   width: 28px;
   height: 2px;
-  background-color: #EA6C0A;
+  background-color: var(--color-accent-alt);
   margin-top: -4px;
   opacity: 0;
   animation: fadeInLine 0.2s ease forwards;
@@ -61,8 +61,8 @@
   left: 60px;
   top: 50%;
   transform: translateY(-50%);
-  background-color: #1c1c1c;
-  color: #ffffff;
+  background-color: var(--md-surface-container-low);
+  color: var(--color-text);
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 13px;

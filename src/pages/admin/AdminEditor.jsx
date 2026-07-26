@@ -7,6 +7,7 @@ import { resolveNoteImageSrc } from '../../lib/noteImageSrc'
 import { segmentToSubfolder } from '../../lib/notesApi'
 import { useDropzone } from 'react-dropzone'
 import { colors } from '../../constants/colors'
+import { resolveThemeColor } from '../../lib/theme/palette'
 import { supabase } from '../../lib/supabaseClient'
 import '../../styles/adminTokens.css'
 import { useAdmin } from './useAdmin'
@@ -190,7 +191,7 @@ function createMenuOption(text, onClick, color = colors.text) {
   `
 
   option.addEventListener('mouseenter', () => {
-    option.style.background = 'rgba(255, 255, 255, 0.06)'
+    option.style.background = 'rgba(var(--color-fg-rgb), 0.06)'
   })
 
   option.addEventListener('mouseleave', () => {
@@ -231,7 +232,7 @@ function AdminEditorContent() {
   const noteEditorRef = useRef(null)
 
   const { handleImageUpload } = useEditorImages({
-    selectedPath, showToast, editorRef, noteEditorRef, useWysiwyg: USE_WYSIWYG, setContent,
+    selectedPath, showToast, editorRef, noteEditorRef, useWysiwyg: USE_WYSIWYG, setContent, content,
   })
 
   const { restoreDraftIfExists, clearDraft } = useEditorDrafts({
@@ -300,17 +301,19 @@ function AdminEditorContent() {
 
   const subjectLabel = moduleId ? (modules.find(m => m.id === moduleId)?.label ?? moduleId) : null
 
-  // Monaco theme setup
+  // Monaco theme setup. Monaco parses these as literal colour strings, so
+  // the themed tokens have to be resolved to real hex first — handing it a
+  // raw `var(--color-accent)` silently yields an unstyled editor (T-062).
   const handleBeforeMount = (monaco) => {
     monaco.editor.defineTheme('mooner-dark', {
       base: 'vs-dark',
       inherit: true,
       rules: [],
       colors: {
-        'editor.background': colors.bg,
-        'editor.foreground': colors.text,
-        'editorLineNumber.foreground': colors.border,
-        'editor.selectionBackground': `${colors.accent}40`,
+        'editor.background': resolveThemeColor(colors.bg, '#0b0a0a'),
+        'editor.foreground': resolveThemeColor(colors.text, '#f5f5f4'),
+        'editorLineNumber.foreground': resolveThemeColor(colors.border, '#38342e'),
+        'editor.selectionBackground': `${resolveThemeColor(colors.accent, '#ffa31a')}40`,
         'editor.lineHighlightBackground': 'transparent',
       }
     })

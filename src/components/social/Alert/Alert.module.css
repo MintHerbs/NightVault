@@ -40,13 +40,13 @@
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(var(--color-fg-rgb), 0.95);
 }
 
 .message {
   font-size: 0.8rem;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(var(--color-fg-rgb), 0.75);
 }
 
 .closeBtn {

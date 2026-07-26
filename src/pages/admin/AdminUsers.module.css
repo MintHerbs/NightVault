@@ -128,7 +128,7 @@
   border: none;
   border-radius: 20px;
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text);
   font: inherit;
   font-size: 14px;
   font-weight: 500;
@@ -286,7 +286,7 @@
   height: 32px;
   border-radius: 50%;
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -323,7 +323,7 @@
   font-weight: 500;
 }
 
-.roleChip.primary { background: var(--color-accent); color: #fff; }
+.roleChip.primary { background: var(--color-accent); color: var(--color-text); }
 .roleChip.owner { background: var(--color-accent-badge); color: var(--color-accent-bright); }
 .roleChip.admin { background: var(--color-success-badge); color: var(--color-success-bright); }
 .roleChip.contributor { background: var(--color-hover-strong); color: var(--color-text-muted); }
@@ -476,10 +476,10 @@
 
 .btnText { background: transparent; color: var(--color-accent-bright); }
 .btnText:hover { background: var(--color-accent-soft); }
-.btnPrimary { background: var(--color-accent); color: #fff; }
+.btnPrimary { background: var(--color-accent); color: var(--color-text); }
 .btnPrimary:hover { background: var(--color-accent-hover); }
 .btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
-.btnDanger { background: var(--color-error); color: #fff; }
+.btnDanger { background: var(--color-error); color: var(--color-text); }
 .btnDanger:hover { background: var(--color-error-hover); }
 .btnDanger:disabled { opacity: 0.5; cursor: not-allowed; }
 

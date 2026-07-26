@@ -259,7 +259,7 @@ export default function OnboardingCarousel({ onComplete }) {
               >
                 {isLast ? 'Enter feed' : 'Continue'}
                 {!isLast && <ChevronRight size={16} />}
-                <RippleButtonRipples color="rgba(255, 255, 255, 0.3)" />
+                <RippleButtonRipples color="rgba(var(--color-fg-rgb), 0.3)" />
               </RippleButton>
             </div>
 

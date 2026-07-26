@@ -14,8 +14,8 @@
 }
 
 .container {
-  background: rgba(15, 15, 15, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(var(--color-bg-rgb), 0.95);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.1);
   border-radius: 18px;
   padding: 24px;
   display: flex;
@@ -30,26 +30,26 @@
   align-items: center;
   gap: 14px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(var(--color-fg-rgb), 0.08);
   text-align: center;
 }
 
 .headerIcon {
-  color: #ffa31a;
-  filter: drop-shadow(0 0 8px rgba(255, 163, 26, 0.4));
+  color: var(--color-accent);
+  filter: drop-shadow(0 0 8px rgba(var(--color-accent-rgb), 0.4));
 }
 
 .title {
   font-size: 1.75rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(var(--color-fg-rgb), 0.95);
   margin: 0;
   letter-spacing: -0.02em;
 }
 
 .headerSubtext {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--color-fg-rgb), 0.5);
   margin: 0;
 }
 
@@ -62,7 +62,7 @@
 .sectionTitle {
   font-size: 1.125rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(var(--color-fg-rgb), 0.95);
   margin: 0 0 12px 0;
   letter-spacing: -0.01em;
 }
@@ -70,7 +70,7 @@
 .sectionIntro {
   font-size: 0.9rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(var(--color-fg-rgb), 0.75);
   margin: 0 0 16px 0;
 }
 
@@ -85,21 +85,21 @@
 
 .rulesList li {
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(var(--color-fg-rgb), 0.03);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.08);
   border-radius: 10px;
   font-size: 0.875rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--color-fg-rgb), 0.85);
 }
 
 .rulesList li strong {
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(var(--color-fg-rgb), 0.95);
   font-weight: 600;
 }
 
 .inlineLink {
-  color: #ffb84d;
+  color: var(--color-accent-bright);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -111,14 +111,14 @@
 .footer {
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(var(--color-fg-rgb), 0.08);
   text-align: center;
 }
 
 .footerText {
   font-size: 0.875rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(var(--color-fg-rgb), 0.6);
   margin: 0;
   font-style: italic;
 }

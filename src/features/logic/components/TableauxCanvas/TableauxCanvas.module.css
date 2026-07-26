@@ -26,50 +26,50 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #666;
+  color: var(--color-text-muted);
   font-size: 16px;
 }
 
 /* Edges */
 .edges {
-  stroke: #333;
+  stroke: var(--color-border);
   stroke-width: 2;
   fill: none;
 }
 
 .edge {
-  stroke: #333;
+  stroke: var(--color-border);
   stroke-width: 2;
 }
 
 /* Nodes */
 .node {
-  fill: #1a1a1a;
-  stroke: #333;
+  fill: var(--md-surface-container-low);
+  stroke: var(--color-border);
   stroke-width: 2;
   transition: all 0.2s ease;
 }
 
 .node:hover {
-  fill: #222;
-  stroke: #ffa31a;
+  fill: var(--md-surface-container-low);
+  stroke: var(--color-accent);
 }
 
 .closedNode {
-  fill: #2a1a1a;
+  fill: var(--md-surface-container-low);
   stroke: #ef4444;
 }
 
 .openNode {
-  fill: #1a2a1a;
+  fill: var(--md-surface-container);
   stroke: #22c55e;
 }
 
 .highlighted {
   fill: #332100 !important;
-  stroke: #ffa31a !important;
+  stroke: var(--color-accent) !important;
   stroke-width: 3 !important;
-  filter: drop-shadow(0 0 8px rgba(255, 163, 26, 0.5));
+  filter: drop-shadow(0 0 8px rgba(var(--color-accent-rgb), 0.5));
 }
 
 /* Text */

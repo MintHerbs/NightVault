@@ -1,9 +1,11 @@
 // LogicalEquivalencePage - Logical equivalence proof builder using forward chaining
 import { useState, useCallback, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { ScrambleText } from '../../../components/ui/ScrambleText'
 import Starfield from '../../../components/effects/Starfield/Starfield'
 import Navbar from '../../../components/layout/Navbar/Navbar'
+import BackButton from '../../../components/common/BackButton/BackButton'
 import PillInput from '../../../components/ui/PillInput/PillInput'
 import SymbolBar from '../../../features/logic/components/SymbolBar'
 import ProofTreeCanvas from '../../../features/logic/components/ProofTreeCanvas'
@@ -14,6 +16,7 @@ import { parseFormula } from '../../../lib/logic/formulaParser'
 import styles from './LogicalEquivalencePage.module.css'
 
 export default function LogicalEquivalencePage({ onAIStateChange }) {
+  const navigate = useNavigate()
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [isRulesDrawerOpen, setIsRulesDrawerOpen] = useState(false)
@@ -129,7 +132,8 @@ export default function LogicalEquivalencePage({ onAIStateChange }) {
     return (
       <div className={styles.page}>
         <Starfield />
-        <Navbar 
+        <BackButton onClick={() => navigate('/home')} />
+        <Navbar
           showNewFormula={true}
           onNewFormula={handleReset}
         />
@@ -156,8 +160,9 @@ export default function LogicalEquivalencePage({ onAIStateChange }) {
   return (
     <div className={styles.page}>
       <Starfield />
+      <BackButton onClick={() => navigate('/home')} />
       <Navbar />
-      
+
       <main className={styles.main}>
         <motion.div 
           className={styles.container}

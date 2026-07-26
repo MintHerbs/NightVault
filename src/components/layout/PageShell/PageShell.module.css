@@ -47,7 +47,7 @@
 .title {
   font-size: clamp(2.2rem, 5vw, 3.8rem);
   font-weight: 700;
-  color: #ffa31a;
+  color: var(--color-accent);
   margin: 0;
   animation: softGlow 3s ease-in-out infinite;
   min-height: 60px;
@@ -57,21 +57,21 @@
 
 @keyframes softGlow {
   0%, 100% {
-    text-shadow: 0 0 10px rgba(255, 163, 26, 0.3),
-                 0 0 20px rgba(255, 163, 26, 0.2),
-                 0 0 30px rgba(255, 163, 26, 0.1);
+    text-shadow: 0 0 10px rgba(var(--color-accent-rgb), 0.3),
+                 0 0 20px rgba(var(--color-accent-rgb), 0.2),
+                 0 0 30px rgba(var(--color-accent-rgb), 0.1);
   }
   50% {
-    text-shadow: 0 0 20px rgba(255, 163, 26, 0.5),
-                 0 0 30px rgba(255, 163, 26, 0.3),
-                 0 0 40px rgba(255, 163, 26, 0.2);
+    text-shadow: 0 0 20px rgba(var(--color-accent-rgb), 0.5),
+                 0 0 30px rgba(var(--color-accent-rgb), 0.3),
+                 0 0 40px rgba(var(--color-accent-rgb), 0.2);
   }
 }
 
 .subtitle {
   font-size: clamp(0.9rem, 2vw, 1.15rem);
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(var(--color-fg-rgb), 0.55);
   margin: 0;
   display: flex;
   align-items: center;
@@ -138,8 +138,8 @@
   min-width: 0;
   height: 100%;
   overflow: hidden;
-  background: #020409;
-  border: 1px solid #1a2535;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
   position: relative;
   z-index: 1;
@@ -167,7 +167,7 @@
 .errorTitle {
   font-size: 20px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--color-text);
   margin: 0 0 12px 0;
 }
 
@@ -181,7 +181,7 @@
 .retryButton {
   padding: 10px 20px;
   background: var(--color-accent);
-  color: white;
+  color: var(--color-text);
   border: none;
   border-radius: 8px;
   font-size: 14px;

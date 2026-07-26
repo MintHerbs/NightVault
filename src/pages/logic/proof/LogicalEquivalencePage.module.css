@@ -2,7 +2,7 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
-  background: #0a0a0a;
+  background: var(--color-bg);
   overflow-x: hidden;
 }
 
@@ -43,7 +43,7 @@
   font-size: 3.5rem;
   font-weight: 700;
   text-align: center;
-  color: #ffa31a;
+  color: var(--color-accent);
   margin: 0;
   line-height: 1.2;
   animation: softGlow 3s ease-in-out infinite;
@@ -51,21 +51,21 @@
 
 @keyframes softGlow {
   0%, 100% {
-    text-shadow: 0 0 10px rgba(255, 163, 26, 0.3),
-                 0 0 20px rgba(255, 163, 26, 0.2),
-                 0 0 30px rgba(255, 163, 26, 0.1);
+    text-shadow: 0 0 10px rgba(var(--color-accent-rgb), 0.3),
+                 0 0 20px rgba(var(--color-accent-rgb), 0.2),
+                 0 0 30px rgba(var(--color-accent-rgb), 0.1);
   }
   50% {
-    text-shadow: 0 0 20px rgba(255, 163, 26, 0.5),
-                 0 0 30px rgba(255, 163, 26, 0.3),
-                 0 0 40px rgba(255, 163, 26, 0.2);
+    text-shadow: 0 0 20px rgba(var(--color-accent-rgb), 0.5),
+                 0 0 30px rgba(var(--color-accent-rgb), 0.3),
+                 0 0 40px rgba(var(--color-accent-rgb), 0.2);
   }
 }
 
 .subtitle {
   font-size: 1.125rem;
   text-align: center;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(var(--color-fg-rgb), 0.6);
   margin: 0 0 1rem 0;
   font-weight: 400;
 }

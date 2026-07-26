@@ -34,9 +34,9 @@
 
 /* Color variants */
 .default {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
+  background: rgba(var(--color-fg-rgb), 0.1);
+  border-color: rgba(var(--color-fg-rgb), 0.2);
+  color: rgba(var(--color-fg-rgb), 0.9);
 }
 
 .primary {
@@ -71,8 +71,8 @@
 
 .orange,
 .purple {
-  background: rgba(255, 163, 26, 0.15);
-  border-color: rgba(255, 163, 26, 0.4);
+  background: rgba(var(--color-accent-rgb), 0.15);
+  border-color: rgba(var(--color-accent-rgb), 0.4);
   color: #ffd08a;
 }
 
@@ -152,8 +152,8 @@
 
 .dot.orange,
 .dot.purple {
-  background: #ffa31a;
-  border-color: rgba(255, 163, 26, 0.3);
+  background: var(--color-accent);
+  border-color: rgba(var(--color-accent-rgb), 0.3);
 }
 
 .dot .pulse {

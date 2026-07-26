@@ -9,8 +9,10 @@
 import { useState, useRef } from 'react'
 import styles from './RecurrenceTreeView.module.css'
 
+// Applied via `style`, not SVG presentation attributes — var() only
+// resolves in CSS declarations, so `fill="var(--x)"` would render nothing.
 const COLORS = {
-  recursive: { fill: 'rgba(255, 163, 26,0.15)', stroke: '#ffa31a', text: '##ffd08a' },
+  recursive: { fill: 'rgba(var(--color-accent-rgb), 0.15)', stroke: 'var(--color-accent)', text: 'var(--color-accent-bright)' },
   // Work done at a node, drawn as its own branch on chains. Green matches the
   // per-level cost boxes so the same colour always means "this is the cost".
   cost: { fill: 'rgba(34,197,94,0.14)', stroke: '#22c55e', text: '#86efac' },
@@ -114,8 +116,7 @@ function RecurrenceTreeView({ tree, formula }) {
           y={node.y - node.h / 2}
           width={node.w}
           height={node.h}
-          fill={c.fill}
-          stroke={c.stroke}
+          style={{ fill: c.fill, stroke: c.stroke }}
           strokeWidth={1.5}
           rx={7}
         />
@@ -123,7 +124,7 @@ function RecurrenceTreeView({ tree, formula }) {
           x={node.x}
           y={node.y + 4}
           textAnchor="middle"
-          fill={c.text}
+          style={{ fill: c.text }}
           fontSize="13"
           fontFamily="JetBrains Mono, monospace"
           fontWeight="bold"

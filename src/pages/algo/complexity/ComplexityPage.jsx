@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../../../components/layout/Navbar/Navbar';
 import Starfield from '../../../components/effects/Starfield/Starfield';
+import BackButton from '../../../components/common/BackButton/BackButton';
 import { ScrambleText } from '../../../components/ui/ScrambleText';
 import CodePillInput from '../../../components/ui/CodePillInput/CodePillInput';
 import ComplexityCodeView from '../../../features/complexity/components/ComplexityCodeView/ComplexityCodeView';
@@ -10,6 +12,7 @@ import { displayComplexity } from '../../../lib/algo/complexityTypes';
 import styles from './ComplexityPage.module.css';
 
 export default function ComplexityPage({ onAIStateChange }) {
+  const navigate = useNavigate();
   const [view, setView] = useState('input');
   const [code, setCode] = useState('');
   const [result, setResult] = useState(null);
@@ -54,6 +57,7 @@ export default function ComplexityPage({ onAIStateChange }) {
     return (
       <div className={styles.container}>
         <Starfield />
+        <BackButton onClick={() => navigate('/home')} />
         <Navbar />
         <main className={styles.landingCenter}>
           <div className={styles.heroContainer}>
@@ -81,7 +85,8 @@ export default function ComplexityPage({ onAIStateChange }) {
   return (
     <div className={styles.resultPage}>
       <Starfield />
-      <Navbar 
+      <BackButton onClick={() => navigate('/home')} />
+      <Navbar
         showTitle 
         title="O Complexity" 
         showNewFormula 

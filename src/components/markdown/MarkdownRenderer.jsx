@@ -1,11 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math'
 import remarkGfm from 'remark-gfm'
 import remarkDirective from 'remark-directive'
 import { visit } from 'unist-util-visit'
-import rehypeKatex from 'rehype-katex'
-import 'katex/dist/katex.min.css'
 import CodeBlock from '../social/CodeBlock/CodeBlock'
 import RichTooltip, { YouTubeIcon, InstagramIcon, LinkedInIcon } from '../ui/smoothui/rich-popover/index.tsx'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../lib/noteImageSrc'
@@ -264,8 +262,107 @@ const markdownComponents = {
   },
 }
 
+// KaTeX is by far the heaviest thing the reader pulls in — ~258 KB of JS plus
+// a 29 KB stylesheet and its web fonts — and most notes contain no maths at
+// all. So it's loaded on demand, keyed off the content, instead of being a
+// static import every note pays for.
+//
+// The delimiters here are exactly the ones remark-math recognises, verified
+// against the installed version: `$…$` (inlineMath) and `$$…$$` (math, which
+// may span lines). LaTeX's `\(…\)` / `\[…\]` are deliberately NOT included —
+// remark-math produces no math node for them, so matching them would only
+// fetch KaTeX for content it can't typeset anyway.
+//
+// The test is otherwise deliberately loose: a false positive costs the
+// download we used to make unconditionally, while a false negative would show
+// unformatted TeX.
+const MATH_RE = /\$\$[\s\S]*?\$\$|\$[^$\n]+\$/
+
+export function contentHasMath(content) {
+  return MATH_RE.test(String(content || ''))
+}
+
+/** The rehype-katex plugin once loaded, shared across every renderer instance
+ * so only the first maths note in a session pays for the chunk. */
+let katexModule = null
+let katexPromise = null
+
+function loadKatex() {
+  if (katexModule) return Promise.resolve(katexModule)
+  if (!katexPromise) {
+    katexPromise = Promise.all([
+      import('rehype-katex'),
+      import('katex/dist/katex.min.css'),
+    ])
+      .then(([mod]) => {
+        katexModule = mod.default
+        return katexModule
+      })
+      .catch((err) => {
+        // Do NOT keep a rejected promise here: one transient chunk fetch
+        // failure (flaky network, or a stale chunk hash after a redeploy)
+        // would otherwise be replayed to every later caller and permanently
+        // break maths for the rest of the session.
+        katexPromise = null
+        throw err
+      })
+  }
+  return katexPromise
+}
+
+/**
+ * Warm the KaTeX chunk before it's needed — called from the notes listing on
+ * hover, so a maths note doesn't spend a round trip on it after opening.
+ */
+export function prefetchKatex(content) {
+  if (contentHasMath(content)) loadKatex().catch(() => {})
+}
+
+/**
+ * → { plugin, failed }. `plugin` is the rehype-katex attacher, or null while
+ * it's still loading / not needed. `failed` means the chunk couldn't be
+ * fetched, and the caller should render without maths support rather than
+ * showing nothing at all.
+ *
+ * rehype-katex's default export is itself a FUNCTION, which makes both of
+ * React's function-valued-state traps live here: `useState(fn)` would run
+ * `fn` as a lazy initialiser and `setPlugin(fn)` would run it as an updater.
+ * Either one stores `rehypeKatex()` — a transformer — where a plugin belongs,
+ * and unified then throws "Cannot use 'in' operator to search for 'children'
+ * in undefined" mid-render. Hence the `() => …` wrappers in both places; do
+ * not "simplify" them away.
+ */
+function useKatexPlugin(needed) {
+  const [plugin, setPlugin] = useState(() => katexModule)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    if (!needed || plugin) return
+    let cancelled = false
+    loadKatex().then(
+      (mod) => { if (!cancelled) setPlugin(() => mod) },
+      () => { if (!cancelled) setFailed(true) },
+    )
+    return () => { cancelled = true }
+  }, [needed, plugin])
+
+  return { plugin: needed ? plugin : null, failed }
+}
+
 function MarkdownRenderer({ content }) {
   const parts = splitContentByRichPopovers(content)
+  const needsKatex = contentHasMath(content)
+  const { plugin: katexPlugin, failed: katexFailed } = useKatexPlugin(needsKatex)
+
+  // Rendering maths before KaTeX arrives would flash raw `$\frac{a}{b}$` at
+  // the reader, so a maths note waits for the chunk (one fetch, usually
+  // already warm from the listing's hover prefetch). Prose-only notes never
+  // reach this branch — and neither does a note whose KaTeX fetch FAILED,
+  // which falls through and renders unformatted maths: readable, if ugly,
+  // where waiting forever would leave a blank page.
+  if (needsKatex && !katexPlugin && !katexFailed) {
+    return <div className={styles.markdownContainer} />
+  }
 
   return (
     <div className={styles.markdownContainer}>
@@ -281,7 +378,7 @@ function MarkdownRenderer({ content }) {
           <ReactMarkdown
             key={i}
             remarkPlugins={[remarkGfm, remarkMath, remarkBrToBreak, remarkDirective, remarkNoteDirectives]}
-            rehypePlugins={[rehypeKatex]}
+            rehypePlugins={katexPlugin ? [katexPlugin] : []}
             components={markdownComponents}
           >
             {part.content}

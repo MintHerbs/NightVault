@@ -33,12 +33,22 @@
  * Known false positive: alpha 0.48 is matched but computes to ~5.0:1. It is
  * marginal enough that converting it to the token is the right call anyway, so
  * no exception is carved out.
+ *
+ * T-062 addendum: the theme retrofit rewrote every `rgba(255,255,255,α)` into
+ * `rgba(var(--color-fg-rgb), α)` so the washes follow light/dark mode. That
+ * form sailed straight past the original literal-only pattern, silently
+ * disarming this guard, so the token form is matched too. In light mode
+ * --color-fg-rgb is a near-black, where a low alpha fails contrast just as
+ * badly — the threshold applies to both.
  */
 export default {
   rules: {
     'declaration-property-value-disallowed-list': [
       {
-        color: ['/^rgba\\(\\s*255\\s*,\\s*255\\s*,\\s*255\\s*,\\s*0?\\.[0-4]/'],
+        color: [
+          '/^rgba\\(\\s*255\\s*,\\s*255\\s*,\\s*255\\s*,\\s*0?\\.[0-4]/',
+          '/^rgba\\(\\s*var\\(\\s*--color-fg-rgb\\s*\\)\\s*,\\s*0?\\.[0-4]/',
+        ],
       },
       {
         message:

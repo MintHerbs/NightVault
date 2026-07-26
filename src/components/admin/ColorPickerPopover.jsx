@@ -83,7 +83,7 @@ export default function ColorPickerPopover({ icon, tooltip, kind, swatches, onPi
             <input
               type="text"
               className={styles.hexInput}
-              placeholder="#ffa31a"
+              placeholder="#8B5CF6"
               value={hex}
               onChange={(e) => {
                 setHex(e.target.value)
@@ -95,7 +95,7 @@ export default function ColorPickerPopover({ icon, tooltip, kind, swatches, onPi
               Apply
             </button>
           </div>
-          {error && <div className={styles.hexError}>Enter a valid hex color (e.g. #ffa31a)</div>}
+          {error && <div className={styles.hexError}>Enter a valid hex color (e.g. #8B5CF6)</div>}
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

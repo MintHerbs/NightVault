@@ -43,7 +43,7 @@
   left: 56px;
   right: 0;
   height: 80px;
-  background: linear-gradient(to bottom, #000000 0%, #000000 40%, transparent 100%);
+  background: linear-gradient(to bottom, var(--color-bg) 0%, var(--color-bg) 40%, transparent 100%);
   z-index: 2;
   pointer-events: none;
 }
@@ -57,12 +57,12 @@
 }
 
 .messagesArea::-webkit-scrollbar-thumb {
-  background: #1a1a1a;
+  background: var(--md-surface-container-low);
   border-radius: 3px;
 }
 
 .messagesArea::-webkit-scrollbar-thumb:hover {
-  background: #2a2a2a;
+  background: var(--md-surface-container);
 }
 
 .messagesContent {
@@ -95,7 +95,7 @@
   z-index: 1;
   padding: 12px 20px;
   margin-bottom: 3vh;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(var(--color-bg-rgb), 0.8);
   backdrop-filter: blur(10px);
 }
 

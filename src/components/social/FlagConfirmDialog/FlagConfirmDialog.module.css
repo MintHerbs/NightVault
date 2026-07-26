@@ -11,7 +11,7 @@
 .backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(var(--color-bg-rgb), 0.75);
   backdrop-filter: blur(8px);
 }
 
@@ -19,33 +19,33 @@
   position: relative;
   width: 460px;
   max-width: 100%;
-  background: linear-gradient(135deg, rgba(17, 17, 17, 0.98) 0%, rgba(20, 20, 20, 0.98) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, rgba(var(--color-bg-rgb), 0.98) 0%, rgba(var(--color-bg-rgb), 0.98) 100%);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.12);
   border-radius: 20px;
   padding: 32px;
-  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(var(--color-fg-rgb), 0.05);
 }
 
 .closeBtn {
   position: absolute;
   top: 16px;
   right: 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(var(--color-fg-rgb), 0.05);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.1);
   border-radius: 8px;
   padding: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(var(--color-fg-rgb), 0.6);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .closeBtn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.9);
+  background: rgba(var(--color-fg-rgb), 0.08);
+  border-color: rgba(var(--color-fg-rgb), 0.15);
+  color: rgba(var(--color-fg-rgb), 0.9);
 }
 
 .iconWrapper {
@@ -64,7 +64,7 @@
 .title {
   font-size: 1.375rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(var(--color-fg-rgb), 0.95);
   margin-bottom: 12px;
   letter-spacing: -0.02em;
 }
@@ -72,12 +72,12 @@
 .message {
   font-size: 0.9rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(var(--color-fg-rgb), 0.7);
   margin-bottom: 20px;
 }
 
 .message strong {
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(var(--color-fg-rgb), 0.95);
   font-weight: 600;
 }
 
@@ -109,7 +109,7 @@
 
 .infoList li {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(var(--color-fg-rgb), 0.75);
   padding-left: 20px;
   position: relative;
 }
@@ -131,9 +131,9 @@
 .cancelBtn {
   width: 100%;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.9);
+  background: rgba(var(--color-fg-rgb), 0.05);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.15);
+  color: rgba(var(--color-fg-rgb), 0.9);
   padding: 12px 16px;
   font-size: 0.875rem;
   font-weight: 600;
@@ -143,15 +143,15 @@
 }
 
 .cancelBtn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(var(--color-fg-rgb), 0.08);
+  border-color: rgba(var(--color-fg-rgb), 0.2);
 }
 
 .flagBtn {
   width: 100%;
   border-radius: 12px;
   background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-  color: white;
+  color: var(--color-text);
   border: 1px solid rgba(239, 68, 68, 0.3);
   padding: 12px 16px;
   font-size: 0.875rem;
@@ -170,7 +170,7 @@
   width: 100%;
   border-radius: 12px;
   background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  color: white;
+  color: var(--color-text);
   border: 1px solid rgba(16, 185, 129, 0.3);
   padding: 12px 16px;
   font-size: 0.875rem;

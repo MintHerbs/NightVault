@@ -6,9 +6,9 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  color: #ffa31a;
+  background: var(--md-surface-container-low);
+  border: 1px solid var(--color-border);
+  color: var(--color-accent);
   font-size: 20px;
   font-weight: 700;
   cursor: pointer;
@@ -19,9 +19,9 @@
 }
 
 .toggleButton:hover {
-  background: #222;
-  border-color: #ffa31a;
-  box-shadow: 0 0 20px rgba(255, 163, 26, 0.3);
+  background: var(--md-surface-container-low);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 20px rgba(var(--color-accent-rgb), 0.3);
   transform: scale(1.05);
 }
 
@@ -31,7 +31,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(var(--color-bg-rgb), 0.7);
   z-index: 998;
 }
 
@@ -42,8 +42,8 @@
   bottom: 0;
   width: 500px;
   max-width: 90vw;
-  background: #0a0a0a;
-  border-left: 1px solid #222;
+  background: var(--color-bg);
+  border-left: 1px solid var(--color-border);
   border-radius: 12px 0 0 12px;
   z-index: 999;
   overflow-y: auto;
@@ -53,8 +53,8 @@
 .header {
   position: sticky;
   top: 0;
-  background: #0a0a0a;
-  border-bottom: 1px solid #222;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
   padding: 24px;
   display: flex;
   align-items: center;
@@ -65,7 +65,7 @@
 .title {
   font-size: 20px;
   font-weight: 700;
-  color: #ffa31a;
+  color: var(--color-accent);
   margin: 0;
 }
 
@@ -74,8 +74,8 @@
   height: 32px;
   border-radius: 50%;
   background: transparent;
-  border: 1px solid #333;
-  color: #888;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
   font-size: 24px;
   line-height: 1;
   cursor: pointer;
@@ -86,9 +86,9 @@
 }
 
 .closeButton:hover {
-  background: #1a1a1a;
-  border-color: #ffa31a;
-  color: #ffa31a;
+  background: var(--md-surface-container-low);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .content {
@@ -106,7 +106,7 @@
 .sectionTitle {
   font-size: 16px;
   font-weight: 700;
-  color: #ffa31a;
+  color: var(--color-accent);
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -115,7 +115,7 @@
 .sectionDescription {
   font-size: 14px;
   line-height: 1.6;
-  color: #888;
+  color: var(--color-text-muted);
   margin-bottom: 16px;
 }
 
@@ -126,21 +126,21 @@
 }
 
 .rulesTable thead {
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .rulesTable th {
   text-align: left;
   padding: 12px;
   font-weight: 600;
-  color: #888;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 12px;
 }
 
 .rulesTable tbody tr {
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .rulesTable tbody tr:last-child {
@@ -148,7 +148,7 @@
 }
 
 .rulesTable tbody tr:hover {
-  background: #111;
+  background: var(--color-bg);
 }
 
 .rulesTable td {
@@ -159,11 +159,11 @@
   font-family: 'Courier New', Courier, monospace;
   font-size: 16px;
   font-weight: 600;
-  color: #ffa31a;
+  color: var(--color-accent);
 }
 
 .resultCell {
   font-family: 'Courier New', Courier, monospace;
   font-size: 14px;
-  color: #e0e0e0;
+  color: var(--color-text);
 }

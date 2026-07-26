@@ -1,7 +1,8 @@
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useState } from 'react'
 import { BookOpen, ChatCircle, Globe, House } from '@phosphor-icons/react'
 import ChatAvatar from '../../../../features/chat/components/ChatAvatar/ChatAvatar'
 import NotificationBadge from '../../../effects/smoothui/components/notification-badge'
+import AppearanceDialog from '../../AppearanceDialog/AppearanceDialog'
 import { colors } from '../../../../constants/colors'
 import styles from '../Sidebar.module.css'
 import moonLogo from '../../../../img/moon.svg'
@@ -33,6 +34,8 @@ function CollapsedView({
   setMode,
   sessionId,
 }) {
+  const [isAppearanceOpen, setIsAppearanceOpen] = useState(false)
+
   const handleMoonClick = useCallback((e) => {
     e.preventDefault()
     go('/home', 'Home')
@@ -126,9 +129,28 @@ function CollapsedView({
           </div>
         </div>
 
-        <div className={styles.avatarContainer}>
+        <div
+          className={styles.avatarContainer}
+          title="Appearance"
+          role="button"
+          tabIndex={0}
+          aria-label="Appearance settings"
+          onClick={() => setIsAppearanceOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setIsAppearanceOpen(true)
+            }
+          }}
+        >
           <ChatAvatar sessionId={sessionId} size={26} />
         </div>
+
+        <AppearanceDialog
+          open={isAppearanceOpen}
+          onClose={() => setIsAppearanceOpen(false)}
+          sessionId={sessionId}
+        />
       </div>
     </div>
   )

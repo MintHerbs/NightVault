@@ -15,7 +15,7 @@
 .editorSurface :global(.ProseMirror) {
   outline: none;
   padding-bottom: 30vh;
-  color: #e8e0d5;
+  color: var(--color-text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   line-height: 1.7;
@@ -27,8 +27,8 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin: 2rem 0 1.5rem 0;
-  color: #ffa31a;
-  border-bottom: 2px solid rgba(255, 163, 26, 0.4);
+  color: var(--color-accent);
+  border-bottom: 2px solid rgba(var(--color-accent-rgb), 0.4);
   padding-bottom: 0.5rem;
 }
 
@@ -36,8 +36,8 @@
   font-size: 2rem;
   font-weight: 600;
   margin: 1.8rem 0 1.2rem 0;
-  color: #f0eae0;
-  border-bottom: 1px solid rgba(255, 163, 26, 0.4);
+  color: var(--color-text);
+  border-bottom: 1px solid rgba(var(--color-accent-rgb), 0.4);
   padding-bottom: 0.4rem;
 }
 
@@ -45,12 +45,12 @@
   font-size: 1.5rem;
   font-weight: 600;
   margin: 1.5rem 0 1rem 0;
-  color: #f0eae0;
+  color: var(--color-text);
 }
 
 .editorSurface :global(.ProseMirror p) {
   margin: 1rem 0;
-  color: #e8e0d5;
+  color: var(--color-text);
 }
 
 .editorSurface :global(.ProseMirror ul),
@@ -64,15 +64,15 @@
 }
 
 .editorSurface :global(.ProseMirror blockquote) {
-  border-left: 3px solid rgba(255, 163, 26, 0.5);
+  border-left: 3px solid rgba(var(--color-accent-rgb), 0.5);
   margin: 1.5rem 0;
   padding: 0.5rem 0 0.5rem 1.25rem;
-  color: #c9c2b8;
+  color: var(--color-text-muted);
 }
 
 .editorSurface :global(.ProseMirror hr) {
   border: none;
-  border-top: 1px solid rgba(255, 163, 26, 0.3);
+  border-top: 1px solid rgba(var(--color-accent-rgb), 0.3);
   margin: 2rem 0;
 }
 
@@ -89,8 +89,8 @@
 /* Fenced code block (default rendering for now; a themed social-CodeBlock node
    view is a follow-up in this ticket). */
 .editorSurface :global(.ProseMirror pre) {
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 163, 26, 0.25);
+  background: rgba(var(--color-bg-rgb), 0.35);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.25);
   border-radius: 8px;
   padding: 1rem 1.25rem;
   margin: 1.5rem 0;
@@ -100,7 +100,7 @@
 .editorSurface :global(.ProseMirror pre code) {
   background: none;
   padding: 0;
-  color: #e8e0d5;
+  color: var(--color-text);
 }
 
 .editorSurface :global(.ProseMirror table) {
@@ -108,21 +108,21 @@
   border-collapse: collapse;
   margin: 1.5rem 0;
   font-size: 15px;
-  border: 1px solid rgba(255, 163, 26, 0.3);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.3);
   border-radius: 8px;
 }
 
 .editorSurface :global(.ProseMirror th),
 .editorSurface :global(.ProseMirror td) {
   padding: 0.75rem 1rem;
-  border: 1px solid rgba(255, 163, 26, 0.2);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.2);
   text-align: left;
 }
 
 .editorSurface :global(.ProseMirror th) {
-  background: rgba(255, 163, 26, 0.15);
+  background: rgba(var(--color-accent-rgb), 0.15);
   font-weight: 600;
-  color: #f0eae0;
+  color: var(--color-text);
 }
 
 .editorSurface :global(.ProseMirror img) {
@@ -132,7 +132,7 @@
 }
 
 .editorSurface :global(.ProseMirror a) {
-  color: #ffa31a;
+  color: var(--color-accent);
   text-decoration: underline;
 }
 
@@ -177,8 +177,8 @@
   cursor: pointer;
   font-size: 20px;
   line-height: 1;
-  color: #fff;
-  background: rgba(28, 22, 20, 0.5);
+  color: var(--color-text);
+  background: rgba(var(--color-bg-rgb), 0.5);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 10px rgba(0, 0, 0, 0.25);
@@ -214,11 +214,11 @@
   gap: 6px;
   padding: 6px 6px 6px 14px;
   border-radius: 18px;
-  background: rgba(32, 26, 23, 0.94);
+  background: rgba(var(--color-bg-rgb), 0.94);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.28);
-  color: #ece0d8;
+  color: var(--color-text);
   font-size: 13px;
   line-height: 1;
   white-space: nowrap;
@@ -250,16 +250,16 @@
 
 .imageConfirmCancel {
   background: transparent;
-  color: #cbbfb6;
+  color: var(--color-text-muted);
 }
 
 .imageConfirmCancel:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(var(--color-fg-rgb), 0.08);
 }
 
 .imageConfirmRemove {
   background: #b3261e; /* MD3 error */
-  color: #fff;
+  color: var(--color-text);
 }
 
 .imageConfirmRemove:hover {
@@ -322,11 +322,11 @@
   display: none;
   padding: 5px 10px;
   border-radius: 9999px;
-  background: rgba(28, 22, 20, 0.72);
+  background: rgba(var(--color-bg-rgb), 0.72);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  color: #ece0d8;
+  color: var(--color-text);
   font-size: 12px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -347,7 +347,7 @@
   margin: 1rem 0;
   border-radius: 12px;
   overflow: hidden;
-  background: #000;
+  background: var(--color-bg);
   aspect-ratio: 16 / 9;
 }
 
@@ -370,8 +370,8 @@
   border: none;
   border-radius: 9999px;
   cursor: pointer;
-  color: #fff;
-  background: rgba(28, 22, 20, 0.55);
+  color: var(--color-text);
+  background: rgba(var(--color-bg-rgb), 0.55);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 10px rgba(0, 0, 0, 0.25);
@@ -380,7 +380,7 @@
 }
 
 .videoPlayButton:hover {
-  background: rgba(255, 163, 26, 0.85);
+  background: rgba(var(--color-accent-rgb), 0.85);
   transform: translate(-50%, -50%) scale(1.06);
 }
 

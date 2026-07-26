@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { motion, useAnimation } from 'motion/react';
+import { useTheme } from '../../../hooks/useTheme';
 
 function generateStars(count, starColor) {
   const shadows = [];
@@ -48,8 +49,10 @@ function StarLayer({ count = 1000, size = 1, transition, starColor = '#fff' }) {
   );
 }
 
-function CometCanvas() {
+function CometCanvas({ isLight = false }) {
   const canvasRef = React.useRef(null);
+  const isLightRef = React.useRef(isLight);
+  React.useEffect(() => { isLightRef.current = isLight; }, [isLight]);
   const cometsRef = React.useRef([]);
   const animationFrameRef = React.useRef(null);
   const lastCometTimeRef = React.useRef(0);
@@ -140,13 +143,24 @@ function CometCanvas() {
         const tailEndX = comet.x - Math.cos(comet.angle) * comet.tailLength;
         const tailEndY = comet.y - Math.sin(comet.angle) * comet.tailLength;
 
-        // Tail — thin, smooth, more gradient stops for silky falloff
+        // Tail — thin, smooth, more gradient stops for silky falloff.
+        // Light mode inverts to ink-on-white; read through a ref because
+        // this animate loop is created once and never re-closes over props.
+        const light = isLightRef.current;
         const gradient = ctx.createLinearGradient(comet.x, comet.y, tailEndX, tailEndY);
-        gradient.addColorStop(0,   `rgba(255,255,255,${comet.life * 0.9})`);
-        gradient.addColorStop(0.2, `rgba(220,235,255,${comet.life * 0.6})`);
-        gradient.addColorStop(0.5, `rgba(200,220,255,${comet.life * 0.3})`);
-        gradient.addColorStop(0.8, `rgba(180,200,255,${comet.life * 0.1})`);
-        gradient.addColorStop(1,   'rgba(150,180,255,0)');
+        if (light) {
+          gradient.addColorStop(0,   `rgba(20,20,30,${comet.life * 0.85})`);
+          gradient.addColorStop(0.2, `rgba(40,50,80,${comet.life * 0.55})`);
+          gradient.addColorStop(0.5, `rgba(60,75,110,${comet.life * 0.28})`);
+          gradient.addColorStop(0.8, `rgba(80,95,130,${comet.life * 0.1})`);
+          gradient.addColorStop(1,   'rgba(100,120,160,0)');
+        } else {
+          gradient.addColorStop(0,   `rgba(255,255,255,${comet.life * 0.9})`);
+          gradient.addColorStop(0.2, `rgba(220,235,255,${comet.life * 0.6})`);
+          gradient.addColorStop(0.5, `rgba(200,220,255,${comet.life * 0.3})`);
+          gradient.addColorStop(0.8, `rgba(180,200,255,${comet.life * 0.1})`);
+          gradient.addColorStop(1,   'rgba(150,180,255,0)');
+        }
 
         ctx.save();
         ctx.strokeStyle = gradient;
@@ -164,9 +178,15 @@ function CometCanvas() {
           comet.x, comet.y, 0,
           comet.x, comet.y, 3
         );
-        headGlow.addColorStop(0,   `rgba(255,255,255,${comet.life})`);
-        headGlow.addColorStop(0.4, `rgba(220,235,255,${comet.life * 0.6})`);
-        headGlow.addColorStop(1,   'rgba(200,220,255,0)');
+        if (light) {
+          headGlow.addColorStop(0,   `rgba(15,15,25,${comet.life})`);
+          headGlow.addColorStop(0.4, `rgba(40,50,80,${comet.life * 0.6})`);
+          headGlow.addColorStop(1,   'rgba(60,75,110,0)');
+        } else {
+          headGlow.addColorStop(0,   `rgba(255,255,255,${comet.life})`);
+          headGlow.addColorStop(0.4, `rgba(220,235,255,${comet.life * 0.6})`);
+          headGlow.addColorStop(1,   'rgba(200,220,255,0)');
+        }
 
         ctx.save();
         ctx.fillStyle = headGlow;
@@ -222,27 +242,38 @@ function CometCanvas() {
 function StarsBackground({
   children,
   speed = 90,
-  starColor = '#fff',
+  starColor,
 }) {
+  // Light mode inverts the whole field: white sky, ink-dark stars and
+  // comets (T-062). starColor stays overridable per-call site.
+  const { resolvedMode } = useTheme();
+  const isLight = resolvedMode === 'light';
+  const resolvedStarColor = starColor ?? (isLight ? '#1a1a26' : '#fff');
+
   return (
     <>
       <div style={{
         position: 'fixed',
         inset: 0,
         overflow: 'hidden',
-        background: 'radial-gradient(ellipse at bottom, #0d0d0d 0%, #000 100%)',
+        // Themed tokens, not literal #fff/#000 — light mode uses the
+        // tinted off-white surfaces (T-062), so the field matches whatever
+        // theme is selected instead of glaring.
+        background: isLight
+          ? 'radial-gradient(ellipse at bottom, var(--md-surface-container) 0%, var(--color-bg) 100%)'
+          : 'radial-gradient(ellipse at bottom, var(--md-surface-container-low) 0%, var(--color-bg) 100%)',
         zIndex: 0,
         pointerEvents: 'none',
         opacity: 0.6,
       }}>
 
-        
-        <StarLayer count={1000} size={1} transition={{ repeat: Infinity, duration: speed,     ease: 'linear' }} starColor={starColor} />
-        <StarLayer count={400}  size={2} transition={{ repeat: Infinity, duration: speed * 2, ease: 'linear' }} starColor={starColor} />
-        <StarLayer count={200}  size={3} transition={{ repeat: Infinity, duration: speed * 3, ease: 'linear' }} starColor={starColor} />
+
+        <StarLayer count={1000} size={1} transition={{ repeat: Infinity, duration: speed,     ease: 'linear' }} starColor={resolvedStarColor} />
+        <StarLayer count={400}  size={2} transition={{ repeat: Infinity, duration: speed * 2, ease: 'linear' }} starColor={resolvedStarColor} />
+        <StarLayer count={200}  size={3} transition={{ repeat: Infinity, duration: speed * 3, ease: 'linear' }} starColor={resolvedStarColor} />
       </div>
 
-      <CometCanvas />
+      <CometCanvas isLight={isLight} />
 
       {children}
     </>

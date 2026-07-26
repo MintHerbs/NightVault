@@ -10,7 +10,7 @@
 
 .instruction {
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--color-fg-rgb), 0.5);
   text-align: center;
   line-height: 1.6;
   margin: 0;
@@ -19,8 +19,8 @@
 
 .codeBlock {
   width: 100%;
-  background: #0a0a0a;
-  border: 1px solid #222;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -30,8 +30,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid #222;
+  background: rgba(var(--color-fg-rgb), 0.02);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .codeLabel {
@@ -44,7 +44,7 @@
 .codeContent {
   font-family: monospace;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--color-fg-rgb), 0.85);
   white-space: pre-wrap;
   padding: 16px;
   max-height: 320px;
@@ -58,10 +58,10 @@
   max-height: 340px;
   overflow-y: auto;
   padding: 16px;
-  background-color: #0f0f0f;
-  border: 1px solid #222222;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(var(--color-fg-rgb), 0.8);
   font-family: monospace;
   font-size: 0.8rem;
   line-height: 1.5;
@@ -79,23 +79,23 @@
 .copyButton {
   padding: 6px 14px;
   background-color: transparent;
-  color: #ffa31a;
+  color: var(--color-accent);
   font-size: 12px;
   font-weight: 500;
-  border: 1px solid #ffa31a;
+  border: 1px solid var(--color-accent);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .copyButton:hover {
-  background-color: rgba(255, 163, 26, 0.15);
+  background-color: rgba(var(--color-accent-rgb), 0.15);
 }
 
 .nextButton {
   padding: 10px 20px;
-  background-color: #ffa31a;
-  color: #ffffff;
+  background-color: var(--color-accent);
+  color: var(--color-text);
   font-size: 14px;
   font-weight: 500;
   border: none;
@@ -105,7 +105,7 @@
 }
 
 .nextButton:hover {
-  background-color: #e68a00;
+  background-color: var(--color-accent-hover);
 }
 
 .nextButton:active,

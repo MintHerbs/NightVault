@@ -12,7 +12,7 @@ export default function Navbar({
   showNewFormula = false,
   onNewFormula = null,
   newFormulaText = '← New Formula',
-  showAbout = true,
+  showAbout = false,
   showDisclaimer = false
 }) {
   return (

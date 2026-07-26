@@ -26,7 +26,7 @@ A process can be in one of **three states** at any given time:
 | **Blocked** | The process is waiting for an event (e.g., I/O to complete) and cannot run even if the CPU is free. |
 
 
-![image](/notes/img/operating-systems/11.png)
+![image](/notes/img/operating-systems/11.webp)
 
 ### State Transitions
 
@@ -116,7 +116,7 @@ Then:
 
 More processes in memory → higher CPU utilization (up to a point).
 
-![image](/notes/img/operating-systems/2.png)
+![image](/notes/img/operating-systems/2.webp)
 
 ### Key Assumption
 
@@ -142,7 +142,7 @@ A **thread** is a lightweight, schedulable unit of execution *within a process*.
 - Example: A **web server** uses a dispatcher thread to receive requests and worker threads to handle them.
 - Threads are **cheaper** to create and manage than processes.
 - They are often called **lightweight processes**.
-![image](/notes/img/operating-systems/3.png)
+![image](/notes/img/operating-systems/3.webp)
 
 ### Thread vs Process
 
@@ -286,7 +286,7 @@ A **race condition** occurs when two or more processes/threads access shared dat
 
 > **Example (Spooler Directory):** Imagine two processes A and B both want to print a file. A shared variable `in` points to the next free slot in the print queue. If both read `in = 7` at the same time, both write their file name to slot 7, and one file gets overwritten. The `in` variable should have become 9 but it's only 8.
 
-![image](/notes/img/operating-systems/4.png)
+![image](/notes/img/operating-systems/4.webp)
 
 ---
 
@@ -301,7 +301,7 @@ For a good solution to prevent race conditions, **four conditions** must be sati
 3. **Bounded Waiting:** No process should wait forever to enter its critical section (no starvation).
 4. **No assumptions about speed:** The solution must not assume anything about the relative speeds of processes or number of CPUs.
 
-![image](/notes/img/operating-systems/4.png)
+![image](/notes/img/operating-systems/4.webp)
 
 
 ---

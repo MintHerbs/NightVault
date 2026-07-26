@@ -135,14 +135,17 @@ export default function AgentAvatar({
         : 1
 
       ctx.save()
-      ctx.translate(half, half)
-      ctx.scale(scale, scale)
-      ctx.translate(-half, -half)
 
-      // Clip to circle
+      // Clip to circle BEFORE applying the breathe scale. Clipping inside
+      // the transform scaled the clip path too, pushing it past the canvas
+      // edges at the top of each pulse and flattening the avatar's sides.
       ctx.beginPath()
       ctx.arc(half, half, half, 0, Math.PI * 2)
       ctx.clip()
+
+      ctx.translate(half, half)
+      ctx.scale(scale, scale)
+      ctx.translate(-half, -half)
 
       // Dark background
       ctx.fillStyle = '#08080f'

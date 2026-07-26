@@ -5,8 +5,8 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-md) var(--spacing-lg);
-  background-color: #000000;
-  border-top: 1px solid #1a1a1a;
+  background-color: var(--color-bg);
+  border-top: 1px solid var(--color-border);
   z-index: 100;
   gap: var(--spacing-lg);
   min-height: 72px;
@@ -40,17 +40,17 @@
   gap: 6px;
   padding: 8px 16px;
   background-color: transparent;
-  color: #ffffff;
+  color: var(--color-text);
   font-size: 14px;
   font-weight: 500;
   border-radius: 8px;
   transition: all 0.2s ease;
-  border: 1px solid #333333;
+  border: 1px solid var(--color-border);
   cursor: pointer;
 }
 
 .button:hover:not(:disabled) {
-  border-color: #ffa31a;
+  border-color: var(--color-accent);
 }
 
 .button:active:not(:disabled) {
@@ -63,13 +63,13 @@
 }
 
 .playButton {
-  background-color: #ffa31a;
-  border-color: #ffa31a;
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 .playButton:hover:not(:disabled) {
-  background-color: #e68a00;
-  border-color: #e68a00;
+  background-color: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 
 .buttonIcon {
@@ -84,14 +84,14 @@
 .stepCounter {
   font-size: 15px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(var(--color-fg-rgb), 0.6);
   font-family: var(--font-mono);
   letter-spacing: 0.5px;
 }
 
 .description {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--color-fg-rgb), 0.85);
   text-align: center;
   max-width: 400px;
   white-space: nowrap;
@@ -101,7 +101,7 @@
 
 .speedLabel {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--color-fg-rgb), 0.5);
   font-weight: 500;
 }
 
@@ -111,7 +111,7 @@
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
-  background: #222222;
+  background: var(--md-surface-container-low);
   border-radius: 2px;
   outline: none;
 }
@@ -121,21 +121,21 @@
   appearance: none;
   width: 16px;
   height: 16px;
-  background: #ffa31a;
+  background: var(--color-accent);
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .slider::-webkit-slider-thumb:hover {
-  background: #e68a00;
+  background: var(--color-accent-hover);
   transform: scale(1.1);
 }
 
 .slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
-  background: #ffa31a;
+  background: var(--color-accent);
   border-radius: 50%;
   cursor: pointer;
   border: none;
@@ -143,12 +143,12 @@
 }
 
 .slider::-moz-range-thumb:hover {
-  background: #e68a00;
+  background: var(--color-accent-hover);
   transform: scale(1.1);
 }
 
 .slider::-moz-range-track {
-  background: #222222;
+  background: var(--md-surface-container-low);
   border-radius: 2px;
 }
 
@@ -167,7 +167,7 @@
 
 .speedValue {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--color-fg-rgb), 0.5);
   font-weight: 600;
   font-family: var(--font-mono);
   min-width: 40px;

@@ -1,6 +1,6 @@
 .panel {
-  background: #111;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-bg);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.1);
   border-radius: 12px;
   padding: 12px;
   display: flex;
@@ -10,9 +10,9 @@
 
 .searchInput {
   width: 100%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.92);
+  background: rgba(var(--color-fg-rgb), 0.04);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.12);
+  color: rgba(var(--color-fg-rgb), 0.92);
   border-radius: 10px;
   padding: 9px 10px;
   font-size: 13px;
@@ -20,8 +20,8 @@
 }
 
 .searchInput:focus {
-  border-color: rgba(255, 163, 26, 0.55);
-  box-shadow: 0 0 0 3px rgba(255, 163, 26, 0.18);
+  border-color: rgba(var(--color-accent-rgb), 0.55);
+  box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.18);
 }
 
 .grid {
@@ -36,8 +36,8 @@
 .thumbBtn {
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.08);
+  background: rgba(var(--color-fg-rgb), 0.02);
   aspect-ratio: 1 / 1;
   padding: 0;
   cursor: pointer;
@@ -46,7 +46,7 @@
 
 .thumbBtn:hover {
   transform: translateY(-1px);
-  border-color: rgba(255, 163, 26, 0.35);
+  border-color: rgba(var(--color-accent-rgb), 0.35);
 }
 
 .thumbImg {
@@ -58,12 +58,12 @@
 
 .skeleton {
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(var(--color-fg-rgb), 0.08);
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.04) 100%
+    rgba(var(--color-fg-rgb), 0.04) 0%,
+    rgba(var(--color-fg-rgb), 0.08) 50%,
+    rgba(var(--color-fg-rgb), 0.04) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.1s ease-in-out infinite;
@@ -73,7 +73,7 @@
 .attribution {
   align-self: flex-end;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--color-fg-rgb), 0.5);
 }
 
 @keyframes shimmer {

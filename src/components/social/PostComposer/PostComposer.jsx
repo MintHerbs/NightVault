@@ -213,7 +213,7 @@ export default function PostComposer({ onPost, sessionId }) {
               className={`${styles.charCount} ${warnCount ? styles.charCountWarn : ''}`}
               animate={{ 
                 scale: warnCount ? [1, 1.1, 1] : 1,
-                color: warnCount ? '#ff6464' : 'rgba(255, 255, 255, 0.35)'
+                color: warnCount ? '#ff6464' : 'rgba(var(--color-fg-rgb), 0.35)'
               }}
               transition={{ duration: 0.3 }}
             >
@@ -279,7 +279,7 @@ export default function PostComposer({ onPost, sessionId }) {
               tapScale={0.98}
             >
               {isPosting ? 'Posting…' : 'Post'}
-              <RippleButtonRipples color="rgba(255, 255, 255, 0.3)" />
+              <RippleButtonRipples color="rgba(var(--color-fg-rgb), 0.3)" />
             </RippleButton>
           </div>
         </div>

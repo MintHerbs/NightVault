@@ -1,5 +1,6 @@
 // TableauxPage - Semantic tableaux visualization tool
 import { useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAnimationPlayer } from '../../../hooks/useAnimationPlayer'
 import LogicInputPage from '../../../features/logic/components/LogicInputPage'
 import TableauxCanvas from '../../../features/logic/components/TableauxCanvas'
@@ -7,10 +8,12 @@ import RulesPanel from '../../../features/logic/components/RulesPanel'
 import LogicStepControls from '../../../features/logic/components/LogicStepControls'
 import Starfield from '../../../components/effects/Starfield/Starfield'
 import Navbar from '../../../components/layout/Navbar/Navbar'
+import BackButton from '../../../components/common/BackButton/BackButton'
 import { runTableaux } from '../../../lib/logic/tableauxEngine'
 import styles from './TableauxPage.module.css'
 
 export default function TableauxPage({ onAIStateChange }) {
+  const navigate = useNavigate()
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [mode, setMode] = useState('satisfiability') // 'satisfiability' or 'validity'
@@ -75,7 +78,8 @@ export default function TableauxPage({ onAIStateChange }) {
     return (
       <div className={styles.page}>
         <Starfield />
-        <Navbar 
+        <BackButton onClick={() => navigate('/home')} />
+        <Navbar
           showResult={true}
           resultText={result.conclusion}
           showNewFormula={true}
@@ -106,6 +110,7 @@ export default function TableauxPage({ onAIStateChange }) {
     return (
       <div className={styles.page}>
         <Starfield />
+        <BackButton onClick={() => navigate('/home')} />
         <Navbar />
         <main className={styles.main}>
           <div className={styles.errorContainer}>

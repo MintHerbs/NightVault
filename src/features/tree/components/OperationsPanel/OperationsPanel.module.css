@@ -2,8 +2,8 @@
 
 .panel {
   width: 280px;
-  background-color: #0a0a0a;
-  border-left: 1px solid #1a1a1a;
+  background-color: var(--color-bg);
+  border-left: 1px solid var(--color-border);
   padding: var(--spacing-lg);
   overflow-y: auto;
   display: flex;
@@ -21,7 +21,7 @@
 .sectionTitle {
   font-size: 0.7rem;
   font-weight: 600;
-  color: #ffa31a;
+  color: var(--color-accent);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: var(--spacing-xs);
@@ -29,18 +29,18 @@
 
 .input {
   padding: 10px 12px;
-  background-color: #0f0f0f;
-  border: 1px solid #222;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  color: #ffffff;
+  color: var(--color-text);
   font-size: 14px;
   transition: all 0.2s ease;
 }
 
 .input:focus {
   outline: none;
-  border-color: #ffa31a;
-  box-shadow: 0 0 0 2px rgba(255, 163, 26, 0.2);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(var(--color-accent-rgb), 0.2);
 }
 
 .input::placeholder {
@@ -49,8 +49,8 @@
 
 .button {
   padding: 10px 16px;
-  background-color: #ffa31a;
-  color: #ffffff;
+  background-color: var(--color-accent);
+  color: var(--color-text);
   font-size: 14px;
   font-weight: 600;
   border: none;
@@ -76,17 +76,17 @@
 .deleteButton {
   padding: 10px 16px;
   background-color: transparent;
-  color: #ffa31a;
+  color: var(--color-accent);
   font-size: 14px;
   font-weight: 600;
-  border: 1px solid #ffa31a;
+  border: 1px solid var(--color-accent);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .deleteButton:hover:not(:disabled) {
-  background-color: rgba(255, 163, 26, 0.15);
+  background-color: rgba(var(--color-accent-rgb), 0.15);
 }
 
 .deleteButton:active:not(:disabled) {
@@ -105,7 +105,7 @@
   padding: var(--spacing-md);
   background-color: transparent;
   border-radius: 8px;
-  border: 1px solid #1a1a1a;
+  border: 1px solid var(--color-border);
 }
 
 .infoRow {
@@ -116,11 +116,11 @@
 }
 
 .infoRow span:first-child {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--color-fg-rgb), 0.5);
 }
 
 .infoRow span:last-child {
-  color: #ffa31a;
+  color: var(--color-accent);
   font-weight: 600;
   font-family: var(--font-mono);
 }
@@ -130,7 +130,7 @@
   .panel {
     width: 100%;
     border-left: none;
-    border-top: 1px solid #1a1a1a;
+    border-top: 1px solid var(--color-border);
     height: auto;
     max-height: none;
   }

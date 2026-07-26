@@ -86,14 +86,14 @@
 
 /* Monaco Image Widget Styles */
 :global(.monaco-image-markdown) {
-  background: rgba(255, 163, 26, 0.08);
+  background: rgba(var(--color-accent-rgb), 0.08);
   border-bottom: 1px solid var(--accent);
   cursor: pointer;
   transition: all 150ms ease;
 }
 
 :global(.monaco-image-markdown:hover) {
-  background: rgba(255, 163, 26, 0.15);
+  background: rgba(var(--color-accent-rgb), 0.15);
 }
 
 @keyframes imageWidgetFadeIn {

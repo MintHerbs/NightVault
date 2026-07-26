@@ -41,9 +41,10 @@ export default function ComplexityCodeView({ code, annotations }) {
         const deepest = coveringAnnotations.reduce((max, ann) => 
           ann.depth > max.depth ? ann : max
         );
-        lineColorMap[lineNum] = colorForComplexity(deepest.complexity) || '#e2e8f0';
+        lineColorMap[lineNum] = colorForComplexity(deepest.complexity) || 'var(--color-text)';
       } else {
-        lineColorMap[lineNum] = '#e2e8f0';
+        // Unannotated lines take the themed body colour (T-062).
+        lineColorMap[lineNum] = 'var(--color-text)';
       }
     }
     
@@ -65,7 +66,7 @@ export default function ComplexityCodeView({ code, annotations }) {
                 <span className={styles.lineNumber}>{idx + 1}</span>
                 <span 
                   className={styles.lineText}
-                  style={{ color: lineColorMap[idx + 1] ?? '#e2e8f0' }}
+                  style={{ color: lineColorMap[idx + 1] ?? 'var(--color-text)' }}
                 >
                   {line}
                 </span>

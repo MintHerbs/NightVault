@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Starfield from '../../components/effects/Starfield/Starfield'
 import Navbar from '../../components/layout/Navbar/Navbar'
+import BackButton from '../../components/common/BackButton/BackButton'
 import HeroText from '../../components/effects/HeroText/HeroText'
 import PillInput from '../../components/ui/PillInput/PillInput'
 import TreeCanvas from '../../features/tree/components/TreeCanvas/TreeCanvas'
@@ -110,7 +111,8 @@ function TreePage({ onAIStateChange, onChatOpen }) {
     <div className={styles.container}>
       {/* Starfield background - z-index: 0 */}
       <Starfield />
-      
+      <BackButton onClick={() => navigate('/home')} />
+
       {/* Show landing screen when no tree exists */}
       {!hasTree && (
         <>
@@ -144,7 +146,6 @@ function TreePage({ onAIStateChange, onChatOpen }) {
                 onAIStateChange('idle')
               }
             }}
-            showDisclaimer={true}
           />
           
           <div className={styles.mainContent}>

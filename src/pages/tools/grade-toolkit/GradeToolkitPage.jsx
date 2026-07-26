@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { colors } from '../../../constants/colors'
+import BackButton from '../../../components/common/BackButton/BackButton'
 import CpaMode from './CpaMode'
 import MinMaxMode from './MinMaxMode'
 import styles from './GradeToolkitPage.module.css'
@@ -22,6 +23,7 @@ const MODES = [
 ]
 
 export default function GradeToolkitPage() {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const requested = searchParams.get('mode')
   const initial = MODES.some(m => m.key === requested) ? requested : 'cpa'
@@ -55,6 +57,7 @@ export default function GradeToolkitPage() {
         '--tool-success': colors.success,
       }}
     >
+      <BackButton onClick={() => navigate('/home')} />
       <div className={styles.content}>
         <motion.header
           className={styles.header}

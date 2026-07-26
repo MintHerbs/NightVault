@@ -4,6 +4,7 @@ import { flushSync } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Starfield from '../../components/effects/Starfield/Starfield'
 import Navbar from '../../components/layout/Navbar/Navbar'
+import BackButton from '../../components/common/BackButton/BackButton'
 import ERDStep1 from '../../features/erd/components/ERDStep1/ERDStep1'
 import ERDStep2 from '../../features/erd/components/ERDStep2/ERDStep2'
 import ERDStep3 from '../../features/erd/components/ERDStep3/ERDStep3'
@@ -136,7 +137,8 @@ function ERDPage({ onAIStateChange }) {
     <div className={styles.erdPage}>
       {/* Starfield background - z-index: 0 */}
       <Starfield />
-      
+      <BackButton onClick={() => navigate('/home')} />
+
       {/* Navbar */}
       {parsedERD ? (
         <Navbar 
