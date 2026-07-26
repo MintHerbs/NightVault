@@ -1,24 +1,6 @@
 import { useMemo } from 'react';
-import { displayComplexity } from '../../../../lib/algo/complexityTypes.js';
+import { displayComplexity, colorForComplexity } from '../../../../lib/algo/complexityTypes.js';
 import styles from './ComplexityCodeView.module.css';
-
-// Bracket colours by complexity key
-const COMPLEXITY_COLORS = {
-  '1': '#6b7280',
-  'log_n': '#10b981',
-  'log2_n': '#10b981',
-  'sqrt_n': '#06b6d4',
-  'sqrt_n_log_n': '#06b6d4',
-  'n': '#3b82f6',
-  'n_log_n': '#8b5cf6',
-  'n_sqrt_n': '#8b5cf6',
-  'n2': '#f59e0b',
-  'n2_log_n': '#f59e0b',
-  'n3': '#ef4444',
-  'n3_log_n': '#ef4444',
-  'exp_n': '#be123c',
-  'unknown': '#6b7280',
-};
 
 const LINE_HEIGHT = 22;
 const BRACKET_COL_WIDTH = 88;
@@ -59,7 +41,7 @@ export default function ComplexityCodeView({ code, annotations }) {
         const deepest = coveringAnnotations.reduce((max, ann) => 
           ann.depth > max.depth ? ann : max
         );
-        lineColorMap[lineNum] = COMPLEXITY_COLORS[deepest.complexity] || '#e2e8f0';
+        lineColorMap[lineNum] = colorForComplexity(deepest.complexity) || '#e2e8f0';
       } else {
         lineColorMap[lineNum] = '#e2e8f0';
       }
@@ -100,7 +82,7 @@ export default function ComplexityCodeView({ code, annotations }) {
                 className={styles.svg}
               >
                 {sortedAnnotations.map((ann, idx) => {
-                  const color = COMPLEXITY_COLORS[ann.complexity] || '#6b7280';
+                  const color = colorForComplexity(ann.complexity) || '#6b7280';
                   
                   // Calculate positions
                   const x = (maxDepth - ann.depth) * BRACKET_COL_WIDTH + BASE_OFFSET;
@@ -113,6 +95,9 @@ export default function ComplexityCodeView({ code, annotations }) {
                   
                   return (
                     <g key={`${ann.id}-${idx}`}>
+                      {/* Hover explanation: how this group's complexity was derived */}
+                      {ann.label && <title>{ann.label}</title>}
+
                       {/* Vertical line */}
                       <line
                         x1={x}
