@@ -37,7 +37,7 @@
 
 .timestamp {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--md-on-surface-variant);
   margin-top: 4px;
   padding: 0 4px;
 }

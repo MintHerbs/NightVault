@@ -24,7 +24,7 @@
 
 .removeBtn {
   background: transparent;
-  color: rgba(255, 255, 255, 0.48);
+  color: var(--md-on-surface-variant);
   border: 0;
   padding: 7px 10px;
   font-size: 0.75rem;
