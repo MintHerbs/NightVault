@@ -36,13 +36,20 @@ export default function RecurrencePage({ onAIStateChange }) {
     }
     
     // Solve based on method
-    let analysis;
-    if (submittedMethod === 'tree') {
-      analysis = solveByTree(parsed);
-    } else {
-      analysis = solveBySubstitution(parsed);
+    const analysis = submittedMethod === 'tree' ? solveByTree(parsed) : solveBySubstitution(parsed);
+
+    // A recurrence can parse cleanly and still be outside what the solver
+    // covers, so surface that instead of drawing a meaningless tree.
+    if (analysis.error) {
+      setFormula(submittedFormula);
+      setMethod(submittedMethod);
+      setResult({ error: analysis.error });
+      setView('result');
+      setIsAnimating(false);
+      if (onAIStateChange) onAIStateChange('idle');
+      return;
     }
-    
+
     setFormula(submittedFormula);
     setMethod(submittedMethod);
     setResult(analysis);
@@ -118,7 +125,9 @@ export default function RecurrencePage({ onAIStateChange }) {
       {result?.error ? (
         <div className={styles.errorContainer}>
           <div className={styles.errorBox}>
-            <h3 className={styles.errorTitle}>Parse Error</h3>
+            {/* Covers both "could not read that" and "read it fine, but this
+                family needs a method the solver does not implement". */}
+            <h3 className={styles.errorTitle}>Cannot solve this one</h3>
             <p className={styles.errorMessage}>{result.error}</p>
             <button className={styles.retryButton} onClick={handleReset}>
               ← Try Again
@@ -140,9 +149,10 @@ export default function RecurrencePage({ onAIStateChange }) {
             )}
           </div>
           <div className={styles.rightPanel}>
-            <ComplexityTerminal 
-              steps={result?.steps || []} 
+            <ComplexityTerminal
+              steps={result?.steps || []}
               finalComplexity={result?.finalComplexity}
+              finalComplexityLabel={result?.finalLabel}
               onAnimationComplete={handleAnimationComplete}
             />
           </div>

@@ -20,7 +20,13 @@ const STEP_PREFIXES = {
   default: '▸ ',
 };
 
-export default function ComplexityTerminal({ steps, finalComplexity, onAnimationComplete }) {
+/**
+ * @param {string} [finalComplexityLabel] exact label to show in the final box.
+ *   Recurrences can end up at complexities the fixed key list cannot name
+ *   (O(n^1.58), O(log² n), O(φⁿ)), so callers may pass the rendered string
+ *   directly. Falls back to the key lookup when omitted.
+ */
+export default function ComplexityTerminal({ steps, finalComplexity, finalComplexityLabel, onAnimationComplete }) {
   const [visibleCount, setVisibleCount] = useState(0);
   const terminalRef = useRef(null);
   
@@ -124,7 +130,7 @@ export default function ComplexityTerminal({ steps, finalComplexity, onAnimation
         {showFinalBox && (
           <div className={styles.finalBox}>
             <div className={styles.finalLabel}>FINAL COMPLEXITY</div>
-            <div className={styles.finalValue}>{displayComplexity(finalComplexity)}</div>
+            <div className={styles.finalValue}>{finalComplexityLabel ?? displayComplexity(finalComplexity)}</div>
           </div>
         )}
       </div>

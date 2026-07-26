@@ -1,133 +1,122 @@
 /**
- * RecurrenceTreeView - Zoomable/pannable SVG recursion tree
- * Displays the recursion tree with colored nodes for recursive calls, leaves, and base cases
+ * RecurrenceTreeView - zoomable, pannable SVG recursion tree.
+ *
+ * All geometry arrives pre-computed from the solver (node boxes, the
+ * annotation column, the tail and the derived formula), so this component
+ * only draws. The viewBox comes from the solver's content bounds rather than
+ * a fixed canvas size, which is what keeps wide trees from being clipped.
  */
 import { useState, useRef } from 'react'
 import styles from './RecurrenceTreeView.module.css'
 
+const COLORS = {
+  recursive: { fill: 'rgba(139,92,246,0.15)', stroke: '#8B5CF6', text: '#c4b5fd' },
+  base: { fill: 'rgba(107,114,128,0.15)', stroke: '#6b7280', text: '#9ca3af' },
+  ellipsis: { fill: 'transparent', stroke: 'transparent', text: '#6b7280' },
+}
+
+const ZOOM_MIN = 0.35
+const ZOOM_MAX = 2.5
+
 function RecurrenceTreeView({ tree, formula }) {
-  const [zoom, setZoom] = useState(1.0)
-  const [panX, setPanX] = useState(0)
-  const [panY, setPanY] = useState(0)
+  const [zoom, setZoom] = useState(1)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  const containerRef = useRef(null)
+  const dragStart = useRef({ x: 0, y: 0 })
 
   if (!tree || !tree.nodes || tree.nodes.length === 0) {
     return (
       <div className={styles.container}>
-        <div className={styles.emptyState}>No tree data</div>
+        <div className={styles.emptyState}>No tree to draw</div>
       </div>
     )
   }
 
-  const { nodes, edges, levelCosts } = tree
+  const { nodes, edges, annotations = [], tail, derivation, viewBox } = tree
+  const byId = new Map(nodes.map(n => [n.id, n]))
 
-  // Compute viewBox from node positions
-  const nodePositions = nodes.filter(n => n.type !== 'dots').map(n => ({ x: n.x, y: n.y }))
-  const minX = Math.min(...nodePositions.map(p => p.x)) - 80
-  const minY = Math.min(...nodePositions.map(p => p.y)) - 40
-  const maxX = Math.max(...nodePositions.map(p => p.x)) + 80
-  const maxY = Math.max(...nodePositions.map(p => p.y)) + 40
-  
-  // Extend maxX if we have levelCosts to make room for annotations
-  const svgWidth = levelCosts ? 800 : maxX - minX
-  const viewBox = levelCosts 
-    ? `0 ${minY} ${svgWidth} ${maxY - minY}`
-    : `${minX} ${minY} ${maxX - minX} ${maxY - minY}`
+  // Zoom about the middle of the content, so the tree stays put as it scales.
+  const cx = viewBox.x + viewBox.width / 2
+  const cy = viewBox.y + viewBox.height / 2
+  const transform = `translate(${cx + pan.x}, ${cy + pan.y}) scale(${zoom}) translate(${-cx}, ${-cy})`
 
-  // Zoom controls
-  const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev + 0.2, 2.0))
+  const zoomBy = delta => setZoom(z => clamp(z + delta, ZOOM_MIN, ZOOM_MAX))
+
+  const handleWheel = e => {
+    if (!e.ctrlKey && !e.metaKey) return
+    e.preventDefault()
+    zoomBy(e.deltaY > 0 ? -0.12 : 0.12)
   }
 
-  const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev - 0.2, 0.4))
-  }
-
-  const handleWheel = (e) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault()
-      const delta = e.deltaY > 0 ? -0.1 : 0.1
-      setZoom(prev => Math.max(0.4, Math.min(2.0, prev + delta)))
-    }
-  }
-
-  // Pan controls
-  const handleMouseDown = (e) => {
+  const handleMouseDown = e => {
     setIsPanning(true)
-    setDragStart({ x: e.clientX - panX, y: e.clientY - panY })
+    dragStart.current = { x: e.clientX - pan.x, y: e.clientY - pan.y }
   }
 
-  const handleMouseMove = (e) => {
-    if (isPanning) {
-      setPanX(e.clientX - dragStart.x)
-      setPanY(e.clientY - dragStart.y)
-    }
+  const handleMouseMove = e => {
+    if (!isPanning) return
+    setPan({ x: e.clientX - dragStart.current.x, y: e.clientY - dragStart.current.y })
   }
 
-  const handleMouseUp = () => {
-    setIsPanning(false)
+  const stopPanning = () => setIsPanning(false)
+
+  const reset = () => {
+    setZoom(1)
+    setPan({ x: 0, y: 0 })
   }
 
-  const handleDoubleClick = () => {
-    setZoom(1.0)
-    setPanX(0)
-    setPanY(0)
+  const renderEdge = (edge, i) => {
+    const from = byId.get(edge.from)
+    const to = byId.get(edge.to)
+    if (!from || !to) return null
+    return (
+      <line
+        key={`e${i}`}
+        x1={from.x}
+        y1={from.y + from.h / 2}
+        x2={to.x}
+        y2={to.y - to.h / 2}
+        stroke="#4b5563"
+        strokeWidth={1.4}
+        strokeDasharray={edge.kind === 'dashed' ? '4 4' : undefined}
+      />
+    )
   }
 
-  // Render node based on type
-  const renderNode = (node) => {
-    if (node.type === 'dots') {
-      // Render 3 dots
+  const renderNode = node => {
+    if (node.kind === 'ellipsis') {
       return (
-        <g key={node.id}>
-          <circle cx={node.x} cy={node.y} r={2.5} fill="#6b7280" />
-          <circle cx={node.x} cy={node.y + 16} r={2.5} fill="#6b7280" />
-          <circle cx={node.x} cy={node.y + 32} r={2.5} fill="#6b7280" />
-        </g>
+        <text
+          key={node.id}
+          x={node.x}
+          y={node.y + 6}
+          textAnchor="middle"
+          fill={COLORS.ellipsis.text}
+          fontSize="18"
+          fontFamily="JetBrains Mono, monospace"
+        >
+          …
+        </text>
       )
     }
-
-    // Calculate rect dimensions
-    const width = node.label.length * 8 + 24
-    const height = 28
-    const x = node.x - width / 2
-    const y = node.y - 14
-
-    // Colors by type
-    let fill, stroke, textFill
-    if (node.type === 'recursive') {
-      fill = 'rgba(139,92,246,0.15)'
-      stroke = '#8B5CF6'
-      textFill = '#c4b5fd'
-    } else if (node.type === 'leaf') {
-      fill = 'rgba(34,197,94,0.15)'
-      stroke = '#22c55e'
-      textFill = '#86efac'
-    } else if (node.type === 'base') {
-      fill = 'rgba(107,114,128,0.15)'
-      stroke = '#6b7280'
-      textFill = '#9ca3af'
-    }
-
+    const c = COLORS[node.kind] ?? COLORS.recursive
     return (
       <g key={node.id}>
         <rect
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-          fill={fill}
-          stroke={stroke}
+          x={node.x - node.w / 2}
+          y={node.y - node.h / 2}
+          width={node.w}
+          height={node.h}
+          fill={c.fill}
+          stroke={c.stroke}
           strokeWidth={1.5}
-          rx={6}
+          rx={7}
         />
         <text
           x={node.x}
           y={node.y + 4}
           textAnchor="middle"
-          fill={textFill}
+          fill={c.text}
           fontSize="13"
           fontFamily="JetBrains Mono, monospace"
           fontWeight="bold"
@@ -138,142 +127,141 @@ function RecurrenceTreeView({ tree, formula }) {
     )
   }
 
-  // Render edge
-  const renderEdge = (edge) => {
-    const fromNode = nodes.find(n => n.id === edge.from)
-    const toNode = nodes.find(n => n.id === edge.to)
-
-    if (!fromNode || !toNode) return null
-
-    // Skip edges to/from dots
-    if (fromNode.type === 'dots' || toNode.type === 'dots') return null
-
-    return (
-      <line
-        key={`${edge.from}-${edge.to}`}
-        x1={fromNode.x}
-        y1={fromNode.y + 14}
-        x2={toNode.x}
-        y2={toNode.y - 14}
-        stroke="#555"
-        strokeWidth={1.5}
-      />
-    )
-  }
-
-  // Helper to find rightmost node X at a given level
-  const getRightmostNodeX = (level) => {
-    const nodesAtLevel = nodes.filter(n => n.level === level && n.type !== 'dots')
-    if (nodesAtLevel.length === 0) return 0
-    return Math.max(...nodesAtLevel.map(n => n.x))
-  }
-
-  // Render level cost annotation
-  const renderLevelCost = (lc) => {
-    const COST_X = svgWidth - 20
-    const rightmostX = getRightmostNodeX(lc.level)
-    
-    return (
-      <g key={`cost-${lc.level}`}>
-        {/* Horizontal dashed line from rightmost node to cost label */}
-        <line
-          x1={rightmostX + 40}
-          y1={lc.y}
-          x2={COST_X - 60}
-          y2={lc.y}
-          stroke="#333"
-          strokeWidth="1"
-          strokeDasharray="4 4"
-        />
-        
-        {/* Cost label box */}
-        <rect
-          x={COST_X - 55}
-          y={lc.y - 14}
-          width={50}
-          height={28}
-          rx={6}
-          fill="rgba(34,197,94,0.15)"
-          stroke="#22c55e"
-          strokeWidth="0.8"
-        />
-        
-        {/* Cost label text */}
+  const renderAnnotation = (a, i) => (
+    <g key={`a${i}`}>
+      {a.countText && (
         <text
-          x={COST_X - 30}
-          y={lc.y + 4}
-          fill="#86efac"
-          fontSize="12"
+          x={a.x}
+          y={a.y + 4}
+          fill="#6b7280"
+          fontSize="11.5"
           fontFamily="JetBrains Mono, monospace"
-          fontWeight="700"
-          textAnchor="middle"
         >
-          {lc.label}
+          {a.countText}
         </text>
-      </g>
-    )
-  }
+      )}
+      <rect
+        x={a.x + a.countWidth + 12}
+        y={a.y - 13}
+        width={a.costWidth}
+        height={26}
+        rx={6}
+        fill="rgba(34,197,94,0.14)"
+        stroke="#22c55e"
+        strokeWidth={0.9}
+      />
+      <text
+        x={a.x + a.countWidth + 12 + a.costWidth / 2}
+        y={a.y + 4}
+        textAnchor="middle"
+        fill="#86efac"
+        fontSize="12"
+        fontFamily="JetBrains Mono, monospace"
+        fontWeight="700"
+      >
+        {a.costText}
+      </text>
+    </g>
+  )
 
   return (
     <div className={styles.container}>
-      {/* Zoom controls */}
       <div className={styles.zoomControls}>
-        <button
-          className={styles.zoomButton}
-          onClick={handleZoomIn}
-          title="Zoom in"
-          aria-label="Zoom in"
-        >
+        <button className={styles.zoomButton} onClick={() => zoomBy(0.2)} title="Zoom in" aria-label="Zoom in">
           +
         </button>
-        <button
-          className={styles.zoomButton}
-          onClick={handleZoomOut}
-          title="Zoom out"
-          aria-label="Zoom out"
-        >
+        <button className={styles.zoomButton} onClick={() => zoomBy(-0.2)} title="Zoom out" aria-label="Zoom out">
           −
         </button>
       </div>
 
-      {/* SVG canvas */}
       <div
-        ref={containerRef}
         className={`${styles.svgWrapper} ${isPanning ? styles.grabbing : ''}`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onDoubleClick={handleDoubleClick}
+        onMouseUp={stopPanning}
+        onMouseLeave={stopPanning}
+        onDoubleClick={reset}
         onWheel={handleWheel}
       >
         <svg
           width="100%"
           height="100%"
-          viewBox={viewBox}
+          viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
           preserveAspectRatio="xMidYMid meet"
         >
-          <g transform={`translate(${panX / zoom}, ${panY / zoom}) scale(${zoom})`}>
-            {/* Render edges first (behind nodes) */}
-            {edges.map(edge => renderEdge(edge))}
-            
-            {/* Render nodes */}
-            {nodes.map(node => renderNode(node))}
-            
-            {/* Render level cost annotations if present */}
-            {levelCosts && levelCosts.map(lc => renderLevelCost(lc))}
+          <g transform={transform}>
+            {edges.map(renderEdge)}
+
+            {/* The tail: the tree continues, then reaches its base case. */}
+            {tail && (
+              <g>
+                {tail.from.map((p, i) => (
+                  <line
+                    key={`t${i}`}
+                    x1={p.x}
+                    y1={p.y}
+                    x2={tail.x}
+                    y2={tail.dotsY - 16}
+                    stroke="#4b5563"
+                    strokeWidth={1.4}
+                    strokeDasharray="4 4"
+                  />
+                ))}
+                <circle cx={tail.x} cy={tail.dotsY - 8} r={2.4} fill="#6b7280" />
+                <circle cx={tail.x} cy={tail.dotsY} r={2.4} fill="#6b7280" />
+                <circle cx={tail.x} cy={tail.dotsY + 8} r={2.4} fill="#6b7280" />
+                <line
+                  x1={tail.x}
+                  y1={tail.dotsY + 16}
+                  x2={tail.x}
+                  y2={tail.toY}
+                  stroke="#4b5563"
+                  strokeWidth={1.4}
+                  strokeDasharray="4 4"
+                />
+              </g>
+            )}
+
+            {nodes.map(renderNode)}
+            {annotations.map(renderAnnotation)}
+
+            {/* The formula the tree derives. */}
+            {derivation && (
+              <g>
+                <line
+                  x1={derivation.x - derivation.width / 2}
+                  y1={derivation.y - 22}
+                  x2={derivation.x + derivation.width / 2}
+                  y2={derivation.y - 22}
+                  stroke="#1f2937"
+                  strokeWidth={1}
+                />
+                {derivation.lines.map((line, i) => (
+                  <text
+                    key={`d${i}`}
+                    x={derivation.x}
+                    y={derivation.y + i * 24}
+                    textAnchor="middle"
+                    fill={i === derivation.lines.length - 1 ? '#c4b5fd' : '#9ca3af'}
+                    fontSize={i === derivation.lines.length - 1 ? '15' : '13'}
+                    fontFamily="JetBrains Mono, monospace"
+                    fontWeight={i === derivation.lines.length - 1 ? '700' : '400'}
+                  >
+                    {line}
+                  </text>
+                ))}
+              </g>
+            )}
           </g>
         </svg>
       </div>
 
-      {/* Formula display at bottom */}
-      {formula && (
-        <div className={styles.formulaDisplay}>
-          {formula}
-        </div>
-      )}
+      {formula && <div className={styles.formulaDisplay}>{formula}</div>}
     </div>
   )
 }
+
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 
 export default RecurrenceTreeView

@@ -1,404 +1,353 @@
 /**
- * Recurrence Solver - Substitution Method
- * Performs algebraic back-substitution to find general pattern
+ * Recurrence Solver, substitution method.
+ *
+ * This performs the substitution honestly: expand the recurrence into itself
+ * three times showing the algebra, read off the pattern after k steps, solve
+ * for k from the base case, put k back, then evaluate the sum that remains.
+ * The previous implementation expanded twice and then handed the answer to a
+ * Master Theorem helper, which is a different method wearing this one's label.
  */
 
-import { identifySummation } from './recurrenceTypes.js';
-import { fToTermShape, textToLatex } from './recurrenceParser.js';
-import { displayComplexity, shortComplexity } from './complexityTypes.js';
+import {
+  exponential,
+  polylog,
+  loglog,
+  growthToKey,
+  formatGrowthLatex,
+  theta,
+  bigO,
+  num,
+  renderF,
+  arg,
+  divideLevelSum,
+  sumSubtractSeries,
+  dominantRoot,
+} from './recurrenceMath.js';
+
+const SUBSCRIPT = { 0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉' };
+const sub = v => String(v).split('').map(c => SUBSCRIPT[c] ?? c).join('');
+const logOf = (b, x = 'n') => `log${sub(num(b))}(${x})`;
 
 /**
- * Apply Master Theorem to divide-type recurrence
- * @param {number} a - Number of subproblems
- * @param {number} b - Factor by which problem size is divided
- * @param {string} fComplexity - Complexity of f(n)
- * @param {Array} steps - Steps array to append to
- * @returns {string} Final complexity
- */
-function applyMasterTheorem(a, b, fComplexity, steps) {
-  const logba = Math.log(a) / Math.log(b);
-  const fExponent = {
-    '1': 0,
-    'log_n': 0.05,
-    'sqrt_n': 0.5,
-    'n': 1,
-    'n_log_n': 1.05,
-    'n2': 2,
-    'n3': 3
-  }[fComplexity] ?? 1;
-
-  steps.push({ text: `a=${a}, b=${b}, f(n)=O(${fComplexity})`, type: 'info', indent: 0 });
-  steps.push({ text: `log_${b}(${a}) = ${logba.toFixed(2)}`, type: 'special', indent: 0 });
-
-  if (Math.abs(fExponent - logba) < 0.1) {
-    // Case 2: f(n) = Θ(n^log_b(a)) → multiply by log n
-    const base = exponentToComplexity(logba);
-    const result = addLogFactor(base);
-    steps.push({ text: `Case 2: f(n) = Θ(n^log_b(a)) → multiply by log n`, type: 'special', indent: 0 });
-    return result;
-  } else if (fExponent > logba) {
-    // Case 3: root work dominates (f(n) grows faster)
-    steps.push({ text: `Case 3: f(n) grows faster than n^log_b(a) → O(f(n))`, type: 'special', indent: 0 });
-    return fComplexity;
-  } else {
-    // Case 1: leaf work dominates (f(n) grows slower)
-    const result = exponentToComplexity(logba);
-    steps.push({ text: `Case 1: f(n) grows slower than n^log_b(a) → O(n^${logba.toFixed(2)})`, type: 'special', indent: 0 });
-    return result;
-  }
-}
-
-/**
- * Convert exponent to complexity string
- * @param {number} exp - Exponent value
- * @returns {string} Complexity string
- */
-function exponentToComplexity(exp) {
-  if (exp < 0.1) return '1';
-  if (Math.abs(exp - 0.5) < 0.1) return 'sqrt_n';
-  if (Math.abs(exp - 1) < 0.1) return 'n';
-  if (Math.abs(exp - 2) < 0.1) return 'n2';
-  if (Math.abs(exp - 3) < 0.1) return 'n3';
-  return 'n';
-}
-
-/**
- * Add log factor to complexity
- * @param {string} complexity - Base complexity
- * @returns {string} Complexity with log factor
- */
-function addLogFactor(complexity) {
-  const map = {
-    '1': 'log_n',
-    'sqrt_n': 'sqrt_n_log_n',
-    'n': 'n_log_n',
-    'n2': 'n2_log_n',
-    'n3': 'n3_log_n'
-  };
-  return map[complexity] ?? complexity;
-}
-
-/**
- * Solve recurrence using the substitution method
- * @param {Object} parsed - Parsed recurrence object from parseRecurrence
- * @returns {Object} { formulas, steps, finalComplexity }
+ * @param {Object} parsed output of parseRecurrence
+ * @returns {{ formulas: Array, steps: Array, finalComplexity: string, finalLabel: string }}
  */
 export function solveBySubstitution(parsed) {
-  if (parsed.error) {
-    return {
-      formulas: [],
-      steps: [{ text: `Error: ${parsed.error}`, type: 'info' }],
-      finalComplexity: 'unknown',
-    };
-  }
-
-  if (parsed.type === 'subtract') {
-    return solveSubtractSubstitution(parsed);
-  } else if (parsed.type === 'divide') {
-    return solveDivideSubstitution(parsed);
-  } else {
-    return {
-      formulas: [],
-      steps: [{ text: 'Unsupported recurrence type', type: 'info' }],
-      finalComplexity: 'unknown',
-    };
+  if (!parsed || parsed.error) return failure(parsed?.error ?? 'No recurrence to solve');
+  switch (parsed.type) {
+    case 'divide':
+      return divideSubstitution(parsed);
+    case 'subtract':
+      return chainSubstitution(parsed);
+    case 'linear':
+      return branchingSubstitution(parsed);
+    case 'sqrt':
+      return sqrtSubstitution(parsed);
+    default:
+      return failure(`Unsupported recurrence type "${parsed.type}"`);
   }
 }
 
-/**
- * Solve subtract-type recurrence using substitution
- */
-function solveSubtractSubstitution(parsed) {
-  const { a, b, f, fComplexity, original } = parsed;
+function failure(message) {
+  return {
+    formulas: [],
+    steps: [{ text: message, type: 'worst_case' }],
+    finalComplexity: 'unknown',
+    finalLabel: 'not solved',
+    error: message,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// T(n) = T(n − b) + f(n)
+// ---------------------------------------------------------------------------
+
+function chainSubstitution(parsed) {
+  const { b, fTerms, fLatex } = parsed;
+  const series = sumSubtractSeries(fTerms, b);
+  const at = k => arg.minus('n', k * b);
+  const fAt = (k, latex) => renderF(fTerms, k === 0 ? arg.symbol('n') : at(k), { latex, inSum: true });
+
   const formulas = [];
-  
-  // 1. Given formula
-  formulas.push({
-    latex: textToLatex(original),
-    label: 'Given',
-  });
-  
-  // 2. Replace n with n-b
-  const sub1 = `T(n-${b}) = T(n-${b * 2}) + ${f.replace(/n/g, `n-${b}`)}`;
-  formulas.push({
-    latex: textToLatex(sub1),
-    label: `Replace n with n-${b}`,
-  });
-  
-  // 3. Substitute back
-  const back1 = `T(n) = T(n-${b * 2}) + ${f.replace(/n/g, `n-${b}`)} + ${f}`;
-  formulas.push({
-    latex: textToLatex(back1),
-    label: 'Substitute back',
-  });
-  
-  // 4. Replace n with n-2b
-  const sub2 = `T(n-${b * 2}) = T(n-${b * 3}) + ${f.replace(/n/g, `n-${b * 2}`)}`;
-  formulas.push({
-    latex: textToLatex(sub2),
-    label: `Replace n with n-${b * 2}`,
-  });
-  
-  // 5. Substitute back
-  const back2 = `T(n) = T(n-${b * 3}) + ${f.replace(/n/g, `n-${b * 2}`)} + ${f.replace(/n/g, `n-${b}`)} + ${f}`;
-  formulas.push({
-    latex: textToLatex(back2),
-    label: 'Substitute back',
-  });
-  
-  // 6. Pattern label
-  formulas.push({
-    latex: '\\text{After } k \\text{ substitutions:}',
-    label: 'Pattern',
-  });
-  
-  // 7. General form with summation
-  const sumTerm = f.replace(/n/g, 'n-i+1');
-  formulas.push({
-    latex: `T(n) = T(n-k) + \\sum_{i=1}^{k} ${textToLatex(sumTerm)}`,
-    label: 'General form',
-  });
-  
-  // 8. Set base case
-  formulas.push({
-    latex: `n - k = 0 \\implies k = n`,
-    label: 'Set base case',
-  });
-  
-  // 9. Expand with actual terms
-  const expandedTerms = `${f.replace(/n/g, '1')} + ${f.replace(/n/g, '2')} + \\cdots + ${f}`;
-  formulas.push({
-    latex: `T(n) = T(0) + ${expandedTerms}`,
-    label: 'Expand',
-  });
-  
-  // Identify summation pattern
-  const leafTerms = collectSubstitutionTerms(f, fComplexity);
-  const identity = identifySummation(leafTerms);
-  
-  // 10. Apply summation identity
-  if (identity) {
-    if (identity.id === 'log_factorial') {
-      formulas.push({
-        latex: `= T(0) + \\log(n!)`,
-        label: 'Log product rule',
-      });
-      formulas.push({
-        latex: `= O(n \\log n)`,
-        label: "By Stirling's approximation",
-      });
-    } else if (identity.id === 'arithmetic_series') {
-      formulas.push({
-        latex: `= T(0) + \\frac{n(n+1)}{2}`,
-        label: 'Arithmetic series',
-      });
-      formulas.push({
-        latex: `= O(n^{2})`,
-        label: 'Final complexity',
-      });
-    } else if (identity.id === 'constant_sum') {
-      formulas.push({
-        latex: `= T(0) + n`,
-        label: 'Sum of constants',
-      });
-      formulas.push({
-        latex: `= O(n)`,
-        label: 'Final complexity',
-      });
-    } else if (identity.id === 'sum_of_squares') {
-      formulas.push({
-        latex: `= T(0) + \\frac{n(n+1)(2n+1)}{6}`,
-        label: 'Sum of squares',
-      });
-      formulas.push({
-        latex: `= O(n^{3})`,
-        label: 'Final complexity',
-      });
-    } else {
-      formulas.push({
-        latex: `= ${displayComplexity(identity.complexity)}`,
-        label: 'Final complexity',
-      });
-    }
-  } else {
-    formulas.push({
-      latex: `= O(n)`,
-      label: 'Final complexity',
-    });
-  }
-  
-  // Build steps
-  const steps = buildSubstitutionSteps(parsed, f, identity, 'subtract');
-  const finalComplexity = identity ? identity.complexity : 'n';
-  
-  return { formulas, steps, finalComplexity };
-}
+  const add = (latex, label) => formulas.push({ latex, label });
 
-/**
- * Solve divide-type recurrence using substitution
- */
-function solveDivideSubstitution(parsed) {
-  const { a, b, f, fComplexity, original } = parsed;
-  const formulas = [];
-  
-  // 1. Given formula
-  formulas.push({
-    latex: textToLatex(original),
-    label: 'Given',
-  });
-  
-  // 2. Replace n with n/b
-  const sub1 = `T(n/${b}) = ${a}T(n/${b * b}) + ${f.replace(/n/g, `n/${b}`)}`;
-  formulas.push({
-    latex: textToLatex(sub1),
-    label: `Replace n with n/${b}`,
-  });
-  
-  // 3. Substitute back
-  const back1 = `T(n) = ${a}(${a}T(n/${b * b}) + ${f.replace(/n/g, `n/${b}`)}) + ${f}`;
-  formulas.push({
-    latex: textToLatex(back1),
-    label: 'Substitute back',
-  });
-  
-  // Simplify
-  const simplified1 = `T(n) = ${a * a}T(n/${b * b}) + ${a}${f.replace(/n/g, `n/${b}`)} + ${f}`;
-  formulas.push({
-    latex: textToLatex(simplified1),
-    label: 'Simplify',
-  });
-  
-  // 4. Replace n with n/b²
-  const sub2 = `T(n/${b * b}) = ${a}T(n/${b * b * b}) + ${f.replace(/n/g, `n/${b * b}`)}`;
-  formulas.push({
-    latex: textToLatex(sub2),
-    label: `Replace n with n/${b * b}`,
-  });
-  
-  // 5. Substitute back
-  const back2 = `T(n) = ${a * a * a}T(n/${b * b * b}) + ${a * a}${f.replace(/n/g, `n/${b * b}`)} + ${a}${f.replace(/n/g, `n/${b}`)} + ${f}`;
-  formulas.push({
-    latex: textToLatex(back2),
-    label: 'Substitute back',
-  });
-  
-  // 6. Pattern
-  formulas.push({
-    latex: '\\text{After } k \\text{ substitutions:}',
-    label: 'Pattern',
-  });
-  
-  // 7. General form
-  formulas.push({
-    latex: `T(n) = a^{k}T(n/b^{k}) + \\sum_{i=0}^{k-1} a^{i}f(n/b^{i})`,
-    label: 'General form',
-  });
-  
-  // 8. Set base case
-  formulas.push({
-    latex: `n/b^{k} = 1 \\implies k = \\log_{b}(n)`,
-    label: 'Set base case',
-  });
-  
-  // 9. Apply Master Theorem (formulas will be added based on the case)
-  formulas.push({
-    latex: '\\text{Apply Master Theorem}',
-    label: 'Master Theorem',
-  });
-  
-  // Build steps (Master Theorem is applied inside buildSubstitutionSteps)
-  const leafTerms = collectSubstitutionTerms(f, fComplexity);
-  const identity = identifySummation(leafTerms);
-  const steps = buildSubstitutionSteps(parsed, f, identity, 'divide');
-  
-  // Extract final complexity from steps
-  const finalStep = steps.find(s => s.type === 'final');
-  const finalComplexity = finalStep ? finalStep.complexity : 'n_log_n';
-  
-  // Add final complexity formula
-  formulas.push({
-    latex: `= ${displayComplexity(finalComplexity)}`,
-    label: 'Final complexity',
-  });
-  
-  return { formulas, steps, finalComplexity };
-}
+  add(`T(n) = T(n - ${b}) + ${fLatex}`, 'Given');
+  add(`T(n-${b}) = T(n-${2 * b}) + ${fAt(1, true)}`, `Step 1: replace n with n−${b}`);
+  add(`T(n) = T(n-${2 * b}) + ${fAt(1, true)} + ${fAt(0, true)}`, 'Substitute that back');
+  add(`T(n-${2 * b}) = T(n-${3 * b}) + ${fAt(2, true)}`, `Step 2: replace n with n−${2 * b}`);
+  add(`T(n) = T(n-${3 * b}) + ${fAt(2, true)} + ${fAt(1, true)} + ${fAt(0, true)}`, 'Substitute that back');
+  add(`T(n) = T(n-${4 * b}) + ${fAt(3, true)} + ${fAt(2, true)} + ${fAt(1, true)} + ${fAt(0, true)}`, 'Step 3, same move again');
+  add(`T(n) = T(n-k${b === 1 ? '' : `\\cdot ${b}`}) + \\sum_{i=0}^{k-1} f(n - i${b === 1 ? '' : `\\cdot ${b}`})`, 'Pattern after k steps');
+  add(`n - k${b === 1 ? '' : `\\cdot ${b}`} = 0 \\implies k = ${b === 1 ? 'n' : `\\frac{n}{${b}}`}`, 'Stop at the base case');
+  add(`T(n) = T(0) + \\sum_{i=0}^{${b === 1 ? 'n-1' : `\\frac{n}{${b}}-1`}} f(n - i${b === 1 ? '' : `\\cdot ${b}`})`, 'Put k back');
+  add(`= T(0) + ${fAt(0, true)} + ${fAt(1, true)} + \\cdots + ${renderF(fTerms, arg.literal(String(b)), { latex: true })}`, 'Written out');
+  add(`= ${series.closedLatex}`, `Known sum: ${series.name}`);
+  add(`= \\Theta\\left(${formatGrowthLatex(series.growth)}\\right)`, 'Final complexity');
 
-/**
- * Collect terms for substitution pattern recognition
- */
-function collectSubstitutionTerms(f, fComplexity) {
-  const terms = [];
-  const termShape = fToTermShape(f);
-  
-  for (let i = 0; i < 5; i++) {
-    terms.push({ ...termShape, arg: i === 0 ? 'n' : `n-${i}` });
-  }
-  
-  return terms;
-}
-
-/**
- * Build terminal steps for substitution method
- */
-function buildSubstitutionSteps(parsed, f, identity, type) {
   const steps = [];
-  const { b } = parsed;
-  
-  steps.push({ text: `Parsed: ${parsed.original}`, type: 'info' });
-  steps.push({ text: 'Method: Substitution (back-substitution)', type: 'info' });
-  steps.push({ text: '', type: 'divider' });
-  
-  if (type === 'subtract') {
-    steps.push({ text: `Substituting n → n−${b}:`, type: 'loop' });
-    steps.push({ text: `  T(n−${b}) = T(n−${b * 2}) + ${f.replace(/n/g, `n−${b}`)}`, type: 'combine_nested' });
-    steps.push({ text: 'Back-substituting into T(n):', type: 'loop' });
-    steps.push({ text: `  T(n) = T(n−${b * 2}) + ${f.replace(/n/g, `n−${b}`)} + ${f}`, type: 'combine_nested' });
-    steps.push({ text: `Substituting n → n−${b * 2}:`, type: 'loop' });
-    steps.push({ text: `  T(n−${b * 2}) = T(n−${b * 3}) + ${f.replace(/n/g, `n−${b * 2}`)}`, type: 'combine_nested' });
-    steps.push({ text: 'Back-substituting:', type: 'loop' });
-    steps.push({ text: `  T(n) = T(n−${b * 3}) + ${f.replace(/n/g, `n−${b * 2}`)} + ${f.replace(/n/g, `n−${b}`)} + ${f}`, type: 'combine_nested' });
-    steps.push({ text: '', type: 'divider' });
-    steps.push({ text: 'General pattern after k steps:', type: 'special' });
-    steps.push({ text: `  T(n) = T(n−k) + Σ ${f.replace(/n/g, 'n−i+1')} for i=1..k`, type: 'special' });
-    steps.push({ text: `Setting base case: n − k = 0 → k = n`, type: 'special' });
-    steps.push({ text: `  T(n) = T(0) + ${f.replace(/n/g, '1')} + ${f.replace(/n/g, '2')} + ... + ${f}`, type: 'special' });
-    
-    if (identity) {
-      steps.push({ text: '', type: 'divider' });
-      steps.push({ text: `Recognized: ${identity.name.toLowerCase()}`, type: 'special' });
-      
-      if (identity.id === 'log_factorial') {
-        steps.push({ text: 'Recognized: log(n!) by log product rule', type: 'special' });
-        steps.push({ text: "By Stirling: log(n!) = Θ(n log n)", type: 'special' });
-      } else {
-        steps.push({ text: identity.explanation, type: 'special' });
-      }
-    }
-    
-    steps.push({ text: '─────────────────────────────────', type: 'divider' });
-    const finalComp = identity ? identity.complexity : 'n';
-    steps.push({ text: `FINAL COMPLEXITY: ${displayComplexity(finalComp)}`, type: 'final', complexity: finalComp });
-  } else {
-    // divide type
-    steps.push({ text: `Substituting n → n/${b}:`, type: 'loop' });
-    steps.push({ text: `  T(n/${b}) = ${parsed.a}T(n/${b * b}) + ${f.replace(/n/g, `n/${b}`)}`, type: 'combine_nested' });
-    steps.push({ text: 'Back-substituting:', type: 'loop' });
-    steps.push({ text: `  T(n) = ${parsed.a * parsed.a}T(n/${b * b}) + ${parsed.a}${f.replace(/n/g, `n/${b}`)} + ${f}`, type: 'combine_nested' });
-    steps.push({ text: '', type: 'divider' });
-    steps.push({ text: 'General pattern after k steps:', type: 'special' });
-    steps.push({ text: `  T(n) = a^k T(n/b^k) + Σ a^i f(n/b^i) for i=0..k-1`, type: 'special' });
-    steps.push({ text: `Setting base case: n/b^k = 1 → k = log_${b}(n)`, type: 'special' });
-    
-    steps.push({ text: '', type: 'divider' });
-    steps.push({ text: 'Applying Master Theorem:', type: 'info' });
-    
-    // Use Master Theorem instead of summation identity
-    const finalComplexity = applyMasterTheorem(parsed.a, parsed.b, parsed.fComplexity, steps);
-    
-    steps.push({ text: '─────────────────────────────────', type: 'divider' });
-    steps.push({ text: `FINAL COMPLEXITY: ${displayComplexity(finalComplexity)}`, type: 'final', complexity: finalComplexity });
+  info(steps, `Parsed: ${parsed.original}`);
+  info(steps, 'Method: substitution (expand the recurrence into itself)');
+  divider(steps);
+  loop(steps, `Replace n with n−${b}:`);
+  nest(steps, `T(n−${b}) = T(n−${2 * b}) + ${fAt(1)}`);
+  loop(steps, 'Substitute back into T(n):');
+  nest(steps, `T(n) = T(n−${2 * b}) + ${fAt(1)} + ${fAt(0)}`);
+  loop(steps, `Replace n with n−${2 * b}:`);
+  nest(steps, `T(n−${2 * b}) = T(n−${3 * b}) + ${fAt(2)}`);
+  loop(steps, 'Substitute back again:');
+  nest(steps, `T(n) = T(n−${3 * b}) + ${fAt(2)} + ${fAt(1)} + ${fAt(0)}`);
+  divider(steps);
+  special(steps, `Pattern after k steps:`);
+  special(steps, `  T(n) = T(n−k${b === 1 ? '' : `·${b}`}) + Σ f(n−i${b === 1 ? '' : `·${b}`}) for i = 0..k−1`);
+  special(steps, `Base case T(0) is reached when n − k${b === 1 ? '' : `·${b}`} = 0, so k = ${b === 1 ? 'n' : `n/${b}`}`);
+  nest(steps, `T(n) = T(0) + ${fAt(0)} + ${fAt(1)} + … + ${renderF(fTerms, arg.literal(String(b)))}`);
+  divider(steps);
+  special(steps, `Recognised: ${series.name}`);
+  special(steps, series.note);
+  nest(steps, `= ${series.closedText}`);
+  nest(steps, `= ${theta(series.growth)}`);
+  final(steps, series.growth);
+
+  return {
+    formulas,
+    steps,
+    finalComplexity: growthToKey(series.growth),
+    finalLabel: bigO(series.growth),
+    growth: series.growth,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// T(n) = a·T(n/b) + f(n)
+// ---------------------------------------------------------------------------
+
+function divideSubstitution(parsed) {
+  const { a, b, fTerms, fLatex, fDominant: d } = parsed;
+  const analysis = divideLevelSum(a, b, fTerms);
+  const at = k => (k === 0 ? arg.symbol('n') : arg.over('n', num(Math.pow(b, k))));
+  const fAt = (k, latex) => renderF(fTerms, at(k), { latex });
+  const A = k => num(Math.pow(a, k));
+  const B = k => num(Math.pow(b, k));
+  const coef = k => (Math.abs(Math.pow(a, k) - 1) < 1e-9 ? '' : `${A(k)}`);
+
+  const formulas = [];
+  const add = (latex, label) => formulas.push({ latex, label });
+
+  add(`T(n) = ${a === 1 ? '' : A(1)}T\\left(\\frac{n}{${num(b)}}\\right) + ${fLatex}`, 'Given');
+  add(`T\\left(\\frac{n}{${B(1)}}\\right) = ${a === 1 ? '' : A(1)}T\\left(\\frac{n}{${B(2)}}\\right) + ${fAt(1, true)}`, `Step 1: replace n with n/${num(b)}`);
+  add(`T(n) = ${coef(2)}T\\left(\\frac{n}{${B(2)}}\\right) + ${coef(1)}${fAt(1, true)} + ${fAt(0, true)}`, 'Substitute that back');
+  add(`T\\left(\\frac{n}{${B(2)}}\\right) = ${a === 1 ? '' : A(1)}T\\left(\\frac{n}{${B(3)}}\\right) + ${fAt(2, true)}`, `Step 2: replace n with n/${B(2)}`);
+  add(
+    `T(n) = ${coef(3)}T\\left(\\frac{n}{${B(3)}}\\right) + ${coef(2)}${fAt(2, true)} + ${coef(1)}${fAt(1, true)} + ${fAt(0, true)}`,
+    'Substitute that back'
+  );
+  add(`T(n) = a^{k}\\,T\\left(\\frac{n}{b^{k}}\\right) + \\sum_{i=0}^{k-1} a^{i} f\\left(\\frac{n}{b^{i}}\\right)`, 'Pattern after k steps');
+  add(`\\frac{n}{${num(b)}^{k}} = 1 \\implies k = \\log_{${num(b)}} n`, 'Stop at the base case');
+  add(
+    `T(n) = n^{\\log_{${num(b)}} ${num(a)}}\\,T(1) + \\sum_{i=0}^{\\log_{${num(b)}} n - 1} ${num(a)}^{i} f\\left(\\frac{n}{${num(b)}^{i}}\\right)`,
+    'Put k back'
+  );
+  add(
+    `a^{i} f\\!\\left(\\frac{n}{b^{i}}\\right) = ${formatGrowthLatex(polylog(d.exp, d.logExp))} \\cdot r^{i}, \\quad r = \\frac{a}{b^{p}} = ${num(analysis.ratio)}`,
+    'The sum is geometric with ratio r'
+  );
+  add(geometricLatex(analysis, b), analysis.caseNum === 2 ? 'r = 1, so every term is equal' : `r ${analysis.caseNum === 1 ? '<' : '>'} 1`);
+  add(`= \\Theta\\left(${formatGrowthLatex(analysis.growth)}\\right)`, 'Final complexity');
+
+  const steps = [];
+  info(steps, `Parsed: ${parsed.original}`);
+  info(steps, 'Method: substitution (expand the recurrence into itself)');
+  divider(steps);
+  loop(steps, `Replace n with n/${num(b)}:`);
+  nest(steps, `T(n/${B(1)}) = ${a === 1 ? '' : A(1)}T(n/${B(2)}) + ${fAt(1)}`);
+  loop(steps, 'Substitute back into T(n):');
+  nest(steps, `T(n) = ${coef(2)}T(n/${B(2)}) + ${coef(1)}${fAt(1)} + ${fAt(0)}`);
+  loop(steps, `Replace n with n/${B(2)}:`);
+  nest(steps, `T(n/${B(2)}) = ${a === 1 ? '' : A(1)}T(n/${B(3)}) + ${fAt(2)}`);
+  loop(steps, 'Substitute back again:');
+  nest(steps, `T(n) = ${coef(3)}T(n/${B(3)}) + ${coef(2)}${fAt(2)} + ${coef(1)}${fAt(1)} + ${fAt(0)}`);
+  divider(steps);
+  special(steps, 'Pattern after k steps:');
+  special(steps, '  T(n) = a^k T(n/b^k) + Σ a^i f(n/b^i) for i = 0..k−1');
+  special(steps, `Base case T(1) is reached when n/b^k = 1, so k = ${logOf(b)}`);
+  nest(steps, `T(n) = n^${num(analysis.logba)}·T(1) + Σ a^i f(n/b^i)`);
+  divider(steps);
+  special(steps, `Each term is r = a/b^p = ${num(a)}/${num(b)}^${num(d.exp)} = ${num(analysis.ratio)} times the one before it`);
+  special(steps, analysis.reason);
+  special(steps, analysis.seriesNote);
+  divider(steps);
+  nest(steps, `= ${theta(analysis.growth)}`);
+  final(steps, analysis.growth);
+
+  return {
+    formulas,
+    steps,
+    finalComplexity: growthToKey(analysis.growth),
+    finalLabel: bigO(analysis.growth),
+    growth: analysis.growth,
+  };
+}
+
+function geometricLatex(analysis, b) {
+  if (analysis.caseNum === 2) {
+    return `\\sum_{i=0}^{\\log_{${num(b)}} n - 1} 1 = \\log_{${num(b)}} n`;
   }
-  
-  return steps;
+  if (analysis.caseNum === 1) {
+    return `\\sum_{i\\ge 0} r^{i} = \\frac{1}{1-r} = O(1)`;
+  }
+  return `\\sum_{i=0}^{k-1} r^{i} = \\Theta\\!\\left(r^{k}\\right) = \\Theta\\!\\left(n^{\\log_{${num(b)}} a - p}\\right)`;
+}
+
+// ---------------------------------------------------------------------------
+// T(n) = a·T(n − b) + f(n), branching
+// ---------------------------------------------------------------------------
+
+function branchingSubstitution(parsed) {
+  const { recTerms, b, fTerms, fLatex } = parsed;
+  const base = dominantRoot(recTerms);
+  const growth = exponential(base);
+  const totalBranch = recTerms.reduce((s, t) => s + t.coef, 0);
+  const single = recTerms.length === 1;
+  const at = k => arg.minus('n', k * b);
+  const fAt = (k, latex) => renderF(fTerms, k === 0 ? arg.symbol('n') : at(k), { latex });
+
+  const formulas = [];
+  const add = (latex, label) => formulas.push({ latex, label });
+
+  add(
+    `T(n) = ${recTerms.map(t => `${t.coef === 1 ? '' : num(t.coef)}T(n - ${t.shift})`).join(' + ')} + ${fLatex}`,
+    'Given'
+  );
+
+  if (single) {
+    const a = totalBranch;
+    add(`T(n-${b}) = ${num(a)}T(n-${2 * b}) + ${fAt(1, true)}`, `Step 1: replace n with n−${b}`);
+    add(`T(n) = ${num(a * a)}T(n-${2 * b}) + ${num(a)}${fAt(1, true)} + ${fAt(0, true)}`, 'Substitute that back');
+    add(`T(n) = ${num(a ** 3)}T(n-${3 * b}) + ${num(a * a)}${fAt(2, true)} + ${num(a)}${fAt(1, true)} + ${fAt(0, true)}`, 'Step 2, same move again');
+    add(`T(n) = ${num(a)}^{k}\\,T(n-k${b === 1 ? '' : `\\cdot ${b}`}) + \\sum_{i=0}^{k-1} ${num(a)}^{i} f(n - i${b === 1 ? '' : `\\cdot ${b}`})`, 'Pattern after k steps');
+    add(`n - k${b === 1 ? '' : `\\cdot ${b}`} = 0 \\implies k = ${b === 1 ? 'n' : `\\frac{n}{${b}}`}`, 'Stop at the base case');
+    add(`T(n) = ${num(a)}^{${b === 1 ? 'n' : `n/${b}`}}\\,T(0) + \\sum_{i=0}^{k-1} ${num(a)}^{i} f(n - i${b === 1 ? '' : `\\cdot ${b}`})`, 'Put k back');
+    add(`\\sum_{i=0}^{k-1} ${num(a)}^{i} = \\frac{${num(a)}^{k} - 1}{${num(a)} - 1} = \\Theta\\!\\left(${num(a)}^{k}\\right)`, 'Geometric series, last term dominates');
+  } else {
+    const maxShift = Math.max(...recTerms.map(t => t.shift));
+    add(`T(n) = ${recTerms.map(t => `T(n-${t.shift})`).join(' + ')} + ${fLatex}`, 'Two different shifts, so expansion branches');
+    add(`T(n) = ${'T(n-2) + 2T(n-3) + T(n-4)'} + \\ldots`, 'Expanding twice already doubles the terms');
+    add(`T(n) = \\Theta(x^{n}) \\text{ for some base } x`, 'So try an exponential solution');
+    add(
+      `x^{${maxShift}} = ${recTerms.map(t => `${t.coef === 1 ? '' : num(t.coef)}x^{${maxShift - t.shift}}`).join(' + ')}`,
+      'Substituting x^n gives the characteristic equation'
+    );
+    add(`x \\approx ${num(base)}${Math.abs(base - 1.618) < 0.01 ? ' = \\varphi' : ''}`, 'Its dominant root');
+  }
+  add(`= \\Theta\\left(${formatGrowthLatex(growth)}\\right)`, 'Final complexity');
+
+  const steps = [];
+  info(steps, `Parsed: ${parsed.original}`);
+  info(steps, 'Method: substitution (expand the recurrence into itself)');
+  divider(steps);
+
+  if (single) {
+    const a = totalBranch;
+    loop(steps, `Replace n with n−${b}:`);
+    nest(steps, `T(n−${b}) = ${num(a)}T(n−${2 * b}) + ${fAt(1)}`);
+    loop(steps, 'Substitute back into T(n):');
+    nest(steps, `T(n) = ${num(a * a)}T(n−${2 * b}) + ${num(a)}${fAt(1)} + ${fAt(0)}`);
+    loop(steps, 'Substitute back again:');
+    nest(steps, `T(n) = ${num(a ** 3)}T(n−${3 * b}) + ${num(a * a)}${fAt(2)} + ${num(a)}${fAt(1)} + ${fAt(0)}`);
+    divider(steps);
+    special(steps, 'Pattern after k steps:');
+    special(steps, `  T(n) = ${num(a)}^k T(n−k${b === 1 ? '' : `·${b}`}) + Σ ${num(a)}^i f(n−i${b === 1 ? '' : `·${b}`})`);
+    special(steps, `Base case reached when k = ${b === 1 ? 'n' : `n/${b}`}`);
+    nest(steps, `T(n) = ${num(a)}^${b === 1 ? 'n' : `n/${b}`}·T(0) + Σ ${num(a)}^i f(n−i${b === 1 ? '' : `·${b}`})`);
+    divider(steps);
+    special(steps, `The ${num(a)}^k term grows faster than the sum beside it`);
+    special(steps, `Geometric series: 1 + ${num(a)} + ${num(a * a)} + … + ${num(a)}^k = Θ(${num(a)}^k)`);
+  } else {
+    loop(steps, 'Expanding once:');
+    nest(steps, `T(n) = ${recTerms.map(t => `T(n−${t.shift})`).join(' + ')} + ${fAt(0)}`);
+    loop(steps, 'Expanding again doubles the number of terms:');
+    nest(steps, 'T(n) = T(n−2) + 2T(n−3) + T(n−4) + …');
+    divider(steps);
+    special(steps, 'The expansion does not collapse into a single sum, so try T(n) = x^n');
+    const maxShift = Math.max(...recTerms.map(t => t.shift));
+    special(steps, `x^${maxShift} = ${recTerms.map(t => `${t.coef === 1 ? '' : num(t.coef)}x^${maxShift - t.shift}`).join(' + ')}`);
+    special(steps, `Dominant root x ≈ ${num(base)}${Math.abs(base - 1.618) < 0.01 ? ' (the golden ratio φ)' : ''}`);
+  }
+
+  divider(steps);
+  nest(steps, `= ${theta(growth)}`);
+  final(steps, growth);
+
+  return {
+    formulas,
+    steps,
+    finalComplexity: growthToKey(growth),
+    finalLabel: bigO(growth),
+    growth,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// T(n) = T(√n) + f(n)
+// ---------------------------------------------------------------------------
+
+function sqrtSubstitution(parsed) {
+  const { fTerms, fDominant: d, fLatex } = parsed;
+  const growth = d.exp > 1e-9 ? polylog(d.exp, d.logExp) : d.logExp < 1e-9 ? loglog() : polylog(0, d.logExp);
+  const fAt = (k, latex) =>
+    renderF(fTerms, k === 0 ? arg.symbol('n') : arg.literal(`n^(1/${Math.pow(2, k)})`, `n^{1/${Math.pow(2, k)}}`), { latex });
+
+  const formulas = [];
+  const add = (latex, label) => formulas.push({ latex, label });
+
+  add(`T(n) = T(\\sqrt{n}) + ${fLatex}`, 'Given');
+  add(`T(\\sqrt{n}) = T(n^{1/4}) + ${fAt(1, true)}`, 'Step 1: replace n with √n');
+  add(`T(n) = T(n^{1/4}) + ${fAt(1, true)} + ${fAt(0, true)}`, 'Substitute that back');
+  add(`T(n) = T\\left(n^{1/2^{k}}\\right) + \\sum_{i=0}^{k-1} f\\left(n^{1/2^{i}}\\right)`, 'Pattern after k steps');
+  add(`\\text{let } n = 2^{m} \\implies S(m) = S\\!\\left(\\frac{m}{2}\\right) + f(2^{m})`, 'Substitute n = 2^m to turn the root into a halving');
+  add(`n^{1/2^{k}} = 2 \\implies k = \\log\\log n`, 'Stop at the base case');
+  add(`= \\Theta\\left(${formatGrowthLatex(growth)}\\right)`, 'Final complexity');
+
+  const steps = [];
+  info(steps, `Parsed: ${parsed.original}`);
+  info(steps, 'Method: substitution (expand the recurrence into itself)');
+  divider(steps);
+  loop(steps, 'Replace n with √n:');
+  nest(steps, `T(√n) = T(n^(1/4)) + ${fAt(1)}`);
+  loop(steps, 'Substitute back into T(n):');
+  nest(steps, `T(n) = T(n^(1/4)) + ${fAt(1)} + ${fAt(0)}`);
+  divider(steps);
+  special(steps, 'Pattern after k steps:');
+  special(steps, '  T(n) = T(n^(1/2^k)) + Σ f(n^(1/2^i))');
+  special(steps, 'Let n = 2^m, so S(m) = S(m/2) + f(2^m), a halving recurrence in m');
+  special(steps, 'Base case at n^(1/2^k) = 2, so k = log log n');
+  divider(steps);
+  nest(steps, `= ${theta(growth)}`);
+  final(steps, growth);
+
+  return {
+    formulas,
+    steps,
+    finalComplexity: growthToKey(growth),
+    finalLabel: bigO(growth),
+    growth,
+  };
+}
+
+// ---------------------------------------------------------------------------
+
+const info = (steps, text) => steps.push({ text, type: 'info' });
+const loop = (steps, text) => steps.push({ text, type: 'loop' });
+const nest = (steps, text) => steps.push({ text: `  ${text}`, type: 'combine_nested' });
+const special = (steps, text) => steps.push({ text, type: 'special' });
+const divider = steps => steps.push({ text: '', type: 'divider' });
+
+function final(steps, growth) {
+  steps.push({ text: '─────────────────────────────────', type: 'divider' });
+  steps.push({
+    text: `FINAL COMPLEXITY: ${bigO(growth)}`,
+    type: 'final',
+    complexity: growthToKey(growth),
+    label: bigO(growth),
+  });
 }

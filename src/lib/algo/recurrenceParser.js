@@ -1,231 +1,225 @@
 /**
  * Recurrence Formula Parser
- * Parses strings like "T(n) = T(n-1) + log(n)" into structured objects
+ *
+ * Turns "T(n) = 2T(n/2) + n log n" into a structured recurrence:
+ * the recursive terms (how many subproblems, and how the size shrinks) plus
+ * f(n) as real algebra from recurrenceMath, never as a label string.
+ *
+ * The parser refuses input it cannot analyse rather than guessing, because a
+ * confidently wrong complexity is worse than a clear "not supported".
  */
 
+import { parseF, fGrowth, renderF, arg, dominantTerm } from './recurrenceMath.js';
+
 /**
- * Parse a recurrence formula string into a structured object
- * @param {string} formulaStr - The recurrence formula (e.g., "T(n) = T(n-1) + log(n)")
- * @returns {Object} Parsed recurrence object with type, coefficients, and complexity
+ * @param {string} formulaStr e.g. "T(n) = T(n-1) + log(n)"
+ * @returns {Object} recurrence descriptor, or { error } if unsupported
  */
 export function parseRecurrence(formulaStr) {
-  try {
-    // 1. Trim and normalize spaces
-    let formula = formulaStr.trim().replace(/\s+/g, ' ');
-    
-    // 2. Split on '='
-    const parts = formula.split('=');
-    if (parts.length !== 2) {
-      return { error: 'Invalid format: expected T(n) = ...' };
-    }
-    
-    const rightSide = parts[1].trim();
-    
-    // 3. Find all T(...) terms with optional coefficient
-    const tTermRegex = /(\d*)T\(([^)]+)\)/g;
-    const tTerms = [];
-    let match;
-    let remainingFormula = rightSide;
-    
-    while ((match = tTermRegex.exec(rightSide)) !== null) {
-      const coefficient = match[1] ? parseInt(match[1]) : 1;
-      const argument = match[2].trim();
-      tTerms.push({ coefficient, argument, fullMatch: match[0] });
-    }
-    
-    if (tTerms.length === 0) {
-      return { error: 'No recursive terms found' };
-    }
-    
-    // 5. Extract f(n) by removing all T terms
-    tTerms.forEach(term => {
-      remainingFormula = remainingFormula.replace(term.fullMatch, '');
-    });
-    
-    // Clean up remaining formula: remove leading/trailing + and spaces
-    let f = remainingFormula.replace(/^\+\s*/, '').replace(/\+\s*$/, '').trim();
-    if (!f) f = '1'; // If nothing remains, f(n) = 1
-    
-    // 6. Classify type based on first T term argument
-    const firstArg = tTerms[0].argument;
-    const a = tTerms[0].coefficient;
-    let type, b, subproblem;
-    
-    if (firstArg.includes('/')) {
-      // Divide type: T(n/2), T(n/3), etc.
-      type = 'divide';
-      subproblem = firstArg;
-      
-      // Extract divisor
-      const divMatch = firstArg.match(/n\s*\/\s*(\d+)/);
-      b = divMatch ? parseInt(divMatch[1]) : 2;
-    } else if (firstArg.includes('-')) {
-      // Subtract type: T(n-1), T(n-2), etc.
-      type = 'subtract';
-      subproblem = firstArg;
-      
-      // Extract subtractor
-      const subMatch = firstArg.match(/n\s*-\s*(\d+)/);
-      b = subMatch ? parseInt(subMatch[1]) : 1;
-    } else if (tTerms.length > 1 && tTerms[0].argument !== tTerms[1].argument) {
-      // Multiple different T arguments (e.g., Fibonacci)
-      type = 'fibonacci';
-      subproblem = tTerms.map(t => t.argument).join(', ');
-      b = 1;
-    } else {
-      // Default to subtract type
-      type = 'subtract';
-      subproblem = firstArg;
-      b = 1;
-    }
-    
-    // 7. Classify f(n) complexity
-    const fComplexity = classifyFComplexity(f);
-    
+  const original = String(formulaStr ?? '').trim().replace(/\s+/g, ' ');
+  if (!original) return { error: 'Enter a recurrence such as T(n) = 2T(n/2) + n' };
+
+  const eq = original.split('=');
+  if (eq.length !== 2) {
+    return { error: 'Expected the form T(n) = ... with a single "=" sign' };
+  }
+
+  const lhs = eq[0].replace(/\s+/g, '').toLowerCase();
+  if (!/^[a-z]\(n\)$/.test(lhs)) {
+    return { error: `Left side should be T(n), got "${eq[0].trim()}"` };
+  }
+  const fnName = lhs[0].toUpperCase();
+
+  const rhs = eq[1].trim();
+
+  // "T(n) = 2T(n/2) +" is unfinished. Dropping the dangling operator would
+  // silently answer a different question than the one being typed. This is
+  // checked on the raw right side, because removing the T(...) calls later
+  // legitimately leaves operators behind, as in "n + 2T(n/2)".
+  if (/[+\-*/]$/.test(rhs)) {
+    return { error: `The right side ends with "${rhs.slice(-1)}", so something is missing after it` };
+  }
+
+  // Pull out every recursive call, e.g. "3T(n/4)" or "T(n-2)". The lookbehind
+  // keeps the "t(" inside "sqrt(n)" from being read as a recursive call.
+  const callRegex = new RegExp(
+    `(\\d*(?:\\.\\d+)?)\\s*\\*?\\s*(?<![a-zA-Z])${fnName}\\s*\\(([^()]*(?:\\([^()]*\\))?[^()]*)\\)`,
+    'gi'
+  );
+  const calls = [];
+  let rest = rhs;
+  let m;
+  while ((m = callRegex.exec(rhs)) !== null) {
+    calls.push({ coef: m[1] ? parseFloat(m[1]) : 1, argText: m[2].trim(), raw: m[0] });
+  }
+
+  if (calls.length === 0) {
+    return { error: `No recursive ${fnName}(...) term on the right side` };
+  }
+
+  for (const c of calls) rest = rest.replace(c.raw, ' ');
+
+  // Whatever is left is f(n). Removing the calls leaves orphaned "+" signs
+  // behind, so tidy those before handing the string to the algebra parser.
+  const leftover = cleanLeftover(rest);
+  const noWorkTerm = leftover === '';
+  const fSource = noWorkTerm ? '1' : leftover;
+  const parsedF = parseF(fSource);
+  if (parsedF.error) {
+    return { error: `Could not read the non-recursive part "${fSource.trim()}": ${parsedF.error}` };
+  }
+  const fTerms = parsedF.terms;
+
+  // Classify each recursive call's argument.
+  const recTerms = [];
+  for (const c of calls) {
+    const shape = classifyArgument(c.argText);
+    if (shape.error) return { error: shape.error };
+    recTerms.push({ coef: c.coef, ...shape });
+  }
+
+  const kinds = new Set(recTerms.map(t => t.kind));
+  if (kinds.size > 1) {
     return {
-      type,
-      a,
-      subproblem,
-      b,
-      f,
-      fComplexity,
-      original: formulaStr.trim(),
+      error: 'Mixing shrink styles in one recurrence (for example T(n/2) + T(n−1)) is not supported',
     };
-  } catch (err) {
-    return { error: `Parse error: ${err.message}` };
   }
+  const kind = recTerms[0].kind;
+
+  const base = {
+    original,
+    fnName,
+    fSource,
+    fTerms,
+    fText: renderF(fTerms, arg.symbol('n')),
+    fLatex: renderF(fTerms, arg.symbol('n'), { latex: true }),
+    fGrowth: fGrowth(fTerms),
+    fDominant: dominantTerm(fTerms),
+    recTerms,
+    noWorkTerm,
+  };
+
+  if (kind === 'divide') {
+    const divisors = new Set(recTerms.map(t => t.b));
+    if (divisors.size > 1) {
+      return {
+        error: `Unequal subproblem sizes (${[...divisors].map(d => `n/${d}`).join(' and ')}) need the Akra-Bazzi method, which is not supported yet`,
+      };
+    }
+    const b = recTerms[0].b;
+    const a = recTerms.reduce((s, t) => s + t.coef, 0);
+    if (b <= 1) return { error: 'The divisor must be greater than 1, otherwise the recursion never shrinks' };
+    return { ...base, type: 'divide', a, b };
+  }
+
+  if (kind === 'subtract') {
+    const a = recTerms.reduce((s, t) => s + t.coef, 0);
+    const b = Math.min(...recTerms.map(t => t.shift));
+    // One subproblem per level is a chain: the total is a plain sum of f values.
+    // More than one is a linear recurrence and grows exponentially.
+    const type = a > 1 ? 'linear' : 'subtract';
+    return { ...base, type, a, b, shift: recTerms[0].shift };
+  }
+
+  if (kind === 'sqrt') {
+    if (recTerms.length > 1 || recTerms[0].coef > 1) {
+      return { error: 'Only a single T(√n) subproblem is supported' };
+    }
+    return { ...base, type: 'sqrt', a: 1, b: 2, root: recTerms[0].root };
+  }
+
+  return { error: 'Unsupported recurrence shape' };
+}
+
+/** Collapse the operator debris left where the T(...) calls used to be. */
+function cleanLeftover(rest) {
+  let s = rest.replace(/\s+/g, ' ').trim();
+  let prev = null;
+  while (prev !== s) {
+    prev = s;
+    s = s
+      .replace(/([+-])\s*([+-])/g, (_, a, b) => (a === b ? '+' : '-'))
+      .replace(/^\+\s*/, '')
+      .replace(/[+\-*]\s*$/, '')
+      .trim();
+  }
+  return s;
 }
 
 /**
- * Classify the complexity of f(n)
- * @param {string} fStr - The f(n) string
- * @returns {string} Complexity key
+ * Work out how one T(...) argument shrinks the problem.
+ * Lower-order offsets are ignored on purpose: T(n/2 + 7) is Θ-identical to
+ * T(n/2), and floors and ceilings do not change the asymptotics either.
  */
-function classifyFComplexity(fStr) {
-  const normalized = fStr.toLowerCase().replace(/\s+/g, '').replace(/^[+\-]/, '');
-  
-  // Check for specific patterns
-  if (/^[0-9]+$/.test(normalized) || normalized === '1') {
-    return '1';
+function classifyArgument(argText) {
+  const s = argText.replace(/[⌊⌋⌈⌉]/g, '').replace(/\s+/g, '').toLowerCase();
+  if (!s) return { error: 'Empty recursive call argument' };
+
+  // Square-root shrink: sqrt(n), n^(1/2), n^0.5
+  if (/^sqrt\(n\)$/.test(s) || /^n\^\(1\/2\)$/.test(s) || /^n\^0?\.5$/.test(s)) {
+    return { kind: 'sqrt', root: 2 };
   }
-  
-  if (normalized.includes('log') && normalized.includes('n') && normalized.includes('*')) {
-    return 'n_log_n';
+  if (/^n\^\(1\/(\d+)\)$/.test(s)) {
+    return { kind: 'sqrt', root: parseInt(/^n\^\(1\/(\d+)\)$/.exec(s)[1], 10) };
   }
-  
-  if (normalized.includes('log')) {
-    return 'log_n';
+
+  // Divide shrink: n/b, with an optional additive offset we can ignore.
+  const div = /^n\/(\d+(?:\.\d+)?)(?:[+-]\d+)?$/.exec(s);
+  if (div) {
+    const b = parseFloat(div[1]);
+    if (b <= 1) return { error: `T(n/${div[1]}) does not shrink the problem` };
+    return { kind: 'divide', b, shift: 0 };
   }
-  
-  if (normalized.includes('n^3') || normalized.includes('n*n*n')) {
-    return 'n3';
+
+  // Fractional shrink written as a coefficient: 2n/3, 0.5n
+  const frac = /^(\d+(?:\.\d+)?)n\/(\d+(?:\.\d+)?)$/.exec(s) || /^(0?\.\d+)n$/.exec(s);
+  if (frac) {
+    const ratio = frac[2] ? parseFloat(frac[1]) / parseFloat(frac[2]) : parseFloat(frac[1]);
+    if (ratio >= 1) return { error: `T(${argText.trim()}) does not shrink the problem` };
+    return { kind: 'divide', b: 1 / ratio, shift: 0 };
   }
-  
-  if (normalized.includes('n^2') || normalized.includes('n*n')) {
-    return 'n2';
+
+  // Subtract shrink: n-c
+  const sub = /^n-(\d+)$/.exec(s);
+  if (sub) {
+    const shift = parseInt(sub[1], 10);
+    if (shift < 1) return { error: 'T(n−0) does not shrink the problem' };
+    return { kind: 'subtract', shift, b: shift };
   }
-  
-  if (normalized.includes('sqrt') || normalized.includes('n^0.5')) {
-    return 'sqrt_n';
-  }
-  
-  if (normalized === 'n') {
-    return 'n';
-  }
-  
-  // Default to treating as constant if unrecognized
-  return '1';
+
+  if (s === 'n') return { error: `${'T(n)'} cannot call itself on the same size n` };
+  if (/^n\+/.test(s)) return { error: `T(${argText.trim()}) grows the problem, so the recursion never ends` };
+
+  return { error: `Could not read the recursive call argument "${argText.trim()}"` };
 }
 
 /**
- * Convert plain text formula to LaTeX string
- * @param {string} text - Plain text formula
- * @returns {string} LaTeX formatted string
+ * Convert a plain-text formula to LaTeX for the input preview.
+ * @param {string} text
+ * @returns {string}
  */
 export function textToLatex(text) {
-  let latex = text;
-  
-  // Apply conversions in order
-  
-  // 1. log( → \log(
-  latex = latex.replace(/log\(/g, '\\log(');
-  
-  // 2. sqrt( → \sqrt{ and matching ) → }
-  latex = latex.replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
-  
-  // 3. Standalone fractions: digits/digits → \frac{num}{denom}
-  // But NOT inside T() arguments
-  // Match fractions that are not inside T(...)
-  latex = latex.replace(/(\d+)\/(\d+)(?![^T]*\))/g, '\\frac{$1}{$2}');
-  
-  // 4. ^ followed by single char or {group} → ^{...}
-  // If already has braces, leave it; otherwise wrap single char
-  latex = latex.replace(/\^([0-9a-zA-Z])/g, '^{$1}');
-  latex = latex.replace(/\^\(([^)]+)\)/g, '^{$1}');
-  
-  // 5. * → \times (with spaces)
-  latex = latex.replace(/\*/g, ' \\times ');
-  
-  // 6. ... → \cdots
-  latex = latex.replace(/\.\.\./g, '\\cdots');
-  
-  // 7. >= → \geq
-  latex = latex.replace(/>=/g, '\\geq');
-  
-  // 8. <= → \leq
-  latex = latex.replace(/<=/g, '\\leq');
-  
-  // Clean up extra spaces
-  latex = latex.replace(/\s+/g, ' ').trim();
-  
-  return latex;
-}
+  let latex = String(text ?? '');
 
-/**
- * Convert f(n) string to term shape object
- * @param {string} fStr - The f(n) string (e.g., "n", "n^2", "log(n)", "1")
- * @returns {Object} Term object with fn, exponent, value properties
- */
-export function fToTermShape(fStr) {
-  const normalized = fStr.toLowerCase().replace(/\s+/g, '');
-  
-  // Check for constant
-  if (/^[0-9]+$/.test(normalized)) {
-    return { fn: 'const', value: parseInt(normalized) };
-  }
-  
-  if (normalized === '1') {
-    return { fn: 'const', value: 1 };
-  }
-  
-  // Check for logarithmic
-  if (normalized.includes('log')) {
-    return { fn: 'log', arg: 'n' };
-  }
-  
-  // Check for reciprocal (1/n)
-  if (normalized.match(/^1\/n$/)) {
-    return { fn: 'reciprocal', arg: 'n' };
-  }
-  
-  // Check for power
-  if (normalized.includes('n^3')) {
-    return { fn: 'power', exponent: 3, arg: 'n' };
-  }
-  
-  if (normalized.includes('n^2') || normalized.includes('n*n')) {
-    return { fn: 'power', exponent: 2, arg: 'n' };
-  }
-  
-  if (normalized === 'n') {
-    return { fn: 'power', exponent: 1, arg: 'n' };
-  }
-  
-  // Check for sqrt
-  if (normalized.includes('sqrt')) {
-    return { fn: 'power', exponent: 0.5, arg: 'n' };
-  }
-  
-  // Default to constant
-  return { fn: 'const', value: 1 };
+  // sqrt(x) -> \sqrt{x}
+  latex = latex.replace(/sqrt\s*\(([^()]*)\)/gi, '\\sqrt{$1}');
+
+  // log(x), log_2(x), log^2(x) -> \log ...
+  latex = latex.replace(/log_(\d+)/gi, '\\log_{$1}');
+  latex = latex.replace(/log\^(\d+)/gi, '\\log^{$1}');
+  latex = latex.replace(/(?<!\\)\blog\b/gi, '\\log');
+
+  // n/2 and 3/4 -> \frac{..}{..} (single operands only, so T(n)/f(n) survive)
+  latex = latex.replace(/([a-zA-Z0-9]+)\s*\/\s*([a-zA-Z0-9]+)/g, '\\frac{$1}{$2}');
+
+  // Exponents
+  latex = latex.replace(/\^\(([^()]+)\)/g, '^{$1}');
+  latex = latex.replace(/\^([0-9a-zA-Z.]+)/g, '^{$1}');
+
+  latex = latex.replace(/\*/g, ' \\cdot ');
+  latex = latex.replace(/\.\.\./g, '\\cdots');
+  latex = latex.replace(/>=/g, '\\geq').replace(/<=/g, '\\leq');
+  latex = latex.replace(/−/g, '-');
+
+  return latex.replace(/\s+/g, ' ').trim();
 }
