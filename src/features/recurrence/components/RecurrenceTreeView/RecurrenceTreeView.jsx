@@ -98,9 +98,9 @@ function RecurrenceTreeView({ tree, formula }) {
     // Colors by type
     let fill, stroke, textFill
     if (node.type === 'recursive') {
-      fill = 'rgba(139,92,246,0.15)'
-      stroke = '#8B5CF6'
-      textFill = '#c4b5fd'
+      fill = 'rgba(255, 163, 26,0.15)'
+      stroke = '#ffa31a'
+      textFill = '#ffd08a'
     } else if (node.type === 'leaf') {
       fill = 'rgba(34,197,94,0.15)'
       stroke = '#22c55e'

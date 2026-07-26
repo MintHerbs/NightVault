@@ -63,7 +63,7 @@
 }
 
 .formulaRow :global(.katex .mbin) {
-  color: #a78bfa;
+  color: #ffb84d;
 }
 
 .formulaRow :global(.katex .mrel) {
@@ -105,12 +105,12 @@
 }
 
 .container::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.3);
+  background: rgba(255, 163, 26, 0.3);
   border-radius: 4px;
 }
 
 .container::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.5);
+  background: rgba(255, 163, 26, 0.5);
 }
 
 /* Responsive */

@@ -78,14 +78,14 @@
 }
 
 .modeLabel:hover .modeText {
-  color: #8B5CF6;
+  color: #ffa31a;
 }
 
 .modeRadio {
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: #8B5CF6;
+  accent-color: #ffa31a;
 }
 
 .modeText {

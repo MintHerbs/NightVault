@@ -8,7 +8,7 @@
 :root {
   /* Grok-inspired landing page colors */
   --color-bg: #000000;
-  --color-accent: #8B5CF6;
+  --color-accent: #ffa31a;
   --color-orange: #EA6C0A;
   --color-star: #ffffff;
   --color-muted: #555555;
@@ -17,18 +17,18 @@
 
   /* Chat colors */
   --color-chat-own: #1A1A1A;
-  --color-chat-other: #1a1a2e;
+  --color-chat-other: #21180d;
 
   /* Tree page colors */
   --bg-dark: #0d0d0d;
-  --bg-card: #1a1a2e;
-  --bg-panel: #111122;
+  --bg-card: #21180d;
+  --bg-panel: #171109;
   --bg-controls: #111;
-  --border-subtle: #2a2a4a;
+  --border-subtle: #3a2b19;
   --border-highlight: #4f8ef7;
   --text-primary: #ffffff;
   --text-muted: #999;
-  --pointer-slot: #252540;
+  --pointer-slot: #302414;
   --accent-blue: #4f8ef7;
   --accent-orange: #ff9f43;
   --accent-green: #26de81;
@@ -53,25 +53,25 @@
   --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   --font-mono: 'Courier New', Courier, monospace;
 
-  /* Material You (M3) — dark scheme, seeded from --color-accent (#8B5CF6)
-     rather than Material's baseline purple, so tonal roles stay on-brand.
+  /* Material You (M3) — dark scheme, seeded from --color-accent (#ffa31a),
+     with warm neutral surfaces so tonal roles stay on-brand.
      Consumed by the landing page tool cards; see docs/design/colors.md. */
 
   /* Surface container tones — M3 elevation is tonal, not shadow-based */
-  --md-surface-container-low:  #131117;
-  --md-surface-container:      #1a171f;
-  --md-surface-container-high: #241f2b;
+  --md-surface-container-low:  #17140f;
+  --md-surface-container:      #1f1a13;
+  --md-surface-container-high: #2b2419;
 
   /* Primary + tonal container */
-  --md-primary:              #8B5CF6;  /* same value as --color-accent */
-  --md-on-primary:           #ffffff;
-  --md-primary-container:    #2e2148;
-  --md-on-primary-container: #d9c8ff;
+  --md-primary:              #ffa31a;  /* same value as --color-accent */
+  --md-on-primary:           #241600;
+  --md-primary-container:    #4a2a00;
+  --md-on-primary-container: #ffd9a3;
 
   /* Text on surfaces */
-  --md-on-surface:         #eae5ef;
-  --md-on-surface-variant: #c9c2d2;
-  --md-outline-variant:    #2c2833;
+  --md-on-surface:         #f2eadf;
+  --md-on-surface-variant: #d2c6b5;
+  --md-outline-variant:    #3a3023;
 
   /* State layer opacities — M3 spec values */
   --md-state-hover:   0.08;

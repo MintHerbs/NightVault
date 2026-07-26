@@ -1,7 +1,7 @@
 .card {
   width: calc(100% - 32px);
   background: #0A0A0C;
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  border: 1px solid rgba(255, 163, 26, 0.25);
   border-radius: 16px;
   padding: 16px 18px;
   margin: 0 16px 12px;
@@ -9,16 +9,16 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   box-shadow: 
     0 1px 3px rgba(0, 0, 0, 0.4),
-    inset 0 0 60px rgba(139, 92, 246, 0.02);
+    inset 0 0 60px rgba(255, 163, 26, 0.02);
   will-change: transform;
 }
 
 .card:hover {
-  border-color: rgba(139, 92, 246, 0.45);
+  border-color: rgba(255, 163, 26, 0.45);
   box-shadow: 
     0 4px 16px rgba(0, 0, 0, 0.6), 
-    0 0 0 1px rgba(139, 92, 246, 0.15),
-    inset 0 0 60px rgba(139, 92, 246, 0.04);
+    0 0 0 1px rgba(255, 163, 26, 0.15),
+    inset 0 0 60px rgba(255, 163, 26, 0.04);
   transform: translateY(-2px);
 }
 
@@ -49,7 +49,7 @@
   font-weight: 600;
   color: #C9A0FF;
   letter-spacing: 0.01em;
-  text-shadow: 0 0 8px rgba(201, 160, 255, 0.4);
+  text-shadow: 0 0 8px rgba(255, 208, 138, 0.4);
 }
 
 .time {
@@ -70,8 +70,8 @@
 }
 
 .menuBtn:hover {
-  color: #8B5CF6;
-  text-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
+  color: #ffa31a;
+  text-shadow: 0 0 10px rgba(255, 163, 26, 0.6);
 }
 
 .menu {
@@ -79,7 +79,7 @@
   top: 40px;
   right: 10px;
   background: rgba(10, 10, 12, 0.98);
-  border: 1px solid rgba(139, 92, 246, 0.35);
+  border: 1px solid rgba(255, 163, 26, 0.35);
   border-radius: 12px;
   padding: 6px;
   display: flex;
@@ -89,7 +89,7 @@
   min-width: 140px;
   box-shadow: 
     0 4px 12px rgba(0, 0, 0, 0.6),
-    0 0 20px rgba(139, 92, 246, 0.2);
+    0 0 20px rgba(255, 163, 26, 0.2);
 }
 
 .menuItem {
@@ -105,8 +105,8 @@
 }
 
 .menuItem:hover {
-  background: rgba(139, 92, 246, 0.15);
-  text-shadow: 0 0 8px rgba(201, 160, 255, 0.5);
+  background: rgba(255, 163, 26, 0.15);
+  text-shadow: 0 0 8px rgba(255, 208, 138, 0.5);
 }
 
 .menuDanger {
@@ -138,17 +138,17 @@
 .readMore {
   margin: 6px 0 12px 0;
   font-size: 0.8rem;
-  color: #8B5CF6;
+  color: #ffa31a;
   display: inline-flex;
   cursor: pointer;
   font-weight: 500;
   transition: color 0.15s ease, text-shadow 0.15s ease;
-  text-shadow: 0 0 6px rgba(139, 92, 246, 0.3);
+  text-shadow: 0 0 6px rgba(255, 163, 26, 0.3);
 }
 
 .readMore:hover {
   color: #C9A0FF;
-  text-shadow: 0 0 10px rgba(201, 160, 255, 0.6);
+  text-shadow: 0 0 10px rgba(255, 208, 138, 0.6);
 }
 
 .edited {
@@ -169,8 +169,8 @@
   max-height: 400px;
   object-fit: cover;
   border-radius: 12px;
-  border: 1px solid rgba(139, 92, 246, 0.25);
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(255, 163, 26, 0.25);
+  box-shadow: 0 0 20px rgba(255, 163, 26, 0.1);
 }
 
 .poll {
@@ -184,8 +184,8 @@
   width: 100%;
   text-align: left;
   background: transparent;
-  border: 1px solid rgba(139, 92, 246, 0.35);
-  color: #8B5CF6;
+  border: 1px solid rgba(255, 163, 26, 0.35);
+  color: #ffa31a;
   padding: 12px 16px;
   border-radius: 24px;
   font-size: 0.9rem;
@@ -194,14 +194,14 @@
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  text-shadow: 0 0 6px rgba(139, 92, 246, 0.3);
+  text-shadow: 0 0 6px rgba(255, 163, 26, 0.3);
 }
 
 .pollOptionBtn:hover {
-  background: rgba(139, 92, 246, 0.12);
-  border-color: rgba(139, 92, 246, 0.6);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-  text-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
+  background: rgba(255, 163, 26, 0.12);
+  border-color: rgba(255, 163, 26, 0.6);
+  box-shadow: 0 4px 12px rgba(255, 163, 26, 0.3);
+  text-shadow: 0 0 10px rgba(255, 163, 26, 0.6);
 }
 
 .pollOptionBtn:active {
@@ -225,25 +225,25 @@
   border-radius: 6px;
   background: rgba(10, 10, 12, 0.6);
   overflow: hidden;
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  border: 1px solid rgba(255, 163, 26, 0.25);
   position: relative;
 }
 
 .barFill {
   height: 100%;
-  background: linear-gradient(90deg, rgba(139, 92, 246, 0.3), rgba(201, 160, 255, 0.3));
+  background: linear-gradient(90deg, rgba(255, 163, 26, 0.3), rgba(255, 208, 138, 0.3));
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   position: absolute;
   top: 0;
   left: 0;
-  box-shadow: inset 0 0 20px rgba(139, 92, 246, 0.2);
+  box-shadow: inset 0 0 20px rgba(255, 163, 26, 0.2);
 }
 
 .barFillSelected {
-  background: linear-gradient(90deg, rgba(139, 92, 246, 0.5), rgba(201, 160, 255, 0.5));
+  background: linear-gradient(90deg, rgba(255, 163, 26, 0.5), rgba(255, 208, 138, 0.5));
   box-shadow: 
-    inset 0 0 20px rgba(139, 92, 246, 0.4),
-    0 0 15px rgba(139, 92, 246, 0.3);
+    inset 0 0 20px rgba(255, 163, 26, 0.4),
+    0 0 15px rgba(255, 163, 26, 0.3);
 }
 
 .barContent {
@@ -289,7 +289,7 @@
 .editTextarea {
   width: 100%;
   background: rgba(10, 10, 12, 0.6);
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  border: 1px solid rgba(255, 163, 26, 0.25);
   color: rgba(255, 255, 255, 0.9);
   border-radius: 12px;
   padding: 10px 12px;
@@ -301,8 +301,8 @@
 }
 
 .editTextarea:focus {
-  border-color: rgba(139, 92, 246, 0.45);
-  box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+  border-color: rgba(255, 163, 26, 0.45);
+  box-shadow: 0 0 15px rgba(255, 163, 26, 0.2);
 }
 
 .editActions {
@@ -314,35 +314,35 @@
 
 .btn {
   background: rgba(10, 10, 12, 0.6);
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  border: 1px solid rgba(255, 163, 26, 0.25);
   color: #C9A0FF;
   border-radius: 10px;
   padding: 6px 12px;
   font-size: 0.8rem;
   font-weight: 500;
   transition: all 0.15s ease;
-  text-shadow: 0 0 6px rgba(201, 160, 255, 0.3);
+  text-shadow: 0 0 6px rgba(255, 208, 138, 0.3);
 }
 
 .btn:hover {
-  background: rgba(139, 92, 246, 0.12);
-  border-color: rgba(139, 92, 246, 0.45);
-  text-shadow: 0 0 10px rgba(201, 160, 255, 0.6);
+  background: rgba(255, 163, 26, 0.12);
+  border-color: rgba(255, 163, 26, 0.45);
+  text-shadow: 0 0 10px rgba(255, 208, 138, 0.6);
 }
 
 .btnPrimary {
-  background: linear-gradient(135deg, #8B5CF6, #C9A0FF);
-  border-color: #8B5CF6;
+  background: linear-gradient(135deg, #ffa31a, #C9A0FF);
+  border-color: #ffa31a;
   color: #0A0A0C;
   text-shadow: none;
   font-weight: 600;
-  box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 0 15px rgba(255, 163, 26, 0.3);
 }
 
 .btnPrimary:hover {
-  background: linear-gradient(135deg, #C9A0FF, #8B5CF6);
+  background: linear-gradient(135deg, #C9A0FF, #ffa31a);
   border-color: #C9A0FF;
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 20px rgba(255, 163, 26, 0.5);
 }
 
 .btn.btnDanger {

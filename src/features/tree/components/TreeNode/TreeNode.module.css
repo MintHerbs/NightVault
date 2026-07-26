@@ -6,26 +6,26 @@
 
 .nodeRect {
   fill: #0d0d0d;
-  stroke: #8B5CF6;
+  stroke: #ffa31a;
   stroke-width: 2;
-  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6));
-  animation: purpleGlow 4s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(255, 163, 26, 0.6));
+  animation: orangeGlow 4s ease-in-out infinite;
   transition: all 0.3s ease;
 }
 
-@keyframes purpleGlow {
+@keyframes orangeGlow {
   0%, 100% {
-    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.5));
+    filter: drop-shadow(0 0 8px rgba(255, 163, 26, 0.5));
   }
   50% {
-    filter: drop-shadow(0 0 14px rgba(139, 92, 246, 0.8));
+    filter: drop-shadow(0 0 14px rgba(255, 163, 26, 0.8));
   }
 }
 
 .nodeRect.highlighted {
-  stroke: #8B5CF6;
+  stroke: #ffa31a;
   stroke-width: 3;
-  filter: drop-shadow(0 0 20px rgba(139, 92, 246, 1));
+  filter: drop-shadow(0 0 20px rgba(255, 163, 26, 1));
 }
 
 .keySlot {

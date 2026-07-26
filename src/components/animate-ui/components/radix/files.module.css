@@ -128,12 +128,12 @@
 }
 
 :global([data-slot="motion-highlight-item-container"][data-active="true"]) .row {
-  color: #8B5CF6;
-  background: rgba(139, 92, 246, 0.1);
+  color: #ffa31a;
+  background: rgba(255, 163, 26, 0.1);
 }
 
 :global([data-slot="motion-highlight-item-container"][data-active="true"]) .row svg {
-  color: #8B5CF6;
+  color: #ffa31a;
 }
 
 :global([data-slot="motion-highlight-item-container"][data-active="true"]) :global([data-slot="file-item"][data-variant="tool"]) {

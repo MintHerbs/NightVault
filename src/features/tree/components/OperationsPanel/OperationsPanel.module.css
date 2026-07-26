@@ -21,7 +21,7 @@
 .sectionTitle {
   font-size: 0.7rem;
   font-weight: 600;
-  color: #8B5CF6;
+  color: #ffa31a;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: var(--spacing-xs);
@@ -39,8 +39,8 @@
 
 .input:focus {
   outline: none;
-  border-color: #8B5CF6;
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+  border-color: #ffa31a;
+  box-shadow: 0 0 0 2px rgba(255, 163, 26, 0.2);
 }
 
 .input::placeholder {
@@ -49,7 +49,7 @@
 
 .button {
   padding: 10px 16px;
-  background-color: #8B5CF6;
+  background-color: #ffa31a;
   color: #ffffff;
   font-size: 14px;
   font-weight: 600;
@@ -76,17 +76,17 @@
 .deleteButton {
   padding: 10px 16px;
   background-color: transparent;
-  color: #8B5CF6;
+  color: #ffa31a;
   font-size: 14px;
   font-weight: 600;
-  border: 1px solid #8B5CF6;
+  border: 1px solid #ffa31a;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .deleteButton:hover:not(:disabled) {
-  background-color: rgba(139, 92, 246, 0.15);
+  background-color: rgba(255, 163, 26, 0.15);
 }
 
 .deleteButton:active:not(:disabled) {
@@ -120,7 +120,7 @@
 }
 
 .infoRow span:last-child {
-  color: #8B5CF6;
+  color: #ffa31a;
   font-weight: 600;
   font-family: var(--font-mono);
 }

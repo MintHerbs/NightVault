@@ -1,12 +1,12 @@
 // Single source of truth for all color tokens used across the app
 export const colors = {
   // Brand
-  accent:        '#8B5CF6',   // primary purple
+  accent:        '#ffa31a',   // primary brand orange
   orange:        '#EA6C0A',   // secondary orange
   bg:            '#000000',
   surface:       '#0f0f0f',
   card:          '#0a0a0a',
-  panel:         '#1a1a2e',
+  panel:         '#21180d',
   border:        '#222222',
   text:          '#ffffff',
   textMuted:     'rgba(255,255,255,0.6)',
@@ -22,29 +22,28 @@ export const colors = {
   // low-emphasis *text*, use --md-on-surface-variant instead (see LT-001).
   iconOff:       'rgba(255,255,255,0.38)',  // inactive — subtle on black
   iconHover:     'rgba(255,255,255,0.75)',  // hover — visible but not full
-  iconActive:    '#8B5CF6',                 // active — accent purple
+  iconActive:    '#ffa31a',                 // active — brand orange
   iconActiveAlt: '#EA6C0A',                 // active alt — orange for external tools
 }
 
 // Material You (M3) dark scheme — mirrors the --md-* custom properties in
-// src/styles/global.css for the JS side. Seeded from colors.accent, not
-// Material's baseline purple. See docs/design/colors.md.
+// src/styles/global.css for the JS side. Seeded from colors.accent.
 export const md = {
   // Surface container tones — M3 elevation is tonal, not shadow-based
-  surfaceContainerLow:  '#131117',
-  surfaceContainer:     '#1a171f',
-  surfaceContainerHigh: '#241f2b',
+  surfaceContainerLow:  '#17140f',
+  surfaceContainer:     '#1f1a13',
+  surfaceContainerHigh: '#2b2419',
 
   // Primary + tonal container
-  primary:            '#8B5CF6',  // same value as colors.accent
-  onPrimary:          '#ffffff',
-  primaryContainer:   '#2e2148',
-  onPrimaryContainer: '#d9c8ff',
+  primary:            '#ffa31a',  // same value as colors.accent
+  onPrimary:          '#241600',
+  primaryContainer:   '#4a2a00',
+  onPrimaryContainer: '#ffd9a3',
 
   // Text on surfaces
-  onSurface:        '#eae5ef',
-  onSurfaceVariant: '#c9c2d2',
-  outlineVariant:   '#2c2833',
+  onSurface:        '#f2eadf',
+  onSurfaceVariant: '#d2c6b5',
+  outlineVariant:   '#3a3023',
 
   // State layer opacities — M3 spec values
   stateHover:   0.08,

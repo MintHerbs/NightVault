@@ -20,8 +20,8 @@
 }
 
 .searchInput:focus {
-  border-color: rgba(139, 92, 246, 0.55);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+  border-color: rgba(255, 163, 26, 0.55);
+  box-shadow: 0 0 0 3px rgba(255, 163, 26, 0.18);
 }
 
 .grid {
@@ -46,7 +46,7 @@
 
 .thumbBtn:hover {
   transform: translateY(-1px);
-  border-color: rgba(139, 92, 246, 0.35);
+  border-color: rgba(255, 163, 26, 0.35);
 }
 
 .thumbImg {

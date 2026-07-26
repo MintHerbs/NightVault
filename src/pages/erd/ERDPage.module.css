@@ -41,10 +41,10 @@
   left: 100px;
   padding: 10px 20px;
   background-color: transparent;
-  color: #8B5CF6;
+  color: #ffa31a;
   font-size: 14px;
   font-weight: 500;
-  border: 1px solid #8B5CF6;
+  border: 1px solid #ffa31a;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -52,7 +52,7 @@
 }
 
 .previousButton:hover {
-  background-color: rgba(139, 92, 246, 0.15);
+  background-color: rgba(255, 163, 26, 0.15);
 }
 
 .previousButton:active {
@@ -65,10 +65,10 @@
   right: 40px;
   padding: 10px 20px;
   background-color: transparent;
-  color: #8B5CF6;
+  color: #ffa31a;
   font-size: 14px;
   font-weight: 500;
-  border: 1px solid #8B5CF6;
+  border: 1px solid #ffa31a;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -76,7 +76,7 @@
 }
 
 .resetButton:hover {
-  background-color: rgba(139, 92, 246, 0.15);
+  background-color: rgba(255, 163, 26, 0.15);
 }
 
 .resetButton:active {
@@ -94,7 +94,7 @@
 .stepTitle {
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 700;
-  color: #8B5CF6;
+  color: #ffa31a;
   margin: 0;
 }
 

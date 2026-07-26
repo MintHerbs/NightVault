@@ -45,7 +45,7 @@
 }
 
 .textarea:focus {
-  border-color: rgba(139, 92, 246, 0.4);
+  border-color: rgba(255, 163, 26, 0.4);
 }
 
 .textarea::placeholder {

@@ -119,8 +119,8 @@ export function renderInlineLaTeX(editor, monaco) {
             justify-content: ${isBlock ? 'center' : 'flex-start'};
             padding: ${isBlock ? '14px 24px' : '8px 16px'};
             cursor: pointer;
-            border-left: 2px solid rgba(139, 92, 246, 0.35);
-            background: rgba(139, 92, 246, 0.04);
+            border-left: 2px solid rgba(255, 163, 26, 0.35);
+            background: rgba(255, 163, 26, 0.04);
             border-radius: 0 6px 6px 0;
             overflow: visible;
             box-sizing: border-box;
@@ -151,12 +151,12 @@ export function renderInlineLaTeX(editor, monaco) {
             editor.focus()
           })
           domNode.addEventListener('mouseenter', () => {
-            domNode.style.background = 'rgba(139, 92, 246, 0.10)'
-            domNode.style.borderLeftColor = 'rgba(139, 92, 246, 0.65)'
+            domNode.style.background = 'rgba(255, 163, 26, 0.10)'
+            domNode.style.borderLeftColor = 'rgba(255, 163, 26, 0.65)'
           })
           domNode.addEventListener('mouseleave', () => {
-            domNode.style.background = 'rgba(139, 92, 246, 0.04)'
-            domNode.style.borderLeftColor = 'rgba(139, 92, 246, 0.35)'
+            domNode.style.background = 'rgba(255, 163, 26, 0.04)'
+            domNode.style.borderLeftColor = 'rgba(255, 163, 26, 0.35)'
           })
 
           // Hide the raw LaTeX text

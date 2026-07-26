@@ -21,7 +21,7 @@ import {
 } from '@/components/animate-ui/primitives/buttons/ripple';
 import styles from './Card.module.css';
 
-const RIPPLE_COLOR = 'rgba(139, 92, 246, 0.3)';
+const RIPPLE_COLOR = 'rgba(255, 163, 26, 0.3)';
 
 export default function Card({
   title,

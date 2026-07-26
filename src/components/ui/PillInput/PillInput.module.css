@@ -15,8 +15,8 @@
 }
 
 .container:focus-within {
-  border-color: #8B5CF6;
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
+  border-color: #ffa31a;
+  box-shadow: 0 0 0 2px rgba(255, 163, 26, 0.25);
 }
 
 .input {
@@ -27,20 +27,20 @@
   color: #ffffff;
   font-size: 15px;
   font-family: inherit;
-  caret-color: #8B5CF6;
+  caret-color: #ffa31a;
 }
 
 .input::placeholder {
   color: var(--md-on-surface-variant);
 }
 
-/* Send button - purple circle with arrow */
+/* Send button - orange circle with arrow */
 .sendButton {
   width: 32px;
   height: 32px;
   min-width: 32px;
   min-height: 32px;
-  background-color: #8B5CF6;
+  background-color: #ffa31a;
   border: none;
   border-radius: 50%;
   display: flex;
@@ -53,7 +53,7 @@
 }
 
 .sendButton:hover {
-  background-color: #7c3aed;
+  background-color: #e68a00;
   transform: scale(1.05);
 }
 

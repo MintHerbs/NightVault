@@ -102,7 +102,7 @@
 }
 
 .hexApply {
-  background: var(--color-accent-soft, rgba(139, 92, 246, 0.15));
+  background: var(--color-accent-soft, rgba(255, 163, 26, 0.15));
   border: 1px solid var(--accent);
   border-radius: 6px;
   padding: 6px 10px;
@@ -113,7 +113,7 @@
 }
 
 .hexApply:hover {
-  background: var(--color-accent-muted, rgba(139, 92, 246, 0.25));
+  background: var(--color-accent-muted, rgba(255, 163, 26, 0.25));
 }
 
 .hexError {

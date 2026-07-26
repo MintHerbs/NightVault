@@ -194,7 +194,7 @@ function FormulaNodes({ steps, positions, floatOffsets, conclusionId, onNodeDrag
               rx={8}
               ry={8}
               fill="transparent"
-              stroke="#8B5CF6"
+              stroke="#ffa31a"
               strokeWidth={1.5}
               style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
               onMouseDown={(e) => onNodeDragStart(e, step.id)}

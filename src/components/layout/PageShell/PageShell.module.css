@@ -47,7 +47,7 @@
 .title {
   font-size: clamp(2.2rem, 5vw, 3.8rem);
   font-weight: 700;
-  color: #8B5CF6;
+  color: #ffa31a;
   margin: 0;
   animation: softGlow 3s ease-in-out infinite;
   min-height: 60px;
@@ -57,14 +57,14 @@
 
 @keyframes softGlow {
   0%, 100% {
-    text-shadow: 0 0 10px rgba(139, 92, 246, 0.3),
-                 0 0 20px rgba(139, 92, 246, 0.2),
-                 0 0 30px rgba(139, 92, 246, 0.1);
+    text-shadow: 0 0 10px rgba(255, 163, 26, 0.3),
+                 0 0 20px rgba(255, 163, 26, 0.2),
+                 0 0 30px rgba(255, 163, 26, 0.1);
   }
   50% {
-    text-shadow: 0 0 20px rgba(139, 92, 246, 0.5),
-                 0 0 30px rgba(139, 92, 246, 0.3),
-                 0 0 40px rgba(139, 92, 246, 0.2);
+    text-shadow: 0 0 20px rgba(255, 163, 26, 0.5),
+                 0 0 30px rgba(255, 163, 26, 0.3),
+                 0 0 40px rgba(255, 163, 26, 0.2);
   }
 }
 

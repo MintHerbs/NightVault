@@ -8,7 +8,7 @@
   border-radius: 50%;
   background: #1a1a1a;
   border: 1px solid #333;
-  color: #8B5CF6;
+  color: #ffa31a;
   font-size: 20px;
   font-weight: 700;
   cursor: pointer;
@@ -20,8 +20,8 @@
 
 .toggleButton:hover {
   background: #222;
-  border-color: #8B5CF6;
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  border-color: #ffa31a;
+  box-shadow: 0 0 20px rgba(255, 163, 26, 0.3);
   transform: scale(1.05);
 }
 
@@ -65,7 +65,7 @@
 .title {
   font-size: 20px;
   font-weight: 700;
-  color: #8B5CF6;
+  color: #ffa31a;
   margin: 0;
 }
 
@@ -87,8 +87,8 @@
 
 .closeButton:hover {
   background: #1a1a1a;
-  border-color: #8B5CF6;
-  color: #8B5CF6;
+  border-color: #ffa31a;
+  color: #ffa31a;
 }
 
 .content {
@@ -106,7 +106,7 @@
 .sectionTitle {
   font-size: 16px;
   font-weight: 700;
-  color: #8B5CF6;
+  color: #ffa31a;
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -159,7 +159,7 @@
   font-family: 'Courier New', Courier, monospace;
   font-size: 16px;
   font-weight: 600;
-  color: #8B5CF6;
+  color: #ffa31a;
 }
 
 .resultCell {
