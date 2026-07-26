@@ -1,7 +1,7 @@
 ---
 id: T-058
 title: Support unequal subproblem splits via Akra-Bazzi
-status: backlog
+status: done
 severity: medium
 area: recurrence
 epic: E-007
@@ -52,11 +52,41 @@ handles.
 
 ## Acceptance criteria
 
-- [ ] `T(n) = T(n/3) + T(2n/3) + n` gives Θ(n log n)
-- [ ] `T(n) = T(n/5) + T(7n/10) + n` gives Θ(n)
-- [ ] The unbalanced tree draws with correct per-branch labels and no overlap
-- [ ] Confirmed by the T-057 oracle, not only by hand-written expectations
-- [ ] Genuinely unsupported shapes still refuse with a clear message
+- [x] `T(n) = T(n/3) + T(2n/3) + n` gives Θ(n log n)
+- [x] `T(n) = T(n/5) + T(7n/10) + n` gives Θ(n)
+- [x] The unbalanced tree draws with correct per-branch labels and no overlap
+- [x] Confirmed by the T-057 oracle, not only by hand-written expectations
+- [x] Genuinely unsupported shapes still refuse with a clear message
+
+## Resolution
+
+The key observation kept the tree narrative intact rather than bolting on a
+separate formula: for unequal splits the level ratio generalises from a/b^q to
+**ρ = Σ aᵢbᵢ^q**, and ρ = 1 exactly when q = p. So the same three-case decision
+the divide path already used applies unchanged, with the Akra-Bazzi p in place of
+log_b(a). That decision is now `levelSumGrowth` in `recurrenceMath.js`, shared by
+both paths, and `divideLevelSum` became a thin wrapper over it. The refactor was
+verified behaviour-preserving before Akra-Bazzi was added.
+
+`akraBazziExponent` finds p by bisection on Σ aᵢbᵢ^p = 1, which is monotone
+because every bᵢ is in (0, 1). Subproblem sizes are tracked as exact rationals,
+so nested levels label as T(n/9), T(2n/9), T(4n/9) rather than T(0.444n).
+
+Results, all confirmed numerically:
+
+| Recurrence | p | ρ | Case | Result |
+|---|---|---|---|---|
+| `T(n/3) + T(2n/3) + n` | 1 | 1 | 2 | Θ(n log n) |
+| `T(n/5) + T(7n/10) + n` | 0.8398 | 0.9 | 1 | Θ(n) |
+| `T(n/2) + T(n/4) + n` | 0.6942 | 0.75 | 1 | Θ(n) |
+| `T(n/3) + T(2n/3) + 1` | 1 | 2 | 3 | Θ(n) |
+| `T(n/3) + T(2n/3) + n²` | 1 | 0.556 | 1 | Θ(n²) |
+
+The oracle needed a new evaluator, and the first attempt repeated the mistake
+T-057 documented: evaluating integers to 2e6 could not reject a spurious log
+factor on the median-of-medians case (drift 0.291, under tolerance). Solving on a
+grid uniform in ln n instead lets the ladder reach n = 2^1000, and the drift for
+that same wrong answer is 3.641. 94 oracle checks, 847 assertions.
 
 ## References
 

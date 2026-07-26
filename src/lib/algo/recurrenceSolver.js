@@ -12,6 +12,9 @@
 import {
   polylog,
   loglog,
+  akraLevelSum,
+  fractionOfN,
+  multiplyFraction,
   exponential,
   compareGrowth,
   formatGrowth,
@@ -65,6 +68,8 @@ export function solveByTree(parsed) {
       return chainTree(parsed);
     case 'linear':
       return branchingTree(parsed);
+    case 'akra':
+      return akraTree(parsed);
     case 'sqrt':
       return sqrtTree(parsed);
     default:
@@ -234,6 +239,124 @@ function divideSteps(parsed, analysis) {
 
   divider(steps);
   derivationLines(parsed, analysis).forEach(line => push(steps, line, 'combine_nested'));
+  final(steps, analysis.growth);
+  return steps;
+}
+
+// ---------------------------------------------------------------------------
+// Unequal splits: T(n) = Σ aᵢ·T(bᵢn) + f(n), analysed by Akra-Bazzi
+// ---------------------------------------------------------------------------
+
+/** "T(n)", "T(n/3)", "T(4n/9)": the size after the fractions have multiplied out. */
+const fractionLabel = state => `T(${fractionOfN(state)})`;
+
+const fractionText = part =>
+  part.num == null ? num(part.frac) : `${part.num}/${part.den}`;
+
+function akraTree(parsed) {
+  const { parts, fTerms } = parsed;
+  const analysis = akraLevelSum(parts, fTerms);
+  const branching = parts.reduce((sum, t) => sum + t.coef, 0);
+  const levelsShown = levelsFor(branching);
+
+  const root = buildBranchingSpecs({
+    levelsShown,
+    rootState: { num: 1, den: 1, value: 1 },
+    expand: state => parts.flatMap(part =>
+      Array.from({ length: Math.round(part.coef) }, () => multiplyFraction(state, part))
+    ),
+    labelOf: fractionLabel,
+  });
+
+  const annotations = [];
+  for (let k = 0; k < levelsShown; k++) {
+    const count = Math.round(Math.pow(branching, k));
+    annotations.push({
+      depth: k,
+      countText: `${count} node${count === 1 ? '' : 's'}`,
+      costText: akraLevelCost(parsed, analysis, k),
+    });
+  }
+
+  const tree = assemble({
+    root,
+    annotations,
+    baseLabel: 'T(1)',
+    baseNote: `${formatGrowth(polylog(analysis.p, 0))} leaves`,
+    derivation: akraDerivation(parsed, analysis),
+  });
+
+  return {
+    tree,
+    steps: akraSteps(parsed, analysis),
+    finalComplexity: growthToKey(analysis.growth),
+    finalLabel: bigO(analysis.growth),
+    growth: analysis.growth,
+  };
+}
+
+/**
+ * Cost of a whole level. The nodes differ in size, but their total is
+ * f(n)·ρ^k with ρ = Σ aᵢbᵢ^q, which is why ρ decides the whole analysis.
+ */
+function akraLevelCost(parsed, analysis, k) {
+  const mult = Math.pow(analysis.ratio, k);
+  const fAtN = renderF(parsed.fTerms, arg.symbol('n'));
+  if (Math.abs(mult - 1) < 1e-9) return fAtN;
+  if (fAtN === '1') return num(mult);
+  return `${num(mult)}·${fAtN}`;
+}
+
+/** "(1/3)^p + (2/3)^p = 1" with the actual fractions substituted in. */
+const akraEquation = parts =>
+  parts
+    .map(part => `${part.coef === 1 ? '' : `${num(part.coef)}·`}(${fractionText(part)})^p`)
+    .join(' + ') + ' = 1';
+
+function akraDerivation(parsed, analysis) {
+  const costs = [0, 1, 2].map(k => akraLevelCost(parsed, analysis, k));
+  const lines = [`Total = ${costs.join(' + ')} + …`];
+  lines.push(`${akraEquation(parsed.parts)}  →  p = ${num(analysis.p, 3)}`);
+  if (analysis.caseNum === 2) {
+    lines.push(`ρ = ${num(analysis.ratio)}, so every level costs the same`);
+  } else if (analysis.caseNum === 1) {
+    lines.push(`ρ = ${num(analysis.ratio)} < 1, so the root dominates`);
+  } else {
+    lines.push(`ρ = ${num(analysis.ratio)} > 1, so the leaves dominate`);
+  }
+  lines.push(`= ${theta(analysis.growth)}`);
+  return lines;
+}
+
+function akraSteps(parsed, analysis) {
+  const { parts, fText, fDominant: d } = parsed;
+  const branching = parts.reduce((sum, t) => sum + t.coef, 0);
+  const steps = [];
+
+  push(steps, `Parsed: ${parsed.original}`, 'info');
+  push(steps, `Unequal splits: ${parts.map(t => `${t.coef === 1 ? '' : `${num(t.coef)}×`}${fractionText(t)} of n`).join(', ')}`, 'info');
+  push(steps, `f(n) = ${fText}`, 'info');
+  push(steps, 'The subproblems differ in size, so the tree is lopsided and no', 'info');
+  push(steps, 'single ratio a/b^p applies. This is the Akra-Bazzi case.', 'info');
+  divider(steps);
+
+  const levelsShown = levelsFor(branching);
+  for (let k = 0; k < levelsShown; k++) {
+    const count = Math.round(Math.pow(branching, k));
+    push(steps, `Level ${k}: ${count} node${count === 1 ? '' : 's'} of differing sizes, total ${akraLevelCost(parsed, analysis, k)}`, 'loop');
+  }
+  push(steps, '⋮', 'info');
+
+  divider(steps);
+  push(steps, 'Find the exponent p of the leaf count:', 'info');
+  push(steps, `  ${akraEquation(parts)}`, 'special');
+  push(steps, `  p = ${num(analysis.p, 4)}`, 'special');
+  push(steps, `Level totals shrink or grow by ρ = Σ aᵢbᵢ^q = ${num(analysis.ratio)}, where q = ${num(d.exp)}`, 'special');
+  push(steps, analysis.reason, 'special');
+  push(steps, analysis.seriesNote, 'special');
+
+  divider(steps);
+  akraDerivation(parsed, analysis).forEach(line => push(steps, line, 'combine_nested'));
   final(steps, analysis.growth);
   return steps;
 }

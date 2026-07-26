@@ -29,9 +29,9 @@ refuses, and does the UX pass the feature has never had.
 
 ## Tickets
 
-- [ ] T-056 — Chain recursion trees render as a straight line instead of branching (high)
-- [ ] T-057 — Verify solver output against the numerically evaluated recurrence (high)
-- [ ] T-058 — Support unequal subproblem splits via Akra-Bazzi (medium)
+- [x] T-056 — Chain recursion trees render as a straight line instead of branching (high)
+- [x] T-057 — Verify solver output against the numerically evaluated recurrence (high)
+- [x] T-058 — Support unequal subproblem splits via Akra-Bazzi (medium)
 - [ ] T-059 — Recurrence input and error-state UX pass (low)
 
 ## Non-goals

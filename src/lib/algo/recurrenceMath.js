@@ -461,6 +461,46 @@ export function renderF(terms, a, { latex = false, inSum = false } = {}) {
   return parts.join('');
 }
 
+// ---------------------------------------------------------------------------
+// Exact shrink fractions, so nested subproblem sizes stay rational
+// ---------------------------------------------------------------------------
+
+function gcd(x, y) {
+  let a = Math.abs(x);
+  let b = Math.abs(y);
+  while (b) [a, b] = [b, a % b];
+  return a || 1;
+}
+
+/** Reduced { num, den }, or { num: null } when the inputs are not rational. */
+export function reduceFraction(numer, denom) {
+  if (!Number.isInteger(numer) || !Number.isInteger(denom) || denom === 0) {
+    return { num: null, den: null, value: numer / denom };
+  }
+  const g = gcd(numer, denom);
+  return { num: numer / g, den: denom / g, value: numer / denom };
+}
+
+/** Product of two shrink fractions, kept exact: 2/3 of 2/3 is 4/9, not 0.444. */
+export function multiplyFraction(a, b) {
+  if (a.num == null || b.num == null) {
+    return { num: null, den: null, value: (a.value ?? a.num / a.den) * (b.value ?? b.num / b.den) };
+  }
+  return reduceFraction(a.num * b.num, a.den * b.den);
+}
+
+/**
+ * A subproblem size as a multiple of n: "n", "n/3", "2n/3", "4n/9".
+ * Falls back to a decimal when the fraction is not rational.
+ */
+export function fractionOfN(frac, { latex = false } = {}) {
+  if (frac.num == null) return `${num(frac.value)}n`;
+  const { num: p, den: q } = frac;
+  if (q === 1) return p === 1 ? 'n' : `${p}n`;
+  if (latex) return `\\frac{${p === 1 ? '' : p}n}{${q}}`;
+  return `${p === 1 ? '' : p}n/${q}`;
+}
+
 /** Multiply every term by a scalar, for level costs like 4 · f(n/2). */
 export function scaleTerms(terms, k) {
   return terms.map(t => term(t.coef * k, t.exp, t.logExp));
@@ -545,62 +585,126 @@ function subtractIdentity(d, b) {
  */
 export function divideLevelSum(a, b, terms) {
   const d = dominantTerm(terms);
-  const p = d.exp;
-  const q = d.logExp;
   const logba = Math.log(a) / Math.log(b);
-  const ratio = a / Math.pow(b, p);
-  const leaves = polylog(logba, 0);
+  const ratio = a / Math.pow(b, d.exp);
+  const decision = levelSumGrowth(logba, terms, {
+    levelsText: `log_${b}(n)`,
+    ratioText: 'r = a/b^p',
+    leavesText: `Θ(a^log_${b}(n)) = Θ(n^log_${b}(a))`,
+  });
+  return { ...decision, ratio, logba };
+}
 
-  if (ratio < 1 - 1e-6) {
+/**
+ * Exponent p solving Σ aᵢ·bᵢ^p = 1, the Akra-Bazzi exponent. Σ aᵢ·bᵢ^p is
+ * strictly decreasing in p because every bᵢ is in (0, 1), so bisection is safe.
+ * This is the same role log_b(a) plays for equal splits: it is the exponent of
+ * the leaf count.
+ *
+ * @param {Array<{coef: number, frac: number}>} parts shrink fractions bᵢ = 1/b
+ */
+export function akraBazziExponent(parts) {
+  const g = p => parts.reduce((sum, t) => sum + t.coef * Math.pow(t.frac, p), 0);
+  let lo = 0;
+  let hi = 1;
+  while (g(hi) > 1 && hi < 1e6) hi *= 2;
+  while (g(lo) < 1 && lo > -1e6) lo = lo === 0 ? -1 : lo * 2;
+  for (let i = 0; i < 400; i++) {
+    const mid = (lo + hi) / 2;
+    if (g(mid) > 1) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+/**
+ * The level sum for unequal splits: T(n) = Σ aᵢ·T(bᵢn) + f(n).
+ *
+ * The tree is lopsided, so "the cost of level k" is a sum over differently
+ * sized nodes rather than one term. It still collapses: with f = c·n^q·log^r n
+ * the polynomial part of level k is f(n)·ρ^k where ρ = Σ aᵢ·bᵢ^q. And ρ = 1
+ * exactly when q = p, so the same three-way decision as the equal-split case
+ * applies, with p in place of log_b(a).
+ */
+export function akraLevelSum(parts, terms) {
+  const d = dominantTerm(terms);
+  const p = akraBazziExponent(parts);
+  const ratio = parts.reduce((sum, t) => sum + t.coef * Math.pow(t.frac, d.exp), 0);
+  const decision = levelSumGrowth(p, terms, {
+    levelsText: 'log(n)',
+    ratioText: 'ρ = Σ aᵢbᵢ^q',
+    leavesText: 'Θ(n^p)',
+  });
+  return { ...decision, ratio, logba: p, p };
+}
+
+/**
+ * Shared three-case decision for every divide-style recurrence.
+ *
+ * Compare the exponent of the leaf count (log_b(a), or the Akra-Bazzi p) with
+ * the exponent q of f(n):
+ *   q > leaves   the root's own work dominates          Θ(f(n))
+ *   q = leaves   every level costs the same             Θ(f(n) · levels)
+ *   q < leaves   the leaf level dominates               Θ(n^leaves)
+ *
+ * @param {number} leavesExp exponent of the leaf count
+ * @param {Array} terms f(n) as terms
+ */
+export function levelSumGrowth(leavesExp, terms, labels = {}) {
+  const d = dominantTerm(terms);
+  const q = d.exp;
+  const r = d.logExp;
+  const { levelsText = 'log(n)', ratioText = 'r', leavesText = `Θ(n^${num(leavesExp)})` } = labels;
+
+  if (q > leavesExp + 1e-6) {
     return {
       caseNum: 1,
-      ratio,
-      logba,
+      leavesExp,
       dominatedBy: 'root',
-      growth: polylog(p, q),
-      reason: `r = a/b^p < 1, so level costs shrink geometrically and the root dominates`,
+      growth: polylog(q, r),
+      reason: `${ratioText} < 1, so level costs shrink geometrically and the root dominates`,
       seriesNote: 'a decreasing geometric series sums to a constant times its first term',
     };
   }
-  if (ratio <= 1 + 1e-6) {
+
+  if (q >= leavesExp - 1e-6) {
     // Every level costs the same power of n, so the total is that power times
-    // Σ_{k} log^q(n/b^k). Writing j = log_b n − k turns that into Σ_j j^q, and
-    // the sum behaves in three different ways:
-    //   q > −1   Σ j^q = Θ(log^(q+1) n)   the familiar "one more log" case
-    //   q = −1   Σ 1/j is harmonic        = Θ(log log n)
-    //   q < −1   Σ j^q converges          so the level count drops out entirely
-    // Assuming the first case unconditionally is what made T(n) = 2T(n/2) + n/log n
-    // come back as Θ(n) instead of Θ(n log log n).
+    // Σ_k log^r(n/b^k). Writing j for the remaining depth turns that into
+    // Σ_j j^r, and the sum behaves in three different ways:
+    //   r > −1   Σ j^r = Θ(log^(r+1) n)   the familiar "one more log" case
+    //   r = −1   Σ 1/j is harmonic        = Θ(log log n)
+    //   r < −1   Σ j^r converges          so the level count drops out entirely
+    // Assuming the first case unconditionally is what made
+    // T(n) = 2T(n/2) + n/log n come back as Θ(n) instead of Θ(n log log n).
     let growth;
     let seriesNote;
-    if (q > -1 + 1e-9) {
-      growth = polylog(p, q + 1);
-      seriesNote = `equal level costs × log_${b}(n) levels adds one log factor`;
-    } else if (Math.abs(q + 1) < 1e-9) {
-      growth = polylog(p, 0, 1);
+    if (r > -1 + 1e-9) {
+      growth = polylog(q, r + 1);
+      seriesNote = `equal level costs × ${levelsText} levels adds one log factor`;
+    } else if (Math.abs(r + 1) < 1e-9) {
+      growth = polylog(q, 0, 1);
       seriesNote = 'the level costs form a harmonic series, which sums to Θ(log log n)';
     } else {
-      growth = polylog(p, 0);
-      seriesNote = `Σ log^${num(q)} over the levels converges, so the level count drops out`;
+      growth = polylog(q, 0);
+      seriesNote = `Σ log^${num(r)} over the levels converges, so the level count drops out`;
     }
     return {
       caseNum: 2,
-      ratio,
-      logba,
+      leavesExp,
       dominatedBy: 'all levels',
       growth,
-      reason: `r = a/b^p = 1, so every level costs the same and there are log_${b}(n) + 1 of them`,
+      reason: `${ratioText} = 1, so every level costs the same and there are ${levelsText} + 1 of them`,
       seriesNote,
     };
   }
+
   return {
     caseNum: 3,
-    ratio,
-    logba,
+    leavesExp,
     dominatedBy: 'leaves',
-    growth: leaves,
-    reason: `r = a/b^p = ${num(ratio)} > 1, so level costs grow geometrically and the leaf level dominates`,
-    seriesNote: `an increasing geometric series is Θ(last term) = Θ(a^log_${b}(n)) = Θ(n^log_${b}(a))`,
+    growth: polylog(leavesExp, 0),
+    reason: `${ratioText} > 1, so level costs grow geometrically and the leaf level dominates`,
+    seriesNote: `an increasing geometric series is Θ(last term) = ${leavesText}`,
   };
 }
 

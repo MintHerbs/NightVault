@@ -12,6 +12,9 @@ import {
   exponential,
   polylog,
   loglog,
+  akraLevelSum,
+  fractionOfN,
+  multiplyFraction,
   growthToKey,
   formatGrowthLatex,
   theta,
@@ -41,6 +44,8 @@ export function solveBySubstitution(parsed) {
       return chainSubstitution(parsed);
     case 'linear':
       return branchingSubstitution(parsed);
+    case 'akra':
+      return akraSubstitution(parsed);
     case 'sqrt':
       return sqrtSubstitution(parsed);
     default:
@@ -285,6 +290,111 @@ function branchingSubstitution(parsed) {
     finalLabel: bigO(growth),
     growth,
   };
+}
+
+// ---------------------------------------------------------------------------
+// T(n) = Σ aᵢ·T(bᵢn) + f(n), unequal splits
+// ---------------------------------------------------------------------------
+
+const fracText = part => (part.num == null ? num(part.frac) : `${part.num}/${part.den}`);
+/** Subproblem size as a multiple of n, e.g. "n/3", "4n/9". */
+const sizeText = frac => fractionOfN(frac);
+const sizeLatex = frac => fractionOfN(frac, { latex: true });
+
+function akraSubstitution(parsed) {
+  const { parts, fTerms, fLatex, fDominant: d } = parsed;
+  const analysis = akraLevelSum(parts, fTerms);
+  const p = analysis.p;
+  const q = d.exp;
+  const r = d.logExp;
+
+  const callsLatex = parts
+    .map(t => `${t.coef === 1 ? '' : num(t.coef)}T\\!\\left(${sizeLatex(t)}\\right)`)
+    .join(' + ');
+
+  const formulas = [];
+  const add = (latex, label) => formulas.push({ latex, label });
+
+  add(`T(n) = ${callsLatex} + ${fLatex}`, 'Given');
+
+  // Expanding each call once shows why this cannot collapse the usual way: the
+  // sizes multiply out to different fractions rather than a common n/b^k.
+  const oneDeeper = parts
+    .flatMap(outer => parts.map(inner => `T\\!\\left(${sizeLatex(multiplyFraction(outer, inner))}\\right)`))
+    .join(' + ');
+  add(
+    `T(n) = ${oneDeeper} + ${parts.map(t => `f\\!\\left(${sizeLatex(t)}\\right)`).join(' + ')} + ${fLatex}`,
+    'Expand every call once'
+  );
+  add(
+    `\\text{the sizes no longer share one } b^{k}\\text{, so } \\sum a^{k}f(n/b^{k}) \\text{ does not apply}`,
+    'Why this needs Akra-Bazzi'
+  );
+  add(`${akraEquationLatex(parts)} \\implies p = ${num(p, 4)}`, 'Find p, the exponent of the leaf count');
+  add(
+    `T(n) = \\Theta\\!\\left(n^{p}\\left(1 + \\int_{1}^{n} \\frac{f(u)}{u^{p+1}}\\,du\\right)\\right)`,
+    'Akra-Bazzi formula'
+  );
+  add(akraIntegralLatex(q, r, p, analysis), 'Evaluate the integral');
+  add(`= \\Theta\\left(${formatGrowthLatex(analysis.growth)}\\right)`, 'Final complexity');
+
+  const steps = [];
+  info(steps, `Parsed: ${parsed.original}`);
+  info(steps, 'Method: substitution (expand the recurrence into itself)');
+  divider(steps);
+  loop(steps, 'Expanding every call once:');
+  parts.forEach(t => {
+    const kids = parts.map(i => `T(${sizeText(multiplyFraction(t, i))})`).join(' + ');
+    nest(steps, `T(${sizeText(t)}) = ${kids} + f(${sizeText(t)})`);
+  });
+  divider(steps);
+  special(steps, 'Each branch shrinks by a different factor, so the sizes never');
+  special(steps, 'collect into a single n/b^k and the geometric sum does not apply.');
+  special(steps, 'Akra-Bazzi handles exactly this: find p from the leaf count.');
+  divider(steps);
+  special(steps, `  ${akraEquationText(parts)}`);
+  special(steps, `  p = ${num(p, 4)}`);
+  special(steps, `T(n) = Θ(n^p · (1 + ∫₁ⁿ f(u)/u^(p+1) du))`);
+  special(steps, akraIntegralText(q, r, p, analysis));
+  special(steps, analysis.reason);
+  divider(steps);
+  nest(steps, `= ${theta(analysis.growth)}`);
+  final(steps, analysis.growth);
+
+  return {
+    formulas,
+    steps,
+    finalComplexity: growthToKey(analysis.growth),
+    finalLabel: bigO(analysis.growth),
+    growth: analysis.growth,
+  };
+}
+
+const akraEquationText = parts =>
+  parts.map(t => `${t.coef === 1 ? '' : `${num(t.coef)}·`}(${fracText(t)})^p`).join(' + ') + ' = 1';
+
+const akraEquationLatex = parts =>
+  parts.map(t => `${t.coef === 1 ? '' : num(t.coef)}\\left(\\tfrac{${t.num ?? 1}}{${t.den ?? 1}}\\right)^{p}`).join(' + ') + ' = 1';
+
+/** The integral is what selects the case, so show which way it went. */
+function akraIntegralText(q, r, p, analysis) {
+  if (analysis.caseNum === 1) return `∫ u^${num(q - p - 1)} log^${num(r)} u du grows like n^${num(q - p)}, so f(n) dominates`;
+  if (analysis.caseNum === 3) return `∫ u^${num(q - p - 1)} log^${num(r)} u du converges, so only n^p survives`;
+  if (Math.abs(r + 1) < 1e-9) return '∫ du/(u log u) = log log n';
+  if (r < -1) return '∫ log^r(u)/u du converges, so only n^p survives';
+  if (Math.abs(r) < 1e-9) return '∫ du/u = log n';
+  return `∫ log^${num(r)}(u)/u du = log^${num(r + 1)}(n)/${num(r + 1)}`;
+}
+
+function akraIntegralLatex(q, r, p, analysis) {
+  if (analysis.caseNum === 1) {
+    return `\\int_{1}^{n} u^{${num(q - p - 1)}}\\log^{${num(r)}} u\\,du = \\Theta\\!\\left(n^{${num(q - p)}}\\log^{${num(r)}} n\\right)`;
+  }
+  if (analysis.caseNum === 3) return `\\int_{1}^{n} \\frac{f(u)}{u^{p+1}}\\,du = O(1)`;
+  if (Math.abs(r + 1) < 1e-9) return `\\int_{1}^{n} \\frac{du}{u\\log u} = \\log\\log n`;
+  if (r < -1) return `\\int_{1}^{n} \\frac{\\log^{${num(r)}} u}{u}\\,du = O(1)`;
+  if (Math.abs(r) < 1e-9) return `\\int_{1}^{n} \\frac{du}{u} = \\log n`;
+  return `\\int_{1}^{n} \\frac{\\log^{${num(r)}} u}{u}\\,du = \\frac{\\log^{${num(r + 1)}} n}{${num(r + 1)}}`;
 }
 
 // ---------------------------------------------------------------------------

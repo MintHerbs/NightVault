@@ -100,10 +100,14 @@ export function parseRecurrence(formulaStr) {
   };
 
   if (kind === 'divide') {
-    const divisors = new Set(recTerms.map(t => t.b));
-    if (divisors.size > 1) {
+    // Unequal subproblem sizes have no single ratio a/b^p, so they are analysed
+    // by Akra-Bazzi instead of the Master-style level ratio.
+    if (new Set(recTerms.map(t => t.b)).size > 1) {
       return {
-        error: `Unequal subproblem sizes (${[...divisors].map(d => `n/${d}`).join(' and ')}) need the Akra-Bazzi method, which is not supported yet`,
+        ...base,
+        type: 'akra',
+        a: recTerms.reduce((sum, t) => sum + t.coef, 0),
+        parts: recTerms.map(t => ({ coef: t.coef, frac: 1 / t.b, num: t.num, den: t.den })),
       };
     }
     const b = recTerms[0].b;
@@ -129,6 +133,23 @@ export function parseRecurrence(formulaStr) {
   }
 
   return { error: 'Unsupported recurrence shape' };
+}
+
+/**
+ * Exact shrink fraction for a call, so nested sizes stay rational: two levels of
+ * T(2n/3) is T(4n/9), not T(0.444n).
+ */
+function rational(numer, denom) {
+  if (!Number.isInteger(numer) || !Number.isInteger(denom)) return { num: null, den: null };
+  const g = gcd(numer, denom);
+  return { num: numer / g, den: denom / g };
+}
+
+function gcd(x, y) {
+  let a = Math.abs(x);
+  let b = Math.abs(y);
+  while (b) [a, b] = [b, a % b];
+  return a || 1;
 }
 
 /** Collapse the operator debris left where the T(...) calls used to be. */
@@ -168,15 +189,17 @@ function classifyArgument(argText) {
   if (div) {
     const b = parseFloat(div[1]);
     if (b <= 1) return { error: `T(n/${div[1]}) does not shrink the problem` };
-    return { kind: 'divide', b, shift: 0 };
+    return { kind: 'divide', b, shift: 0, ...rational(1, b) };
   }
 
   // Fractional shrink written as a coefficient: 2n/3, 0.5n
   const frac = /^(\d+(?:\.\d+)?)n\/(\d+(?:\.\d+)?)$/.exec(s) || /^(0?\.\d+)n$/.exec(s);
   if (frac) {
-    const ratio = frac[2] ? parseFloat(frac[1]) / parseFloat(frac[2]) : parseFloat(frac[1]);
+    const numer = parseFloat(frac[1]);
+    const denom = frac[2] ? parseFloat(frac[2]) : 1;
+    const ratio = numer / denom;
     if (ratio >= 1) return { error: `T(${argText.trim()}) does not shrink the problem` };
-    return { kind: 'divide', b: 1 / ratio, shift: 0 };
+    return { kind: 'divide', b: 1 / ratio, shift: 0, ...rational(numer, denom) };
   }
 
   // Subtract shrink: n-c

@@ -116,6 +116,14 @@ const CASES = [
   // Coefficients split across several calls of the same size
   ['T(n) = T(n/2) + T(n/2) + n', 'n log n'],
   ['T(n) = T(n/3) + T(n/3) + T(n/3) + n', 'n log n'],
+
+  // Unequal splits, analysed by Akra-Bazzi (T-058)
+  ['T(n) = T(n/3) + T(2n/3) + n', 'n log n'],
+  ['T(n) = T(n/5) + T(7n/10) + n', 'n'],
+  ['T(n) = T(n/2) + T(n/4) + n', 'n'],
+  ['T(n) = T(n/3) + T(2n/3) + 1', 'n'],
+  ['T(n) = T(n/3) + T(2n/3) + n^2', 'n²'],
+  ['T(n) = 2T(n/4) + T(n/2) + n', 'n log n'],
 ];
 
 // Spelling and spacing must not change the answer.
@@ -349,8 +357,6 @@ console.log('=== 4. Substituted f(n) labels are correctly bracketed ===');
 
 console.log('=== 5. Unsupported input reports an error ===');
 const REJECTED = [
-  'T(n) = T(n/3) + T(2n/3) + n',   // Akra-Bazzi
-  'T(n) = T(n/5) + T(7n/10) + n',  // median of medians
   'T(n) = T(n) + 1',
   'T(n) = T(n+1) + 1',
   'T(n) = T(n/1) + n',
@@ -372,6 +378,8 @@ for (const input of REJECTED) {
 
 // Accepted-but-unusual input must still parse.
 const ACCEPTED = [
+  'T(n) = T(n/3) + T(2n/3) + n',   // Akra-Bazzi, supported since T-058
+  'T(n) = T(n/5) + T(7n/10) + n',  // median of medians
   'T(n) = T(n/2 + 1) + n',
   'T(n) = 2T(n/2) + n log n',
   'T(n) = 2T(n/2) + 4n',

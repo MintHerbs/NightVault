@@ -129,6 +129,48 @@ function evaluateBranching({ recTerms, fTerms }, g, { nMax = 4000 } = {}) {
 }
 
 /**
+ * T(n) = Σ aᵢ·T(bᵢn) + f(n).
+ *
+ * The sizes are not powers of a common b, so there is no exact ladder to walk.
+ * Instead solve the recurrence numerically on a grid that is uniform in ln n:
+ * each grid point's children sit at ln n + ln bᵢ, a fixed offset down the grid,
+ * reached by linear interpolation. log T is close to linear in log n (T ~ n^p),
+ * so that interpolation is accurate.
+ *
+ * Working on a log grid rather than over the integers is what lets the ladder
+ * reach n = 2^1000. A first version evaluated integers up to 2e6 and could not
+ * reject a spurious log factor on T(n/5) + T(7n/10) + n, because log log n
+ * barely moves over that range. This is the same trap the chain evaluator hit.
+ */
+function evaluateAkra({ parts, fTerms }, g, { lnMax = 1000 * Math.LN2, points = 20000 } = {}) {
+  const dx = lnMax / points;
+  const logT = new Float64Array(points + 1);
+  const residuals = [];
+
+  // log T at ln n = x, with the base case T(n) = 1 for n <= 1.
+  const at = x => {
+    if (x <= 0) return 0;
+    const j = x / dx;
+    const lo = Math.floor(j);
+    if (lo >= points) return logT[points];
+    const frac = j - lo;
+    return logT[lo] * (1 - frac) + logT[lo + 1] * frac;
+  };
+
+  const sampleEvery = Math.ceil(points / 200);
+  for (let i = 1; i <= points; i++) {
+    const lnN = i * dx;
+    let acc = logF(fTerms, lnN);
+    for (const part of parts) {
+      acc = logaddexp(acc, Math.log(part.coef) + at(lnN + Math.log(part.frac)));
+    }
+    logT[i] = acc;
+    if (i > points / 50 && i % sampleEvery === 0) residuals.push(acc - logG(g, lnN));
+  }
+  return driftOf(residuals);
+}
+
+/**
  * T(n) = T(√n) + f(n). Substituting n = 2^m gives S(m) = S(m/2) + f(2^m), so
  * iterate on m and report the residual against g evaluated at n = 2^m.
  */
@@ -154,6 +196,8 @@ function evaluate(parsed, g) {
       return evaluateChain(parsed, g);
     case 'linear':
       return evaluateBranching(parsed, g);
+    case 'akra':
+      return evaluateAkra(parsed, g);
     case 'sqrt':
       return evaluateSqrt(parsed, g);
     default:
@@ -210,6 +254,13 @@ const CASES = [
   // root shrink
   'T(n) = T(sqrt(n)) + 1',
   'T(n) = T(sqrt(n)) + log(n)',
+
+  // unequal splits, analysed by Akra-Bazzi
+  'T(n) = T(n/3) + T(2n/3) + n',
+  'T(n) = T(n/5) + T(7n/10) + n',
+  'T(n) = T(n/2) + T(n/4) + n',
+  'T(n) = T(n/3) + T(2n/3) + 1',
+  'T(n) = T(n/3) + T(2n/3) + n^2',
 ];
 
 console.log('=== 1. Solver answers confirmed by numeric evaluation ===');
@@ -269,6 +320,9 @@ const WRONG = [
   ['T(n) = T(sqrt(n)) + 1', P(0, 1, 0), 'confusing log log n with log n'],
   ['T(n) = 2T(n-1) + 1', { kind: 'exp', base: 3 }, 'wrong exponential base: Θ(3ⁿ)'],
   ['T(n) = T(n-1) + T(n-2)', { kind: 'exp', base: 2 }, 'branching factor instead of φ'],
+  ['T(n) = T(n/3) + T(2n/3) + n', P(1, 0, 0), 'missing the log on the balanced split'],
+  ['T(n) = T(n/5) + T(7n/10) + n', P(1, 1, 0), 'adding a log that Akra-Bazzi does not give'],
+  ['T(n) = T(n/3) + T(2n/3) + 1', P(0, 1, 0), 'Θ(log n) instead of the leaf count Θ(n)'],
 ];
 
 for (const [input, wrongGrowth, why] of WRONG) {
