@@ -114,6 +114,8 @@
   border-radius: var(--md-shape-xl);
   background: var(--md-surface-container);
   transition: background var(--md-duration-short) var(--md-easing-emphasized);
+  position: relative;
+  height: 300px;
 }
 
 /* State layer on hover — a tonal overlay, not a lift (M3 spec). */
@@ -191,6 +193,8 @@
   display: flex;
   gap: 8px;
   margin-top: 14px;
+  position: absolute;
+  bottom: 20px;
 }
 
 .socialLink {
