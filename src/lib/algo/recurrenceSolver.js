@@ -1,400 +1,852 @@
 /**
- * Recurrence Solver - Tree Method
- * Builds recursion tree and identifies summation patterns
+ * Recurrence Solver, tree method.
+ *
+ * The tree is not decoration: the complexity reported here is read off the
+ * level costs that the drawing shows. For a divide-and-conquer recurrence the
+ * cost of level k is a^k · f(n/b^k), so with f = c·n^p·log^q n the whole
+ * analysis reduces to the ratio r = a/b^p between consecutive levels. That is
+ * the same answer the Master Theorem gives, but derived from the tree rather
+ * than looked up, which is what the step panel is meant to show.
  */
 
-import { identifySummation, SUMMATION_IDENTITIES } from './recurrenceTypes.js';
-import { fToTermShape } from './recurrenceParser.js';
-import { displayComplexity, shortComplexity } from './complexityTypes.js';
+import {
+  polylog,
+  loglog,
+  akraLevelSum,
+  fractionOfN,
+  multiplyFraction,
+  exponential,
+  compareGrowth,
+  formatGrowth,
+  growthToKey,
+  theta,
+  bigO,
+  num,
+  renderF,
+  scaleBy,
+  arg,
+  divideLevelSum,
+  sumSubtractSeries,
+  dominantRoot,
+} from './recurrenceMath.js';
+import {
+  divideWorking,
+  chainWorking,
+  exponentialWorking,
+  akraWorking,
+  sqrtWorking,
+} from './recurrenceWorking.js';
+import {
+  layoutTree,
+  collectEdges,
+  normalize,
+  boundsOf,
+  nodesAtDepth,
+  measureNode,
+  textWidth,
+  LEVEL_HEIGHT,
+  NODE_H,
+} from './recurrenceTreeLayout.js';
 
-// Re-export substitution method from separate file
 export { solveBySubstitution } from './recurrenceSubstitution.js';
 
+export const BREADTH_BUDGET = 16;
+
 /**
- * Apply Master Theorem to divide-type recurrence
- * @param {number} a - Number of subproblems
- * @param {number} b - Factor by which problem size is divided
- * @param {string} fComplexity - Complexity of f(n)
- * @param {Array} steps - Steps array to append to
- * @returns {string} Final complexity
+ * How many levels to draw. A level is only worth drawing if it can be drawn in
+ * full: a partly expanded level leaves one subtree far from its siblings and
+ * reads as a layout bug rather than as elision. Beyond this the dots row and
+ * the annotation column carry the pattern instead.
  */
-function applyMasterTheorem(a, b, fComplexity, steps) {
-  const logba = Math.log(a) / Math.log(b);
-  const fExponent = {
-    '1': 0,
-    'log_n': 0.05,
-    'sqrt_n': 0.5,
-    'n': 1,
-    'n_log_n': 1.05,
-    'n2': 2,
-    'n3': 3
-  }[fComplexity] ?? 1;
-
-  steps.push({ text: `a=${a}, b=${b}, f(n)=O(${fComplexity})`, type: 'info', indent: 0 });
-  steps.push({ text: `log_${b}(${a}) = ${logba.toFixed(2)}`, type: 'special', indent: 0 });
-
-  if (Math.abs(fExponent - logba) < 0.1) {
-    // Case 2: f(n) = Θ(n^log_b(a)) → multiply by log n
-    const base = exponentToComplexity(logba);
-    const result = addLogFactor(base);
-    steps.push({ text: `Case 2: f(n) = Θ(n^log_b(a)) → multiply by log n`, type: 'special', indent: 0 });
-    return result;
-  } else if (fExponent > logba) {
-    // Case 3: root work dominates (f(n) grows faster)
-    steps.push({ text: `Case 3: f(n) grows faster than n^log_b(a) → O(f(n))`, type: 'special', indent: 0 });
-    return fComplexity;
-  } else {
-    // Case 1: leaf work dominates (f(n) grows slower)
-    const result = exponentToComplexity(logba);
-    steps.push({ text: `Case 1: f(n) grows slower than n^log_b(a) → O(n^${logba.toFixed(2)})`, type: 'special', indent: 0 });
-    return result;
-  }
-}
+const levelsFor = branching => (branching <= 3 ? 3 : 2);
+const SUBSCRIPT = { 0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉' };
+const sub = v => String(v).split('').map(c => SUBSCRIPT[c] ?? c).join('');
+const logOf = (b, x = 'n') => `log${sub(num(b))}(${x})`;
 
 /**
- * Convert exponent to complexity string
- * @param {number} exp - Exponent value
- * @returns {string} Complexity string
- */
-function exponentToComplexity(exp) {
-  if (exp < 0.1) return '1';
-  if (Math.abs(exp - 0.5) < 0.1) return 'sqrt_n';
-  if (Math.abs(exp - 1) < 0.1) return 'n';
-  if (Math.abs(exp - 2) < 0.1) return 'n2';
-  if (Math.abs(exp - 3) < 0.1) return 'n3';
-  return 'n';
-}
-
-/**
- * Add log factor to complexity
- * @param {string} complexity - Base complexity
- * @returns {string} Complexity with log factor
- */
-function addLogFactor(complexity) {
-  const map = {
-    '1': 'log_n',
-    'sqrt_n': 'sqrt_n_log_n',
-    'n': 'n_log_n',
-    'n2': 'n2_log_n',
-    'n3': 'n3_log_n'
-  };
-  return map[complexity] ?? complexity;
-}
-
-/**
- * Solve recurrence using the tree method
- * @param {Object} parsed - Parsed recurrence object from parseRecurrence
- * @returns {Object} { tree, steps, finalComplexity }
+ * @param {Object} parsed output of parseRecurrence
+ * @returns {{ tree: Object, steps: Array, finalComplexity: string, finalLabel: string }}
  */
 export function solveByTree(parsed) {
-  if (parsed.error) {
-    return {
-      tree: { nodes: [], edges: [] },
-      steps: [{ text: `Error: ${parsed.error}`, type: 'info' }],
-      finalComplexity: 'unknown',
-    };
-  }
-
-  if (parsed.type === 'subtract') {
-    return solveSubtractTree(parsed);
-  } else if (parsed.type === 'divide') {
-    return solveDivideTree(parsed);
-  } else {
-    return {
-      tree: { nodes: [], edges: [] },
-      steps: [{ text: 'Unsupported recurrence type', type: 'info' }],
-      finalComplexity: 'unknown',
-    };
+  if (!parsed || parsed.error) return failure(parsed?.error ?? 'No recurrence to solve');
+  switch (parsed.type) {
+    case 'divide':
+      return divideTree(parsed);
+    case 'subtract':
+      return chainTree(parsed);
+    case 'linear':
+      return branchingTree(parsed);
+    case 'akra':
+      return akraTree(parsed);
+    case 'sqrt':
+      return sqrtTree(parsed);
+    default:
+      return failure(`Unsupported recurrence type "${parsed.type}"`);
   }
 }
 
-/**
- * Solve subtract-type recurrence: T(n) = T(n-c) + f(n)
- */
-function solveSubtractTree(parsed) {
-  const { a, b, f, fComplexity } = parsed;
-  
-  // Build tree nodes with right-leaning chain layout
-  const nodes = [];
-  const edges = [];
-  
-  // Constants for layout
-  const LEVEL_HEIGHT = 70;
-  const X_SHIFT_RIGHT = 105;
-  const X_LEAF_OFFSET = 115;
-  const START_X = 165;
-  const START_Y = 55;
-  
-  // Level 0: T(n)
-  nodes.push({ id: 'n0', label: 'T(n)', type: 'recursive', x: START_X, y: START_Y, level: 0 });
-  nodes.push({ id: 'l0', label: f, type: 'leaf', x: START_X - X_LEAF_OFFSET, y: START_Y + LEVEL_HEIGHT, level: 0 });
-  edges.push({ from: 'n0', to: 'l0' });
-  
-  // Level 1: T(n-1)
-  const x1 = START_X + X_SHIFT_RIGHT;
-  const y1 = START_Y + LEVEL_HEIGHT;
-  nodes.push({ id: 'n1', label: `T(n−${b})`, type: 'recursive', x: x1, y: y1, level: 1 });
-  nodes.push({ id: 'l1', label: f.replace(/n/g, `n−${b}`), type: 'leaf', x: x1 - X_LEAF_OFFSET, y: y1 + LEVEL_HEIGHT, level: 1 });
-  edges.push({ from: 'n0', to: 'n1' });
-  edges.push({ from: 'n1', to: 'l1' });
-  
-  // Level 2: T(n-2)
-  const x2 = x1 + X_SHIFT_RIGHT;
-  const y2 = y1 + LEVEL_HEIGHT;
-  nodes.push({ id: 'n2', label: `T(n−${b * 2})`, type: 'recursive', x: x2, y: y2, level: 2 });
-  nodes.push({ id: 'l2', label: f.replace(/n/g, `n−${b * 2}`), type: 'leaf', x: x2 - X_LEAF_OFFSET, y: y2 + LEVEL_HEIGHT, level: 2 });
-  edges.push({ from: 'n1', to: 'n2' });
-  edges.push({ from: 'n2', to: 'l2' });
-  
-  // Level 3: T(n-3)
-  const x3 = x2 + 80;
-  const y3 = y2 + LEVEL_HEIGHT;
-  nodes.push({ id: 'n3', label: `T(n−${b * 3})`, type: 'recursive', x: x3, y: y3, level: 3 });
-  edges.push({ from: 'n2', to: 'n3' });
-  
-  // Dots
-  const dotsY = y3 + 52;
-  nodes.push({ id: 'dots1', type: 'dots', x: x3, y: dotsY });
-  nodes.push({ id: 'dots2', type: 'dots', x: x3, y: dotsY + 16 });
-  nodes.push({ id: 'dots3', type: 'dots', x: x3, y: dotsY + 32 });
-  
-  // Base cases: T(2), T(1), T(0)
-  const xEnd2 = x3;
-  const yEnd2 = dotsY + 73;
-  nodes.push({ id: 'n_end2', label: 'T(2)', type: 'recursive', x: xEnd2, y: yEnd2 });
-  nodes.push({ id: 'l_end2', label: f.replace(/n/g, '2'), type: 'leaf', x: xEnd2 - X_LEAF_OFFSET, y: yEnd2 + LEVEL_HEIGHT });
-  edges.push({ from: 'n_end2', to: 'l_end2' });
-  
-  const xEnd1 = xEnd2 + 55;
-  const yEnd1 = yEnd2 + LEVEL_HEIGHT;
-  nodes.push({ id: 'n_end1', label: 'T(1)', type: 'recursive', x: xEnd1, y: yEnd1 });
-  nodes.push({ id: 'l_end1', label: f.replace(/n/g, '1'), type: 'leaf', x: xEnd1 - X_LEAF_OFFSET, y: yEnd1 + LEVEL_HEIGHT });
-  edges.push({ from: 'n_end2', to: 'n_end1' });
-  edges.push({ from: 'n_end1', to: 'l_end1' });
-  
-  const xBase = xEnd1 + 45;
-  const yBase = yEnd1 + LEVEL_HEIGHT;
-  nodes.push({ id: 'n_base', label: 'T(0)', type: 'base', x: xBase, y: yBase });
-  edges.push({ from: 'n_end1', to: 'n_base' });
-  
-  // Collect leaf terms for summation
-  const leafTerms = collectSubtractLeafTerms(f, fComplexity);
-  
-  // Identify summation pattern
-  const identity = identifySummation(leafTerms);
-  
-  // Build steps
-  const steps = buildSubtractSteps(parsed, f, identity);
-  
-  const finalComplexity = identity ? identity.complexity : fComplexity;
-  
-  return { tree: { nodes, edges }, steps, finalComplexity };
-}
-
-/**
- * Solve divide-type recurrence: T(n) = aT(n/b) + f(n)
- */
-function solveDivideTree(parsed) {
-  const { a, b, f, fComplexity } = parsed;
-  
-  const nodes = [];
-  const edges = [];
-  const levelCosts = [];
-  
-  const SVG_WIDTH = 800;
-  const LEVELS_SHOWN = 3;
-  const LEVEL_HEIGHT = 120;
-  
-  // Helper function to calculate x position for node i at level k
-  const getNodeX = (level, index) => {
-    const nodesAtLevel = Math.pow(a, level);
-    return (2 * index + 1) * SVG_WIDTH / (2 * nodesAtLevel);
+function failure(message) {
+  return {
+    tree: null,
+    steps: [{ text: message, type: 'worst_case' }],
+    finalComplexity: 'unknown',
+    finalLabel: 'not solved',
+    error: message,
   };
-  
-  // Level 0: root
-  const level0Y = 60;
-  nodes.push({ 
-    id: 'n0', 
-    label: 'T(n)', 
-    type: 'recursive', 
-    x: getNodeX(0, 0), 
-    y: level0Y, 
-    level: 0 
+}
+
+// ---------------------------------------------------------------------------
+// Divide and conquer: T(n) = a·T(n/b) + f(n)
+// ---------------------------------------------------------------------------
+
+function divideTree(parsed) {
+  const { a, b, fTerms } = parsed;
+  const analysis = divideLevelSum(a, b, fTerms);
+  const levelsShown = levelsFor(a);
+
+  // With a = 1 there is one call per level, so the recursion is a path and the
+  // work has to be drawn as a branch for the tree to have any shape at all.
+  // With a >= 2 the recursive fan-out already provides the shape, and the cost
+  // stays in the annotation column rather than multiplying the width by a + 1.
+  const isChain = Math.abs(a - 1) < 1e-9;
+  const sizeLabel = depth => (depth === 0 ? 'T(n)' : `T(n/${num(Math.pow(b, depth))})`);
+  const levelArg = k => (k === 0 ? arg.symbol('n') : arg.over('n', num(Math.pow(b, k))));
+
+  const root = isChain
+    ? buildChainSpecs(levelsShown, sizeLabel, depth => renderF(fTerms, levelArg(depth)))
+    : buildBranchingSpecs({
+        levelsShown,
+        rootState: { depth: 0 },
+        expand: s => Array.from({ length: Math.round(a) }, () => ({ depth: s.depth + 1 })),
+        labelOf: s => sizeLabel(s.depth),
+      });
+
+  const annotations = [];
+  if (!isChain) {
+    for (let k = 0; k < levelsShown; k++) {
+      const count = Math.round(Math.pow(a, k));
+      annotations.push({
+        depth: k,
+        countText: `${count} × ${renderF(fTerms, levelArg(k))}`,
+        costText: divideLevelCost(parsed, k),
+      });
+    }
+  }
+
+  const leafCount = formatGrowth(polylog(analysis.logba, 0));
+  const leafNote = leafCount === '1' ? '1 leaf' : `${leafCount} leaves`;
+  const tree = assemble({
+    root,
+    annotations,
+    baseLabel: 'T(1)',
+    baseNote: leafNote,
+    derivation: derivationLines(parsed, analysis),
   });
-  levelCosts.push({ level: 0, label: f, y: level0Y });
-  
-  // Level 1: a children
-  const level1Y = level0Y + LEVEL_HEIGHT;
-  for (let i = 0; i < a; i++) {
-    const x = getNodeX(1, i);
-    const nodeId = `n1_${i}`;
-    nodes.push({ 
-      id: nodeId, 
-      label: `T(n/${b})`, 
-      type: 'recursive', 
-      x, 
-      y: level1Y, 
-      level: 1 
-    });
-    edges.push({ from: 'n0', to: nodeId });
+
+  return {
+    tree,
+    steps: divideSteps(parsed, analysis),
+    finalComplexity: growthToKey(analysis.growth),
+    finalLabel: bigO(analysis.growth),
+    growth: analysis.growth,
+  };
+}
+
+/** "4·(n−2)" for a level of 4 nodes, but just "4" when each costs a constant. */
+function levelCostText(count, fAtLevel) {
+  if (count === 1) return fAtLevel;
+  // count × 1 is just the count, which reads better than "4·1".
+  if (fAtLevel === '1') return String(count);
+  return scaleBy(count, fAtLevel);
+}
+
+/**
+ * Is a cancelled multiplier worth showing as a number? Integers and the simple
+ * fractions read fine (2n, (3/2)n, (1/4)n^2); anything else does not, and
+ * 1/2^100 rounds to a bare "0", which is worse than not cancelling at all.
+ */
+function isCleanMultiplier(m) {
+  if (!Number.isFinite(m) || m === 0) return false;
+  if (Number.isInteger(m)) return Math.abs(m) <= 1e6;
+  // Round(m * den) must be non-zero, or a vanishing multiplier like 1/2^100
+  // "matches" 0/2 and renders as the bare "0" this guard exists to avoid.
+  return [2, 3, 4, 6, 8].some(
+    den => Math.round(m * den) !== 0 && Math.abs(m * den - Math.round(m * den)) < 1e-9
+  );
+}
+
+/** Cost of one whole level: a^k · f(n/b^k), with the powers cancelled. */
+function divideLevelCost(parsed, k) {
+  const { a, b, fTerms, fDominant: d } = parsed;
+  const mult = d.coef * Math.pow(a, k) / Math.pow(b, k * d.exp);
+  const argK = k === 0 ? arg.symbol('n') : arg.over('n', num(Math.pow(b, k)));
+
+  // Fall back to the uncancelled a^k · f(n/b^k), which is exact and shorter.
+  if (!isCleanMultiplier(mult)) {
+    const count = Math.round(Math.pow(a, k));
+    const at = renderF(fTerms, argK);
+    return count === 1 ? at : `${count}·${at}`;
   }
-  levelCosts.push({ level: 1, label: f, y: level1Y });
-  
-  // Level 2: a² children
-  const level2Y = level1Y + LEVEL_HEIGHT;
-  const nodesAtLevel2 = Math.pow(a, 2);
-  for (let i = 0; i < nodesAtLevel2; i++) {
-    const x = getNodeX(2, i);
-    const nodeId = `n2_${i}`;
-    const parentIdx = Math.floor(i / a);
-    nodes.push({ 
-      id: nodeId, 
-      label: `T(n/${b * b})`, 
-      type: 'recursive', 
-      x, 
-      y: level2Y, 
-      level: 2 
-    });
-    edges.push({ from: `n1_${parentIdx}`, to: nodeId });
+
+  const poly = renderF([{ coef: mult, exp: d.exp, logExp: 0 }], arg.symbol('n'));
+  if (Math.abs(d.logExp) < 1e-9) return poly;
+  const logPart = renderF([{ coef: 1, exp: 0, logExp: d.logExp }], argK);
+  return poly === '1' ? logPart : `${poly} ${logPart}`;
+}
+
+/** Compact text for a ratio that may be astronomically small or large. */
+function ratioText(r) {
+  if (r !== 0 && (Math.abs(r) < 0.01 || Math.abs(r) > 1e6)) return r.toExponential(1);
+  return num(r);
+}
+
+function derivationLines(parsed, analysis) {
+  const { a, b } = parsed;
+  const costs = [0, 1, 2].map(k => divideLevelCost(parsed, k));
+  const sum = `${costs.join(' + ')} + …`;
+  if (analysis.caseNum === 2) {
+    return [`Total = ${sum}`, `= ${costs[0]} × (${logOf(b)} + 1)`, `= ${theta(analysis.growth)}`];
   }
-  levelCosts.push({ level: 2, label: f, y: level2Y });
-  
-  // Dots below level 2
-  const dotsY = level2Y + LEVEL_HEIGHT;
-  const centerX = SVG_WIDTH / 2;
-  nodes.push({ id: 'dots1', type: 'dots', x: centerX - 50, y: dotsY });
-  nodes.push({ id: 'dots2', type: 'dots', x: centerX, y: dotsY });
-  nodes.push({ id: 'dots3', type: 'dots', x: centerX + 50, y: dotsY });
-  
-  // Collect terms and identify pattern (no longer used for final complexity)
-  const leafTerms = collectDivideLeafTerms(f, fComplexity, a, b);
-  const identity = identifySummation(leafTerms);
-  
-  // Build steps (Master Theorem is applied inside buildDivideSteps)
-  const steps = buildDivideSteps(parsed, f, a, b, identity);
-  
-  // Extract final complexity from steps
-  const finalStep = steps.find(s => s.type === 'final');
-  const finalComplexity = finalStep ? finalStep.complexity : 'n_log_n';
-  
-  return { 
-    tree: { 
-      nodes, 
-      edges, 
-      levelCosts 
-    }, 
-    steps, 
-    finalComplexity 
+  if (analysis.caseNum === 1) {
+    return [`Total = ${sum}`, `geometric, ratio r = ${ratioText(analysis.ratio)} < 1, so the root dominates`, `= ${theta(analysis.growth)}`];
+  }
+  return [
+    `Total = ${sum}`,
+    `geometric, ratio r = ${ratioText(analysis.ratio)} > 1, so the leaves dominate`,
+    `= ${theta(analysis.growth)}`,
+  ];
+}
+
+function divideSteps(parsed, analysis) {
+  const { a, b, fText, fDominant: d } = parsed;
+  const steps = [];
+  push(steps, `Parsed: ${parsed.original}`, 'info');
+  push(steps, `Divide and conquer: a = ${num(a)} subproblems of size n/${num(b)}, f(n) = ${fText}`, 'info');
+  if (parsed.noWorkTerm) push(steps, 'No additive term given, so f(n) = 1 (constant work per call)', 'info');
+  push(steps, 'Building the recursion tree, level by level:', 'info');
+  divider(steps);
+
+  const levelsShown = levelsFor(a);
+  for (let k = 0; k < levelsShown; k++) {
+    const argK = k === 0 ? arg.symbol('n') : arg.over('n', num(Math.pow(b, k)));
+    const count = Math.round(Math.pow(a, k));
+    push(
+      steps,
+      `Level ${k}: ${count} node${count === 1 ? '' : 's'} × ${renderF(parsed.fTerms, argK)} = ${divideLevelCost(parsed, k)}`,
+      'loop'
+    );
+  }
+  push(steps, '⋮', 'info');
+  push(steps, `Depth: n/b^k = 1 when k = ${logOf(b)}, so the tree has ${logOf(b)} + 1 levels`, 'loop');
+  push(steps, `Leaves: a^${logOf(b)} = ${formatGrowth(polylog(analysis.logba, 0))}, each costing T(1)`, 'loop');
+
+  divider(steps);
+  push(steps, 'Summing the levels:', 'info');
+  pushWorking(steps, divideWorking(parsed, analysis));
+  final(steps, analysis.growth);
+  return steps;
+}
+
+// ---------------------------------------------------------------------------
+// Unequal splits: T(n) = Σ aᵢ·T(bᵢn) + f(n), analysed by Akra-Bazzi
+// ---------------------------------------------------------------------------
+
+/** "T(n)", "T(n/3)", "T(4n/9)": the size after the fractions have multiplied out. */
+const fractionLabel = state => `T(${fractionOfN(state)})`;
+
+const fractionText = part =>
+  part.num == null ? num(part.frac) : `${part.num}/${part.den}`;
+
+function akraTree(parsed) {
+  const { parts, fTerms } = parsed;
+  const analysis = akraLevelSum(parts, fTerms);
+  const branching = parts.reduce((sum, t) => sum + t.coef, 0);
+  const levelsShown = levelsFor(branching);
+
+  const root = buildBranchingSpecs({
+    levelsShown,
+    rootState: { num: 1, den: 1, value: 1 },
+    expand: state => parts.flatMap(part =>
+      Array.from({ length: Math.round(part.coef) }, () => multiplyFraction(state, part))
+    ),
+    labelOf: fractionLabel,
+  });
+
+  const annotations = [];
+  for (let k = 0; k < levelsShown; k++) {
+    const count = Math.round(Math.pow(branching, k));
+    annotations.push({
+      depth: k,
+      countText: `${count} node${count === 1 ? '' : 's'}`,
+      costText: akraLevelCost(parsed, analysis, k),
+    });
+  }
+
+  const tree = assemble({
+    root,
+    annotations,
+    baseLabel: 'T(1)',
+    baseNote: `${formatGrowth(polylog(analysis.p, 0))} leaves`,
+    derivation: akraDerivation(parsed, analysis),
+  });
+
+  return {
+    tree,
+    steps: akraSteps(parsed, analysis),
+    finalComplexity: growthToKey(analysis.growth),
+    finalLabel: bigO(analysis.growth),
+    growth: analysis.growth,
   };
 }
 
 /**
- * Collect leaf terms for subtract-type recurrence
+ * Cost of a whole level. The nodes differ in size, but their total is
+ * f(n)·ρ^k with ρ = Σ aᵢbᵢ^q, which is why ρ decides the whole analysis.
  */
-function collectSubtractLeafTerms(f, fComplexity) {
-  const terms = [];
-  const termShape = fToTermShape(f);
-  
-  // Generate n terms from n down to 1
-  for (let i = 0; i < 5; i++) {
-    terms.push({ ...termShape, arg: i === 0 ? 'n' : `n-${i}` });
-  }
-  
-  return terms;
+function akraLevelCost(parsed, analysis, k) {
+  const mult = Math.pow(analysis.ratio, k);
+  const fAtN = renderF(parsed.fTerms, arg.symbol('n'));
+  if (Math.abs(mult - 1) < 1e-9) return fAtN;
+  if (fAtN === '1') return num(mult);
+  return `${num(mult)}·${fAtN}`;
 }
 
-/**
- * Collect leaf terms for divide-type recurrence
- */
-function collectDivideLeafTerms(f, fComplexity, a, b) {
-  const terms = [];
-  const termShape = fToTermShape(f);
-  
-  // For divide type, check if it's repeated n pattern
-  if (termShape.fn === 'power' && termShape.exponent === 1) {
-    // n repeated log_b(n) times
-    const logLevels = 5; // Approximate
-    for (let i = 0; i < logLevels; i++) {
-      terms.push({ ...termShape, arg: 'n' });
-    }
+/** "(1/3)^p + (2/3)^p = 1" with the actual fractions substituted in. */
+const akraEquation = parts =>
+  parts
+    .map(part => `${part.coef === 1 ? '' : `${num(part.coef)}·`}(${fractionText(part)})^p`)
+    .join(' + ') + ' = 1';
+
+function akraDerivation(parsed, analysis) {
+  const costs = [0, 1, 2].map(k => akraLevelCost(parsed, analysis, k));
+  const lines = [`Total = ${costs.join(' + ')} + …`];
+  lines.push(`${akraEquation(parsed.parts)}  →  p = ${num(analysis.p, 3)}`);
+  if (analysis.caseNum === 2) {
+    lines.push(`ρ = ${num(analysis.ratio)}, so every level costs the same`);
+  } else if (analysis.caseNum === 1) {
+    lines.push(`ρ = ${num(analysis.ratio)} < 1, so the root dominates`);
   } else {
-    // Other patterns
-    for (let i = 0; i < 5; i++) {
-      terms.push({ ...termShape });
-    }
+    lines.push(`ρ = ${num(analysis.ratio)} > 1, so the leaves dominate`);
   }
-  
-  return terms;
+  lines.push(`= ${theta(analysis.growth)}`);
+  return lines;
+}
+
+function akraSteps(parsed, analysis) {
+  const { parts, fText, fDominant: d } = parsed;
+  const branching = parts.reduce((sum, t) => sum + t.coef, 0);
+  const steps = [];
+
+  push(steps, `Parsed: ${parsed.original}`, 'info');
+  push(steps, `Unequal splits: ${parts.map(t => `${t.coef === 1 ? '' : `${num(t.coef)}×`}${fractionText(t)} of n`).join(', ')}`, 'info');
+  push(steps, `f(n) = ${fText}`, 'info');
+  push(steps, 'The subproblems differ in size, so the tree is lopsided and no single', 'info');
+  push(steps, 'ratio a/b^q applies. That is the Akra-Bazzi case.', 'info');
+  divider(steps);
+
+  const levelsShown = levelsFor(branching);
+  for (let k = 0; k < levelsShown; k++) {
+    const count = Math.round(Math.pow(branching, k));
+    push(steps, `Level ${k}: ${count} node${count === 1 ? '' : 's'} of differing sizes, total ${akraLevelCost(parsed, analysis, k)}`, 'loop');
+  }
+  push(steps, '⋮', 'info');
+
+  divider(steps);
+  pushWorking(steps, akraWorking(parsed, analysis));
+  final(steps, analysis.growth);
+  return steps;
+}
+
+// ---------------------------------------------------------------------------
+// Chain: T(n) = T(n − b) + f(n)
+// ---------------------------------------------------------------------------
+
+function chainTree(parsed) {
+  const { b, fTerms } = parsed;
+  const series = sumSubtractSeries(fTerms, b);
+  const levelsShown = 3;
+
+  const costAt = depth => renderF(fTerms, depth === 0 ? arg.symbol('n') : arg.minus('n', b * depth));
+  const root = buildChainSpecs(
+    levelsShown,
+    depth => `T(n${depth === 0 ? '' : `−${b * depth}`})`,
+    costAt
+  );
+
+  // The work is drawn in the tree now, so the annotation column would only
+  // repeat it. One node per level means the level cost is the node cost.
+  const terms = [
+    renderF(fTerms, arg.symbol('n'), { inSum: true }),
+    renderF(fTerms, arg.minus('n', b), { inSum: true }),
+    renderF(fTerms, arg.minus('n', 2 * b), { inSum: true }),
+  ];
+  const derivation = [
+    `Total = ${terms.join(' + ')} + … + ${renderF(fTerms, arg.literal(String(b)))}`,
+    `= ${series.closedText}`,
+    `= ${theta(series.growth)}`,
+  ];
+
+  const tree = assemble({
+    root,
+    annotations: [],
+    baseLabel: 'T(0)',
+    baseNote: b === 1 ? 'n levels' : `n/${b} levels`,
+    derivation,
+  });
+
+  return {
+    tree,
+    steps: chainSteps(parsed, series, terms),
+    finalComplexity: growthToKey(series.growth),
+    finalLabel: bigO(series.growth),
+    growth: series.growth,
+  };
+}
+
+function chainSteps(parsed, series, terms) {
+  const { b, fText } = parsed;
+  const steps = [];
+  push(steps, `Parsed: ${parsed.original}`, 'info');
+  push(steps, `One subproblem per level, size falling by ${b} each time, f(n) = ${fText}`, 'info');
+  push(steps, 'Building the recursion tree, level by level:', 'info');
+  divider(steps);
+
+  for (let k = 0; k < 3; k++) {
+    const argK = k === 0 ? arg.symbol('n') : arg.minus('n', b * k);
+    push(steps, `Level ${k}: 1 node × ${renderF(parsed.fTerms, argK)}`, 'loop');
+  }
+  push(steps, '⋮', 'info');
+  const levels = b === 1 ? 'n' : `n/${b}`;
+  push(steps, `Depth: n − k${b === 1 ? '' : `·${b}`} = 0 when k = ${levels}, so the chain has ${levels} levels`, 'loop');
+
+  divider(steps);
+  push(steps, `Recognised: ${series.name}`, 'info');
+  pushWorking(steps, chainWorking(parsed, series));
+  final(steps, series.growth);
+  return steps;
+}
+
+// ---------------------------------------------------------------------------
+// Branching subtract: T(n) = a·T(n − b) + f(n), and Fibonacci-shaped variants
+// ---------------------------------------------------------------------------
+
+function branchingTree(parsed) {
+  const { recTerms, fTerms, b } = parsed;
+  const rootBase = dominantRoot(recTerms);
+  const growth = exponential(rootBase);
+  const totalBranchFactor = recTerms.reduce((s, t) => s + t.coef, 0);
+  const levelsShown = levelsFor(totalBranchFactor);
+
+  // Each child carries its own accumulated shift, so T(n−1) + T(n−2) expands
+  // into T(n−2), T(n−3) under the first child and T(n−3), T(n−4) under the second.
+  // The shift also fixes the cost label, which is why an uneven recurrence shows
+  // f(n−1) and f(n−2) on the same row rather than one shared level cost.
+  const sizeArg = shift => (shift === 0 ? arg.symbol('n') : arg.minus('n', shift));
+  const root = buildBranchingSpecs({
+    levelsShown,
+    rootState: { shift: 0 },
+    expand: s =>
+      recTerms.flatMap(t =>
+        Array.from({ length: Math.round(t.coef) }, () => ({ shift: s.shift + t.shift }))
+      ),
+    labelOf: s => (s.shift === 0 ? 'T(n)' : `T(n−${s.shift})`),
+    costOf: s => renderF(fTerms, sizeArg(s.shift)),
+  });
+
+  // Several shifts means one row holds several different sizes, which the tree
+  // now shows node by node. Claiming "2 × f(n−1)" for a row that really holds
+  // f(n−1) + f(n−2) would contradict the drawing, so state it as the bound it
+  // is: b is the smallest shift and f grows with n, so f(n−k·b) is the largest
+  // value on the row.
+  const mixedSizes = recTerms.length > 1;
+  const totalBranch = recTerms.reduce((s, t) => s + t.coef, 0);
+  const annotations = [];
+  for (let k = 0; k < levelsShown; k++) {
+    const count = Math.round(Math.pow(totalBranch, k));
+    const fHere = renderF(fTerms, k === 0 ? arg.symbol('n') : arg.minus('n', b * k));
+    const bounded = mixedSizes && k > 0;
+    annotations.push({
+      depth: k,
+      countText: bounded ? `${count} nodes` : `${count} × ${fHere}`,
+      costText: bounded ? `≤ ${levelCostText(count, fHere)}` : levelCostText(count, fHere),
+    });
+  }
+
+  const counts = [0, 1, 2].map(k => Math.round(Math.pow(totalBranch, k)));
+
+  // With one shift the tree is uniform, so the node count really is a plain
+  // geometric series. With several shifts the branches bottom out at different
+  // depths, which is exactly why the base is the characteristic root and not
+  // the branching factor: T(n−1) + T(n−2) grows as φⁿ, not 2ⁿ.
+  const derivation =
+    recTerms.length === 1
+      ? [
+          `Total = ${counts.join(' + ')} + … + ${num(totalBranch)}^${b === 1 ? 'n' : `(n/${b})`}`,
+          `geometric with ratio ${num(totalBranch)}, so the last level dominates`,
+          `= ${theta(growth)}`,
+        ]
+      : [
+          `Node count obeys the same recurrence: N(n) = ${recTerms.map(t => `N(n−${t.shift})`).join(' + ')}`,
+          `branches end at different depths, so the base is the root of x^${Math.max(...recTerms.map(t => t.shift))} = ${recTerms
+            .map(t => `${t.coef === 1 ? '' : num(t.coef)}x^${Math.max(...recTerms.map(u => u.shift)) - t.shift}`)
+            .join(' + ')}`,
+          `= ${theta(growth)}`,
+        ];
+
+  const tree = assemble({
+    root,
+    annotations,
+    baseLabel: 'T(0)',
+    baseNote: `${formatGrowth(growth)} leaves`,
+    derivation,
+  });
+
+  return {
+    tree,
+    steps: branchingSteps(parsed, rootBase, growth, counts),
+    finalComplexity: growthToKey(growth),
+    finalLabel: bigO(growth),
+    growth,
+  };
+}
+
+function branchingSteps(parsed, rootBase, growth, counts) {
+  const { recTerms, fText, b } = parsed;
+  const steps = [];
+  const totalBranch = recTerms.reduce((s, t) => s + t.coef, 0);
+
+  push(steps, `Parsed: ${parsed.original}`, 'info');
+  push(steps, `Each call spawns ${num(totalBranch)} more, and the size only falls by ${b}`, 'info');
+  push(steps, `f(n) = ${fText}`, 'info');
+  divider(steps);
+
+  counts.forEach((count, k) => {
+    push(steps, `Level ${k}: ${count} node${count === 1 ? '' : 's'} × ${fText === '1' ? '1' : renderF(parsed.fTerms, k === 0 ? arg.symbol('n') : arg.minus('n', b * k))}`, 'loop');
+  });
+  push(steps, '⋮', 'info');
+  push(steps, `Depth: ${b === 1 ? 'n' : `n/${b}`} levels before reaching the base case`, 'loop');
+
+  divider(steps);
+  push(steps, 'Summing the levels:', 'info');
+  pushWorking(steps, exponentialWorking(parsed, rootBase, growth));
+  final(steps, growth);
+  return steps;
+}
+
+// ---------------------------------------------------------------------------
+// Root shrink: T(n) = T(√n) + f(n)
+// ---------------------------------------------------------------------------
+
+function sqrtTree(parsed) {
+  const { fTerms, fDominant: d } = parsed;
+  const growth = sqrtGrowth(d);
+  const levelsShown = 3;
+
+  const sqrtArg = k => (k === 0 ? arg.symbol('n') : arg.literal(`n^(1/${Math.pow(2, k)})`, `n^{1/${Math.pow(2, k)}}`));
+  const root = buildChainSpecs(
+    levelsShown,
+    depth => (depth === 0 ? 'T(n)' : `T(n^(1/${Math.pow(2, depth)}))`),
+    depth => renderF(fTerms, sqrtArg(depth))
+  );
+
+  const derivation =
+    d.exp > 1e-9
+      ? [`Total = ${parsed.fText} + ${renderF(fTerms, arg.literal('√n'))} + …`, 'the first term dominates the rest', `= ${theta(growth)}`]
+      : [
+          'Substituting n = 2^m gives S(m) = S(m/2) + f(2^m)',
+          `there are log log n levels, each costing ${d.logExp > 0 ? `log^${num(d.logExp)} n` : 'a constant'}`,
+          `= ${theta(growth)}`,
+        ];
+
+  const tree = assemble({
+    root,
+    annotations: [],
+    baseLabel: 'T(2)',
+    baseNote: 'log log n levels',
+    derivation,
+  });
+
+  return {
+    tree,
+    steps: sqrtSteps(parsed, growth, derivation),
+    finalComplexity: growthToKey(growth),
+    finalLabel: bigO(growth),
+    growth,
+  };
 }
 
 /**
- * Build terminal steps for subtract-type recurrence
+ * Substituting n = 2^m turns T(√n) into S(m/2), a halving recurrence in m,
+ * where f(n) = c·n^p·log^q n becomes c·2^(pm)·m^q.
+ *   p > 0  the work is exponential in m, so the root dominates: Θ(f(n))
+ *   p = 0, q = 0  constant work over log log n levels: Θ(log log n)
+ *   p = 0, q > 0  Σ m^q over halvings is Θ(m^q) = Θ(log^q n)
  */
-function buildSubtractSteps(parsed, f, identity) {
+function sqrtGrowth(d) {
+  if (d.exp > 1e-9) return polylog(d.exp, d.logExp);
+  if (Math.abs(d.logExp) < 1e-9) return loglog();
+  return polylog(0, d.logExp);
+}
+
+function sqrtSteps(parsed, growth, derivation) {
   const steps = [];
-  const { b } = parsed;
-  
-  steps.push({ text: `Parsed: ${parsed.original}`, type: 'info' });
-  steps.push({ text: `Form: subtract type (n−${b}), work per level: ${f}`, type: 'info' });
-  steps.push({ text: 'Building recursion tree...', type: 'info' });
-  steps.push({ text: '', type: 'divider' });
-  
-  steps.push({ text: `Level 0:  ${f}`, type: 'loop' });
-  steps.push({ text: `Level 1:  ${f.replace(/n/g, `n−${b}`)}`, type: 'loop' });
-  steps.push({ text: `Level 2:  ${f.replace(/n/g, `n−${b * 2}`)}`, type: 'loop' });
-  steps.push({ text: '⋮', type: 'info' });
-  steps.push({ text: `Level n−1: ${f.replace(/n/g, '1')}`, type: 'loop' });
-  
-  steps.push({ text: '', type: 'divider' });
-  steps.push({ text: 'Summing all levels:', type: 'info' });
-  steps.push({ text: `${f} + ${f.replace(/n/g, `n−${b}`)} + ... + ${f.replace(/n/g, '2')} + ${f.replace(/n/g, '1')}`, type: 'combine_nested' });
-  
-  if (identity) {
-    steps.push({ text: '', type: 'divider' });
-    steps.push({ text: `Recognized: ${identity.name.toLowerCase()}`, type: 'special' });
-    
-    if (identity.id === 'log_factorial') {
-      steps.push({ text: `= ${f} × ${f.replace(/n/g, 'n−1')} × ... × ${f.replace(/n/g, '2')} × ${f.replace(/n/g, '1')}`, type: 'special' });
-      steps.push({ text: `= ${identity.formula}`, type: 'special' });
-      steps.push({ text: identity.explanation, type: 'special' });
+  push(steps, `Parsed: ${parsed.original}`, 'info');
+  push(steps, `The size is square-rooted each level, f(n) = ${parsed.fText}`, 'info');
+  divider(steps);
+  for (let k = 0; k < 3; k++) {
+    const argK = k === 0 ? arg.symbol('n') : arg.literal(`n^(1/${Math.pow(2, k)})`);
+    push(steps, `Level ${k}: 1 node × ${renderF(parsed.fTerms, argK)}`, 'loop');
+  }
+  push(steps, '⋮', 'info');
+  push(steps, 'Depth: n^(1/2^k) = 2 when k = log log n', 'loop');
+  divider(steps);
+  pushWorking(steps, sqrtWorking(parsed, growth));
+  final(steps, growth);
+  return steps;
+}
+
+// ---------------------------------------------------------------------------
+// Spec building and assembly
+// ---------------------------------------------------------------------------
+
+/**
+ * A chain, where each call branches into the work it does and the one call it
+ * makes. When a = 1 the recursion itself is a path, so the work branch is what
+ * makes the drawing a tree rather than a vertical line. Left child is the cost,
+ * right child continues the recursion, which produces the staircase a lecturer
+ * draws for T(n) = T(n−1) + f(n).
+ *
+ * @param {number} levelsShown how many recursive calls to draw
+ * @param {(depth: number) => string} labelAt   label for the call at a depth
+ * @param {(depth: number) => string} costAt    label for the work at a depth
+ */
+function buildChainSpecs(levelsShown, labelAt, costAt) {
+  const root = { id: 'n0', kind: 'recursive', label: labelAt(0), children: [] };
+  let current = root;
+  for (let depth = 0; depth < levelsShown; depth++) {
+    current.children.push({ id: `c${depth}`, kind: 'cost', label: costAt(depth), children: [] });
+    if (depth < levelsShown - 1) {
+      const kid = { id: `n${depth + 1}`, kind: 'recursive', label: labelAt(depth + 1), children: [] };
+      current.children.push(kid);
+      current = kid;
     } else {
-      steps.push({ text: `= ${identity.formula}`, type: 'special' });
-      steps.push({ text: identity.explanation, type: 'special' });
+      // Where the next call would go. Making it a real sibling of the cost lets
+      // the layout reserve the space, so the "continues" dots cannot be drawn
+      // through the cost box no matter how wide its label is.
+      current.children.push({ id: 'continues', kind: 'continues', label: '', children: [] });
     }
   }
-  
-  steps.push({ text: '─────────────────────────────────', type: 'divider' });
-  const finalComp = identity ? identity.complexity : 'n';
-  steps.push({ text: `FINAL COMPLEXITY: ${displayComplexity(finalComp)}`, type: 'final', complexity: finalComp });
-  
-  return steps;
+  return root;
 }
 
 /**
- * Build terminal steps for divide-type recurrence
+ * A branching tree, expanded breadth-first while the level still fits the
+ * budget. Once it does not, the remaining subtrees collapse into a single
+ * ellipsis node and the level annotation reports the true count.
+ *
+ * Children are derived from their own parent's state rather than from the
+ * depth alone, so T(n−1) + T(n−2) correctly draws T(n−3), T(n−4) under its
+ * second child instead of repeating the first subtree.
+ *
+ * @param {(state: Object) => string} [costOf] when given, every node that gets
+ *   expanded also gets a leftmost cost child holding f at that node's own size.
+ *   That is the sum the tree is being drawn to build, so a lecturer writes it
+ *   into the tree. A node on the last drawn row is not expanded and so gets no
+ *   cost child, because its own work belongs to the part still to come.
  */
-function buildDivideSteps(parsed, f, a, b, identity) {
-  const steps = [];
-  
-  steps.push({ text: `Parsed: ${parsed.original}`, type: 'info' });
-  steps.push({ text: `Divide type: a=${a}, b=${b}, f(n) = ${f}`, type: 'info' });
-  steps.push({ text: 'Building recursion tree...', type: 'info' });
-  steps.push({ text: '', type: 'divider' });
-  
-  steps.push({ text: `Level 0: 1 node  × ${f}     = ${f}`, type: 'loop' });
-  steps.push({ text: `Level 1: ${a} nodes × ${f.replace(/n/g, `n/${b}`)}   = ${f}`, type: 'loop' });
-  steps.push({ text: `Level 2: ${a * a} nodes × ${f.replace(/n/g, `n/${b * b}`)}   = ${f}`, type: 'loop' });
-  steps.push({ text: '⋮', type: 'info' });
-  steps.push({ text: `Height: log₂(n) levels`, type: 'info' });
-  
-  steps.push({ text: '', type: 'divider' });
-  steps.push({ text: 'Applying Master Theorem:', type: 'info' });
-  
-  // Use Master Theorem instead of summation identity
-  const finalComplexity = applyMasterTheorem(a, b, parsed.fComplexity, steps);
-  
-  steps.push({ text: '─────────────────────────────────', type: 'divider' });
-  steps.push({ text: `FINAL COMPLEXITY: ${displayComplexity(finalComplexity)}`, type: 'final', complexity: finalComplexity });
-  
-  return steps;
+function buildBranchingSpecs({ levelsShown, rootState, expand, labelOf, costOf, budget = BREADTH_BUDGET }) {
+  const root = { id: 'n0', kind: 'recursive', label: labelOf(rootState), state: rootState, children: [] };
+  let frontier = [root];
+
+  for (let depth = 1; depth < levelsShown; depth++) {
+    const next = [];
+
+    for (const parent of frontier) {
+      const childStates = expand(parent.state);
+      const room = budget - next.length;
+
+      if (costOf) {
+        parent.children.push({
+          id: `c${parent.id}`,
+          kind: 'cost',
+          label: costOf(parent.state),
+          children: [],
+        });
+      }
+
+      // No room left for a whole sibling group: mark and stop.
+      if (room < 1) {
+        parent.children.push(ellipsis(depth, parent.id));
+        break;
+      }
+      const take = childStates.length <= room ? childStates.length : Math.max(1, room - 1);
+      for (let i = 0; i < take; i++) {
+        const kid = {
+          id: `n${depth}_${next.length}`,
+          kind: 'recursive',
+          label: labelOf(childStates[i]),
+          state: childStates[i],
+          children: [],
+        };
+        parent.children.push(kid);
+        next.push(kid);
+      }
+      if (take < childStates.length) {
+        parent.children.push(ellipsis(depth, parent.id));
+        break;
+      }
+    }
+    if (next.length === 0) break;
+    frontier = next;
+  }
+  return root;
 }
+
+const ellipsis = (depth, parentId) => ({
+  id: `e${depth}_${parentId}`,
+  kind: 'ellipsis',
+  label: '…',
+  children: [],
+});
+
+/**
+ * Position the spec tree, then append the dots, the base-case row, the
+ * per-level annotation column and the derived formula, and compute the
+ * viewBox from the real content rather than a fixed canvas.
+ */
+function assemble({ root, annotations, baseLabel, baseNote, derivation }) {
+  const nodes = layoutTree(root);
+  const edges = collectEdges(root);
+  normalize(nodes, 0);
+
+  const deepest = Math.max(...nodes.map(n => n.depth));
+
+  // The recursion continues from the deepest *call*, not the deepest node: in a
+  // chain the work leaf hangs one level below the last call, and dangling the
+  // dots off it would imply the work recurses.
+  const calls = nodes.filter(n => n.kind === 'recursive');
+  const deepestCallDepth = Math.max(...calls.map(n => n.depth));
+  const lastRow = nodesAtDepth(nodes, deepestCallDepth).filter(n => n.kind === 'recursive');
+
+  // Chains reserve a slot for the call that would come next, so the dots have
+  // somewhere to go that the layout has already kept clear of the cost box.
+  // Branching trees have no such slot and converge on the centre of the row.
+  const slot = nodes.find(n => n.kind === 'continues');
+  const centerX = slot
+    ? slot.x
+    : (Math.min(...lastRow.map(n => n.x)) + Math.max(...lastRow.map(n => n.x))) / 2;
+
+  // Clear the whole drawing, including any cost leaf below the last call.
+  const lastY = Math.max(...nodes.map(n => n.y + n.h / 2)) - NODE_H / 2;
+
+  const dotsY = slot ? slot.y : lastY + 58;
+  const baseY = dotsY + 66;
+  const baseSize = measureNode(baseLabel, 'base');
+  nodes.push({
+    id: 'base',
+    kind: 'base',
+    label: baseLabel,
+    x: centerX,
+    y: baseY,
+    w: baseSize.w,
+    h: baseSize.h,
+    depth: deepest + 1,
+  });
+
+  const tail = {
+    x: centerX,
+    dotsY,
+    toY: baseY - NODE_H / 2,
+    // Branching trees converge one dashed line per still-expanding node. On a
+    // chain the parent-to-slot edge already draws that link.
+    from: slot ? [] : lastRow.map(n => ({ x: n.x, y: n.y + n.h / 2 })),
+  };
+
+  // Annotation column sits clear of the widest node, so it cannot collide.
+  const nodeBounds = boundsOf(nodes);
+  const columnX = nodeBounds.maxX + 52;
+  const placedAnnotations = annotations.map(a => ({
+    ...a,
+    x: columnX,
+    y: a.depth * LEVEL_HEIGHT,
+    countWidth: textWidth(a.countText),
+    costWidth: textWidth(a.costText) + 18,
+  }));
+  const columnGutter = Math.max(0, ...placedAnnotations.map(a => a.countWidth));
+  const baseAnnotation = baseNote
+    ? {
+        depth: deepest + 1,
+        x: columnX,
+        y: baseY,
+        countText: '',
+        costText: baseNote,
+        countWidth: columnGutter,
+        costWidth: textWidth(baseNote) + 18,
+      }
+    : null;
+
+  const allAnnotations = baseAnnotation ? [...placedAnnotations, baseAnnotation] : placedAnnotations;
+  const annotationRight = Math.max(columnX, ...allAnnotations.map(annotationRightEdge));
+
+  const derivationY = baseY + 74;
+  const derivationWidth = Math.max(...derivation.map(textWidth)) + 44;
+  const derivationX = centerX;
+
+  const padding = 26;
+  const minX = Math.min(nodeBounds.minX, derivationX - derivationWidth / 2) - padding;
+  const maxX = Math.max(annotationRight, derivationX + derivationWidth / 2) + padding;
+  const minY = nodeBounds.minY - padding;
+  const maxY = derivationY + 26 * derivation.length + padding;
+
+  return {
+    nodes,
+    edges,
+    tail,
+    annotations: allAnnotations,
+    derivation: { lines: derivation, x: derivationX, y: derivationY, width: derivationWidth },
+    viewBox: { x: minX, y: minY, width: maxX - minX, height: maxY - minY },
+  };
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Right-hand edge of an annotation row. The view lays these out as a count
+ * label, a gap, then the cost box, so the viewBox has to account for all three
+ * or the last box gets clipped.
+ */
+export function annotationRightEdge(a) {
+  return a.x + a.countWidth + 12 + a.costWidth;
+}
+
+function push(steps, text, type) {
+  steps.push({ text, type });
+}
+
+/**
+ * Emit the detailed algebra. Blank lines become dividers so they do not consume
+ * a line number, and lines that introduce a step get the accent colour.
+ */
+function pushWorking(steps, lines) {
+  for (const line of lines) {
+    if (line === '') steps.push({ text: '', type: 'divider' });
+    else if (line.endsWith(':')) steps.push({ text: line, type: 'special' });
+    else steps.push({ text: line, type: 'combine_nested' });
+  }
+}
+
+function divider(steps) {
+  steps.push({ text: '', type: 'divider' });
+}
+
+function final(steps, growth) {
+  steps.push({ text: '─────────────────────────────────', type: 'divider' });
+  steps.push({
+    text: `FINAL COMPLEXITY: ${bigO(growth)}`,
+    type: 'final',
+    complexity: growthToKey(growth),
+    label: bigO(growth),
+  });
+}
+
+export { compareGrowth, formatGrowth, theta };
