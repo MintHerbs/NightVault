@@ -17,7 +17,7 @@ function AppContent() {
   const location = useLocation()
   const { onlineCount } = usePresence()
   const musicPlayerRef = useRef(null)
-  const [isPlaying, setIsPlaying] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(true)
   const [aiState, setAIState] = useState('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const [activeChild, setActiveChild] = useState('btree')
@@ -37,6 +37,24 @@ function AppContent() {
     const t = setTimeout(preloadRoutes, 3000)
     import('./pages/HomeFeedPage')
     return () => clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
+    // Player autoplays muted (browsers block unmuted autoplay). Unmute
+    // as soon as the visitor interacts with the page in any way.
+    const unmuteOnInteraction = () => {
+      musicPlayerRef.current?.unmute()
+      window.removeEventListener('pointerdown', unmuteOnInteraction)
+      window.removeEventListener('keydown', unmuteOnInteraction)
+    }
+
+    window.addEventListener('pointerdown', unmuteOnInteraction)
+    window.addEventListener('keydown', unmuteOnInteraction)
+
+    return () => {
+      window.removeEventListener('pointerdown', unmuteOnInteraction)
+      window.removeEventListener('keydown', unmuteOnInteraction)
+    }
   }, [])
 
   const handlePlayPause = () => {

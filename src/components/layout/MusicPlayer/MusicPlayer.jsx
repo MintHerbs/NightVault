@@ -10,6 +10,9 @@ const MusicPlayer = forwardRef(({ videoId = 'wjJ3-SzxhCk' }, ref) => {
     },
     pause: () => {
       playerRef.current?.pauseVideo()
+    },
+    unmute: () => {
+      playerRef.current?.unMute()
     }
   }))
 
@@ -30,7 +33,9 @@ const MusicPlayer = forwardRef(({ videoId = 'wjJ3-SzxhCk' }, ref) => {
           loop: 1,
           playlist: videoId,
           controls: 0,
-          mute: 0,
+          // Start muted: browsers block unmuted autoplay without prior
+          // user interaction. We unmute on the page's first click/keypress.
+          mute: 1,
           origin: window.location.origin
         },
         events: {
