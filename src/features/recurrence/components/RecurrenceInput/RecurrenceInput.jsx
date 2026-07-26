@@ -9,9 +9,19 @@ import { textToLatex } from '../../../../lib/algo/recurrenceParser'
 import MathSymbolBar from '../MathSymbolBar/MathSymbolBar'
 import styles from './RecurrenceInput.module.css'
 
-function RecurrenceInput({ onSubmit, onAIStateChange }) {
-  const [inputValue, setInputValue] = useState('')
-  const [method, setMethod] = useState('tree')
+/** One per distinct behaviour, so clicking through them shows the whole range. */
+const EXAMPLES = [
+  { label: 'Merge sort', formula: 'T(n) = 2T(n/2) + n' },
+  { label: 'Binary search', formula: 'T(n) = T(n/2) + 1' },
+  { label: 'Quicksort worst case', formula: 'T(n) = T(n-1) + n' },
+  { label: 'Karatsuba', formula: 'T(n) = 3T(n/2) + n' },
+  { label: 'Fibonacci', formula: 'T(n) = T(n-1) + T(n-2)' },
+  { label: 'Median of medians', formula: 'T(n) = T(n/5) + T(7n/10) + n' },
+]
+
+function RecurrenceInput({ onSubmit, onAIStateChange, initialFormula = '', initialMethod = 'tree' }) {
+  const [inputValue, setInputValue] = useState(initialFormula)
+  const [method, setMethod] = useState(initialMethod)
   const [showMethodDropdown, setShowMethodDropdown] = useState(false)
   const textareaRef = useRef(null)
   const hasTriggeredObserving = useRef(false)
@@ -107,6 +117,15 @@ function RecurrenceInput({ onSubmit, onAIStateChange }) {
 
   const hasContent = inputValue.length > 0
 
+  const useExample = formula => {
+    setInputValue(formula)
+    if (!hasTriggeredObserving.current && typeof onAIStateChange === 'function') {
+      onAIStateChange('observing')
+      hasTriggeredObserving.current = true
+    }
+    textareaRef.current?.focus()
+  }
+
   return (
     <div className={styles.wrapper}>
       <div className={`${styles.container} ${hasContent ? styles.expanded : ''}`}>
@@ -156,6 +175,24 @@ function RecurrenceInput({ onSubmit, onAIStateChange }) {
           </div>
         )}
       </div>
+
+      {/* Examples: nothing to type before seeing what the tool does. */}
+      {!hasContent && (
+        <div className={styles.examples}>
+          <span className={styles.examplesLabel}>Try:</span>
+          {EXAMPLES.map(ex => (
+            <button
+              key={ex.formula}
+              type="button"
+              className={styles.exampleChip}
+              onClick={() => useExample(ex.formula)}
+              title={ex.formula}
+            >
+              {ex.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Method selector - below the pill */}
       <div className={styles.methodSelector}>
