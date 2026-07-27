@@ -46,10 +46,42 @@ db/
 | 0014 | `sql/0014_social_rpcs.sql`         | Server-side RPCs (session, rate limit, bot, soft-delete) |
 | 0015 | `sql/0015_social_realtime.sql`     | Realtime publication for social tables                |
 
-The tables these migrations declare already exist in the live Supabase
-project — the migrations were extracted from the live schema so the
-repo finally has a written record. Re-applying them against the live
-project is a no-op.
+> **Correction (2026-07-27, T-067).** The claim that once stood here, that
+> "the migrations were extracted from the live schema so the repo finally has
+> a written record", was false for `0006`-`0015`. Those ten files are **0
+> bytes**. The rows above describe what they were *meant* to contain; none of
+> it was ever written. They are also already recorded in `schema_migrations`
+> with hash `e3b0c44298fc1c14`, the SHA of an empty string, so they cannot be
+> filled in without tripping the runner's drift check.
+>
+> `0028`-`0038` supersede them, transcribed from the deployed project rather
+> than from intent. Treat those as the record; treat the `0006`-`0015` rows
+> above as historical no-ops.
+>
+> The drift is not confined to the social range: prod has `sessions.id` and
+> `messages.session_id` as `uuid`, while `0002` declares TEXT. `0028`
+> reconciles that.
+
+For `0001`-`0005` and `0016`-`0027`, the tables already exist in the live
+Supabase project and re-applying is a no-op.
+
+| id   | file                              | what it creates                                       |
+|------|-----------------------------------|-------------------------------------------------------|
+| 0028 | `sql/0028_reconcile_session_id_types.sql` | `sessions.id` / `messages.session_id` TEXT to uuid, guarded |
+| 0029 | `sql/0029_init_posts.sql`          | `posts` (supersedes 0006)                             |
+| 0030 | `sql/0030_init_post_votes.sql`     | `post_votes` + `sync_post_votes` (supersedes 0007)    |
+| 0031 | `sql/0031_init_post_flags.sql`     | `post_flags`, `flagged_posts_review`, auto-flag trigger (supersedes 0008) |
+| 0032 | `sql/0032_init_comments.sql`       | `comments` + depth trigger (supersedes 0009)          |
+| 0033 | `sql/0033_init_comment_votes.sql`  | `comment_votes` + `sync_comment_votes` (supersedes 0010) |
+| 0034 | `sql/0034_init_polls.sql`          | `polls` + `poll_votes` (supersedes 0011)              |
+| 0035 | `sql/0035_init_rate_limits.sql`    | `rate_limits` + `bot_blacklist` (supersedes 0012)     |
+| 0036 | `sql/0036_social_rls.sql`          | social RLS policies as deployed (supersedes 0013)     |
+| 0037 | `sql/0037_social_rpcs.sql`         | social RPCs as deployed (supersedes 0014)             |
+| 0038 | `sql/0038_social_realtime.sql`     | social realtime publication (supersedes 0015)         |
+| 0039 | `sql/0039_fix_vote_sync_triggers.sql` | **Behaviour change.** Vote-count sync triggers fire on UPDATE and run SECURITY DEFINER; backfills drifted counts |
+
+`0028`-`0038` are transcriptions and are no-ops against production.
+`0039` is the only one in the range that changes anything there.
 
 ## Applying migrations
 

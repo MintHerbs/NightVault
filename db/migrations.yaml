@@ -19,7 +19,7 @@
 # See db/README.md for how to apply migrations against a Supabase project.
 
 project: b-tree
-schema_version: 27
+schema_version: 41
 
 migrations:
   - id: "0001"
@@ -237,3 +237,115 @@ migrations:
     created: 2026-07-25
     applied_envs: ["prod"]
     related_issues: ["T-053", "E-001"]
+
+  - id: "0028"
+    file: sql/0028_reconcile_session_id_types.sql
+    description: "T-067 prerequisite. Converts sessions.id and messages.session_id from TEXT to uuid, guarded on the current type so it is a no-op against prod (already uuid) and a one-time correction on a fresh database. Needed because every social table's session_id is a uuid FK to sessions(id), which cannot be created against the TEXT column that 0002 declares. Confirms the repo/prod drift is not limited to the empty 0006-0015 stubs."
+    author: agent
+    created: 2026-07-27
+    applied_envs: []
+    related_issues: ["T-067", "E-008"]
+
+  - id: "0029"
+    file: sql/0029_init_posts.sql
+    description: "T-067: supersedes the 0-byte 0006_init_posts.sql. posts table, its three CHECK constraints and three indexes, transcribed from the deployed project on 2026-07-27. Records the denormalised upvotes/downvotes/flag_count columns that 0006's filename never documented. Idempotent no-op against prod."
+    author: agent
+    created: 2026-07-27
+    applied_envs: []
+    related_issues: ["T-067", "E-008"]
+
+  - id: "0030"
+    file: sql/0030_init_post_votes.sql
+    description: "T-067: supersedes the 0-byte 0007_init_post_votes.sql. post_votes, the UNIQUE (post_id, session_id) that the client's onConflict upsert depends on, and sync_post_votes() with its trigger. The trigger is reproduced with its deployed defect (AFTER INSERT OR DELETE, never UPDATE, and not SECURITY DEFINER) so this file stays a faithful record; 0039 fixes it."
+    author: agent
+    created: 2026-07-27
+    applied_envs: []
+    related_issues: ["T-067", "E-008"]
+
+  - id: "0031"
+    file: sql/0031_init_post_flags.sql
+    description: "T-067: supersedes the 0-byte 0008_init_post_flags.sql. post_flags, flagged_posts_review, and handle_post_flag() with its auto-flag-at-10 trigger. Reproduces two deployed defects rather than correcting them: the trigger only ever increments flag_count, and flagged_posts_review has RLS disabled entirely. Both filed as T-069."
+    author: agent
+    created: 2026-07-27
+    applied_envs: []
+    related_issues: ["T-067", "T-069", "E-008"]
+
+  - id: "0032"
+    file: sql/0032_init_comments.sql
+    description: "T-067: supersedes the 0-byte 0009_init_comments.sql. comments, its two CHECK constraints, two indexes, and the check_comment_depth() trigger that enforces the two-level thread the client's buildNestedComments() assumes."
+    author: agent
+    created: 2026-07-27
+    applied_envs: []
+    related_issues: ["T-067", "E-008"]
+
+  - id: "0033"
+    file: sql/0033_init_comment_votes.sql
+    description: "T-067: supersedes the 0-byte 0010_init_comment_votes.sql. comment_votes plus sync_comment_votes() and its trigger, reproduced with the same INSERT-OR-DELETE-only defect as post_votes. Records that prod has no index on comment_id, unlike post_votes."
+    author: agent
+    created: 2026-07-27
+    applied_envs: []
+    related_issues: ["T-067", "E-008"]
+
+  - id: "0034"
+    file: sql/0034_init_polls.sql
+    description: "T-067: supersedes the 0-byte 0011_init_polls.sql. polls and poll_votes. polls.post_id is UNIQUE, which is what lets loadFeedExtras() key pollsByPostId directly."
+    author: agent
+    created: 2026-07-27
+    applied_envs: []
+    related_issues: ["T-067", "E-008"]
+
+  - id: "0035"
+    file: sql/0035_init_rate_limits.sql
+    description: "T-067: supersedes the 0-byte 0012_init_rate_limits.sql. rate_limits (four independent sliding windows) and bot_blacklist."
+    author: agent
+    created: 2026-07-27
+    applied_envs: []
+    related_issues: ["T-067", "E-008"]
+
+  - id: "0036"
+    file: sql/0036_social_rls.sql
+    description: "T-067: supersedes the 0-byte 0013_social_rls.sql. All 21 deployed social RLS policies, transcribed verbatim. DO NOT COPY AS A PATTERN: reproduces three live problems (no UPDATE policy on either vote table, no DELETE policy on post_flags, and every app.session_id predicate being permanently false), all filed as T-069. Deliberately does not enable RLS on flagged_posts_review, because prod has it disabled."
+    author: agent
+    created: 2026-07-27
+    applied_envs: []
+    related_issues: ["T-067", "T-069", "E-008"]
+
+  - id: "0037"
+    file: sql/0037_social_rpcs.sql
+    description: "T-067: supersedes the 0-byte 0014_social_rpcs.sql. set_session_id, check_and_increment_rate_limit, check_bot_blacklist, soft_delete_post, soft_delete_comment, bodies verbatim from prod. Records that set_session_id uses a transaction-local GUC that cannot survive into the next PostgREST request, which is why the ownership policies in 0036 never match."
+    author: agent
+    created: 2026-07-27
+    applied_envs: []
+    related_issues: ["T-067", "T-069", "E-008"]
+
+  - id: "0038"
+    file: sql/0038_social_realtime.sql
+    description: "T-067: supersedes the 0-byte 0015_social_realtime.sql. Adds posts, post_votes, comments, comment_votes and poll_votes to the supabase_realtime publication, matching prod. Documents that every one is at DEFAULT replica identity, which is the constraint T-064's vote handlers work around, and that the local dev seed publishes only posts."
+    author: agent
+    created: 2026-07-27
+    applied_envs: []
+    related_issues: ["T-067", "T-064", "E-008"]
+
+  - id: "0039"
+    file: sql/0039_fix_vote_sync_triggers.sql
+    description: "T-068. FIRST MIGRATION IN THIS RANGE THAT CHANGES BEHAVIOUR. Fixes two independent defects that each alone made posts.upvotes/downvotes permanently wrong: the sync triggers never fired on UPDATE (the client switches a vote via an upsert, which is an UPDATE), and the sync functions were not SECURITY DEFINER, so their 'update posts' ran as anon against an always-false RLS policy and silently affected zero rows. Adds OR UPDATE, makes both functions SECURITY DEFINER with a pinned search_path (also clearing advisor lint 0011), and backfills every drifted row. Verified 2026-07-27: 2 of 2 vote rows had stored counts of 0 against real counts of 1."
+    author: agent
+    created: 2026-07-27
+    applied_envs: ["prod"]
+    related_issues: ["T-068", "E-008"]
+
+  - id: "0040"
+    file: sql/0040_fix_post_flag_trigger.sql
+    description: "T-068 follow-on, third instance of the 0039 defect. handle_post_flag() was not SECURITY DEFINER, so its 'update posts set flag_count' ran as anon against the always-false update_own_posts policy and matched zero rows: flagging has never incremented flag_count, set is_flagged, or reached the >=10 moderation branch. Makes it SECURITY DEFINER with a pinned search_path, backfills flag_count from post_flags, and enables RLS on flagged_posts_review (advisor lint 0013, ERROR; no client references it and the service role bypasses RLS). Does NOT touch the T-069 ownership-policy problem. NOT YET APPLIED - refused by the local permission classifier."
+    author: agent
+    created: 2026-07-27
+    applied_envs: []
+    related_issues: ["T-068", "T-069", "E-008"]
+
+  - id: "0041"
+    file: sql/0041_social_write_rpcs.sql
+    description: "T-069: vote_post, vote_comment, flag_post and update_own_post as SECURITY DEFINER RPCs that filter on the caller's claimed session_id internally, extending the pattern soft_delete_post already uses. Fixes vote switching (blocked by the missing UPDATE policy on both vote tables), un-voting and un-flagging (silently zero rows, since delete_own_votes can never match and post_flags has no DELETE policy), and post editing. Chosen over relaxing the policies to USING (true), which would have handed anon a blanket DELETE on every vote row. Also ensures a sessions row exists, closing a latent FK violation for a visitor who votes before posting. NOT YET APPLIED - refused by the local permission classifier. MUST be applied before any frontend change that calls these RPCs."
+    author: agent
+    created: 2026-07-27
+    applied_envs: []
+    related_issues: ["T-069", "T-064", "E-008"]
