@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import Starfield from '../components/effects/Starfield/Starfield'
 import PostComposer from '../components/social/PostComposer/PostComposer'
@@ -75,13 +75,14 @@ export default function HomeFeedPage({ onAIStateChange }) {
   const {
     posts,
     isLoading,
+    userVotes,
+    userFlags,
     createPost,
     updatePost,
     deletePost,
     votePost,
+    votePoll,
     flagPost,
-    getUserVote,
-    hasUserFlagged,
   } = usePosts()
 
   useEffect(() => {
@@ -104,14 +105,7 @@ export default function HomeFeedPage({ onAIStateChange }) {
     if (!localStorage.getItem('social_onboarded')) setShowCarousel(true)
   }, [])
 
-  const feedPosts = useMemo(() => {
-    return (posts || []).map((p) => ({
-      ...p,
-      userVote: getUserVote?.(p.id),
-      hasFlagged: hasUserFlagged?.(p.id),
-      commentCount: p.comment_count ?? 0,
-    }))
-  }, [getUserVote, hasUserFlagged, posts])
+  const feedPosts = posts || []
 
   return (
     <div className={styles.page}>
@@ -137,17 +131,24 @@ export default function HomeFeedPage({ onAIStateChange }) {
             )}
           </AnimatePresence>
 
-          <AnimatePresence mode="popLayout">
+          {/* Scalar props, not a spread-rebuilt post object: a vote changes only
+              the one post's identity, so React.memo keeps the other cards (and
+              their syntax highlighting) from re-rendering. The handlers below
+              are stable useCallbacks from usePosts for the same reason. */}
+          <AnimatePresence>
             {!isLoading &&
               feedPosts.map((post) => (
                 <PostCard
                   key={post.id}
                   post={post}
                   sessionId={sessionId}
-                  onVote={(postId, voteType) => votePost?.(postId, voteType)}
-                  onFlag={(postId) => flagPost?.(postId)}
-                  onEdit={(postId, data) => updatePost?.(postId, data)}
-                  onDelete={(postId) => deletePost?.(postId)}
+                  userVote={userVotes[post.id] ?? null}
+                  hasFlagged={!!userFlags[post.id]}
+                  onVote={votePost}
+                  onFlag={flagPost}
+                  onEdit={updatePost}
+                  onDelete={deletePost}
+                  onPollVote={votePoll}
                 />
               ))}
           </AnimatePresence>

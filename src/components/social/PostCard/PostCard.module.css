@@ -7,10 +7,12 @@
   margin: 0 16px 12px;
   position: relative;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-  box-shadow: 
+  box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.4),
     inset 0 0 60px rgba(var(--color-accent-rgb), 0.02);
-  will-change: transform;
+  /* No `will-change: transform` here. The card only moves 2px on hover, and
+     promoting 50 of them to permanent compositor layers costs more GPU memory
+     on a phone than the hint ever saves. */
 }
 
 .card:hover {
@@ -379,4 +381,66 @@
   color: #FF5FA2;
   font-weight: 600;
   text-shadow: 0 0 8px rgba(255, 95, 162, 0.4);
+}
+
+/* --breakpoint-sm */
+@media (max-width: 640px) {
+  .card {
+    width: calc(100% - 16px);
+    margin: 0 8px 10px;
+    padding: 14px 14px;
+    border-radius: 14px;
+  }
+
+  /* Hover lift is meaningless on touch and leaves cards stuck in the raised
+     state after a tap. */
+  .card:hover {
+    transform: none;
+  }
+
+  .title {
+    font-size: 1.05rem;
+  }
+
+  /* Long unbroken tokens (URLs, identifiers) were pushing the card wider than
+     the viewport and making the whole page scroll sideways. */
+  .content,
+  .title {
+    overflow-wrap: anywhere;
+  }
+
+  .menu {
+    right: 8px;
+  }
+
+  .readMore {
+    padding: 6px 0;
+    min-height: 32px;
+    align-items: center;
+  }
+
+  .confirm {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .editActions {
+    gap: 10px;
+  }
+
+  .btn {
+    min-height: 40px;
+    padding: 8px 14px;
+  }
+
+  .pollOptionBtn {
+    padding: 12px 14px;
+    font-size: 0.85rem;
+  }
+
+  .barLabel,
+  .barPercent {
+    font-size: 0.82rem;
+  }
 }

@@ -7,6 +7,7 @@ import CodeBlock from '../../social/CodeBlock/CodeBlock'
 import { resolveDraftSrc } from '../../../lib/draftImagePreviews'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../../lib/noteImageSrc'
 import { parseImageTitle, formatImageTitle, MIN_IMAGE_WIDTH } from '../../../lib/noteImageWidth'
+import { normalizeNoteMath } from '../../../lib/noteMath'
 import { YOUTUBE_ID_RE, youtubeThumbnailSrc, youtubeEmbedSrc } from '../../../lib/youtube'
 import { isSafeUrl } from '../../../lib/url'
 import { HEX_COLOR_RE } from '../../../constants/noteColors'
@@ -54,26 +55,6 @@ import styles from './NoteEditor.module.css'
  * of Monaco `executeEdits`.
  */
 const HEADING_LEVEL = { title: 1, subtitle: 2 }
-
-// Strip markdown backslash-escapes that leak into LaTeX when a formula is
-// copied from a markdown-escaped source (e.g. `a\_{11}` → `a_{11}` so it renders
-// as a subscript). Never touches `\\` (a LaTeX row break) or `\{`/`\}`.
-function unescapeMath(body) {
-  return body.replace(/\\([_*#~|])/g, '$1')
-}
-
-// Normalise LaTeX so pasted formulas auto-render. remark-math only knows
-// `$…$` / `$$…$$`, but LaTeX is commonly copied with `\[ … \]` (display) and
-// `\( … \)` (inline) delimiters. Convert them to `$$`/`$` before parsing.
-// Closing delimiters tolerate a missing backslash (`\[ … ]`), which some
-// sources produce.
-function normalizeLatexDelimiters(text) {
-  return text
-    // \[ … \] → $$ … $$   (display)
-    .replace(/\\\[([\s\S]*?)\\?\]/g, (_, body) => `$$\n${unescapeMath(body.trim())}\n$$`)
-    // \( … \) → $ … $     (inline)
-    .replace(/\\\(([\s\S]*?)\\?\)/g, (_, body) => `$${unescapeMath(body.trim())}$`)
-}
 
 // Registers remark-directive on Milkdown's own remark pipeline (the same
 // extension point `remarkPluginsCtx` exposes), giving the parser generic
@@ -628,7 +609,10 @@ const imageDeleteView = $prose(() => new Plugin({
 // Markdown notes editor we always want pasted text parsed as Markdown, so this
 // replaces the stock plugin:
 //   • paste  → parse text/plain as Markdown (LaTeX, code, headings, lists all
-//              auto-render); code blocks keep raw text.
+//              auto-render); code blocks keep raw text. Bare LaTeX is wrapped
+//              in `$`/`$$` first (lib/noteMath.js) — Milkdown's math plugin,
+//              like remark-math, only typesets delimited maths, so an
+//              undelimited formula would otherwise paste in as plain text.
 //   • copy   → serialise the selection back to Markdown (so copying a formula
 //              yields its `$…$` source).
 const markdownClipboard = $prose((ctx) => new Plugin({
@@ -643,7 +627,7 @@ const markdownClipboard = $prose((ctx) => new Plugin({
       if (!text) return false
       let slice
       try {
-        slice = markdownToSlice(normalizeLatexDelimiters(text))(ctx)
+        slice = markdownToSlice(normalizeNoteMath(text))(ctx)
       } catch {
         return false
       }
@@ -713,13 +697,26 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
 
   // Push external content changes (note load / draft restore / clear) into the
   // editor. Guarded so the editor's own emissions don't re-enter as resets.
+  //
+  // Loaded content goes through the same maths normalisation as a paste, so a
+  // note saved before that existed shows its formulas typeset here and not just
+  // in the reader (which normalises on read). `applyingExternal` swallows the
+  // resulting emission, so this never marks a pristine note unsaved — the
+  // delimiters are written back only once the author actually edits and saves.
+  //
+  // Note *what* is compared: the guard runs on the raw prop, and only the
+  // replaceAll payload is normalised. Comparing the normalised form instead
+  // would re-enter on every keystroke — the prop is the editor's own emission
+  // once the author starts typing, and normalising bare LaTeX they are still
+  // in the middle of typing makes it differ from `lastEmitted`, so each
+  // character would trigger a full document replace and lose the cursor.
   useEffect(() => {
     if (loading) return
     const incoming = content ?? ''
     if (incoming === lastEmitted.current) return
     applyingExternal.current = true
     lastEmitted.current = incoming
-    getInstance()?.action(replaceAll(incoming))
+    getInstance()?.action(replaceAll(normalizeNoteMath(incoming)))
   }, [content, loading, getInstance])
 
   useImperativeHandle(ref, () => ({

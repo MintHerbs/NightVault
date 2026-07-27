@@ -8,8 +8,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: 
-    0 4px 16px rgba(0, 0, 0, 0.6), 
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.6),
     0 0 0 1px rgba(var(--color-accent-rgb), 0.1),
     inset 0 0 60px rgba(var(--color-accent-rgb), 0.02);
   position: relative;
@@ -19,8 +19,8 @@
 
 .composer:focus-within {
   border-color: rgba(var(--color-accent-rgb), 0.45);
-  box-shadow: 
-    0 8px 24px rgba(0, 0, 0, 0.7), 
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.7),
     0 0 0 1px rgba(var(--color-accent-rgb), 0.3),
     inset 0 0 60px rgba(var(--color-accent-rgb), 0.04),
     0 0 30px rgba(var(--color-accent-rgb), 0.2);
@@ -70,6 +70,7 @@
 
 .inputs {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -102,7 +103,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   padding-top: 12px;
   border-top: 1px solid rgba(var(--color-accent-rgb), 0.2);
 }
@@ -110,38 +111,69 @@
 .features {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
+.barRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* M3 toggle chip: outlined at rest, tonal-filled when selected. The previous
+   buttons were bare text that signalled state only through a colour shift and
+   a text-shadow, which read as decoration rather than as a control. */
 .featureBtn {
-  background: transparent;
-  color: var(--color-text-muted);
-  border: 0;
-  padding: 0;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  transition: color 0.15s ease, transform 0.15s ease, text-shadow 0.15s ease;
-  font-size: 0.78rem;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(var(--color-fg-rgb), 0.16);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .featureBtn:hover {
+  background: rgba(var(--color-accent-rgb), 0.08);
+  border-color: rgba(var(--color-accent-rgb), 0.35);
   color: var(--color-accent-bright);
-  text-shadow: 0 0 8px rgba(255, 208, 138, 0.5);
+}
+
+.featureBtn:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
 }
 
 .featureBtnActive {
-  color: var(--color-accent);
+  background: rgba(var(--color-accent-rgb), 0.16);
+  border-color: rgba(var(--color-accent-rgb), 0.55);
+  color: var(--color-accent-bright);
   font-weight: 600;
-  text-shadow: 0 0 8px rgba(var(--color-accent-rgb), 0.5);
+}
+
+.featureBtnActive:hover {
+  background: rgba(var(--color-accent-rgb), 0.22);
+}
+
+.featureLabel {
+  white-space: nowrap;
 }
 
 .charCount {
   font-size: 0.75rem;
   color: var(--md-on-surface-variant);
   letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
 }
 
 .charCountWarn {
@@ -155,36 +187,109 @@
   border-radius: 12px;
   padding: 12px;
   box-shadow: inset 0 0 20px rgba(var(--color-accent-rgb), 0.05);
+  overflow: hidden;
 }
 
-.footer {
-  display: flex;
+.gifPreview {
+  position: relative;
+  align-self: flex-start;
+  max-width: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(var(--color-accent-rgb), 0.3);
+}
+
+.gifPreviewImg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 160px;
+  object-fit: cover;
+}
+
+.gifRemove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
+.gifRemove:hover {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.gifRemove:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.9);
+  outline-offset: 2px;
+}
+
+/* M3 filled button: 40px tall, full-height touch target, icon + label. */
 .postBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 20px;
   background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-bright) 100%);
   color: var(--color-bg);
-  border-radius: 50px;
-  padding: 8px 18px;
-  font-size: 0.82rem;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  font-size: 0.85rem;
   font-weight: 600;
-  transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  letter-spacing: 0.01em;
+  transition: background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   box-shadow: 0 2px 8px rgba(var(--color-accent-rgb), 0.4), 0 0 15px rgba(var(--color-accent-rgb), 0.2);
   position: relative;
   overflow: hidden;
 }
 
+/* Nothing to post yet: drop to low emphasis rather than to `disabled`, so the
+   click still lands and the composer can shake to say why. */
+.postBtnIdle {
+  background: rgba(var(--color-accent-rgb), 0.14);
+  border-color: rgba(var(--color-accent-rgb), 0.3);
+  color: var(--color-accent-bright);
+  box-shadow: none;
+}
+
+.postBtnIdle:hover {
+  background: rgba(var(--color-accent-rgb), 0.22);
+}
+
 .postBtn:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
-.postBtn:not(:disabled):hover {
+.postBtn:not(:disabled):not(.postBtnIdle):hover {
   background: linear-gradient(135deg, var(--color-accent-bright) 0%, var(--color-accent) 100%);
   box-shadow: 0 4px 16px rgba(var(--color-accent-rgb), 0.6), 0 0 25px rgba(var(--color-accent-rgb), 0.3);
+}
+
+.postBtn:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+}
+
+.spinner {
+  animation: composerSpin 0.9s linear infinite;
+}
+
+@keyframes composerSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error {
@@ -200,4 +305,57 @@
   font-weight: 500;
   box-shadow: 0 2px 8px rgba(255, 95, 162, 0.2), 0 0 15px rgba(255, 95, 162, 0.1);
   text-shadow: 0 0 6px rgba(255, 95, 162, 0.3);
+}
+
+/* --breakpoint-sm */
+@media (max-width: 640px) {
+  .composer {
+    width: calc(100% - 16px);
+    margin: 12px 8px 16px;
+    padding: 14px 14px 12px;
+  }
+
+  .row {
+    gap: 10px;
+  }
+
+  /* Chips and the primary action stop competing for one row; the action gets
+     its own full-width line so it clears the 48px touch target. */
+  .bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .features {
+    gap: 8px;
+  }
+
+  .featureBtn {
+    height: 40px;
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    padding: 0 10px;
+  }
+
+  .barRight {
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .postBtn {
+    flex: 1;
+    height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shake {
+    animation: none;
+  }
+
+  .spinner {
+    animation-duration: 2s;
+  }
 }

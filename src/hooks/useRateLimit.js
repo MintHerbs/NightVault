@@ -29,6 +29,45 @@ function getOrCreateSessionId() {
   return sessionId
 }
 
+/**
+ * One blacklist lookup per session id, shared by every hook instance.
+ *
+ * `useRateLimit` is mounted once by the feed page, once inside `usePosts`, and
+ * once inside `useComments`. A `CommentSection` (so a `useComments`) is mounted
+ * for every card in the feed, so a 50-post load fired 52 identical
+ * `bot_blacklist` selects, all asking the same question about the same session
+ * and all guaranteed the same answer. Cached here rather than gated in
+ * `useComments` so that every present and future caller inherits the fix.
+ */
+const blacklistChecks = new Map()
+
+function readBlacklist(sessionId) {
+  const cached = blacklistChecks.get(sessionId)
+  if (cached) return cached
+
+  const pending = supabase
+    .from('bot_blacklist')
+    .select('session_id')
+    .eq('session_id', sessionId)
+    .maybeSingle()
+    .then(({ data, error }) => {
+      // A lookup that failed must not be cached as "not blacklisted" for the
+      // life of the page. Drop it so the next mount retries.
+      if (error) {
+        blacklistChecks.delete(sessionId)
+        return false
+      }
+      return !!data?.session_id
+    })
+    .catch(() => {
+      blacklistChecks.delete(sessionId)
+      return false
+    })
+
+  blacklistChecks.set(sessionId, pending)
+  return pending
+}
+
 export function useRateLimit() {
   const [sessionId, setSessionId] = useState(null)
   const [isBlacklisted, setIsBlacklisted] = useState(false)
@@ -60,6 +99,9 @@ export function useRateLimit() {
             reason: 'post_burst',
           })
           if (blacklistError) console.error('[RateLimit] Failed to upsert bot blacklist:', blacklistError)
+          // The shared cache is holding a `false` from page load; correct it so
+          // instances mounted after this point do not read the stale answer.
+          if (!blacklistError) blacklistChecks.set(sessionId, Promise.resolve(true))
           setIsBlacklisted(true)
         }
 
@@ -74,20 +116,17 @@ export function useRateLimit() {
   }, [sessionId])
 
   useEffect(() => {
+    let isActive = true
     const id = getOrCreateSessionId()
     setSessionId(id)
 
-    const checkBlacklist = async () => {
-      const { data, error } = await supabase
-        .from('bot_blacklist')
-        .select('session_id')
-        .eq('session_id', id)
-        .maybeSingle()
+    readBlacklist(id).then((blacklisted) => {
+      if (isActive && blacklisted) setIsBlacklisted(true)
+    })
 
-      if (!error && data?.session_id) setIsBlacklisted(true)
+    return () => {
+      isActive = false
     }
-
-    checkBlacklist()
   }, [])
 
   const checkLimit = useCallback(

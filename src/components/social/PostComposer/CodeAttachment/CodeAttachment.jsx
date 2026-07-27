@@ -1,10 +1,13 @@
 import { useMemo, useRef, useState } from 'react'
-import { Code2, Copy, Check } from 'lucide-react'
+import { Check, ChevronDown, Copy, Trash2 } from 'lucide-react'
 import { detectCodeLanguage, getLanguageLabel, normalizeLanguage } from '../../../../lib/social/codeHighlighter'
 import styles from './CodeAttachment.module.css'
 
+const MAX_LINES = 1000
+const INDENT = '  '
+
 const LANG_OPTIONS = [
-  { value: 'auto', label: 'Auto Detect' },
+  { value: 'auto', label: 'Auto detect' },
   { value: 'python', label: 'Python' },
   { value: 'javascript', label: 'JavaScript' },
   { value: 'typescript', label: 'TypeScript' },
@@ -17,32 +20,54 @@ const LANG_OPTIONS = [
   { value: 'json', label: 'JSON' },
 ]
 
-function getLineCount(value) {
-  if (!value) return 0
-  return String(value).split('\n').length
-}
-
-function clampToMaxLines(value, maxLines) {
+function clampToMaxLines(value) {
   const lines = String(value ?? '').split('\n')
-  if (lines.length <= maxLines) return String(value ?? '')
-  return lines.slice(0, maxLines).join('\n')
+  if (lines.length <= MAX_LINES) return { text: String(value ?? ''), clamped: false }
+  return { text: lines.slice(0, MAX_LINES).join('\n'), clamped: true }
 }
 
-export default function CodeAttachment({ code, language, onChange }) {
+export default function CodeAttachment({ code, language, onChange, onRemove }) {
   const [copied, setCopied] = useState(false)
+  const [wasClamped, setWasClamped] = useState(false)
   const textareaRef = useRef(null)
-  
-  const lineCount = useMemo(() => getLineCount(code), [code])
-  const normalizedLanguage = normalizeLanguage(language)
+  const gutterRef = useRef(null)
+
+  const normalizedLanguage = normalizeLanguage(language) || 'auto'
   const detectedLanguage = useMemo(() => detectCodeLanguage(code), [code])
+
+  const lineNumbers = useMemo(() => {
+    const count = Math.max(String(code ?? '').split('\n').length, 1)
+    return Array.from({ length: count }, (_, i) => i + 1)
+  }, [code])
 
   const handleLangChange = (e) => {
     onChange(code ?? '', e.target.value)
   }
 
   const handleCodeChange = (e) => {
-    const next = clampToMaxLines(e.target.value, 1000)
-    onChange(next, normalizedLanguage || 'auto')
+    const { text, clamped } = clampToMaxLines(e.target.value)
+    setWasClamped(clamped)
+    onChange(text, normalizedLanguage)
+  }
+
+  /* The gutter is its own non-scrolling element, so it has to be driven from
+     the textarea's scroll position. Without this the numbers sat still while
+     the code moved and stopped matching their lines entirely. */
+  const handleScroll = (e) => {
+    if (gutterRef.current) gutterRef.current.scrollTop = e.currentTarget.scrollTop
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key !== 'Tab' || e.shiftKey) return
+    e.preventDefault()
+    const el = e.currentTarget
+    const { selectionStart, selectionEnd, value } = el
+    const next = `${value.slice(0, selectionStart)}${INDENT}${value.slice(selectionEnd)}`
+    onChange(clampToMaxLines(next).text, normalizedLanguage)
+    requestAnimationFrame(() => {
+      el.selectionStart = selectionStart + INDENT.length
+      el.selectionEnd = selectionStart + INDENT.length
+    })
   }
 
   const handleCopy = async () => {
@@ -56,74 +81,93 @@ export default function CodeAttachment({ code, language, onChange }) {
     }
   }
 
-  const lineNumbers = useMemo(() => {
-    const count = Math.max(lineCount, 1)
-    return Array.from({ length: count }, (_, i) => i + 1)
-  }, [lineCount])
-
   return (
     <div className={styles.wrapper}>
-      {/* Header with language selector and actions */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <Code2 size={16} className={styles.codeIcon} />
-          <select 
-            className={styles.select} 
-            value={normalizedLanguage || 'auto'} 
-            onChange={handleLangChange}
-          >
-            {LANG_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          {/* M3 outlined select. The old one set appearance:none without
+              supplying a chevron, so it did not read as a dropdown at all. */}
+          <div className={styles.selectField}>
+            <select
+              className={styles.select}
+              value={normalizedLanguage}
+              onChange={handleLangChange}
+              aria-label="Code language"
+            >
+              {LANG_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={14} className={styles.selectChevron} aria-hidden="true" />
+          </div>
+
+          {normalizedLanguage === 'auto' && code ? (
+            <span className={styles.detectedChip}>{getLanguageLabel(detectedLanguage)}</span>
+          ) : null}
         </div>
-        
+
         <div className={styles.headerRight}>
-          <span className={styles.info}>
-            {normalizedLanguage === 'auto' 
-              ? `Detected: ${getLanguageLabel(detectedLanguage)}` 
-              : `${lineCount}/1000 lines`}
+          <span className={styles.lineCount}>
+            {lineNumbers.length} {lineNumbers.length === 1 ? 'line' : 'lines'}
           </span>
-          <button 
+
+          <button
             type="button"
-            className={styles.copyBtn} 
+            className={styles.iconBtn}
             onClick={handleCopy}
             disabled={!code}
             title="Copy code"
+            aria-label="Copy code"
           >
-            {copied ? <Check size={14} /> : <Copy size={14} />}
+            {copied ? <Check size={15} /> : <Copy size={15} />}
           </button>
+
+          {onRemove ? (
+            <button
+              type="button"
+              className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+              onClick={onRemove}
+              title="Remove code attachment"
+              aria-label="Remove code attachment"
+            >
+              <Trash2 size={15} />
+            </button>
+          ) : null}
         </div>
       </div>
 
-      {/* Code editor area */}
-      <div className={styles.editorContainer}>
-        <div className={styles.lineNumbers}>
+      <div className={styles.editor}>
+        <div className={styles.gutter} ref={gutterRef} aria-hidden="true">
           {lineNumbers.map((num) => (
-            <div key={num} className={styles.lineNumber}>
+            <div key={num} className={styles.gutterLine}>
               {num}
             </div>
           ))}
         </div>
-        
+
         <textarea
           ref={textareaRef}
           className={styles.textarea}
           value={code || ''}
           onChange={handleCodeChange}
+          onScroll={handleScroll}
+          onKeyDown={handleKeyDown}
           spellCheck={false}
-          placeholder="Paste your code here..."
+          autoCapitalize="off"
+          autoCorrect="off"
+          autoComplete="off"
+          placeholder="Paste or write your code"
+          aria-label="Code"
         />
       </div>
-      
-      {/* Footer hint */}
-      <div className={styles.footer}>
-        <span className={styles.hint}>
-          Syntax highlighting will be applied when posted
-        </span>
-      </div>
+
+      {wasClamped && (
+        <div className={styles.notice} role="status">
+          Trimmed to the first {MAX_LINES} lines.
+        </div>
+      )}
     </div>
   )
 }

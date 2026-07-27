@@ -1,9 +1,8 @@
-import { forwardRef, useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { DotsThreeVertical } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'motion/react'
 import { RippleButton, RippleButtonRipples } from '@/components/animate-ui/primitives/buttons/ripple'
 import AgentAvatar from '../../effects/smoothui/agent-avatar'
-import { supabase } from '../../../lib/supabaseClient'
 import PostActions from '../PostActions/PostActions'
 import CodeBlock from '../CodeBlock/CodeBlock'
 import CommentSection from '../CommentSection/CommentSection'
@@ -33,7 +32,10 @@ function toPercent(value, total) {
   return Math.round((value / total) * 100)
 }
 
-const PostCard = forwardRef(function PostCard({ post, sessionId, onVote, onFlag, onEdit, onDelete }, ref) {
+const PostCard = forwardRef(function PostCard(
+  { post, sessionId, userVote, hasFlagged, onVote, onFlag, onEdit, onDelete, onPollVote },
+  ref
+) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isCodeExpanded, setIsCodeExpanded] = useState(false)
   const [showComments, setShowComments] = useState(false)
@@ -41,10 +43,6 @@ const PostCard = forwardRef(function PostCard({ post, sessionId, onVote, onFlag,
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(post?.content || '')
   const [confirmDelete, setConfirmDelete] = useState(false)
-
-  const [poll, setPoll] = useState(null)
-  const [pollVotes, setPollVotes] = useState([])
-  const [userPollVote, setUserPollVote] = useState(null)
   const [isVotingPoll, setIsVotingPoll] = useState(false)
 
   const menuRef = useRef(null)
@@ -72,9 +70,7 @@ const PostCard = forwardRef(function PostCard({ post, sessionId, onVote, onFlag,
     return getFirstLines(post?.code || '', MAX_CODE_LINES)
   }, [codeLines, isCodeExpanded, post?.code])
 
-  const userVote = post?.userVote ?? post?.user_vote ?? null
-  const hasFlagged = !!(post?.hasFlagged ?? post?.has_flagged)
-  const commentCount = post?.commentCount ?? post?.comment_count ?? 0
+  const commentCount = post?.comment_count ?? 0
 
   useEffect(() => {
     setEditContent(post?.content || '')
@@ -91,75 +87,17 @@ const PostCard = forwardRef(function PostCard({ post, sessionId, onVote, onFlag,
     return () => window.removeEventListener('mousedown', handler)
   }, [menuOpen])
 
-  useEffect(() => {
-    let isActive = true
-
-    const loadPoll = async () => {
-      if (!post?.id) {
-        setPoll(null)
-        return
-      }
-
-      const { data: pollRow } = await supabase.from('polls').select('*').eq('post_id', post.id).maybeSingle()
-      if (!isActive) return
-      if (!pollRow?.id) {
-        setPoll(null)
-        setPollVotes([])
-        setUserPollVote(null)
-        return
-      }
-
-      setPoll(pollRow)
-
-      const [{ data: voteRows }, { data: myVoteRow }] = await Promise.all([
-        supabase.from('poll_votes').select('option_index').eq('poll_id', pollRow.id),
-        sessionId
-          ? supabase.from('poll_votes').select('option_index').eq('poll_id', pollRow.id).eq('session_id', sessionId).maybeSingle()
-          : Promise.resolve({ data: null }),
-      ])
-
-      if (!isActive) return
-      setPollVotes(voteRows || [])
-      setUserPollVote(myVoteRow?.option_index ?? null)
-    }
-
-    loadPoll()
-    return () => {
-      isActive = false
-    }
-  }, [post?.id, sessionId])
-
-  const pollStats = useMemo(() => {
-    if (!poll?.id) return null
-    const options = Array.isArray(poll.options) ? poll.options : []
-    const counts = options.map(() => 0)
-    for (const v of pollVotes) {
-      if (typeof v.option_index !== 'number') continue
-      if (v.option_index < 0 || v.option_index >= counts.length) continue
-      counts[v.option_index] += 1
-    }
-    const total = counts.reduce((a, b) => a + b, 0)
-    return { options, counts, total }
-  }, [poll?.id, poll?.options, pollVotes])
-
+  // Polls arrive with the feed (usePosts batches them). Each card used to run
+  // its own `polls` query on mount, so a 50-post feed issued 50 extra requests
+  // even though most posts have no poll at all.
+  const pollStats = post?.poll ?? null
+  const userPollVote = pollStats?.userOptionIndex ?? null
   const hasVotedPoll = userPollVote != null
 
   const handlePollVote = async (idx) => {
-    if (!poll?.id) return
-    if (!sessionId) return
-    if (hasVotedPoll) return
-    if (isVotingPoll) return
-
+    if (!pollStats?.id || !sessionId || hasVotedPoll || isVotingPoll) return
     setIsVotingPoll(true)
-    const { error } = await supabase
-      .from('poll_votes')
-      .upsert({ poll_id: poll.id, session_id: sessionId, option_index: idx }, { onConflict: 'poll_id,session_id' })
-
-    if (!error) {
-      setUserPollVote(idx)
-      setPollVotes((prev) => [...prev, { option_index: idx }])
-    }
-
+    await onPollVote?.(post.id, pollStats.id, idx)
     setIsVotingPoll(false)
   }
 
@@ -210,7 +148,6 @@ const PostCard = forwardRef(function PostCard({ post, sessionId, onVote, onFlag,
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      layout
     >
       <div className={styles.header}>
         <div className={styles.avatar}>
@@ -466,4 +403,8 @@ const PostCard = forwardRef(function PostCard({ post, sessionId, onVote, onFlag,
   )
 })
 
-export default PostCard
+// Every feed-wide state change (any vote, by anyone) used to re-render all 50
+// cards, and each re-render re-tokenised its whole code block. With stable
+// props from HomeFeedPage this shallow compare keeps that work to the one card
+// that actually changed.
+export default memo(PostCard)

@@ -109,11 +109,27 @@
 .pre {
   margin: 0;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 16px 0;
   background: var(--color-bg);
   font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'SF Mono', Consolas, monospace;
   font-size: 0.875rem;
   line-height: 1.7;
+  tab-size: 2;
+}
+
+/* Lines were `display: table-row` inside a plain inline <code> with no
+   `display: table` ancestor, leaning on the browser's anonymous-table fixup.
+   JSX emits the line spans with no whitespace between them, so wherever that
+   fixup did not hold — mobile especially, and after Framer's `layout` prop put
+   a live transform on an ancestor mid-expand — every line rendered inline and
+   ran together into one long line. Flex rows inside a max-content block need
+   no fixup and behave identically everywhere. */
+.code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
 }
 
 .pre::-webkit-scrollbar {
@@ -137,19 +153,27 @@
 }
 
 .line {
-  display: table-row;
+  display: flex;
+  align-items: flex-start;
   transition: background 0.2s ease;
 }
 
 .line:hover {
   background: rgba(91, 140, 255, 0.05);
-  box-shadow: inset 2px 0 0 #5B8CFF;
 }
 
+/* Sticky so the numbers stay readable while the code scrolls sideways, which
+   is most of the time on a phone. Needs an opaque background to sit over the
+   code it overlaps. */
 .lineNumber {
-  display: table-cell;
-  min-width: 48px;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  flex: none;
+  box-sizing: content-box;
+  min-width: 2ch;
   padding: 0 16px 0 20px;
+  background: var(--color-bg);
   color: var(--color-text-muted);
   text-align: right;
   user-select: none;
@@ -165,11 +189,41 @@
 }
 
 .source {
-  display: table-cell;
+  flex: 1 0 auto;
   padding: 0 20px 0 16px;
   color: var(--color-text);
   white-space: pre;
   font-weight: 400;
+}
+
+@media (max-width: 640px) {
+  .block {
+    margin-top: 12px;
+  }
+
+  .header {
+    padding: 10px 12px;
+  }
+
+  .pre {
+    font-size: 0.78rem;
+    line-height: 1.6;
+    padding: 12px 0;
+  }
+
+  .lineNumber {
+    padding: 0 10px 0 12px;
+  }
+
+  .source {
+    padding: 0 14px 0 10px;
+  }
+
+  /* A 10px-tall bar is not grabbable on a touch screen, and the horizontal
+     scroll is now the primary way to read long lines. */
+  .pre::-webkit-scrollbar {
+    height: 6px;
+  }
 }
 
 /* Cyberpunk Syntax Highlighting Theme */

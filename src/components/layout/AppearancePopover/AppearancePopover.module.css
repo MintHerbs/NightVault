@@ -1,0 +1,137 @@
+/* Material You (M3) popover. Tokens: --md-* in src/styles/global.css (T-062) */
+
+.content {
+  z-index: 70; /* above the sidebar (60) and its mobile drawer overlay (59) */
+  width: 240px;
+  background: var(--md-surface-container-high);
+  border-radius: var(--md-shape-lg);
+  padding: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  color: var(--md-on-surface);
+  font-family: var(--font-body);
+}
+
+.header {
+  padding: 6px 10px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--md-on-surface-variant);
+}
+
+.segmented {
+  display: flex;
+  gap: 4px;
+  background: var(--md-surface-container);
+  border-radius: var(--md-shape-md);
+  padding: 4px;
+}
+
+.segmentButton {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  padding: 6px 0;
+  border: none;
+  border-radius: var(--md-shape-sm);
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.segmentButton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--md-on-surface);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.segmentButton:hover::after {
+  opacity: var(--md-state-hover);
+}
+
+.segmentButton:active::after {
+  opacity: var(--md-state-pressed);
+}
+
+.segmentButtonActive {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+.segmentButtonActive::after {
+  background: var(--md-on-primary-container);
+}
+
+.divider {
+  height: 1px;
+  margin: 8px 4px;
+  background: var(--md-outline-variant);
+}
+
+.swatchList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.swatchRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--md-shape-sm);
+  background: transparent;
+  color: var(--md-on-surface);
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.swatchRow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--md-on-surface);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.swatchRow:hover::after {
+  opacity: var(--md-state-hover);
+}
+
+.swatchRow:active::after {
+  opacity: var(--md-state-pressed);
+}
+
+.swatchDot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.swatchName {
+  flex: 1;
+  font-size: 0.85rem;
+}
+
+.swatchCheck {
+  color: var(--md-primary);
+  flex-shrink: 0;
+}

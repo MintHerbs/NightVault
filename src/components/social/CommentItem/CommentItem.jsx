@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowDown, ArrowUp, Trash } from '@phosphor-icons/react'
 import AgentAvatar from '../../effects/smoothui/agent-avatar'
 import styles from './CommentItem.module.css'
+
+const MAX_REPLY_CHARS = 500
 
 function formatRelativeTime(iso) {
   const ts = new Date(iso).getTime()
@@ -21,6 +23,9 @@ export default function CommentItem({ comment, sessionId, depth, onVote, onReply
   const [showReply, setShowReply] = useState(false)
   const [replyContent, setReplyContent] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isReplying, setIsReplying] = useState(false)
+
+  const replyRef = useRef(null)
 
   const isOwn = comment?.session_id && sessionId && comment.session_id === sessionId
   const timeLabel = useMemo(() => formatRelativeTime(comment?.created_at), [comment?.created_at])
@@ -28,14 +33,36 @@ export default function CommentItem({ comment, sessionId, depth, onVote, onReply
   const userVote = getUserVote?.(comment?.id) ?? null
   const isRemoved = !!comment?.is_deleted
   const replies = Array.isArray(comment?.replies) ? comment.replies : []
+  const canReply = replyContent.trim().length > 0 && !isReplying
+
+  // Matches the auto-grow behaviour of the other two composers; this one was
+  // a fixed rows={3} box that neither shrank nor grew.
+  useEffect(() => {
+    const el = replyRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    const lineHeight = Number.parseFloat(window.getComputedStyle(el).lineHeight || '20') || 20
+    const maxHeight = Math.round(lineHeight * 6 + 20)
+    el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`
+    el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden'
+  }, [replyContent, showReply])
 
   const handlePostReply = async () => {
     const trimmed = String(replyContent || '').trim()
-    if (!trimmed) return
+    if (!trimmed || isReplying) return
+    setIsReplying(true)
     const res = await onReply?.(trimmed, comment.id)
+    setIsReplying(false)
     if (res?.error) return
     setReplyContent('')
     setShowReply(false)
+  }
+
+  const handleReplyKeyDown = (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault()
+      handlePostReply()
+    }
   }
 
   const handleDeleteClick = () => {
@@ -128,19 +155,40 @@ export default function CommentItem({ comment, sessionId, depth, onVote, onReply
         {depth === 0 && showReply && (
           <div className={styles.replyBox}>
             <textarea
+              ref={replyRef}
               className={styles.replyTextarea}
-              placeholder="Write a reply..."
+              placeholder="Write a reply"
               value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value.slice(0, 500))}
-              maxLength={500}
-              rows={3}
+              onChange={(e) => setReplyContent(e.target.value.slice(0, MAX_REPLY_CHARS))}
+              onKeyDown={handleReplyKeyDown}
+              maxLength={MAX_REPLY_CHARS}
+              rows={1}
+              aria-label="Write a reply"
             />
             <div className={styles.replyActions}>
-              <button type="button" className={styles.btn} onClick={() => setShowReply(false)}>
+              {replyContent.length >= 400 && (
+                <span className={styles.charCount}>
+                  {replyContent.length}/{MAX_REPLY_CHARS}
+                </span>
+              )}
+              <button
+                type="button"
+                className={styles.btn}
+                onClick={() => {
+                  setShowReply(false)
+                  setReplyContent('')
+                }}
+                disabled={isReplying}
+              >
                 Cancel
               </button>
-              <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={handlePostReply}>
-                Post reply
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={handlePostReply}
+                disabled={!canReply}
+              >
+                {isReplying ? 'Posting' : 'Reply'}
               </button>
             </div>
           </div>

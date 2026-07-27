@@ -2,14 +2,22 @@
 import { useEffect, useRef } from 'react'
 import ChatBubble from '../ChatBubble/ChatBubble'
 import ChatInput from '../ChatInput/ChatInput'
+import TypingIndicator from '../TypingIndicator/TypingIndicator'
 import Starfield from '../../../../components/effects/Starfield/Starfield'
 import Loading from '../../../../components/ui/Loading'
 import useChat from '../../../../hooks/useChat'
+import useTypingIndicator from '../../../../hooks/useTypingIndicator'
 import styles from './ChatPanel.module.css'
 
 export default function ChatPanel({ isOpen, onClose, sessionId }) {
   const { messages, sendMessage, isLoading } = useChat()
+  const { typingSessions, notifyTyping, notifyStopped } = useTypingIndicator(sessionId)
   const messagesEndRef = useRef(null)
+
+  const handleSend = (content) => {
+    notifyStopped()
+    sendMessage(content)
+  }
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -51,7 +59,8 @@ export default function ChatPanel({ isOpen, onClose, sessionId }) {
 
       {/* Input Area */}
       <div className={styles.inputArea}>
-        <ChatInput onSend={sendMessage} />
+        <TypingIndicator sessionIds={typingSessions} />
+        <ChatInput onSend={handleSend} onTyping={notifyTyping} onIdle={notifyStopped} />
       </div>
     </div>
   )

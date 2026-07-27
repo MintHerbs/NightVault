@@ -1,5 +1,5 @@
 // AgentAvatar component - generates unique deterministic avatar patterns from a seed string
-import { useEffect, useRef } from 'react'
+import { memo, useEffect, useRef } from 'react'
 
 const GRID_SIZE = 6
 
@@ -91,7 +91,7 @@ const generateGrid = (hash) => {
   return grid
 }
 
-export default function AgentAvatar({
+function AgentAvatar({
   seed,
   size = 64,
   animated = true,
@@ -125,6 +125,8 @@ export default function AgentAvatar({
 
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
     let shouldAnimate = animated && !motionQuery.matches
+    let isOnScreen = false
+    let isRunning = false
 
     const draw = (time) => {
       ctx.clearRect(0, 0, size, size)
@@ -218,32 +220,65 @@ export default function AgentAvatar({
       ctx.stroke()
       ctx.restore()
 
-      if (shouldAnimate) {
+      if (shouldAnimate && isOnScreen && !document.hidden) {
         rafRef.current = requestAnimationFrame(draw)
+      } else {
+        isRunning = false
       }
+    }
+
+    // Each frame shadow-blurs GRID_SIZE² rects, and the social feed mounts one
+    // of these per post and per comment. Left unchecked that is dozens of
+    // permanent rAF loops fighting the main thread with the click handlers,
+    // which is a large part of why the feed felt sluggish. Animate only what is
+    // actually on screen, in a visible tab.
+    const start = () => {
+      if (isRunning || !shouldAnimate || !isOnScreen || document.hidden) return
+      isRunning = true
+      rafRef.current = requestAnimationFrame(draw)
+    }
+
+    const stop = () => {
+      isRunning = false
+      cancelAnimationFrame(rafRef.current)
     }
 
     const handleMotionChange = () => {
-      cancelAnimationFrame(rafRef.current)
+      stop()
       shouldAnimate = animated && !motionQuery.matches
-      if (shouldAnimate) {
-        rafRef.current = requestAnimationFrame(draw)
-      } else {
-        draw(0)
-      }
+      if (shouldAnimate) start()
+      else draw(0)
     }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) stop()
+      else start()
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isOnScreen = entry.isIntersecting
+        if (isOnScreen) start()
+        else stop()
+      },
+      // Spin up slightly before the avatar scrolls into view so it is never
+      // caught mid-pause at the edge of the viewport.
+      { rootMargin: '200px' }
+    )
+    observer.observe(canvas)
 
     motionQuery.addEventListener('change', handleMotionChange)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
-    if (shouldAnimate) {
-      rafRef.current = requestAnimationFrame(draw)
-    } else {
-      draw(0)
-    }
+    // Paint a first frame unconditionally; the observer decides whether it
+    // then keeps moving.
+    draw(0)
 
     return () => {
-      cancelAnimationFrame(rafRef.current)
+      stop()
+      observer.disconnect()
       motionQuery.removeEventListener('change', handleMotionChange)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [seed, size, animated])
 
@@ -258,3 +293,5 @@ export default function AgentAvatar({
     />
   )
 }
+
+export default memo(AgentAvatar)

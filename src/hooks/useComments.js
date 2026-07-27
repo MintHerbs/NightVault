@@ -28,21 +28,50 @@ function buildNestedComments(flatComments) {
   }))
 }
 
+/** Apply `fn` to one comment anywhere in the two-level tree, leaving the rest untouched. */
+function mapComment(tree, commentId, fn) {
+  return tree.map((c) => {
+    if (c.id === commentId) return { ...fn(c), replies: c.replies }
+    if (!c.replies?.some((r) => r.id === commentId)) return c
+    return { ...c, replies: c.replies.map((r) => (r.id === commentId ? fn(r) : r)) }
+  })
+}
+
+function adjustVoteCounts(comment, from, to) {
+  let upvotes = comment.upvotes ?? 0
+  let downvotes = comment.downvotes ?? 0
+  if (from === 'up') upvotes -= 1
+  else if (from === 'down') downvotes -= 1
+  if (to === 'up') upvotes += 1
+  else if (to === 'down') downvotes += 1
+  return { ...comment, upvotes: Math.max(0, upvotes), downvotes: Math.max(0, downvotes) }
+}
+
 export function useComments(postId) {
   const [comments, setComments] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [userVotes, setUserVotes] = useState({})
   const channelName = useRef(`comments-${Date.now()}-${Math.random().toString(36).slice(2)}`)
 
+  // Read inside voteComment so its identity stays stable across vote changes,
+  // which keeps the hook's returned object from churning on every vote.
+  // CommentItem itself is not memoised, and CommentSection hands it inline
+  // handlers, so a vote still re-renders the thread; threads are small enough
+  // that this has not been worth changing.
+  const userVotesRef = useRef(userVotes)
+  userVotesRef.current = userVotes
+
   const { checkLimit, recordAction } = useRateLimit()
 
   const fetchComments = useCallback(async () => {
     if (!postId) {
       setComments([])
+      setUserVotes({})
       return
     }
 
     setIsLoading(true)
+    const sessionId = getOrCreateSessionId()
 
     const { data, error } = await supabase
       .from('comments')
@@ -58,55 +87,44 @@ export function useComments(postId) {
     }
 
     const flat = data || []
-    
-    // Fetch vote counts for all comments
     const commentIds = flat.map((c) => c.id).filter(Boolean)
-    let voteCounts = {}
-    
-    if (commentIds.length > 0) {
-      const { data: voteData } = await supabase
-        .from('comment_votes')
-        .select('comment_id, vote_type')
-        .in('comment_id', commentIds)
-      
-      // Count votes for each comment
-      for (const vote of voteData || []) {
-        if (!voteCounts[vote.comment_id]) {
-          voteCounts[vote.comment_id] = { upvotes: 0, downvotes: 0 }
-        }
-        if (vote.vote_type === 'up') {
-          voteCounts[vote.comment_id].upvotes++
-        } else if (vote.vote_type === 'down') {
-          voteCounts[vote.comment_id].downvotes++
-        }
-      }
-    }
-    
-    // Add vote counts to comments
-    const flatWithCounts = flat.map(c => ({
-      ...c,
-      upvotes: voteCounts[c.id]?.upvotes ?? 0,
-      downvotes: voteCounts[c.id]?.downvotes ?? 0
-    }))
-    
-    setComments(buildNestedComments(flatWithCounts))
 
-    const sessionId = getOrCreateSessionId()
+    // One request, one pass. This used to be two `comment_votes` queries: one
+    // for the tallies and a second re-reading the same table filtered to our own
+    // session. Asking for `session_id` up front makes the caller's own vote fall
+    // out of the tallies for free, which is what `loadFeedExtras` does for post
+    // votes.
+    const countsById = {}
+    const nextVotes = {}
 
     if (commentIds.length) {
       const { data: voteRows } = await supabase
         .from('comment_votes')
-        .select('comment_id, vote_type')
-        .eq('session_id', sessionId)
+        .select('comment_id, session_id, vote_type')
         .in('comment_id', commentIds)
 
-      const nextVotes = {}
-      for (const row of voteRows || []) nextVotes[row.comment_id] = row.vote_type
-      setUserVotes(nextVotes)
-    } else {
-      setUserVotes({})
+      for (const row of voteRows || []) {
+        let bucket = countsById[row.comment_id]
+        if (!bucket) {
+          bucket = { upvotes: 0, downvotes: 0 }
+          countsById[row.comment_id] = bucket
+        }
+        if (row.vote_type === 'up') bucket.upvotes += 1
+        else if (row.vote_type === 'down') bucket.downvotes += 1
+        if (row.session_id === sessionId) nextVotes[row.comment_id] = row.vote_type
+      }
     }
 
+    setComments(
+      buildNestedComments(
+        flat.map((c) => ({
+          ...c,
+          upvotes: countsById[c.id]?.upvotes ?? 0,
+          downvotes: countsById[c.id]?.downvotes ?? 0,
+        }))
+      )
+    )
+    setUserVotes(nextVotes)
     setIsLoading(false)
   }, [postId])
 
@@ -188,48 +206,49 @@ export function useComments(postId) {
     [checkLimit, postId, recordAction]
   )
 
-  const voteComment = useCallback(async (commentId, voteType) => {
-    const sessionId = getOrCreateSessionId()
-    if (voteType !== 'up' && voteType !== 'down') return { error: 'Invalid vote type' }
+  /** Move the caller's vote marker and the visible tallies together. */
+  const applyVote = useCallback((commentId, from, to) => {
+    setUserVotes((prev) => {
+      const next = { ...prev }
+      if (to === null) delete next[commentId]
+      else next[commentId] = to
+      return next
+    })
+    setComments((prev) => mapComment(prev, commentId, (c) => adjustVoteCounts(c, from, to)))
+  }, [])
 
-    const currentVote = userVotes[commentId]
-    
-    // If clicking the same vote type, remove the vote
-    if (currentVote === voteType) {
-      const { error } = await supabase
-        .from('comment_votes')
-        .delete()
-        .eq('comment_id', commentId)
-        .eq('session_id', sessionId)
+  const voteComment = useCallback(
+    async (commentId, voteType) => {
+      if (voteType !== 'up' && voteType !== 'down') return { error: 'Invalid vote type' }
+      const sessionId = getOrCreateSessionId()
 
-      if (error) return { error: 'Failed to remove vote' }
-      
-      setUserVotes((prev) => {
-        const next = { ...prev }
-        delete next[commentId]
-        return next
-      })
-      
-      // Refresh comments to update counts
-      fetchComments()
-      return { data: null }
-    }
+      const previousVote = userVotesRef.current[commentId] ?? null
+      const nextVote = previousVote === voteType ? null : voteType
 
-    // Otherwise, upsert the new vote
-    const { error } = await supabase
-      .from('comment_votes')
-      .upsert(
-        { comment_id: commentId, session_id: sessionId, vote_type: voteType },
-        { onConflict: 'comment_id,session_id' }
-      )
+      // Paint first, then write. This used to wait on the write and then call
+      // fetchComments(), which is three more queries, so a single click cost
+      // four round trips before the arrow moved.
+      applyVote(commentId, previousVote, nextVote)
 
-    if (error) return { error: 'Failed to vote' }
-    setUserVotes((prev) => ({ ...prev, [commentId]: voteType }))
-    
-    // Refresh comments to update counts
-    fetchComments()
-    return { data: voteType }
-  }, [userVotes, fetchComments])
+      const { error } =
+        nextVote === null
+          ? await supabase.from('comment_votes').delete().eq('comment_id', commentId).eq('session_id', sessionId)
+          : await supabase
+              .from('comment_votes')
+              .upsert(
+                { comment_id: commentId, session_id: sessionId, vote_type: nextVote },
+                { onConflict: 'comment_id,session_id' }
+              )
+
+      if (error) {
+        applyVote(commentId, nextVote, previousVote)
+        return { error: nextVote === null ? 'Failed to remove vote' : 'Failed to vote' }
+      }
+
+      return { data: nextVote }
+    },
+    [applyVote]
+  )
 
   const deleteComment = useCallback(async (commentId) => {
     await withSession()
@@ -238,12 +257,11 @@ export function useComments(postId) {
       p_session_id: localStorage.getItem('session_id'),
     })
 
-    if (error || !data?.success) throw new Error(data?.error || 'Failed to delete comment')
-    
-    // Refresh comments to show the deleted state
-    fetchComments()
+    if (error || !data?.success) return { error: data?.error || 'Failed to delete comment' }
+
+    // The realtime UPDATE for this row refreshes the thread; nothing to do here.
     return { data: true }
-  }, [fetchComments])
+  }, [])
 
   const getUserCommentVote = useCallback((commentId) => userVotes[commentId] ?? null, [userVotes])
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math'
 import remarkGfm from 'remark-gfm'
@@ -9,6 +9,7 @@ import RichTooltip, { YouTubeIcon, InstagramIcon, LinkedInIcon } from '../ui/smo
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../lib/noteImageSrc'
 import { parseImageTitle } from '../../lib/noteImageWidth'
 import { HEX_COLOR_RE } from '../../constants/noteColors'
+import { normalizeNoteMath, noteHasMath, MATH_DELIMITED_RE } from '../../lib/noteMath'
 import { YOUTUBE_ID_RE, youtubeThumbnailSrc, youtubeEmbedSrc } from '../../lib/youtube'
 import styles from './MarkdownRenderer.module.css'
 
@@ -267,20 +268,11 @@ const markdownComponents = {
 // all. So it's loaded on demand, keyed off the content, instead of being a
 // static import every note pays for.
 //
-// The delimiters here are exactly the ones remark-math recognises, verified
-// against the installed version: `$…$` (inlineMath) and `$$…$$` (math, which
-// may span lines). LaTeX's `\(…\)` / `\[…\]` are deliberately NOT included —
-// remark-math produces no math node for them, so matching them would only
-// fetch KaTeX for content it can't typeset anyway.
-//
-// The test is otherwise deliberately loose: a false positive costs the
+// Whether a note needs it is `noteHasMath` (lib/noteMath.js), which tests the
+// *normalised* content, so a note whose formulas are bare LaTeX still pulls
+// KaTeX in. That test is deliberately loose: a false positive costs the
 // download we used to make unconditionally, while a false negative would show
 // unformatted TeX.
-const MATH_RE = /\$\$[\s\S]*?\$\$|\$[^$\n]+\$/
-
-export function contentHasMath(content) {
-  return MATH_RE.test(String(content || ''))
-}
 
 /** The rehype-katex plugin once loaded, shared across every renderer instance
  * so only the first maths note in a session pays for the chunk. */
@@ -315,7 +307,7 @@ function loadKatex() {
  * hover, so a maths note doesn't spend a round trip on it after opening.
  */
 export function prefetchKatex(content) {
-  if (contentHasMath(content)) loadKatex().catch(() => {})
+  if (noteHasMath(content)) loadKatex().catch(() => {})
 }
 
 /**
@@ -350,8 +342,23 @@ function useKatexPlugin(needed) {
 }
 
 function MarkdownRenderer({ content }) {
-  const parts = splitContentByRichPopovers(content)
-  const needsKatex = contentHasMath(content)
+  // Bare LaTeX (no `$`/`$$` around it) is wrapped before parsing, so a formula
+  // typesets whether or not whoever pasted it included delimiters. Notes saved
+  // before this existed are covered too — the fix is on the read path, so
+  // nothing has to be re-saved. See lib/noteMath.js.
+  //
+  // Split first, normalise second: each part is already parsed by its own
+  // ReactMarkdown below, so per-part is exactly the parse boundary, and it
+  // keeps the normaliser away from the innards of a `<RichPopover />` tag.
+  const parts = useMemo(() => (
+    splitContentByRichPopovers(String(content ?? '')).map((part) => (
+      part.type === 'markdown' ? { ...part, content: normalizeNoteMath(part.content) } : part
+    ))
+  ), [content])
+  const needsKatex = useMemo(
+    () => parts.some((part) => part.type === 'markdown' && MATH_DELIMITED_RE.test(part.content)),
+    [parts],
+  )
   const { plugin: katexPlugin, failed: katexFailed } = useKatexPlugin(needsKatex)
 
   // Rendering maths before KaTeX arrives would flash raw `$\frac{a}{b}$` at

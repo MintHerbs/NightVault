@@ -1,20 +1,36 @@
-.container {
+.wrapper {
   width: min(800px, 90vw);
   margin: 0 auto;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 18px;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  padding: 12px 16px;
+  gap: 6px;
+}
+
+/* One row rather than a column with a reserved action strip: the field grows,
+   the send button stays pinned to the bottom-right of it. */
+.container {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 8px 8px 8px 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.container:focus-within {
+  border-color: rgba(var(--color-accent-rgb), 0.5);
+  box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.14);
 }
 
 .textarea {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   min-height: 22px;
   max-height: 176px;
-  height: auto;
+  /* Padding aligns the first line with the 32px button beside it. */
+  padding: 5px 0;
   overflow-y: hidden;
   resize: none;
   line-height: 22px;
@@ -22,14 +38,16 @@
   border: none;
   outline: none;
   color: var(--color-text);
-  padding: 0;
   font-size: 14px;
   font-family: inherit;
-  transition: height 0.1s ease;
 }
 
 .textarea::placeholder {
   color: var(--md-on-surface-variant);
+}
+
+.textarea:disabled {
+  opacity: 0.6;
 }
 
 .textarea::-webkit-scrollbar {
@@ -45,39 +63,75 @@
   border-radius: 2px;
 }
 
-.bottomRow {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  min-height: 32px;
-}
-
+/* Was hardcoded #ffffff on #e0e0e0 hover, which disappears entirely against
+   the light themes added in T-062. */
 .sendButton {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--color-accent);
   border: none;
   color: var(--color-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
 }
 
-.sendButton:hover {
-  background: #e0e0e0;
+.sendButton:hover:not(:disabled) {
+  background: var(--color-accent-bright);
   transform: scale(1.05);
 }
 
-.sendButton:active {
+.sendButton:active:not(:disabled) {
   transform: scale(0.95);
 }
 
+.sendButton:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.8);
+  outline-offset: 2px;
+}
+
+.sendButton:disabled {
+  background: rgba(var(--color-fg-rgb), 0.12);
+  color: var(--md-on-surface-variant);
+  cursor: default;
+}
+
+.hint {
+  padding: 0 16px;
+  color: var(--md-on-surface-variant);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+/* --breakpoint-md */
 @media (max-width: 768px) {
-  .container {
+  .wrapper {
     width: 95vw;
+  }
+
+  .container {
+    padding: 8px 8px 8px 14px;
+  }
+
+  .sendButton {
+    width: 40px;
+    height: 40px;
+  }
+
+  .textarea {
+    /* 16px keeps iOS Safari from zooming the viewport on focus. */
+    font-size: 16px;
+    padding: 9px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sendButton:hover:not(:disabled),
+  .sendButton:active:not(:disabled) {
+    transform: none;
   }
 }
