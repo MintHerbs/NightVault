@@ -336,16 +336,16 @@ migrations:
 
   - id: "0040"
     file: sql/0040_fix_post_flag_trigger.sql
-    description: "T-068 follow-on, third instance of the 0039 defect. handle_post_flag() was not SECURITY DEFINER, so its 'update posts set flag_count' ran as anon against the always-false update_own_posts policy and matched zero rows: flagging has never incremented flag_count, set is_flagged, or reached the >=10 moderation branch. Makes it SECURITY DEFINER with a pinned search_path, backfills flag_count from post_flags, and enables RLS on flagged_posts_review (advisor lint 0013, ERROR; no client references it and the service role bypasses RLS). Does NOT touch the T-069 ownership-policy problem. NOT YET APPLIED - refused by the local permission classifier."
+    description: "T-068 follow-on, third instance of the 0039 defect. handle_post_flag() was not SECURITY DEFINER, so its 'update posts set flag_count' ran as anon against the always-false update_own_posts policy and matched zero rows: flagging has never incremented flag_count, set is_flagged, or reached the >=10 moderation branch. Makes it SECURITY DEFINER with a pinned search_path, backfills flag_count from post_flags, and enables RLS on flagged_posts_review (advisor lint 0013, ERROR; no client references it and the service role bypasses RLS). Does NOT touch the T-069 ownership-policy problem. Applied to prod 2026-07-27."
     author: agent
     created: 2026-07-27
-    applied_envs: []
+    applied_envs: ["prod"]
     related_issues: ["T-068", "T-069", "E-008"]
 
   - id: "0041"
     file: sql/0041_social_write_rpcs.sql
-    description: "T-069: vote_post, vote_comment, flag_post and update_own_post as SECURITY DEFINER RPCs that filter on the caller's claimed session_id internally, extending the pattern soft_delete_post already uses. Fixes vote switching (blocked by the missing UPDATE policy on both vote tables), un-voting and un-flagging (silently zero rows, since delete_own_votes can never match and post_flags has no DELETE policy), and post editing. Chosen over relaxing the policies to USING (true), which would have handed anon a blanket DELETE on every vote row. Also ensures a sessions row exists, closing a latent FK violation for a visitor who votes before posting. NOT YET APPLIED - refused by the local permission classifier. MUST be applied before any frontend change that calls these RPCs."
+    description: "T-069: vote_post, vote_comment, flag_post and update_own_post as SECURITY DEFINER RPCs that filter on the caller's claimed session_id internally, extending the pattern soft_delete_post already uses. Fixes vote switching (blocked by the missing UPDATE policy on both vote tables), un-voting and un-flagging (silently zero rows, since delete_own_votes can never match and post_flags has no DELETE policy), and post editing. Chosen over relaxing the policies to USING (true), which would have handed anon a blanket DELETE on every vote row. Also ensures a sessions row exists, closing a latent FK violation for a visitor who votes before posting. Applied to prod 2026-07-27 and verified end to end as the anon role: vote, switch, un-vote, flag and unflag all succeed and counts stay in sync."
     author: agent
     created: 2026-07-27
-    applied_envs: []
+    applied_envs: ["prod"]
     related_issues: ["T-069", "T-064", "E-008"]

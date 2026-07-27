@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { supabase, withSession } from '../lib/supabaseClient'
+import { supabase } from '../lib/supabaseClient'
 import { useRateLimit } from './useRateLimit'
 
 const FEED_LIMIT = 50
@@ -410,35 +410,41 @@ export function usePosts() {
   )
 
   const updatePost = useCallback(async (id, data) => {
-    await withSession()
-    const updates = {}
+    const sessionId = getOrCreateSessionId()
+    const patch = {}
 
     if (data?.title !== undefined) {
-      updates.title = data.title != null && String(data.title).trim() !== '' ? stripHtmlTags(data.title).trim() : null
+      patch.title = data.title != null && String(data.title).trim() !== '' ? stripHtmlTags(data.title).trim() : null
     }
 
     if (data?.content !== undefined) {
       const content = stripHtmlTags(data.content).trim()
       if (content.length > 1000) return { error: 'Content too long' }
-      updates.content = content
+      patch.content = content
     }
 
-    if (data?.code !== undefined) updates.code = data.code ?? null
-    if (data?.codeLanguage !== undefined) updates.code_language = data.codeLanguage ?? null
-    if (data?.gifUrl !== undefined) updates.gif_url = data.gifUrl ?? null
+    if (data?.code !== undefined) patch.code = data.code ?? null
+    if (data?.codeLanguage !== undefined) patch.code_language = data.codeLanguage ?? null
+    if (data?.gifUrl !== undefined) patch.gif_url = data.gifUrl ?? null
 
-    updates.is_edited = true
-    updates.updated_at = new Date().toISOString()
+    // Ownership is enforced inside the RPC, which filters on session_id. The
+    // direct `.update()` this replaces could never match a row: the
+    // `update_own_posts` policy reads a transaction-local GUC that no longer
+    // exists by the time the request arrives. See T-069.
+    const { data: res, error } = await supabase.rpc('update_own_post', {
+      p_post_id: id,
+      p_session_id: sessionId,
+      p_patch: patch,
+    })
 
-    const { data: updated, error } = await supabase.from('posts').update(updates).eq('id', id).select('*').single()
-    if (error) return { error: 'Failed to update post' }
+    if (error || !res?.success) return { error: res?.error || 'Failed to update post' }
 
-    setPosts((prev) => prev.map((p) => (p.id === id ? { ...p, ...updated } : p)))
-    return { data: updated }
+    const applied = { ...patch, is_edited: true, updated_at: new Date().toISOString() }
+    setPosts((prev) => prev.map((p) => (p.id === id ? { ...p, ...applied } : p)))
+    return { data: applied }
   }, [])
 
   const deletePost = useCallback(async (id) => {
-    await withSession()
     const { data, error } = await supabase.rpc('soft_delete_post', {
       p_post_id: id,
       p_session_id: localStorage.getItem('session_id'),
@@ -475,14 +481,18 @@ export function usePosts() {
       // already know the current vote from state, so the SELECT is redundant.
       applyVote(postId, previousVote, nextVote)
 
-      const { error } =
-        nextVote === null
-          ? await supabase.from('post_votes').delete().eq('post_id', postId).eq('session_id', sessionId)
-          : await supabase
-              .from('post_votes')
-              .upsert({ post_id: postId, session_id: sessionId, vote_type: nextVote }, { onConflict: 'post_id,session_id' })
+      // Routed through an RPC rather than writing `post_votes` directly.
+      // `post_votes` has no UPDATE policy, so the upsert this replaces errored
+      // outright whenever the write hit a conflict, which is exactly the
+      // up-to-down switch; and `delete_own_votes` could never match, so
+      // removing a vote silently affected zero rows. See T-069.
+      const { data: res, error } = await supabase.rpc('vote_post', {
+        p_post_id: postId,
+        p_session_id: sessionId,
+        p_vote_type: nextVote,
+      })
 
-      if (error) {
+      if (error || !res?.success) {
         applyVote(postId, nextVote, previousVote)
         return { error: nextVote === null ? 'Failed to remove vote' : 'Failed to vote' }
       }
@@ -503,13 +513,17 @@ export function usePosts() {
       return next
     })
 
-    const { error } = wasFlagged
-      ? await supabase.from('post_flags').delete().eq('post_id', postId).eq('session_id', sessionId)
-      : await supabase.from('post_flags').insert({ post_id: postId, session_id: sessionId })
+    // `post_flags` has no DELETE policy at all, so unflagging used to affect
+    // zero rows and report success. The RPC also swallows a double-flag with
+    // ON CONFLICT DO NOTHING, so the duplicate-message sniffing this replaces
+    // is no longer needed. See T-069.
+    const { data: res, error } = await supabase.rpc('flag_post', {
+      p_post_id: postId,
+      p_session_id: sessionId,
+      p_flagged: !wasFlagged,
+    })
 
-    const isDuplicate = !wasFlagged && String(error?.message || '').toLowerCase().includes('duplicate')
-
-    if (error && !isDuplicate) {
+    if (error || !res?.success) {
       setUserFlags((prev) => {
         const next = { ...prev }
         if (wasFlagged) next[postId] = true

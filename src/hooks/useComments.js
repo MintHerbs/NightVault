@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { supabase, withSession } from '../lib/supabaseClient'
+import { supabase } from '../lib/supabaseClient'
 import { useRateLimit } from './useRateLimit'
 
 function getOrCreateSessionId() {
@@ -230,17 +230,16 @@ export function useComments(postId) {
       // four round trips before the arrow moved.
       applyVote(commentId, previousVote, nextVote)
 
-      const { error } =
-        nextVote === null
-          ? await supabase.from('comment_votes').delete().eq('comment_id', commentId).eq('session_id', sessionId)
-          : await supabase
-              .from('comment_votes')
-              .upsert(
-                { comment_id: commentId, session_id: sessionId, vote_type: nextVote },
-                { onConflict: 'comment_id,session_id' }
-              )
+      // Same RLS problem as post votes: `comment_votes` has no UPDATE policy,
+      // so switching a vote errored, and `delete_comment_votes` could never
+      // match, so removing one silently did nothing. See T-069.
+      const { data: res, error } = await supabase.rpc('vote_comment', {
+        p_comment_id: commentId,
+        p_session_id: sessionId,
+        p_vote_type: nextVote,
+      })
 
-      if (error) {
+      if (error || !res?.success) {
         applyVote(commentId, nextVote, previousVote)
         return { error: nextVote === null ? 'Failed to remove vote' : 'Failed to vote' }
       }
@@ -251,7 +250,9 @@ export function useComments(postId) {
   )
 
   const deleteComment = useCallback(async (commentId) => {
-    await withSession()
+    // No withSession() here: soft_delete_comment is SECURITY DEFINER and
+    // filters on p_session_id itself, so the extra round trip only ever set a
+    // transaction-local GUC that the next request could not see. See T-069.
     const { data, error } = await supabase.rpc('soft_delete_comment', {
       p_comment_id: commentId,
       p_session_id: localStorage.getItem('session_id'),

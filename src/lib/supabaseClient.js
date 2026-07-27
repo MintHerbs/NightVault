@@ -59,8 +59,17 @@ export const supabase = isSupabaseConfigured
       removeChannel: () => {},
     }
 
-export async function withSession() {
-  const sessionId = localStorage.getItem('session_id')
-  if (!sessionId) return
-  await supabase.rpc('set_session_id', { p_session_id: sessionId })
-}
+// `withSession()` used to live here, calling the `set_session_id` RPC so that
+// RLS policies could read `current_setting('app.session_id')`. It never worked:
+// the RPC uses `set_config(..., true)`, which is transaction-local, and
+// PostgREST runs every HTTP request in its own transaction, so the value was
+// always gone by the time the next request arrived. Every policy depending on
+// it silently evaluated false, which is why editing a post, switching a vote,
+// un-voting and un-flagging all failed.
+//
+// Ownership is now enforced inside SECURITY DEFINER RPCs that take the session
+// id as a parameter and filter on it (`vote_post`, `vote_comment`,
+// `flag_post`, `update_own_post`, and the pre-existing `soft_delete_*`), so
+// nothing needs the GUC. Removed rather than left in place, because a helper
+// that appears to establish identity but does not is worse than none. See
+// T-069 and db/sql/0041.

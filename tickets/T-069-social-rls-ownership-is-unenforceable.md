@@ -30,11 +30,37 @@ the inert RLS policies can be cleaned up separately.
 not-SECURITY-DEFINER defect as the vote triggers, and rewrites it to recount
 rather than increment so unflagging brings `flag_count` back down.
 
-**Neither is applied.** Both were refused by the local permission classifier.
-The client has deliberately NOT been rewired to call these RPCs yet: doing so
-before the functions exist would turn a broken vote *switch* into a completely
-broken vote *button*. Apply 0040 and 0041 first, then the client change is a
-small follow-up in `votePost`, `flagPost`, `updatePost` and `voteComment`.
+## Applied and verified 2026-07-27
+
+`0040` and `0041` are both applied to production, and the client is rewired.
+
+Verified end to end against the live database **as the `anon` role**, which is
+what the app actually runs as, rather than as a privileged connection that
+would have bypassed the very RLS being tested:
+
+| step | result |
+|---|---|
+| `vote_post(..., 'up')` | `{"success": true, "vote_type": "up"}` |
+| `vote_post(..., 'down')` — the switch that used to error | `{"success": true, "vote_type": "down"}` |
+| stored vs real counts after the switch | 1/1 vs 1/1, `in_sync: true` |
+| `vote_post(..., NULL)` — un-vote | `{"success": true, "vote_type": null}` |
+| `flag_post(..., true)` then `(..., false)` | both `success: true` |
+| `anon` has EXECUTE on all four RPCs | true |
+
+Test session row and all its writes were removed afterwards; the post is back
+to its original 1/0 and the whole table reports zero drift.
+
+Client changes: `votePost`, `flagPost` and `updatePost` in `usePosts.js` and
+`voteComment` in `useComments.js` now call the RPCs instead of writing the
+tables directly. `withSession()` is deleted from `src/lib/supabaseClient.js`,
+with a comment recording why, since nothing needs the GUC any more and a helper
+that appears to establish identity but does not is worse than none.
+
+Remaining, not blocking: the now-inert RLS policies that reference
+`app.session_id` are still on the tables. They are harmless (all writes route
+through SECURITY DEFINER functions) but should be dropped in a cleanup pass so
+nobody reads them as live protection. `set_session_id()` itself is likewise
+still defined and now unused.
 
 ## Summary
 
