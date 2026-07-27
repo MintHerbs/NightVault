@@ -35,6 +35,13 @@ function formatDate(iso) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+// Subject/folder rows have no `updatedAt` of their own — the DB doesn't roll
+// one up from their contents — so the metadata column shows an item count
+// instead of a fabricated date. Only file rows carry a real timestamp.
+function formatCount(n) {
+  return `${n} item${n === 1 ? '' : 's'}`
+}
+
 // Drive-style breadcrumb, read-only: every segment but the last is a link;
 // the last is the current location's plain title. "Home" always behaves as
 // a link (it navigates away, never "here"), so it's just the first segment
@@ -137,14 +144,16 @@ export default function NotesBrowserPage() {
     if (level === 'folders' && activeModule) {
       return [
         ...subfoldersForModule(activeModule).map((name) => ({
-          kind: 'folder', key: name, name, date: null,
+          kind: 'folder', key: name, name,
+          count: filesForFolder(activeModule, name).length,
           onOpen: () => navigate(`/notes-browser/${moduleId}/${encodeURIComponent(name)}`),
         })),
         ...rootFilesForModule(activeModule).map(fileItem),
       ]
     }
     return modules.map((m) => ({
-      kind: 'module', key: m.id, name: m.label, date: null,
+      kind: 'module', key: m.id, name: m.label,
+      count: subfoldersForModule(m).length + rootFilesForModule(m).length,
       onOpen: () => navigate(`/notes-browser/${m.id}`),
     }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -160,12 +169,14 @@ export default function NotesBrowserPage() {
     if (typeFilter === 'files') arr = arr.filter((i) => i.kind === 'file')
     arr = [...arr].sort((a, b) => {
       const cmp = sort.key === 'date'
-        ? new Date(a.date || 0) - new Date(b.date || 0)
+        ? level === 'files'
+          ? new Date(a.date || 0) - new Date(b.date || 0)
+          : (a.count ?? 0) - (b.count ?? 0)
         : a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
       return sort.dir === 'asc' ? cmp : -cmp
     })
     return arr
-  }, [items, search, typeFilter, sort])
+  }, [items, search, typeFilter, sort, level])
 
   const crumbs = [{ key: 'home', label: 'Home', to: () => navigate('/home') }]
   crumbs.push({ key: 'root', label: 'Subjects', to: () => navigate('/notes-browser') })
@@ -236,14 +247,23 @@ export default function NotesBrowserPage() {
             <Popover.Root>
               <Popover.Trigger asChild>
                 <button className={`${styles.chip} ${sort.key === 'date' ? styles.chipActive : ''}`}>
-                  Modified
+                  {level === 'files' ? 'Modified' : 'Items'}
                   <CaretDown size={14} weight="bold" />
                 </button>
               </Popover.Trigger>
               <Popover.Portal>
                 <Popover.Content className={styles.menuContent} sideOffset={5} align="start">
-                  <button className={styles.menuItem} onClick={() => setSort({ key: 'date', dir: 'desc' })}>Newest first</button>
-                  <button className={styles.menuItem} onClick={() => setSort({ key: 'date', dir: 'asc' })}>Oldest first</button>
+                  {level === 'files' ? (
+                    <>
+                      <button className={styles.menuItem} onClick={() => setSort({ key: 'date', dir: 'desc' })}>Newest first</button>
+                      <button className={styles.menuItem} onClick={() => setSort({ key: 'date', dir: 'asc' })}>Oldest first</button>
+                    </>
+                  ) : (
+                    <>
+                      <button className={styles.menuItem} onClick={() => setSort({ key: 'date', dir: 'desc' })}>Most items</button>
+                      <button className={styles.menuItem} onClick={() => setSort({ key: 'date', dir: 'asc' })}>Fewest items</button>
+                    </>
+                  )}
                   <button className={styles.menuItem} onClick={() => setSort({ key: 'name', dir: 'asc' })}>Name (A–Z)</button>
                 </Popover.Content>
               </Popover.Portal>
@@ -262,7 +282,7 @@ export default function NotesBrowserPage() {
                 Name {sortArrow('name')}
               </button>
               <button className={`${styles.thDate} ${styles.thSortable}`} onClick={() => toggleSort('date')}>
-                Date modified {sortArrow('date')}
+                {level === 'files' ? 'Date modified' : 'Items'} {sortArrow('date')}
               </button>
             </div>
 
@@ -283,7 +303,9 @@ export default function NotesBrowserPage() {
                     <RowIcon kind={item.kind} />
                     <span className={styles.name}>{item.name}</span>
                   </div>
-                  <div className={styles.cellDate}>{formatDate(item.date)}</div>
+                  <div className={styles.cellDate}>
+                    {level === 'files' ? formatDate(item.date) : formatCount(item.count)}
+                  </div>
                 </div>
               ))
             )}
