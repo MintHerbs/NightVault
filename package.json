@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint:css": "stylelint \"src/**/*.css\"",
+    "test:math": "node src/lib/noteMath.test.js",
     "test:recurrence": "node src/lib/algo/recurrence.test.js && node src/lib/algo/recurrence.oracle.test.js",
     "test:recurrence:oracle": "node src/lib/algo/recurrence.oracle.test.js",
     "test:tree": "node src/test/tree/test-library-integration.js && node src/lib/treeLayout.test.js && node src/test/tree/test-fuzz.js",
