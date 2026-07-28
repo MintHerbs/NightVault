@@ -117,6 +117,10 @@ export default function MediaPicker({ onSelect, onClose }) {
         )}
       </div>
 
+      {!debouncedQuery && !isInitialLoad && status !== 'error' && items.length > 0 && (
+        <div className={styles.sectionLabel}>Trending</div>
+      )}
+
       <div className={styles.grid} role="list">
         {isInitialLoad
           ? skeletons.map((i) => <div key={i} className={styles.skeleton} />)

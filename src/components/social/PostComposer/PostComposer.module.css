@@ -1,29 +1,48 @@
 .composer {
   width: calc(100% - 32px);
-  background: var(--color-bg);
-  border: 1px solid rgba(var(--color-accent-rgb), 0.25);
-  border-radius: 16px;
-  padding: 18px 20px 16px;
+  position: relative;
+  background: var(--md-surface-container-low);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-xl);
+  padding: 20px 22px 16px;
   margin: 16px 16px 24px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(var(--color-accent-rgb), 0.1),
-    inset 0 0 60px rgba(var(--color-accent-rgb), 0.02);
-  position: relative;
-  z-index: 4;
-  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  gap: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+  isolation: isolate;
+  overflow: hidden;
+  transition: border-color 0.25s var(--md-easing-emphasized), box-shadow 0.25s var(--md-easing-emphasized);
+}
+
+/* Cyberpunk signature kept to a single neon hairline that brightens on focus,
+   rather than a glowing border on every edge — the Material surface underneath
+   stays the thing doing the work. */
+.composer::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-accent) 20%,
+    var(--color-accent-bright) 50%,
+    var(--color-accent) 80%,
+    transparent
+  );
+  opacity: 0.4;
+  transition: opacity 0.25s ease;
 }
 
 .composer:focus-within {
-  border-color: rgba(var(--color-accent-rgb), 0.45);
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(var(--color-accent-rgb), 0.3),
-    inset 0 0 60px rgba(var(--color-accent-rgb), 0.04),
-    0 0 30px rgba(var(--color-accent-rgb), 0.2);
+  border-color: rgba(var(--color-accent-rgb), 0.5);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35),
+    0 0 24px rgba(var(--color-accent-rgb), 0.18);
+}
+
+.composer:focus-within::before {
+  opacity: 0.9;
 }
 
 .shake {
@@ -58,14 +77,19 @@
 
 .row {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   align-items: flex-start;
 }
 
 .avatar {
+  /* A bare canvas is inline by default, which leaves baseline whitespace
+     below it — that extra sliver made the ring sit loose around the avatar
+     instead of hugging it. Flex sizes the wrapper to the canvas exactly. */
+  display: flex;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(var(--color-accent-rgb), 0.25);
 }
 
 .inputs {
@@ -89,6 +113,7 @@
   resize: none;
   outline: none;
   overflow-y: hidden;
+  caret-color: var(--color-accent);
 }
 
 .textarea::placeholder {
@@ -105,7 +130,7 @@
   justify-content: space-between;
   gap: 12px;
   padding-top: 12px;
-  border-top: 1px solid rgba(var(--color-accent-rgb), 0.2);
+  border-top: 1px solid var(--md-outline-variant);
 }
 
 .features {
@@ -123,28 +148,28 @@
   flex-shrink: 0;
 }
 
-/* M3 toggle chip: outlined at rest, tonal-filled when selected. The previous
-   buttons were bare text that signalled state only through a colour shift and
-   a text-shadow, which read as decoration rather than as a control. */
+/* M3 toggle chip: outlined at rest, tonal-container filled when selected —
+   the same container/on-container pair Material uses for a chosen chip,
+   rather than a translucent accent wash standing in for it. */
 .featureBtn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   height: 36px;
   padding: 0 14px;
-  border-radius: 18px;
-  border: 1px solid rgba(var(--color-fg-rgb), 0.16);
+  border-radius: var(--md-shape-xl);
+  border: 1px solid var(--md-outline-variant);
   background: transparent;
-  color: var(--color-text-muted);
+  color: var(--md-on-surface-variant);
   font-size: 0.8rem;
   font-weight: 500;
   letter-spacing: 0.01em;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .featureBtn:hover {
-  background: rgba(var(--color-accent-rgb), 0.08);
+  background: rgba(var(--color-accent-rgb), var(--md-state-hover));
   border-color: rgba(var(--color-accent-rgb), 0.35);
   color: var(--color-accent-bright);
 }
@@ -155,14 +180,16 @@
 }
 
 .featureBtnActive {
-  background: rgba(var(--color-accent-rgb), 0.16);
-  border-color: rgba(var(--color-accent-rgb), 0.55);
-  color: var(--color-accent-bright);
+  background: var(--md-primary-container);
+  border-color: transparent;
+  color: var(--md-on-primary-container);
   font-weight: 600;
+  box-shadow: 0 0 14px rgba(var(--color-accent-rgb), 0.22);
 }
 
 .featureBtnActive:hover {
-  background: rgba(var(--color-accent-rgb), 0.22);
+  background: var(--md-primary-container);
+  box-shadow: 0 0 18px rgba(var(--color-accent-rgb), 0.32);
 }
 
 .featureLabel {
@@ -181,12 +208,10 @@
   text-shadow: 0 0 6px rgba(var(--color-danger-rgb), 0.4);
 }
 
+/* Purely a height/opacity transition shell now — each feature panel
+   (PollBuilder / CodeAttachment / MediaPicker) owns its own single card
+   surface, so nothing here draws a second border around it. */
 .panel {
-  background: rgba(var(--color-bg-rgb), 0.6);
-  border: 1px solid rgba(var(--color-accent-rgb), 0.25);
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: inset 0 0 20px rgba(var(--color-accent-rgb), 0.05);
   overflow: hidden;
 }
 
@@ -194,9 +219,9 @@
   position: relative;
   align-self: flex-start;
   max-width: 200px;
-  border-radius: 12px;
+  border-radius: var(--md-shape-lg);
   overflow: hidden;
-  border: 1px solid rgba(var(--color-accent-rgb), 0.3);
+  border: 1px solid var(--md-outline-variant);
 }
 
 .gifPreviewImg {
@@ -244,7 +269,7 @@
   background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-bright) 100%);
   color: var(--color-bg);
   border: 1px solid transparent;
-  border-radius: 20px;
+  border-radius: var(--md-shape-xl);
   font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -299,7 +324,7 @@
   padding: 10px 14px;
   background: rgba(var(--color-danger-rgb), 0.1);
   border: 1px solid rgba(var(--color-danger-rgb), 0.3);
-  border-radius: 10px;
+  border-radius: var(--md-shape-md);
   color: var(--color-danger);
   font-size: 0.8rem;
   font-weight: 500;
@@ -312,7 +337,7 @@
   .composer {
     width: calc(100% - 16px);
     margin: 12px 8px 16px;
-    padding: 14px 14px 12px;
+    padding: 16px 14px 12px;
   }
 
   .row {

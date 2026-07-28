@@ -52,7 +52,9 @@ const PostCard = forwardRef(function PostCard(
   const timeLabel = useMemo(() => formatRelativeTime(post?.created_at), [post?.created_at])
 
   const contentLines = useMemo(() => String(post?.content || '').split('\n').length, [post?.content])
-  const showReadMore = contentLines > 4 && !isExpanded && !isEditing
+  const canToggleContent = contentLines > 4 && !isEditing
+  const showReadMore = canToggleContent && !isExpanded
+  const showShowLess = canToggleContent && isExpanded
   const contentToShow = useMemo(() => {
     if (isEditing) return ''
     if (isExpanded) return String(post?.content || '')
@@ -63,7 +65,9 @@ const PostCard = forwardRef(function PostCard(
   // Code truncation logic
   const codeLines = useMemo(() => String(post?.code || '').split('\n').length, [post?.code])
   const MAX_CODE_LINES = 15
-  const showCodeReadMore = codeLines > MAX_CODE_LINES && !isCodeExpanded
+  const canToggleCode = codeLines > MAX_CODE_LINES
+  const showCodeReadMore = canToggleCode && !isCodeExpanded
+  const showCodeShowLess = canToggleCode && isCodeExpanded
   const codeToShow = useMemo(() => {
     if (isCodeExpanded) return String(post?.code || '')
     if (codeLines <= MAX_CODE_LINES) return String(post?.code || '')
@@ -208,14 +212,14 @@ const PostCard = forwardRef(function PostCard(
 
       {!isEditing && <div className={styles.content}>{contentToShow}</div>}
 
-      {showReadMore && (
-        <motion.div 
-          className={styles.readMore} 
-          onClick={() => setIsExpanded(true)}
+      {(showReadMore || showShowLess) && (
+        <motion.div
+          className={styles.readMore}
+          onClick={() => setIsExpanded((v) => !v)}
           whileHover={{ x: 4 }}
           transition={{ duration: 0.2 }}
         >
-          ...read more
+          {showReadMore ? '...read more' : 'Show less'}
         </motion.div>
       )}
 
@@ -296,15 +300,15 @@ const PostCard = forwardRef(function PostCard(
       {post?.code && (
         <div className={styles.attachment}>
           <CodeBlock code={codeToShow} language={post?.code_language || 'auto'} />
-          {showCodeReadMore && (
-            <motion.div 
-              className={styles.readMore} 
-              onClick={() => setIsCodeExpanded(true)}
+          {(showCodeReadMore || showCodeShowLess) && (
+            <motion.div
+              className={styles.readMore}
+              onClick={() => setIsCodeExpanded((v) => !v)}
               whileHover={{ x: 4 }}
               transition={{ duration: 0.2 }}
               style={{ marginTop: '8px' }}
             >
-              ...read more ({codeLines - MAX_CODE_LINES} more lines)
+              {showCodeReadMore ? `...read more (${codeLines - MAX_CODE_LINES} more lines)` : 'Show less'}
             </motion.div>
           )}
         </div>

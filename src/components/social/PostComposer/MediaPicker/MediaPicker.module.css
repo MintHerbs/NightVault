@@ -1,7 +1,13 @@
+/* Its own single card now — the composer's outer panel no longer supplies a
+   border, so this owns the one frame around the picker. */
 .panel {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: var(--md-surface-container);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-lg);
+  padding: 14px;
 }
 
 .header {
@@ -16,8 +22,8 @@
   display: inline-flex;
   padding: 3px;
   border-radius: 20px;
-  background: rgba(var(--color-fg-rgb), 0.06);
-  border: 1px solid rgba(var(--color-fg-rgb), 0.1);
+  background: var(--md-surface-container-high);
+  border: 1px solid var(--md-outline-variant);
 }
 
 .tab {
@@ -44,9 +50,10 @@
 }
 
 .tabActive {
-  background: rgba(var(--color-accent-rgb), 0.2);
-  color: var(--color-accent-bright);
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
   font-weight: 600;
+  box-shadow: 0 0 10px rgba(var(--color-accent-rgb), 0.2);
 }
 
 .closeBtn {
@@ -81,19 +88,19 @@
   height: 40px;
   padding: 0 12px;
   border-radius: 20px;
-  background: rgba(var(--color-fg-rgb), 0.05);
-  border: 1px solid rgba(var(--color-fg-rgb), 0.1);
+  background: var(--md-surface-container-high);
+  border: 1px solid var(--md-outline-variant);
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .searchField:focus-within {
   border-color: rgba(var(--color-accent-rgb), 0.5);
-  background: rgba(var(--color-fg-rgb), 0.07);
+  background: rgba(var(--color-accent-rgb), var(--md-state-focus));
 }
 
 .searchIcon {
   flex-shrink: 0;
-  color: var(--color-text-muted);
+  color: var(--md-on-surface-variant);
 }
 
 .searchInput {
@@ -102,7 +109,7 @@
   background: transparent;
   border: 0;
   outline: none;
-  color: rgba(var(--color-fg-rgb), 0.9);
+  color: var(--md-on-surface);
   font-size: 0.85rem;
   font-family: inherit;
 }
@@ -121,13 +128,21 @@
   border: 0;
   border-radius: 50%;
   background: rgba(var(--color-fg-rgb), 0.1);
-  color: var(--color-text-muted);
+  color: var(--md-on-surface-variant);
   cursor: pointer;
 }
 
 .clearBtn:hover {
   background: rgba(var(--color-fg-rgb), 0.18);
-  color: rgba(var(--color-fg-rgb), 0.9);
+  color: var(--md-on-surface);
+}
+
+.sectionLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--md-on-surface-variant);
 }
 
 .grid {
@@ -165,16 +180,17 @@
   height: 0;
   padding: 0 0 100%;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--md-shape-sm);
   overflow: hidden;
-  background: rgba(var(--color-fg-rgb), 0.05);
+  background: var(--md-surface-container-high);
   cursor: pointer;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .thumbBtn:hover {
   border-color: rgba(var(--color-accent-rgb), 0.6);
   transform: scale(1.03);
+  box-shadow: 0 0 14px rgba(var(--color-accent-rgb), 0.25);
 }
 
 .thumbBtn:focus-visible {
@@ -195,12 +211,12 @@
   width: 100%;
   height: 0;
   padding: 0 0 100%;
-  border-radius: 10px;
+  border-radius: var(--md-shape-sm);
   background: linear-gradient(
     90deg,
-    rgba(var(--color-fg-rgb), 0.05) 25%,
-    rgba(var(--color-fg-rgb), 0.1) 50%,
-    rgba(var(--color-fg-rgb), 0.05) 75%
+    var(--md-surface-container-high) 25%,
+    var(--md-surface-container-low) 50%,
+    var(--md-surface-container-high) 75%
   );
   background-size: 200% 100%;
   animation: mediaShimmer 1.3s ease-in-out infinite;

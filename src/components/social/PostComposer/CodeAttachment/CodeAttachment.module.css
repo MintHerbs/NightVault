@@ -1,8 +1,12 @@
-/* The gutter and the textarea are separate elements kept in lockstep by
+/* One surface for the whole attachment: header and editor share the same
+   background and are separated by a hairline, not by stacking a second
+   bordered box inside the first. The gutter is the same surface as the
+   textarea, split off by an inset hairline instead of its own fill colour —
+   that's what used to read as "a box within a box within a box".
+
+   The gutter and the textarea are still separate elements kept in lockstep by
    onScroll, so their metrics have to be identical to the pixel. Declaring them
-   once here is what makes the numbers line up with their lines — previously
-   the gutter ran at 0.75rem/1.28 against the code's 0.82rem/1.6 and drifted
-   further apart with every line. */
+   once here is what keeps the numbers lined up with their code. */
 .wrapper {
   --code-font-size: 13px;
   --code-line-height: 22px;
@@ -11,9 +15,9 @@
 
   display: flex;
   flex-direction: column;
-  background: rgba(var(--color-bg-rgb), 0.75);
-  border: 1px solid rgba(var(--color-accent-rgb), 0.28);
-  border-radius: 12px;
+  background: var(--md-surface-container);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-lg);
   overflow: hidden;
 }
 
@@ -23,8 +27,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 8px 10px;
-  background: rgba(var(--color-fg-rgb), 0.04);
-  border-bottom: 1px solid rgba(var(--color-accent-rgb), 0.2);
+  border-bottom: 1px solid var(--md-outline-variant);
 }
 
 .headerLeft,
@@ -49,9 +52,9 @@
   height: 34px;
   padding: 0 30px 0 12px;
   background: transparent;
-  border: 1px solid rgba(var(--color-fg-rgb), 0.2);
-  border-radius: 17px;
-  color: rgba(var(--color-fg-rgb), 0.9);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-xl);
+  color: var(--md-on-surface);
   font-size: 0.78rem;
   font-weight: 500;
   font-family: inherit;
@@ -61,7 +64,7 @@
 }
 
 .select:hover {
-  background: rgba(var(--color-accent-rgb), 0.08);
+  background: rgba(var(--color-accent-rgb), var(--md-state-hover));
   border-color: rgba(var(--color-accent-rgb), 0.4);
 }
 
@@ -79,18 +82,19 @@
   position: absolute;
   right: 10px;
   pointer-events: none;
-  color: var(--color-text-muted);
+  color: var(--md-on-surface-variant);
 }
 
-/* M3 assist chip: what auto-detect landed on, stated plainly. */
+/* M3 assist chip: what auto-detect landed on, stated plainly with the same
+   container / on-container pair the active feature chips use. */
 .detectedChip {
   display: inline-flex;
   align-items: center;
   height: 24px;
   padding: 0 10px;
-  border-radius: 12px;
-  background: rgba(var(--color-accent-rgb), 0.16);
-  color: var(--color-accent-bright);
+  border-radius: var(--md-shape-xl);
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -99,7 +103,7 @@
 
 .lineCount {
   font-size: 0.72rem;
-  color: var(--color-text-muted);
+  color: var(--md-on-surface-variant);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -113,13 +117,13 @@
   border-radius: 50%;
   border: 0;
   background: transparent;
-  color: var(--color-text-muted);
+  color: var(--md-on-surface-variant);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 .iconBtn:hover:not(:disabled) {
-  background: rgba(var(--color-accent-rgb), 0.14);
+  background: rgba(var(--color-accent-rgb), var(--md-state-hover));
   color: var(--color-accent-bright);
 }
 
@@ -143,9 +147,12 @@
   align-items: stretch;
   min-height: 150px;
   max-height: 320px;
-  background: var(--color-bg);
+  background: var(--md-surface-container);
 }
 
+/* No fill of its own — a single inset hairline stands in for the divider a
+   bordered box used to draw, so the gutter reads as part of the same code
+   surface rather than a second panel glued to the first. */
 .gutter {
   flex: none;
   overflow: hidden;
@@ -153,8 +160,7 @@
   min-width: 44px;
   text-align: right;
   user-select: none;
-  background: rgba(var(--color-fg-rgb), 0.03);
-  border-right: 1px solid rgba(var(--color-fg-rgb), 0.08);
+  box-shadow: inset -1px 0 0 var(--md-outline-variant);
 }
 
 .gutterLine {
@@ -163,7 +169,7 @@
   font-family: var(--code-font);
   font-size: var(--code-font-size);
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-muted);
+  color: var(--md-on-surface-variant);
 }
 
 .textarea {
@@ -181,7 +187,7 @@
   overflow-wrap: normal;
   word-break: normal;
   tab-size: 2;
-  color: var(--color-text);
+  color: var(--md-on-surface);
   font-family: var(--code-font);
   font-size: var(--code-font-size);
   line-height: var(--code-line-height);
@@ -259,6 +265,6 @@
 
   .select {
     height: 40px;
-    border-radius: 20px;
+    border-radius: var(--md-shape-xl);
   }
 }

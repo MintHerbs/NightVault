@@ -1,44 +1,166 @@
-.builder {
+/* Single M3 surface card — no second border nested inside the composer's
+   own panel shell. Option rows are one bordered field each (badge + input +
+   remove all inside the same box), not a badge box next to an input box. */
+.card {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 12px;
+  background: var(--md-surface-container);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-lg);
+  padding: 14px;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .optionRow {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 8px 0 6px;
+  background: var(--md-surface-container-high);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-md);
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.input {
+.optionRow:focus-within {
+  border-color: rgba(var(--color-accent-rgb), 0.55);
+  background: rgba(var(--color-accent-rgb), var(--md-state-focus));
+}
+
+.optionBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.optionInput {
   flex: 1;
-  width: 100%;
-  background: rgba(var(--color-fg-rgb), 0.035);
-  border: 1px solid rgba(var(--color-fg-rgb), 0.08);
-  color: rgba(var(--color-fg-rgb), 0.88);
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 0.86rem;
+  min-width: 0;
+  background: transparent;
+  border: 0;
   outline: none;
+  color: var(--md-on-surface);
+  font-size: 0.86rem;
+  font-family: inherit;
+}
+
+.optionInput::placeholder {
+  color: var(--md-on-surface-variant);
 }
 
 .removeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 50%;
   background: transparent;
   color: var(--md-on-surface-variant);
-  border: 0;
-  padding: 7px 10px;
-  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.removeBtn:hover {
+  background: rgba(var(--color-danger-rgb), 0.14);
+  color: var(--color-danger);
+}
+
+.removeBtn:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 1px;
 }
 
 .addBtn {
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: transparent;
-  color: var(--color-accent-bright);
   border: 0;
-  padding: 4px 0;
-  font-size: 0.78rem;
+  color: var(--color-accent-bright);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 4px;
+  cursor: pointer;
 }
 
 .addBtn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.optionCount {
+  color: var(--md-on-surface-variant);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  margin-left: 2px;
+}
+
+.binaryRow {
+  display: flex;
+  gap: 10px;
+}
+
+.binaryTile {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  border-radius: var(--md-shape-md);
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: 1px solid rgba(var(--color-accent-rgb), 0.3);
+}
+
+.binaryYes {
+  color: var(--color-accent-bright);
+  background: rgba(var(--color-accent-rgb), 0.08);
+}
+
+.binaryNo {
+  color: var(--color-danger);
+  border-color: rgba(var(--color-danger-rgb), 0.3);
+  background: rgba(var(--color-danger-rgb), 0.08);
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--md-on-surface-variant);
+}
+
+/* --breakpoint-sm */
+@media (max-width: 640px) {
+  .card {
+    padding: 12px;
+  }
+
+  .optionRow {
+    height: 46px;
+  }
+
+  .binaryTile {
+    height: 52px;
+  }
 }
