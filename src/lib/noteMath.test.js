@@ -193,6 +193,25 @@ check(
   '$$\n\\frac{a}{b}\n$$',
 )
 
+// The repair is only safe where the escaped dollars are the *only* dollars in
+// play. These three shapes each broke that assumption and were caught in review.
+unchanged(
+  'a real delimiter on the line blocks the repair',
+  '\\$\\frac{1}{2}$x\\$',
+)
+unchanged(
+  'escaped dollars inside a display block are LaTeX literals, not escapes',
+  '$$\n\\text{a} \\$\\frac{1}{2}\\$\n$$',
+)
+unchanged(
+  'escaped dollars inside a real inline region are left alone',
+  'text $x + \\$\\alpha\\$ y$ more',
+)
+unchanged(
+  'an escaped backslash before a real delimiter is not an escaped dollar',
+  '\\\\$\\frac{1}{2}\\\\$',
+)
+
 // ---------------------------------------------------------- must not touch
 unchanged('plain prose', 'Round robin gives each process a fixed time slice.')
 unchanged('prose with no backslash but maths words', 'Average waiting time = 17 seconds')
@@ -245,6 +264,8 @@ const IDEMPOTENT_CASES = [
   '\\$\\$\\text{Var}(X) = 0\\$\\$',
   '\\text{Var}(X) = E(X^2) - \\[E(X)]^2',
   'it costs \\$5 and \\$10 total',
+  '\\$\\frac{1}{2}$x\\$',
+  '$$\n\\text{a} \\$\\frac{1}{2}\\$\n$$',
 ]
 for (const source of IDEMPOTENT_CASES) {
   const once = normalizeNoteMath(source)

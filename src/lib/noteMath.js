@@ -115,6 +115,33 @@ function countDoubleDollar(text) {
   return count
 }
 
+/** Consecutive backslashes ending just before `i`. An odd count means the
+ *  character at `i` is itself escaped. */
+function backslashRunBefore(text, i) {
+  let n = 0
+  while (i - n - 1 >= 0 && text[i - n - 1] === '\\') n += 1
+  return n
+}
+
+/**
+ * Does `text` hold a `$` that is *not* backslash-escaped, i.e. a delimiter the
+ * Markdown pipeline will act on?
+ */
+function hasUnescapedDollar(text) {
+  for (let i = 0; i < text.length; i += 1) {
+    if (text[i] !== '$') continue
+    if (backslashRunBefore(text, i) % 2 === 0) return true
+  }
+  return false
+}
+
+/** The whole line `index` sits on. */
+function lineAround(md, index) {
+  const start = md.lastIndexOf('\n', index) + 1
+  const end = md.indexOf('\n', index)
+  return md.slice(start, end === -1 ? md.length : end)
+}
+
 /**
  * Paired runs of backslash-escaped dollars, as
  * `{ start, end, body, count, repairable }`.
@@ -126,17 +153,25 @@ function countDoubleDollar(text) {
  * body is left unprotected for rules 3 and 4 to wrap a fragment of. The result
  * is a live maths node stranded inside literal `$$` text (T-074).
  *
- * `repairable` is the guard that separates the author's maths from prose about
- * money: a body qualifies only if it carries a LaTeX control word or is a lone
- * variable, so `it costs \$5 and \$10` never becomes a formula. Non-repairable
- * pairs are still returned, because they must be protected from rules 3 and 4
- * rather than merely left un-rewritten.
+ * `repairable` gates the rewrite on two things. First the body has to look like
+ * maths (a LaTeX control word, or a lone variable), which is what keeps prose
+ * about money out: `it costs \$5 and \$10` never becomes a formula. Second the
+ * line must carry no *unescaped* `$` at all, because a real delimiter in the mix
+ * makes the pairing ambiguous and rewriting would emit an odd number of
+ * delimiters, leaving a stray `$` to re-pair with whatever follows.
+ *
+ * Non-repairable pairs are still returned: they must be protected from rules 3
+ * and 4 rather than merely left un-rewritten.
  */
 function escapedDollarRegions(md) {
   const runs = []
   ESCAPED_DOLLAR_RUN_RE.lastIndex = 0
   let match
   while ((match = ESCAPED_DOLLAR_RUN_RE.exec(md)) !== null) {
+    // `\\$` is an escaped *backslash* followed by a real delimiter, not an
+    // escaped dollar. Reading it as one would turn working maths into literal
+    // text, so an odd backslash run before the match disqualifies it.
+    if (backslashRunBefore(md, match.index) % 2 === 1) continue
     runs.push({ index: match.index, length: match[0].length, count: match[0].length / 2 })
   }
 
@@ -151,12 +186,13 @@ function escapedDollarRegions(md) {
     // Delimiters never span a line here: a stray `\$` far below would
     // otherwise pair up and swallow the prose between the two.
     if (body.includes('\n')) continue
+    const looksLikeMaths = LATEX_COMMAND_RE.test(body) || LONE_MATH_VARIABLE_RE.test(body)
     regions.push({
       start: open.index,
       end: close.index + close.length,
       body,
       count: open.count,
-      repairable: LATEX_COMMAND_RE.test(body) || LONE_MATH_VARIABLE_RE.test(body),
+      repairable: looksLikeMaths && !hasUnescapedDollar(lineAround(md, open.index)),
     })
     i += 1
   }
@@ -190,6 +226,7 @@ function escapedDollarRegions(md) {
 function scanProtected(md) {
   const marked = new Uint8Array(md.length)
   const code = new Uint8Array(md.length)
+  const mathBlock = new Uint8Array(md.length)
   const lines = []
   let offset = 0
   let fence = null
@@ -220,6 +257,9 @@ function scanProtected(md) {
     if (inMathBlock) {
       if (countDoubleDollar(text) % 2 === 1) inMathBlock = false
       marked.fill(1, start, end)
+      // Inside a display block a `\$` is LaTeX's own literal dollar sign, not a
+      // Markdown escape, so escaped-delimiter repair must not reach in here.
+      mathBlock.fill(1, start, end)
       lines.push({ start, end, text, open: false })
       continue
     }
@@ -252,15 +292,18 @@ function scanProtected(md) {
 
   const protectedBefore = new Int32Array(md.length + 1)
   const codeBefore = new Int32Array(md.length + 1)
+  const mathBlockBefore = new Int32Array(md.length + 1)
   for (let i = 0; i < md.length; i += 1) {
     protectedBefore[i + 1] = protectedBefore[i] + marked[i]
     codeBefore[i + 1] = codeBefore[i] + code[i]
+    mathBlockBefore[i + 1] = mathBlockBefore[i] + mathBlock[i]
   }
 
   return {
     lines,
     isProtected: (start, end) => protectedBefore[end] - protectedBefore[start] > 0,
     isCode: (start, end) => codeBefore[end] - codeBefore[start] > 0,
+    isMathBlock: (start, end) => mathBlockBefore[end] - mathBlockBefore[start] > 0,
   }
 }
 
@@ -376,10 +419,12 @@ export function normalizeNoteMath(input) {
   // No backslash means no LaTeX, and that is the overwhelming majority of notes.
   if (!md.includes('\\')) return md
 
-  const { isProtected, isCode, lines } = scanProtected(md)
-  // A `\$…\$` sample inside a code block is documentation about the syntax, so
-  // it is excluded here and never repaired.
-  const escaped = escapedDollarRegions(md).filter((r) => !isCode(r.start, r.end))
+  const { isProtected, isCode, isMathBlock, lines } = scanProtected(md)
+  // A `\$…\$` sample inside a code block is documentation about the syntax, and
+  // one inside a display block is LaTeX's literal dollar sign. Neither is a
+  // Markdown escape, so neither is repaired.
+  const escaped = escapedDollarRegions(md)
+    .filter((r) => !isCode(r.start, r.end) && !isMathBlock(r.start, r.end))
   const overlapsEscaped = (start, end) => escaped.some((r) => start < r.end && end > r.start)
   const edits = []
   const add = (priority, start, end, text) => {

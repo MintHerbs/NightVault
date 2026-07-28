@@ -119,11 +119,27 @@ Fixed on `fix/T-074-notemath-escaped-delimiters`.
   LaTeX control word, so `\[E(X)]` stops being read as display maths.
 - `unescapeMath` also strips `\[` / `\]`.
 
-Verified: `npm run test:math` 68 passed / 0 failed (52 before, 16 added).
-Feeding both the originally reported `content_md` and the current prod row
-through the normaliser and then `katex.renderToString(..., { throwOnError: true })`
-yields 0 throws and 0 stray literal `\$`; the reported content previously threw on
-22 of 44 regions. `npm run build` succeeds.
+Three further guards were added during self review, each for a shape that the
+first pass corrupted:
+
+- The repair now also requires the line to carry no *unescaped* `$`. A real
+  delimiter in the mix made the pairing ambiguous, and rewriting emitted an odd
+  number of delimiters: `\$\frac{1}{2}$x\$` became `$\frac{1}{2}$x$`, leaving a
+  stray `$` to re-pair with whatever followed.
+- `scanProtected` also returns `isMathBlock`, and escaped regions inside a
+  multi-line `$$ … $$` block are excluded. Inside a display block a `\$` is
+  LaTeX's own literal dollar sign rather than a Markdown escape, so repairing it
+  broke the surrounding formula.
+- A `\$` whose backslash is itself escaped (`\\$`, an escaped backslash followed
+  by a real delimiter) no longer counts as an escaped dollar; reading it as one
+  turned working maths into literal text.
+
+Verified: `npm run test:math` 74 passed / 0 failed (52 before, 22 added), exit 0.
+`npm run build` exit 0, `npm run lint:css` exit 0. Feeding both the originally
+reported `content_md` and the current prod row through the normaliser and then
+`katex.renderToString(..., { throwOnError: true })` yields 0 throws, 0 stray
+literal `\$`, and a balanced delimiter count; the reported content previously
+threw on 22 of 44 regions.
 
 Note the prod row was hand-edited at 2026-07-28T18:12Z, which removed the escaped
 dollars but left `\[E(X)]`, so the second half of this fix is still what that note
