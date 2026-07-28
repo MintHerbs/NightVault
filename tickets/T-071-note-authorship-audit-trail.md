@@ -26,14 +26,45 @@ Code-complete per the Suggested fix below:
   `NotesPage.jsx` to fetch a single note's authors) wired to real
   authors instead of the stub.
 
-**Not verified**: this session had no Docker daemon running, so the
-local Supabase stack (`npx supabase start`) was unreachable and
-`npm run db:migrate` could not be applied or checked against a real
-database — confirmed via `npm run db:migrate -- --status`, which failed
-to connect to `127.0.0.1:54322`. `npm run build` passes; every
+**2026-07-28 update, from the T-072/PR #62 session: this code is now live
+in prod with none of its schema, so the feature is inert there.** Commit
+4338359 is an ancestor of `origin/main`, which is what Vercel serves.
+Probing prod with the service-role key confirms `0042` was never
+applied: `admin_users.display_name` / `note_authors` / `admin_profiles_public`
+/ `notes.created_by` all 404 or "column does not exist"; `notes.updated_by`
+(pre-existing) is the only one that resolves. Nothing is visibly broken —
+the self-review below made every author lookup degrade instead of throw —
+but no avatar renders anywhere in prod either. This is a materially
+different state than "not verified locally": it's shipped-without-its-DB,
+not merely untested. `db/sql/0042_note_authorship.sql` still needs to
+actually be applied to prod before any of this works, and every
 acceptance criterion below that requires a live database is still
-unchecked pending: start Docker Desktop, `npx supabase start`, `npm run
-db:migrate`, then work through the checklist.
+unchecked pending that.
+
+**Verification path correction (2026-07-28, same session)**: the
+originally-written path here — start Docker Desktop, `npx supabase
+start`, `npm run db:migrate` — does not currently work as stated, for two
+independent reasons: Docker Desktop was down again when this was checked
+(daemon unreachable), and separately, `npm run db:migrate` refuses to
+apply *any* migration right now regardless of Docker, because of
+pre-existing checksum drift on `0024` (amended in place after being
+applied, per its own `migrations.yaml` entry) — the runner checks drift
+globally before applying anything, so it blocks every migration, not just
+0024, and fixing that drift is its own separate, unscoped-here fix. Until
+that's resolved, apply `0042` directly instead: paste
+`db/sql/0042_note_authorship.sql` into the Supabase Studio SQL editor for
+prod, or for local dev once Docker is back,
+`docker exec -i supabase_db_b-tree psql -U postgres -d postgres < db/sql/0042_note_authorship.sql`.
+Idempotent per repo convention either way, so this is safe to run even if
+some environment turns out to have partially applied it already.
+
+**Order note**: T-072 (PR #62, its own `0043_*.sql`) depends on the
+`admin_users` columns and `note_authors`/`admin_profiles_public` this
+migration adds — `0043`'s `admin_update_own_profile` RPC is created fine
+without `0042` but fails at call time until it's run. PR #62 is
+deliberately held unmerged until both land, in that order, since merging
+it alone would put an empty "Meet the Team" on prod (`AboutPage` now
+reads `contributor_cards`).
 
 **Self-review (2026-07-28) caught and fixed three real bugs before any
 of this was verified against a database:**

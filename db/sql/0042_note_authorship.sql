@@ -99,9 +99,14 @@ create trigger notes_track_author_trg
   after insert or update on public.notes
   for each row execute function public.notes_track_author();
 
--- Same lockdown as notes_set_metadata (0020): a trigger function has no
--- business being callable directly via RPC.
-revoke execute on function public.notes_track_author() from public;
+-- Same intent as notes_set_metadata (0020): a trigger function has no
+-- business being callable directly via RPC. Unlike 0020's version, this also
+-- revokes from anon/authenticated explicitly, not just public — this
+-- project's Supabase stack grants EXECUTE on new public-schema functions
+-- directly to anon/authenticated/service_role via ALTER DEFAULT PRIVILEGES,
+-- so those roles never inherited it via PUBLIC and revoking from PUBLIC
+-- alone is a no-op for them (verified against pg_proc.proacl locally).
+revoke execute on function public.notes_track_author() from public, anon, authenticated;
 
 -- ─── Backfill ─────────────────────────────────────────────────────────────
 -- Verified against the live project (Supabase MCP, read-only, 2026-07-28) —
