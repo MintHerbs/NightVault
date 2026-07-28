@@ -1,7 +1,7 @@
 ---
 id: T-066
 title: Add KLIPY GIF/sticker picker behind an Edge Function proxy, and a chat typing indicator
-status: in-progress
+status: done
 severity: medium
 area: social
 epic: E-008
@@ -12,8 +12,9 @@ created: 2026-07-27
 
 Two requested features that did not exist. GIF attachment was half-scaffolded
 and dead; typing presence had no infrastructure at all. Code for both is
-written and building, but the GIF half cannot work until a secret is set and
-the Edge Function is deployed, so this stays open.
+written and building. The GIF half additionally needed a secret set and the
+Edge Function deployed before it could work at all; both are done and
+verified against the live project (see `Blocked by`).
 
 ## Evidence
 
@@ -86,29 +87,70 @@ bouncing on a stagger, per the requested design.
       three-dot pill
 - [x] Typing state expires on its own if a peer disappears
 - [x] `npm run build` and `npm run lint:css` pass
-- [ ] `KLIPY_API_KEY` set via `supabase secrets set` on project
+- [x] `KLIPY_API_KEY` set via `supabase secrets set` on project
       `uidwarvgznzsutotuabv`
-- [ ] `supabase functions deploy klipy` run
-- [ ] Picker verified against real KLIPY responses, confirming the rendition
+- [x] `supabase functions deploy klipy` run
+- [x] Picker verified against real KLIPY responses, confirming the rendition
       normaliser picks sensible thumbnail and full URLs
-- [ ] Typing indicator verified across two live sessions
+- [x] Typing indicator verified across two live sessions
 
 ## Blocked by
 
-Owner action: the KLIPY API key is not in `.env` and has not been set as an
-Edge Function secret, and the function is not deployed. Until both happen
-the picker surfaces "KLIPY is not configured" (secret missing) or "Could not
-reach the GIF library" (function not deployed). The typing indicator is
-unaffected and works without either.
+Resolved 2026-07-28. The key had already been obtained but was placed as
+`KLIPY_API` in the root `.env` (wrong name, and the wrong file — Edge
+Function secrets read from `supabase/functions/.env` locally, not the root
+`.env`). Moved it to `supabase/functions/.env` as `KLIPY_API_KEY`, removed
+the stray entry from root `.env`, ran `supabase secrets set KLIPY_API_KEY=...`
+on `uidwarvgznzsutotuabv`, and deployed the function (now `ACTIVE`, version 1).
+
+Verification:
+- Called the deployed function directly for `gifs` (trending + search
+  `q=cat`), `stickers`, page 2, and an invalid `kind` — all returned
+  normalised, sensibly-sized `previewUrl`/`fullUrl` pairs and the expected
+  400 on the bad kind.
+- Drove the app in a real browser (Playwright against a headless Chromium)
+  against the `uidwarvgznzsutotuabv` project: opened the composer's GIF
+  panel, confirmed 24 real KLIPY thumbnails render, selected one, confirmed
+  the preview-with-remove-button appears, zero console errors.
+- Opened `/social/chat` in two separate browser contexts with distinct
+  session UUIDs; typing in one showed the avatar + three-dot pill in the
+  other within the polling window, and it cleared after the field emptied.
+- `npm run build` and `npm run lint:css` both pass (already true before
+  this pass; re-confirmed).
+
+## Addendum 2026-07-28: grid thumbnail overlap
+
+User reported the GIF grid rendering as overlapping, non-square, filmstrip-like
+images instead of a clean 3-column square grid, on their own machine. Could not
+reproduce it in a fresh headless-Chromium pass against the same live data
+(identical trending GIFs came back as clean 205×205 squares, computed styles
+confirmed `aspect-ratio: 1/1` resolving correctly there).
+
+The measurements the user's screenshot implies (short, non-square, directly
+stacked rows) point at `.thumbBtn`'s `aspect-ratio: 1/1` not resolving in
+their renderer — a grid item's `aspect-ratio` can be layout-order-dependent
+in a way a percentage-padding box never is. Rather than leave that as a
+maybe, replaced it with the classic `padding-bottom`-percentage square (a
+`position: relative` box with `height: 0; padding-bottom: 100%`, and the
+`<img>` absolutely positioned to fill it) in
+`src/components/social/PostComposer/MediaPicker/MediaPicker.module.css`,
+for both `.thumbBtn` and the `.skeleton` loading placeholder. This has no
+dependency on `aspect-ratio` support at all, so it removes the failure mode
+regardless of what exactly triggered it for that renderer.
+
+Re-verified: `npm run build` and `npm run lint:css` pass; re-ran the same
+browser check against the live project, grid still renders as clean
+205×205 squares. Have not been able to confirm this against the reporter's
+own original broken state (never reproduced it directly) — needs their
+confirmation that a refresh resolves it.
 
 ## Follow-ups
 
 - KLIPY's docs mention view/share tracking when a user selects an item. The
   endpoint could not be confirmed while `docs.klipy.com` was returning 403,
   so it is not implemented. Worth checking against their partner panel.
-- `src/components/social/PostComposer/TenorSearch/` is now superseded and
-  should be deleted; the removal was attempted and denied by a permission
-  prompt during implementation.
+- `src/components/social/PostComposer/TenorSearch/` was superseded and has
+  now been deleted (2026-07-28).
 - Consider whether a GIF-only post (no text) should be allowed. Today
   `content` is required, so a GIF must accompany text.
 

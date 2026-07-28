@@ -46,8 +46,12 @@ filed.
       have broken affordances and pre-T-062 hardcoded colours (medium).
       Stays closed: its core claims hold. Two criteria were ticked unmet and
       were corrected in place on 2026-07-28, with the residue split to T-070
-- [ ] T-066 — Add KLIPY GIF/sticker picker behind an Edge Function proxy,
-      and a chat typing indicator (medium)
+- [x] T-066 — Add KLIPY GIF/sticker picker behind an Edge Function proxy,
+      and a chat typing indicator (medium). Closed 2026-07-28: the secret
+      was found misplaced (`KLIPY_API` in the root `.env` instead of
+      `KLIPY_API_KEY` in `supabase/functions/.env`), fixed, the function
+      deployed, and both features verified in a real browser against the
+      live project
 - [ ] T-067 — Reconstruct `db/sql/0006`-`0015` from the deployed social
       schema; the ten social migrations are 0-byte files, so the repo cannot
       rebuild or reason about the schema it runs on (high). Unblocked via the
