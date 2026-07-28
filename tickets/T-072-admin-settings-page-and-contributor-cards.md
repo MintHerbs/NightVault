@@ -34,7 +34,11 @@ Code-complete per the Suggested fix below:
   for a card with no photo yet.
 - `scripts/migrate-team-to-contributor-cards.mjs` — one-off migration for the
   7 already-hardcoded people, transcribed from `AboutPage.jsx`'s pre-rewrite
-  arrays. **Not yet run against any environment.**
+  arrays. **Run against prod 2026-07-28**: 7/7 cards created, all
+  photos confirmed resolving over HTTP. Caught one real bug in the
+  script itself first, via `--dry-run`: prod's `admin_users.username`
+  for Noorie is capitalized (`Noorie`), not `noorie` as transcribed from
+  this ticket's own evidence section — fixed before the real run.
 
 **DB verification (2026-07-28)**: unlike T-071's session, this one had
 Docker running with the project's local Supabase stack already up — but
@@ -56,11 +60,26 @@ check confirmed `/about` renders correctly with zero cards (graceful
 degrade, not a crash) and `/admin` / `/admin/settings` (unauth redirect) show
 no console errors.
 
+**2026-07-28 update: `0042` and `0043` both applied to prod** (via the
+Studio SQL editor, since `db:migrate` is still blocked by the `0024`
+drift), and the seed script run against prod immediately after — see
+above. Independently re-verified (not just trusting the apply/run
+output): `contributor_cards` returns exactly 7 rows with the expected
+names/sections/sort_order, and every `photo_url` resolves over HTTP
+with a real WebP body. PR #62 merges next.
+
+One thing found in the same pass, **belonging to T-071/`0042`, not this
+ticket** — flagged there, not fixed here: 27 notes have `created_by`
+still null despite a non-null `updated_by`. `0042`'s backfill only sets
+`created_by` for notes where `updated_by` was *already* null, so notes
+that already had a known author before this migration ran (e.g.
+`lecture-4`, per `0042`'s own comment) never got `created_by` backfilled
+at all.
+
 **Not verified**: the actual authenticated Settings-page UI (cropper, save
 flows) in a real browser — no admin credentials were available this
-session. The migration script has not been run. Acceptance criteria below
-are unchecked pending a real `npm run db:migrate` (once the `0024` drift is
-resolved) and a manual walkthrough as a logged-in admin.
+session. Acceptance criteria below remain unchecked pending that manual
+walkthrough as a logged-in admin, even though the DB layer is now live.
 
 One exception worth noting rather than leaving under that blanket reason:
 the `admin_update_own_profile` criterion (no `role` / `allowed_directories`

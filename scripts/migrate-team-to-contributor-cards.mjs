@@ -103,7 +103,10 @@ const TEAM = [
     sortOrder: 2,
   },
   {
-    username: 'noorie',
+    // Capitalized in prod's admin_users (confirmed 2026-07-28) — the
+    // ticket's evidence text had it lowercase, which silently skipped this
+    // person on the first --dry-run against real data.
+    username: 'Noorie',
     photo: 'noorie.png',
     name: 'Saihah Noorie Ossen',
     photoFocus: 'translate(2%, 34%) scale(1.75)',
