@@ -671,7 +671,12 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
         // nothing to catch it — see EditorErrorBoundary for the same failure
         // mode from any other source. throwOnError: false makes KaTeX render
         // a red inline error span instead, matching the reader's degradation.
-        ctx.set(katexOptionsCtx, { throwOnError: false })
+        // `katexOptionsCtx` is the $ctx()-produced plugin function, not the
+        // slice — the slice plugin-math itself reads from is `.key` (see its
+        // toDOM: `ctx.get(katexOptionsCtx.key)`), so `.set` must target that
+        // same `.key` or it throws "Context not found" against the plugin
+        // function instead of the slice.
+        ctx.set(katexOptionsCtx.key, { throwOnError: false })
         ctx.get(listenerCtx).markdownUpdated((_, markdown) => {
           if (applyingExternal.current) {
             applyingExternal.current = false
