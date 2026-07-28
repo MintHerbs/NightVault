@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import * as Popover from '@radix-ui/react-popover'
 import {
   ArrowUp, ArrowDown, CaretDown, CaretRight, DotsThreeVertical, EyeSlash,
-  Folder, FileText, ListBullets, MagnifyingGlass, Monitor, Plus, SignOut,
+  Folder, FileText, Gear, ListBullets, MagnifyingGlass, Monitor, Plus, SignOut,
   SquaresFour, Users, Warning,
 } from '@phosphor-icons/react'
 import { colors } from '../../constants/colors'
@@ -562,6 +562,9 @@ function AdminBrowserContent() {
                   </span>
                 </div>
                 <div className={styles.menuDivider} />
+                <button className={styles.menuItem} onClick={() => navigate('/admin/settings')}>
+                  <Gear size={16} /> Settings
+                </button>
                 <button className={styles.menuItem} onClick={handleSignOut}>
                   <SignOut size={16} /> Sign out
                 </button>

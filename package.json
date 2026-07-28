@@ -16,7 +16,8 @@
     "notes:sync-to-disk": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/sync-notes-to-disk.mjs",
     "images:convert-to-webp": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/convert-images-to-webp.mjs",
     "images:pull-from-supabase": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/pull-images-from-supabase.mjs",
-    "images:prune-from-supabase": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/prune-images-from-supabase.mjs"
+    "images:prune-from-supabase": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/prune-images-from-supabase.mjs",
+    "team:migrate-contributor-cards": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/migrate-team-to-contributor-cards.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

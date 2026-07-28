@@ -16,6 +16,8 @@
 // smaller, the ORIGINAL file is uploaded unchanged. A slow upload is a much
 // better outcome than a broken image.
 
+import { encodeCanvasToWebp } from './encodeCanvasToWebp'
+
 /** 2x the ~720 px reader column, so the image still looks sharp on HiDPI. */
 const MAX_WIDTH = 1440
 
@@ -64,11 +66,7 @@ async function encodeWebp(source, width, height) {
   if (!ctx) throw new Error('no 2d context')
   ctx.drawImage(source, 0, 0, width, height)
 
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', QUALITY))
-  // toBlob yields null when the browser can't encode the requested type. Safari
-  // only gained WebP encoding in 16.x, so this is a real branch, not a formality.
-  if (!blob || blob.type !== 'image/webp') throw new Error('webp encoding unsupported')
-  return blob
+  return encodeCanvasToWebp(canvas, QUALITY)
 }
 
 /**

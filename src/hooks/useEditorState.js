@@ -6,7 +6,6 @@ export function useEditorState() {
   const [unsaved, setUnsaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
-  const [changePasswordOpen, setChangePasswordOpen] = useState(false)
   const [formulaModalOpen, setFormulaModalOpen] = useState(false)
   const [socialLinkModalOpen, setSocialLinkModalOpen] = useState(false)
   const [selectedPath, setSelectedPath] = useState(null) // { moduleId, subfolder }
@@ -25,7 +24,6 @@ export function useEditorState() {
     unsaved, setUnsaved,
     saving, setSaving,
     previewOpen, setPreviewOpen,
-    changePasswordOpen, setChangePasswordOpen,
     formulaModalOpen, setFormulaModalOpen,
     socialLinkModalOpen, setSocialLinkModalOpen,
     selectedPath, setSelectedPath,

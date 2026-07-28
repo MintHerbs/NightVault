@@ -1,7 +1,7 @@
 ---
 id: E-009
 title: Author identity and audit trail — note authorship, admin profiles, contributor cards
-status: backlog
+status: in-progress
 created: 2026-07-28
 ---
 

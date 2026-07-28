@@ -11,7 +11,7 @@ import {
   Users,
   UserCircle,
   SignOut,
-  Key,
+  Gear,
   TextB,
   TextItalic,
   TextStrikethrough,
@@ -49,7 +49,7 @@ export default function EditorNavbar({
   roleLabel,
   username,
   onSignOut,
-  onChangePassword,
+  onOpenSettings,
   editorRef,
   onFormatAction,
   onInsertImage,
@@ -203,9 +203,9 @@ export default function EditorNavbar({
                   <span className={styles.role}>{roleLabel}</span>
                 </div>
                 <div className={styles.divider} />
-                <button className={styles.menuItem} onClick={onChangePassword}>
-                  <Key size={16} />
-                  <span>Change password</span>
+                <button className={styles.menuItem} onClick={onOpenSettings}>
+                  <Gear size={16} />
+                  <span>Settings</span>
                 </button>
                 <button className={styles.menuItem} onClick={onSignOut}>
                   <SignOut size={16} />

@@ -1,12 +1,134 @@
 ---
 id: T-072
 title: Admin Settings page — profile photo, password, name, and self-serve contributor cards
-status: backlog
+status: in-progress
 severity: medium
 area: admin
 epic: E-009
 created: 2026-07-28
 ---
+
+## Implementation status (2026-07-28)
+
+Code-complete per the Suggested fix below:
+
+- `db/sql/0043_contributor_settings.sql` — `contributor_cards` table (self-row
+  RLS, public read), `admin_update_own_profile` SECURITY DEFINER RPC,
+  `avatars` storage bucket + insert/update policies (registered in
+  `db/migrations.yaml` as id `0043`).
+- `src/lib/encodeCanvasToWebp.js` — extracted from `imageToWebp.js`'s private
+  `encodeWebp()`, now shared by both it and the cropper.
+- `src/components/admin/AvatarCropper/` — hand-rolled drag-to-reposition,
+  scroll/pinch-to-zoom canvas cropper (no library added), outputs a 512x512
+  WebP.
+- `src/lib/contributorCardsApi.js` — upload/RPC/CRUD helpers.
+- `src/pages/admin/AdminSettingsPage.jsx` (+ `.module.css`) — the four
+  sections from the Suggested fix; routed at `/admin/settings`.
+- `AdminBrowser.jsx` / `EditorNavbar.jsx` — "Settings" added to both avatar
+  dropdowns; `EditorNavbar`'s old "Change password" entry removed (and
+  `AdminEditor.jsx`'s now-dead `ChangePasswordModal`/`changePasswordOpen`
+  wiring removed with it) — Settings owns that flow now, matching the
+  acceptance criterion.
+- `AboutPage.jsx` — rewritten to query `contributor_cards` instead of the
+  hardcoded `FOUNDERS`/`CONTRIBUTORS` arrays; renders an initials fallback
+  for a card with no photo yet.
+- `scripts/migrate-team-to-contributor-cards.mjs` — one-off migration for the
+  7 already-hardcoded people, transcribed from `AboutPage.jsx`'s pre-rewrite
+  arrays. **Not yet run against any environment.**
+
+**DB verification (2026-07-28)**: unlike T-071's session, this one had
+Docker running with the project's local Supabase stack already up — but
+local dev is only migrated through `0024` (0025+ blocked by pre-existing,
+unrelated drift on `0024`; T-071's own `0042` backfill also hardcodes prod
+`auth.users` UUIDs that don't exist locally). So `0042`'s DDL prefix (its
+schema, not its data backfill) plus `0043` in full were applied and tested
+inside a transaction that was always rolled back — zero lasting footprint,
+but real verification: `admin_update_own_profile` called end-to-end as an
+authenticated user via `SET ROLE`/JWT-claim impersonation, confirmed it
+touches only `display_name`/`avatar_url`; `contributor_cards` RLS confirmed
+to block cross-user insert/update and allow public read/no-anon-write;
+`avatars` bucket + both storage policies confirmed present. This caught and
+fixed a real bug: `revoke execute ... from public` alone did NOT block
+`anon` from calling the RPC, because this project's Supabase grants EXECUTE
+on new functions directly to `anon` (not via `PUBLIC`) — fixed by also
+revoking from `anon` explicitly. `npm run build` passes; a headless-Chromium
+check confirmed `/about` renders correctly with zero cards (graceful
+degrade, not a crash) and `/admin` / `/admin/settings` (unauth redirect) show
+no console errors.
+
+**Not verified**: the actual authenticated Settings-page UI (cropper, save
+flows) in a real browser — no admin credentials were available this
+session. The migration script has not been run. Acceptance criteria below
+are unchecked pending a real `npm run db:migrate` (once the `0024` drift is
+resolved) and a manual walkthrough as a logged-in admin.
+
+One exception worth noting rather than leaving under that blanket reason:
+the `admin_update_own_profile` criterion (no `role` / `allowed_directories`
+reachable) does already have its evidence — the function body was read back
+via `pg_get_functiondef` confirming neither column is referenced and there is
+no dynamic SQL, and the RPC was called end-to-end as an authenticated caller
+with `role`/`username` confirmed untouched afterwards. It is left unchecked
+only because nothing here has been applied to a persistent database yet.
+
+## Self-review (2026-07-28)
+
+Caught and fixed five real defects in the above, plus re-tested two claims
+that had been asserted rather than exercised:
+
+1. **The profile-photo flow silently persisted the display-name text field's
+   unsaved buffer.** `confirmProfilePhoto` passed the live `displayName`
+   state into `admin_update_own_profile`, which assigns both columns rather
+   than coalescing. Clearing the name field and then changing the photo wrote
+   `''` — and because `admin_profiles_public` is
+   `coalesce(display_name, username)`, which only falls back on NULL, an
+   empty string is *worse* than never having set one: T-071's author avatars
+   would render a blank name and a `'?'` initial, breaking this ticket's own
+   "changing display name updates what T-071 shows" criterion. Fixed by
+   tracking `savedDisplayName` separately from the editing buffer; the photo
+   path writes the saved value, so it can no longer commit a half-typed name.
+2. **`AvatarCropper` failed silently on a browser that can't encode WebP.**
+   `encodeCanvasToWebp` throws there — `imageToWebp.js` documents this as a
+   real branch (Safari only gained WebP encoding in 16.x), and unlike the
+   note-image path there is no fall-back-to-the-original here. The rejection
+   escaped an un-`catch`ed `async` click handler, so "Save photo" just
+   flicked back with no explanation. Now caught and surfaced via a new
+   `onError` prop wired to the page's toast; `getContext('2d')` is
+   null-checked too, matching `imageToWebp.js`.
+3. **A 0-dimension decode was accepted as valid.** `{w: 0, h: 0}` is truthy,
+   so it passed the Save button's `!naturalSize` guard while making
+   `baseScale` Infinity and every derived width NaN — the result would have
+   been a blank 512x512 square. Now rejected with the same `!w || !h` check
+   `imageToWebp.js` makes, and an `<img onError>` handles formats that never
+   decode at all (HEIC being the realistic one), which previously left the
+   dialog stuck with Save permanently disabled and no message.
+4. **`contributor_cards_set_updated_at` left an advisor lint open.** It had
+   no pinned `search_path` (Supabase lint 0011, `function_search_path_mutable`
+   — the exact lint `0039`/`0040` were written to clear) and was still
+   grantable as an RPC. Now pinned and revoked, matching what `0042` does for
+   `notes_track_author` one migration earlier.
+5. **`AboutPage` keyed its cards on `member.name`.** Safe while those were
+   developer-authored literals; now that a card's name is typed by its owner,
+   two people can collide. Keyed on `admin_user_id` instead. Also disabled
+   the avatar-expand button for a photoless card — a focusable control
+   announcing "Expand photo of X" with nothing to expand, only reachable now
+   that cards are self-served.
+
+Re-tested rather than trusted: `storage.foldername(...)[2]` really is the
+`admin_user_id` for both path prefixes (and is NULL for a too-shallow path,
+so it can't be used to sidestep the policy); and the `updated_at` trigger
+really does fire — a first-pass check had printed `false` and been dropped
+from the test rather than explained, but the cause was the test itself
+(`now()` is frozen for the whole of a transaction, so an in-transaction
+before/after timestamp comparison can never move). Re-tested by having the
+`UPDATE` try to write an explicit year-2000 value and confirming the trigger
+overrode it.
+
+`npm run build` and `stylelint` re-run clean after the fixes. **The two SQL
+edits in item 4 are not themselves DB-verified** — Docker Desktop stopped
+partway through the review, after the earlier in-transaction run. They are
+verbatim copies of `0042`'s already-shipped pattern, but re-running
+`.selfreview-verify.mjs` (deleted; trivially recreated) once Docker is back
+would confirm them.
 
 ## Summary
 
