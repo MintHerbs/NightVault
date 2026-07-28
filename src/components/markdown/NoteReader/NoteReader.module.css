@@ -16,15 +16,23 @@
   max-width: 720px;
 }
 
-/* Humanised breadcrumb (e.g. "Database · Getting Started"). The Markdown
-   `# H1` is the title; this sits above it. */
+/* Eyebrow + author avatars, above the content. The Markdown `# H1` is the
+   title; this row sits above it. */
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 20px 0;
+}
+
+/* Humanised breadcrumb (e.g. "Database · Getting Started"). */
 .eyebrow {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-muted, var(--color-text-muted));
-  margin: 0 0 20px 0;
 }
 
 /* Back button now lives in src/components/common/BackButton (shared across

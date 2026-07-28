@@ -16,8 +16,9 @@ import Loading from '../../components/ui/Loading'
 import { ADMIN_ICON_OPTIONS, getIconNameForComponent } from '../../components/admin/adminIconOptions'
 import {
   subfoldersForModule, filesForFolder, rootFilesForModule,
-  subfolderToSegment, segmentToSubfolder,
+  subfolderToSegment, segmentToSubfolder, authorsForFolder, authorsForModule,
 } from '../../lib/notesApi'
+import AvatarGroup from '../../components/common/AvatarGroup/AvatarGroup'
 import { listCourses } from '../../lib/coursesApi'
 import { useActiveCourse, clearActiveCourse } from '../../hooks/useActiveCourse'
 import '../../styles/adminTokens.css'
@@ -246,6 +247,7 @@ function AdminBrowserContent() {
       `/admin/editor/${moduleId}/${subfolderToSegment(holder)}/${encodeURIComponent(f.path)}`
     ),
     path: f.path,
+    authors: f.authors,
   })
 
   const items = useMemo(() => {
@@ -260,6 +262,7 @@ function AdminBrowserContent() {
           kind: 'folder', key: name, name, hidden: !!folderHidden(name), date: null,
           onOpen: () => navigate(`/admin/editor/${moduleId}/${encodeURIComponent(name)}`),
           subfolder: name,
+          authors: authorsForFolder(activeModule, name),
         })),
         ...rootFilesForModule(activeModule).map(f => fileItem(f, null)),
       ]
@@ -268,6 +271,7 @@ function AdminBrowserContent() {
       kind: 'module', key: m.id, name: m.label, hidden: hiddenModuleIds.has(m.id), date: null,
       onOpen: () => navigate(`/admin/editor/${m.id}`),
       id: m.id,
+      authors: authorsForModule(m),
     }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level, activeModule, activeSubfolder, moduleId, visibleModules, folders, hiddenModuleIds])
@@ -773,8 +777,7 @@ function AdminBrowserContent() {
                       {item.hidden && <span className={styles.hiddenBadge}><EyeSlash size={12} weight="bold" /> hidden</span>}
                     </div>
                     <div className={styles.cellOwner}>
-                      <span className={styles.ownerAvatar}>{username.charAt(0).toUpperCase()}</span>
-                      <span className={styles.ownerName}>me</span>
+                      <AvatarGroup authors={item.authors} size={26} />
                     </div>
                     <div className={styles.cellDate}>{formatDate(item.date)}</div>
                     <div className={styles.cellSize}>—</div>

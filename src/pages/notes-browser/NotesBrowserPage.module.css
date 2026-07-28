@@ -189,7 +189,7 @@
 
 .tableHead {
   display: grid;
-  grid-template-columns: 1fr 140px;
+  grid-template-columns: 1fr 110px 140px;
   gap: 12px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--md-outline-variant);
@@ -208,12 +208,19 @@
   align-items: center;
   gap: 4px;
 }
+.thOwner {
+  color: var(--md-on-surface-variant);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 .thSortable { cursor: pointer; }
 .thSortable:hover { color: var(--md-on-surface); }
 
 .row {
   display: grid;
-  grid-template-columns: 1fr 140px;
+  grid-template-columns: 1fr 110px 140px;
   gap: 12px;
   align-items: center;
   min-height: 52px;
@@ -239,6 +246,12 @@
   white-space: nowrap;
 }
 
+.cellOwner {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
 .cellDate {
   color: var(--md-on-surface-variant);
   font-size: 13px;
@@ -257,8 +270,8 @@
 
 .card {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
   padding: 14px;
   border-radius: var(--md-shape-lg);
   background: var(--md-surface-container);
@@ -268,6 +281,13 @@
 }
 .card:hover { background: var(--md-surface-container-high); }
 
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
 .cardName {
   color: var(--md-on-surface);
   font-size: 14px;
@@ -275,6 +295,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
 }
 
 /* Mobile (matches PageShell/Sidebar's shared 968px breakpoint) */
@@ -287,10 +312,10 @@
   .searchWrap { max-width: none; }
   .chips { justify-content: flex-start; }
 
-  /* Date column drops out — not enough width to keep it legible next to a
-     comfortably-tappable name column. */
+  /* Date and author columns drop out — not enough width to keep them legible
+     next to a comfortably-tappable name column. */
   .tableHead, .row { grid-template-columns: 1fr; }
-  .thDate, .cellDate { display: none; }
+  .thDate, .cellDate, .thOwner, .cellOwner { display: none; }
 
   .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
 }

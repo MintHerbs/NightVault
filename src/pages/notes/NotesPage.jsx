@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import NoteReader from '../../components/markdown/NoteReader'
 import Loading from '../../components/ui/Loading'
-import { deriveSubfolder } from '../../lib/notesApi'
+import { deriveSubfolder, getNoteAuthors } from '../../lib/notesApi'
 import { loadNote } from '../../lib/noteCache'
 import { listModulesCached } from '../../lib/modulesApi'
 
@@ -32,6 +32,7 @@ function NotesPage() {
   const [content, setContent] = useState('')
   const [status, setStatus] = useState('idle')
   const [modules, setModules] = useState([])
+  const [authors, setAuthors] = useState([])
 
   const noteKey = useMemo(() => {
     if (!section || !subpath) return null
@@ -62,6 +63,7 @@ function NotesPage() {
       if (!section || !subpath) return
 
       setStatus('loading')
+      setAuthors([])
       try {
         // One request for the Subject list (cached across notes — it also
         // supplies the breadcrumb label below, and carries the `hidden` flag
@@ -84,6 +86,9 @@ function NotesPage() {
         }
         setContent(note.contentMd)
         setStatus('loaded')
+        // Fired off rather than awaited: the reader shouldn't wait on a second
+        // round trip just to show the byline. getNoteAuthors() never rejects.
+        getNoteAuthors(note.id).then((a) => { if (!cancelled) setAuthors(a) })
       } catch {
         if (cancelled) return
         setStatus('error')
@@ -96,7 +101,7 @@ function NotesPage() {
   }, [noteKey])
 
   if (status === 'loaded') {
-    return <NoteReader content={content} eyebrow={eyebrow} onBack={handleBack} />
+    return <NoteReader content={content} eyebrow={eyebrow} authors={authors} onBack={handleBack} />
   }
 
   return (

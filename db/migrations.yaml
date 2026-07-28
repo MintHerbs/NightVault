@@ -19,7 +19,7 @@
 # See db/README.md for how to apply migrations against a Supabase project.
 
 project: b-tree
-schema_version: 41
+schema_version: 42
 
 migrations:
   - id: "0001"
@@ -349,3 +349,11 @@ migrations:
     created: 2026-07-27
     applied_envs: ["prod"]
     related_issues: ["T-069", "T-064", "E-008"]
+
+  - id: "0042"
+    file: sql/0042_note_authorship.sql
+    description: "T-071: notes.created_by (stamped once on INSERT, unlike updated_by which is overwritten every save), note_authors multi-author ledger, admin_users.display_name/avatar_url, and admin_profiles_public (a public-safe view so anon/authenticated can resolve a name/avatar without RLS access to admin_users itself). Splits the trigger: notes_set_metadata (BEFORE) now also stamps created_by; a new notes_track_author (AFTER) writes note_authors, separate because its note_id FK needs the notes row to already exist. Backfills created_by/updated_by and note_authors for every pre-existing note per the verified table in T-071 (Rheva for computer-architecture lecture-{1,2,3}, Munazir for math sem 1 plus Nahla as a second note_authors row there, Munazir for all other still-unattributed notes); computer-architecture sem 2 and the programming module are untouched since no rows exist there yet."
+    author: agent
+    created: 2026-07-28
+    applied_envs: []
+    related_issues: ["T-071", "E-009"]

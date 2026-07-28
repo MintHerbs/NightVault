@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { toStructuralModules, invalidateNotesRegistry } from './useNotesRegistry'
 import { listModules } from '../lib/modulesApi'
-import { listNotes, listNoteFolders, mergeNotesIntoModules } from '../lib/notesApi'
+import { listNotes, listNoteFolders, listNoteAuthors, mergeNotesIntoModules } from '../lib/notesApi'
 
 async function fetchAll() {
-  const [dbModules, notes, folders] = await Promise.all([
-    listModules(), listNotes(), listNoteFolders(),
+  const [dbModules, notes, folders, authorsByNoteId] = await Promise.all([
+    listModules(), listNotes(), listNoteFolders(), listNoteAuthors(),
   ])
-  return { dbModules, notes, folders }
+  return { dbModules, notes, folders, authorsByNoteId }
 }
 
 // Shared by AdminBrowser and AdminEditor so both pages see the same
@@ -30,9 +30,9 @@ export function useAdminModulesRegistry() {
 
   const reload = useCallback(async () => {
     try {
-      const { dbModules, notes, folders: nextFolders } = await fetchAll()
+      const { dbModules, notes, folders: nextFolders, authorsByNoteId } = await fetchAll()
       const base = toStructuralModules(dbModules)
-      setModules(mergeNotesIntoModules(base, notes, nextFolders))
+      setModules(mergeNotesIntoModules(base, notes, nextFolders, authorsByNoteId))
       setFolders(nextFolders)
       setHiddenModuleIds(new Set(dbModules.filter((m) => m.hidden).map((m) => m.id)))
     } catch (err) {
@@ -47,10 +47,10 @@ export function useAdminModulesRegistry() {
 
     ;(async () => {
       try {
-        const { dbModules, notes, folders: nextFolders } = await fetchAll()
+        const { dbModules, notes, folders: nextFolders, authorsByNoteId } = await fetchAll()
         if (cancelled) return
         const base = toStructuralModules(dbModules)
-        setModules(mergeNotesIntoModules(base, notes, nextFolders))
+        setModules(mergeNotesIntoModules(base, notes, nextFolders, authorsByNoteId))
         setFolders(nextFolders)
         setHiddenModuleIds(new Set(dbModules.filter((m) => m.hidden).map((m) => m.id)))
       } catch (err) {

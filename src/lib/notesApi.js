@@ -70,15 +70,17 @@ export function baseName(path) {
  *   notes:   [{ moduleId, path, title }]
  *   folders: [{ moduleId, name }]      // explicit empty subfolders
  */
-export function mergeNotesIntoModules(modules, notes, folders = []) {
+export function mergeNotesIntoModules(modules, notes, folders = [], authorsByNoteId = new Map()) {
   const byModule = new Map()
   for (const n of notes) {
     if (!byModule.has(n.moduleId)) byModule.set(n.moduleId, [])
     byModule.get(n.moduleId).push({
+      id: n.id,
       filename: n.path,
       label: n.title || `${baseName(n.path)}.md`,
       hidden: !!n.hidden,
       updatedAt: n.updatedAt ?? null,
+      authors: authorsByNoteId.get(n.id) ?? [],
     })
   }
   const foldersByModule = new Map()
@@ -133,11 +135,13 @@ export function filesForFolder(module, subfolder) {
   return (module.notes ?? [])
     .filter((n) => deriveSubfolder(n.filename) === (subfolder ?? null))
     .map((n) => ({
+      id: n.id,
       name: n.label || `${baseName(n.filename)}.md`,
       path: n.filename,
       moduleId: module.id,
       hidden: n.hidden,
       updatedAt: n.updatedAt,
+      authors: n.authors ?? [],
     }))
 }
 
@@ -146,23 +150,139 @@ export function rootFilesForModule(module) {
   return filesForFolder(module, null)
 }
 
+// ─── Authorship (T-071) ─────────────────────────────────────────────────────
+
+/**
+ * Merge several notes' author lists into one deduped, richest-contributor-
+ * first list — used for folder/Subject rows, which have no single note
+ * behind them but should still surface every contributor across everything
+ * they contain.
+ */
+export function mergeAuthorLists(lists) {
+  const byId = new Map()
+  for (const list of lists) {
+    for (const a of list ?? []) {
+      const existing = byId.get(a.id)
+      if (existing) existing.contributionCount += a.contributionCount
+      else byId.set(a.id, { ...a })
+    }
+  }
+  return [...byId.values()].sort((a, b) => b.contributionCount - a.contributionCount)
+}
+
+/** Every distinct author across every note directly in `subfolder` (or the
+ * Subject root when `subfolder` is null). */
+export function authorsForFolder(module, subfolder) {
+  return mergeAuthorLists(filesForFolder(module, subfolder).map((f) => f.authors))
+}
+
+/** Every distinct author across every note in a Subject, root and folders alike. */
+export function authorsForModule(module) {
+  return mergeAuthorLists((module.notes ?? []).map((n) => n.authors))
+}
+
 // ─── Reads ─────────────────────────────────────────────────────────────────
 
 /** Every note's identity + label (no content) — for building the registry. */
 export async function listNotes() {
   const { data, error } = await supabase
     .from('notes')
-    .select('module_id, path, title, updated_at, hidden')
+    .select('id, module_id, path, title, updated_at, updated_by, hidden')
     .order('module_id', { ascending: true })
     .order('path', { ascending: true })
   if (error) throw new Error(error.message)
   return (data ?? []).map((r) => ({
+    id: r.id,
     moduleId: r.module_id,
     path: r.path,
     title: r.title,
     updatedAt: r.updated_at,
+    updatedBy: r.updated_by,
     hidden: !!r.hidden,
   }))
+}
+
+/**
+ * Every note's author list, keyed by note id (T-071). note_authors
+ * references auth.users, not admin_users, so there's no FK PostgREST can
+ * embed through — joined client-side against admin_profiles_public instead.
+ *
+ * Degrades to an empty map on error rather than throwing: this is called
+ * alongside listNotes()/listModules()/listNoteFolders() inside a Promise.all
+ * in both registry hooks, and authorship is additive on top of that data —
+ * a note_authors/admin_profiles_public query failure (e.g. migration 0042
+ * not yet applied to this environment) must not take down the entire
+ * notes/Subjects listing, just leave every AvatarGroup empty.
+ */
+export async function listNoteAuthors() {
+  const [authorsRes, profilesRes] = await Promise.all([
+    supabase.from('note_authors').select('note_id, user_id, contribution_count'),
+    supabase.from('admin_profiles_public').select('id, display_name, avatar_url'),
+  ])
+  if (authorsRes.error || profilesRes.error) {
+    console.error('Failed to load note authors:', authorsRes.error || profilesRes.error)
+    return new Map()
+  }
+
+  const profileById = new Map((profilesRes.data ?? []).map((p) => [p.id, p]))
+  const byNote = new Map()
+  for (const row of authorsRes.data ?? []) {
+    const profile = profileById.get(row.user_id)
+    if (!byNote.has(row.note_id)) byNote.set(row.note_id, [])
+    byNote.get(row.note_id).push({
+      id: row.user_id,
+      displayName: profile?.display_name || 'Unknown',
+      avatarUrl: profile?.avatar_url || null,
+      contributionCount: row.contribution_count,
+    })
+  }
+  for (const list of byNote.values()) {
+    list.sort((a, b) => b.contributionCount - a.contributionCount)
+  }
+  return byNote
+}
+
+/**
+ * Author list for a single note, same shape as one `listNoteAuthors()` entry.
+ * For the reader page, which only ever needs one note's worth rather than
+ * the full-registry map the browsers use. Degrades to `[]` on error, same
+ * reasoning as `listNoteAuthors()` — the note itself is already on screen by
+ * the time this is called, so a failure here should lose the byline, not the
+ * note.
+ */
+export async function getNoteAuthors(noteId) {
+  if (!noteId) return []
+  const { data: rows, error } = await supabase
+    .from('note_authors')
+    .select('user_id, contribution_count')
+    .eq('note_id', noteId)
+  if (error) {
+    console.error('Failed to load note authors:', error)
+    return []
+  }
+  if (!rows || rows.length === 0) return []
+
+  const { data: profiles, error: profErr } = await supabase
+    .from('admin_profiles_public')
+    .select('id, display_name, avatar_url')
+    .in('id', rows.map((r) => r.user_id))
+  if (profErr) {
+    console.error('Failed to load note author profiles:', profErr)
+    return []
+  }
+
+  const profileById = new Map((profiles ?? []).map((p) => [p.id, p]))
+  return rows
+    .map((r) => {
+      const profile = profileById.get(r.user_id)
+      return {
+        id: r.user_id,
+        displayName: profile?.display_name || 'Unknown',
+        avatarUrl: profile?.avatar_url || null,
+        contributionCount: r.contribution_count,
+      }
+    })
+    .sort((a, b) => b.contributionCount - a.contributionCount)
 }
 
 /** Explicit empty subfolders. */
@@ -182,18 +302,20 @@ export async function getNote(moduleId, path) {
   const clean = stripMd(path)
   const { data, error } = await supabase
     .from('notes')
-    .select('module_id, path, title, content_md, hidden')
+    .select('id, module_id, path, title, content_md, hidden, updated_by')
     .eq('module_id', moduleId)
     .eq('path', clean)
     .maybeSingle()
   if (error) throw new Error(error.message)
   if (!data) return null
   return {
+    id: data.id,
     moduleId: data.module_id,
     path: data.path,
     title: data.title,
     contentMd: data.content_md,
     hidden: !!data.hidden,
+    updatedBy: data.updated_by,
   }
 }
 

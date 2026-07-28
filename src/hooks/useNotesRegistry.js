@@ -15,7 +15,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { MODULE_TOOLS } from '../components/layout/Sidebar/modules'
 import { getIconOptionByName } from '../components/admin/adminIconOptions'
 import { listModules, invalidateModulesCache } from '../lib/modulesApi'
-import { listNotes, listNoteFolders, mergeNotesIntoModules } from '../lib/notesApi'
+import { listNotes, listNoteFolders, listNoteAuthors, mergeNotesIntoModules } from '../lib/notesApi'
 import { invalidateNote } from '../lib/noteCache'
 
 let lastModules = null
@@ -36,13 +36,13 @@ export function toStructuralModules(dbModules) {
 // reach the sidebar or the notes listing, so they're dropped here, before the
 // merge, rather than carried through and hidden by CSS.
 async function fetchRegistry() {
-  const [dbModules, notes, folders] = await Promise.all([
-    listModules(), listNotes(), listNoteFolders(),
+  const [dbModules, notes, folders, authorsByNoteId] = await Promise.all([
+    listModules(), listNotes(), listNoteFolders(), listNoteAuthors(),
   ])
   const visibleModules = toStructuralModules(dbModules.filter((m) => !m.hidden))
   const visibleNotes = notes.filter((n) => !n.hidden)
   const visibleFolders = folders.filter((f) => !f.hidden)
-  return mergeNotesIntoModules(visibleModules, visibleNotes, visibleFolders)
+  return mergeNotesIntoModules(visibleModules, visibleNotes, visibleFolders, authorsByNoteId)
 }
 
 export function useNotesRegistry() {

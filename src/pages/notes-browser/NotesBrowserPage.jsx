@@ -11,7 +11,9 @@ import Loading from '../../components/ui/Loading'
 import { useNotesRegistry } from '../../hooks/useNotesRegistry'
 import {
   subfoldersForModule, filesForFolder, rootFilesForModule, segmentToSubfolder,
+  authorsForFolder, authorsForModule,
 } from '../../lib/notesApi'
+import AvatarGroup from '../../components/common/AvatarGroup/AvatarGroup'
 import { noteRoute } from '../../components/layout/Sidebar/modules'
 import { prefetchNote } from '../../lib/noteCache'
 import styles from './NotesBrowserPage.module.css'
@@ -126,6 +128,7 @@ export default function NotesBrowserPage() {
     onOpen: () => navigate(noteRoute(moduleId, f.path)),
     onWarm: warmNote(f.path),
     onWarmCancel: cancelWarm,
+    authors: f.authors,
   })
 
   const items = useMemo(() => {
@@ -139,6 +142,7 @@ export default function NotesBrowserPage() {
         ...subfoldersForModule(activeModule).map((name) => ({
           kind: 'folder', key: name, name, date: null,
           onOpen: () => navigate(`/notes-browser/${moduleId}/${encodeURIComponent(name)}`),
+          authors: authorsForFolder(activeModule, name),
         })),
         ...rootFilesForModule(activeModule).map(fileItem),
       ]
@@ -146,6 +150,7 @@ export default function NotesBrowserPage() {
     return modules.map((m) => ({
       kind: 'module', key: m.id, name: m.label, date: null,
       onOpen: () => navigate(`/notes-browser/${m.id}`),
+      authors: authorsForModule(m),
     }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level, activeModule, activeSubfolder, moduleId, modules, navigate])
@@ -261,6 +266,7 @@ export default function NotesBrowserPage() {
               <button className={`${styles.thName} ${styles.thSortable}`} onClick={() => toggleSort('name')}>
                 Name {sortArrow('name')}
               </button>
+              <div className={styles.thOwner}>Author</div>
               <button className={`${styles.thDate} ${styles.thSortable}`} onClick={() => toggleSort('date')}>
                 Date modified {sortArrow('date')}
               </button>
@@ -283,6 +289,9 @@ export default function NotesBrowserPage() {
                     <RowIcon kind={item.kind} />
                     <span className={styles.name}>{item.name}</span>
                   </div>
+                  <div className={styles.cellOwner}>
+                    <AvatarGroup authors={item.authors} size={24} />
+                  </div>
                   <div className={styles.cellDate}>{formatDate(item.date)}</div>
                 </div>
               ))
@@ -303,8 +312,13 @@ export default function NotesBrowserPage() {
                   onMouseEnter={item.onWarm}
                   onMouseLeave={item.onWarmCancel}
                 >
-                  <RowIcon kind={item.kind} />
-                  <span className={styles.cardName} title={item.name}>{item.name}</span>
+                  <div className={styles.cardTop}>
+                    <RowIcon kind={item.kind} />
+                    <span className={styles.cardName} title={item.name}>{item.name}</span>
+                  </div>
+                  <div className={styles.cardMeta}>
+                    <AvatarGroup authors={item.authors} size={18} />
+                  </div>
                 </div>
               ))
             )}
