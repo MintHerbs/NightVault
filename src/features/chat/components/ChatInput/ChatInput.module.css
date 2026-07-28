@@ -80,8 +80,13 @@
   transition: background 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
 }
 
+/* Same flat --color-accent-bright swap as the two comment .btnPrimary rules
+   had, so the same state layer. The icon is a graphical object and needs
+   3:1; on hub/light the swap put it at 2.5:1. */
 .sendButton:hover:not(:disabled) {
-  background: var(--color-accent-bright);
+  background:
+    linear-gradient(rgba(var(--color-bg-rgb), 0.08), rgba(var(--color-bg-rgb), 0.08)),
+    var(--color-accent);
   transform: scale(1.05);
 }
 

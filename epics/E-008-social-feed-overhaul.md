@@ -43,7 +43,9 @@ filed.
       unmet and the vote-delta optimisation drifted counts on a foreign vote
       switch. Both fixed; stays open until verified against a live database
 - [x] T-065 — Composer, code attachment, comment thread, and chat input
-      have broken affordances and pre-T-062 hardcoded colours (medium)
+      have broken affordances and pre-T-062 hardcoded colours (medium).
+      Stays closed: its core claims hold. Two criteria were ticked unmet and
+      were corrected in place on 2026-07-28, with the residue split to T-070
 - [ ] T-066 — Add KLIPY GIF/sticker picker behind an Edge Function proxy,
       and a chat typing indicator (medium)
 - [ ] T-067 — Reconstruct `db/sql/0006`-`0015` from the deployed social
@@ -60,6 +62,10 @@ filed.
       un-voting, un-flagging and post editing all fail, most of them silently
       (high). Needs a product decision between dropping the checks and making
       them enforceable
+- [ ] T-070 — Social CSS still carries un-tokenised danger colours, sub-40px
+      mobile controls in `CommentItem`/`PollBuilder`, and six breakpoint
+      comments naming the wrong token (low). The residue of T-065; filed
+      rather than reopening it, since T-065's core claims hold
 
 ## Non-goals
 

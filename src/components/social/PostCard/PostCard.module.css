@@ -112,13 +112,13 @@
 }
 
 .menuDanger {
-  color: #FF5FA2;
-  text-shadow: 0 0 6px rgba(255, 95, 162, 0.3);
+  color: var(--color-danger);
+  text-shadow: 0 0 6px rgba(var(--color-danger-rgb), 0.3);
 }
 
 .menuDanger:hover {
-  background: rgba(255, 95, 162, 0.1);
-  text-shadow: 0 0 10px rgba(255, 95, 162, 0.6);
+  background: rgba(var(--color-danger-rgb), 0.1);
+  text-shadow: 0 0 10px rgba(var(--color-danger-rgb), 0.6);
 }
 
 .title {
@@ -347,40 +347,51 @@
   box-shadow: 0 0 20px rgba(var(--color-accent-rgb), 0.5);
 }
 
+/* `color` was --color-text, which only worked because the fill was a bright
+   pink in both modes. With a mode-aware fill it has to be the matching
+   on-danger role: near-black --color-text on the light-mode #ad1457 would be
+   2.4:1. The base gradient was two identical stops, i.e. a flat fill. */
 .btn.btnDanger {
-  background: linear-gradient(135deg, #FF5FA2, #FF5FA2);
-  border-color: #FF5FA2;
-  color: var(--color-text);
-  text-shadow: 0 0 8px rgba(255, 95, 162, 0.5);
-  box-shadow: 0 0 15px rgba(255, 95, 162, 0.3);
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--color-on-danger);
+  text-shadow: 0 0 8px rgba(var(--color-danger-rgb), 0.5);
+  box-shadow: 0 0 15px rgba(var(--color-danger-rgb), 0.3);
 }
 
+/* Hover used to blend the danger pink into --color-accent-bright, so the
+   delete button's hue drifted toward whatever accent the viewer's theme
+   happened to use — a destructive action tinted by brand. M3 state layer
+   instead: the content colour at 8% over the unchanged danger fill, which
+   is bounded and cannot shift the hue or invert the contrast. */
 .btn.btnDanger:hover {
-  background: linear-gradient(135deg, #FF5FA2, var(--color-accent-bright));
-  border-color: var(--color-accent-bright);
-  box-shadow: 0 0 20px rgba(255, 95, 162, 0.5);
+  background:
+    linear-gradient(rgba(var(--color-on-danger-rgb), 0.08), rgba(var(--color-on-danger-rgb), 0.08)),
+    var(--color-danger);
+  border-color: var(--color-danger);
+  box-shadow: 0 0 20px rgba(var(--color-danger-rgb), 0.5);
 }
 
 .confirm {
   margin: 8px 0 12px 0;
-  background: rgba(255, 95, 162, 0.1);
-  border: 1px solid rgba(255, 95, 162, 0.4);
+  background: rgba(var(--color-danger-rgb), 0.1);
+  border: 1px solid rgba(var(--color-danger-rgb), 0.4);
   border-radius: 12px;
   padding: 12px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  box-shadow: 
-    0 4px 12px rgba(255, 95, 162, 0.2),
-    0 0 20px rgba(255, 95, 162, 0.1);
+  box-shadow:
+    0 4px 12px rgba(var(--color-danger-rgb), 0.2),
+    0 0 20px rgba(var(--color-danger-rgb), 0.1);
 }
 
 .confirmText {
   font-size: 0.875rem;
-  color: #FF5FA2;
+  color: var(--color-danger);
   font-weight: 600;
-  text-shadow: 0 0 8px rgba(255, 95, 162, 0.4);
+  text-shadow: 0 0 8px rgba(var(--color-danger-rgb), 0.4);
 }
 
 /* --breakpoint-sm */

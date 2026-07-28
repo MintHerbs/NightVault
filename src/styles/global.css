@@ -31,6 +31,24 @@
   --color-muted: #6b6357;
   --color-star: #ffffff;
 
+  /* Danger / error. Deliberately NOT per-theme, for the same reason as the
+     data-viz colours below and the green/red vote states in PostActions:
+     error is one system semantic, not a brand accent. M3 ships a single
+     error role rather than one per seed colour, so this is defined once
+     here and overridden once in the [data-mode="light"] block below rather
+     than in all 18 generated theme blocks.
+
+     The light value is not the dark one lightened. #FF5FA2 is 7.1:1 on the
+     dark surfaces but only 2.7:1 on the light ones (every light theme uses
+     a near-#fafafa background), which failed AA as text everywhere it was
+     used. #ad1457 restores 6.7:1 in the same hue family. --color-on-danger
+     is what sits ON the filled danger colour: black clears 7.4:1 on the
+     bright pink, white clears 7.0:1 on the deep magenta. */
+  --color-danger: #FF5FA2;
+  --color-danger-rgb: 255, 95, 162;
+  --color-on-danger: #000000;
+  --color-on-danger-rgb: 0, 0, 0;
+
   /* Chat colors */
   --color-chat-own: #1b1a18;
   --color-chat-other: #1c1811;
@@ -809,6 +827,22 @@
   --md-on-surface: #1a1a1a;
   --md-on-surface-variant: #4d4d4d;
   --md-outline-variant: #cccccc;
+}
+
+/* Light-mode danger override. Deliberately OUTSIDE the generated region
+   above: derivePalette() emits those 18 blocks and re-emitting them would
+   drop anything hand-added there, but danger is theme-invariant so it has
+   no business being generated per-seed-colour in the first place.
+
+   Specificity is (0,1,0), the same as :root, so source order is what makes
+   this win — it must stay below :root. The generated compound selectors
+   are (0,2,0) and would beat it, but none of them define --color-danger,
+   so there is nothing to conflict with. */
+[data-mode="light"] {
+  --color-danger: #ad1457;
+  --color-danger-rgb: 173, 20, 87;
+  --color-on-danger: #ffffff;
+  --color-on-danger-rgb: 255, 255, 255;
 }
 
 * {

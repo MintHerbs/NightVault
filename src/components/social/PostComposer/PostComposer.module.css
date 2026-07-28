@@ -31,8 +31,8 @@
 }
 
 .shake textarea {
-  color: #FF5FA2;
-  text-shadow: 0 0 8px rgba(255, 95, 162, 0.5);
+  color: var(--color-danger);
+  text-shadow: 0 0 8px rgba(var(--color-danger-rgb), 0.5);
 }
 
 @keyframes composerShake {
@@ -177,8 +177,8 @@
 }
 
 .charCountWarn {
-  color: #FF5FA2;
-  text-shadow: 0 0 6px rgba(255, 95, 162, 0.4);
+  color: var(--color-danger);
+  text-shadow: 0 0 6px rgba(var(--color-danger-rgb), 0.4);
 }
 
 .panel {
@@ -297,14 +297,14 @@
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  background: rgba(255, 95, 162, 0.1);
-  border: 1px solid rgba(255, 95, 162, 0.3);
+  background: rgba(var(--color-danger-rgb), 0.1);
+  border: 1px solid rgba(var(--color-danger-rgb), 0.3);
   border-radius: 10px;
-  color: #FF5FA2;
+  color: var(--color-danger);
   font-size: 0.8rem;
   font-weight: 500;
-  box-shadow: 0 2px 8px rgba(255, 95, 162, 0.2), 0 0 15px rgba(255, 95, 162, 0.1);
-  text-shadow: 0 0 6px rgba(255, 95, 162, 0.3);
+  box-shadow: 0 2px 8px rgba(var(--color-danger-rgb), 0.2), 0 0 15px rgba(var(--color-danger-rgb), 0.1);
+  text-shadow: 0 0 6px rgba(var(--color-danger-rgb), 0.3);
 }
 
 /* --breakpoint-sm */

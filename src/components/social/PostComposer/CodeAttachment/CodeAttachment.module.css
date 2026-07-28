@@ -134,8 +134,8 @@
 }
 
 .iconBtnDanger:hover:not(:disabled) {
-  background: rgba(255, 95, 162, 0.15);
-  color: #FF5FA2;
+  background: rgba(var(--color-danger-rgb), 0.15);
+  color: var(--color-danger);
 }
 
 .editor {
@@ -211,9 +211,9 @@
 
 .notice {
   padding: 8px 12px;
-  background: rgba(255, 95, 162, 0.1);
-  border-top: 1px solid rgba(255, 95, 162, 0.25);
-  color: #FF5FA2;
+  background: rgba(var(--color-danger-rgb), 0.1);
+  border-top: 1px solid rgba(var(--color-danger-rgb), 0.25);
+  color: var(--color-danger);
   font-size: 0.72rem;
   font-weight: 500;
 }

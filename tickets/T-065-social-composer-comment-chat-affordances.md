@@ -107,15 +107,71 @@ targets) over the existing accent tokens; the cyberpunk syntax theme in
 
 ## Acceptance criteria
 
-- [x] No hardcoded hex colours remain on themed surfaces in the composer,
+- [ ] No hardcoded hex colours remain on themed surfaces in the composer,
       comment, or chat-input CSS (the cyberpunk syntax palette in
-      `CodeBlock.module.css` is intentionally exempt)
+      `CodeBlock.module.css` is intentionally exempt) — **unticked
+      2026-07-28, see Correction below**
 - [x] Code attachment line numbers track the textarea's scroll position and
       share its line metrics
 - [x] Comment composer renders above the thread
 - [x] Rate-limited and length-capped input produces visible feedback
-- [x] Interactive controls reach 40px on mobile breakpoints
+- [ ] Interactive controls reach 40px on mobile breakpoints — **unticked
+      2026-07-28, see Correction below**
 - [x] `npm run build` and `npm run lint:css` pass
+
+## Correction (2026-07-28)
+
+A verification pass read all five components against the code on disk. The
+ticket's core claims hold: the gutter genuinely syncs and shares its
+metrics, the comment composer genuinely sits above the thread, refused chat
+input genuinely surfaces a hint, and both gates genuinely pass (re-run on
+Node 22; Node 18 cannot run stylelint here). This ticket stays `done` for
+that reason. Two criteria were ticked while unmet, and are unticked above
+rather than quietly amended, because a closed ticket whose checklist is
+wrong is worse than an open one.
+
+**Criterion 1 was false but nearly true.** The four colours named in
+Evidence were all genuinely fixed. What the sweep missed was a wider
+danger/error family. Fixed on 2026-07-28, in this ticket's spirit rather
+than as new scope: a `--color-danger` / `--color-on-danger` token pair now
+exists in `src/styles/global.css`, and all 32 `#FF5FA2` and
+`rgba(255, 95, 162, …)` occurrences, spread over 30 lines in `PostCard`,
+`PostComposer` and `CodeAttachment`, point at it. The token is deliberately theme-invariant,
+defined once in `:root` and overridden once in a new `[data-mode='light']`
+block, on the same reasoning that keeps the vote green/red flat: error is
+one system semantic, not a brand accent. It needed a light override because
+`#FF5FA2` measures 7.1:1 on the dark surfaces but only 2.7:1 on the light
+ones, so it had been failing AA as text on every light theme everywhere it
+was used. `CodeBlock.module.css` is untouched, as the criterion exempts it.
+
+What still remains under this criterion — `#f87171`, the `#dc2626` family
+in `CommentItem`'s delete-confirm, and some `rgba(0, 0, 0, …)` shadows — is
+tracked in **T-070**.
+
+**Criterion 5 was false in two places**, neither noted at the time:
+`CommentItem`'s `.actionBtn` is 36px rather than 40px on mobile, and
+`PollBuilder` has no `@media` rules at all, which also makes the "Fix
+applied" line "breakpoints added to all five files that had none" wrong,
+since `PollBuilder` is one of the five it names. Both tracked in **T-070**.
+
+**A contrast bug this ticket's own fix introduced, now fixed.** Moving the
+primary buttons onto `--color-accent-bright` for hover was correct in dark
+themes, where that token is a lighter tint and raises contrast, but
+inverted in light themes, where the same lighter tint collapses it against
+a near-white background: hub/light went 4.5:1 at rest to 2.5:1 on hover,
+supabase/light to 1.9:1, cyan/light to 2.2:1, and all nine light themes got
+strictly worse on hover. `CommentSection`, `CommentItem` and `ChatInput`
+now use an M3 state layer — the content colour at 8% over an unchanged base
+— which is bounded and cannot invert the pass/fail state in either mode.
+`PostComposer`'s `.postBtn` did not have this bug; its rest state is already
+a two-stop gradient carrying both colours, so its hover only reverses the
+gradient direction. Separately, `PostCard`'s `.btn.btnDanger:hover` was
+blending the danger colour into `--color-accent-bright`, so a destructive
+action's hover hue drifted toward whatever accent the viewer's theme used;
+it now uses the same state layer over the danger fill.
+
+The LT-001 stylelint rule caught none of this: it inspects `color` for
+low-alpha white only, so a `background` swap is invisible to it.
 
 ## Remaining verification
 

@@ -19,7 +19,16 @@ function formatRelativeTime(iso) {
   return `${day}d ago`
 }
 
-export default function CommentItem({ comment, sessionId, depth, onVote, onReply, onDelete, getUserVote }) {
+export default function CommentItem({
+  comment,
+  sessionId,
+  depth,
+  onVote,
+  onReply,
+  onDelete,
+  getUserVote,
+  isLast = true,
+}) {
   const [showReply, setShowReply] = useState(false)
   const [replyContent, setReplyContent] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -34,6 +43,13 @@ export default function CommentItem({ comment, sessionId, depth, onVote, onReply
   const isRemoved = !!comment?.is_deleted
   const replies = Array.isArray(comment?.replies) ? comment.replies : []
   const canReply = replyContent.trim().length > 0 && !isReplying
+
+  const isReply = depth === 1
+  // The connector spine runs from this avatar down to the last reply's avatar,
+  // crossing however many siblings sit between. No single element knows where
+  // that last reply lands, so each element on the way paints its own segment
+  // and they butt together across .body's flex gap.
+  const hasReplies = !isReply && replies.length > 0
 
   // Matches the auto-grow behaviour of the other two composers; this one was
   // a fixed rows={3} box that neither shrank nor grew.
@@ -85,11 +101,18 @@ export default function CommentItem({ comment, sessionId, depth, onVote, onReply
   }
 
   return (
-    <div className={`${styles.item} ${depth === 1 ? styles.indentReply : ''}`}>
-      <div className={styles.threadLine} />
+    <div className={`${styles.item} ${isReply ? styles.indentReply : ''}`}>
+      {/* Drops from the parent's avatar and curves into this one. A reply with
+          another after it also carries the spine on down to it. */}
+      {isReply && (
+        <div
+          className={`${styles.connector} ${isLast ? '' : styles.connectorContinues}`}
+          aria-hidden="true"
+        />
+      )}
 
       <div className={styles.body}>
-        <div className={styles.row}>
+        <div className={`${styles.row} ${hasReplies ? styles.spineSegment : ''}`}>
           <div className={styles.avatar}>
             <AgentAvatar seed={comment?.session_id || 'anon'} size={24} animated={true} />
           </div>
@@ -153,7 +176,7 @@ export default function CommentItem({ comment, sessionId, depth, onVote, onReply
         )}
 
         {depth === 0 && showReply && (
-          <div className={styles.replyBox}>
+          <div className={`${styles.replyBox} ${hasReplies ? styles.spineSegment : ''}`}>
             <textarea
               ref={replyRef}
               className={styles.replyTextarea}
@@ -196,12 +219,13 @@ export default function CommentItem({ comment, sessionId, depth, onVote, onReply
 
         {depth === 0 &&
           replies.length > 0 &&
-          replies.map((r) => (
+          replies.map((r, i) => (
             <CommentItem
               key={r.id}
               comment={r}
               sessionId={sessionId}
               depth={1}
+              isLast={i === replies.length - 1}
               onVote={onVote}
               onReply={onReply}
               onDelete={onDelete}

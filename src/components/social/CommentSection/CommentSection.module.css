@@ -158,9 +158,17 @@
   font-weight: 600;
 }
 
+/* M3 state layer, not a swap to --color-accent-bright. That token is a
+   lighter tint of the accent, which raises contrast against a dark surface
+   but collapses it against a light one: hub/light went 4.5:1 at rest to
+   2.5:1 on hover, supabase/light to 1.9:1. The state layer is the content
+   colour at 8% over the unchanged base, so it is bounded to ±8% and cannot
+   invert the pass/fail state in either mode. */
 .btnPrimary:hover:not(:disabled) {
-  background: var(--color-accent-bright);
-  border-color: var(--color-accent-bright);
+  background:
+    linear-gradient(rgba(var(--color-bg-rgb), 0.08), rgba(var(--color-bg-rgb), 0.08)),
+    var(--color-accent);
+  border-color: var(--color-accent);
   color: var(--color-bg);
   box-shadow: 0 2px 10px rgba(var(--color-accent-rgb), 0.35);
 }
