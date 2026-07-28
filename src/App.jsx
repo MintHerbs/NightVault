@@ -104,7 +104,7 @@ function AppContent() {
           unreadCount={unreadCount}
         />
       )}
-      <MusicPlayer ref={musicPlayerRef} videoId={currentSongId} />
+      {!isAdminRoute && <MusicPlayer ref={musicPlayerRef} videoId={currentSongId} />}
 
       {/* Only routes fade — nothing else */}
       <div style={{
