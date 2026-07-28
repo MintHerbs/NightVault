@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AlertCircle, Search, X } from 'lucide-react'
-import { supabase } from '../../../../lib/supabaseClient'
+import { supabase } from '../../../lib/supabaseClient'
+import { EMOJI_ITEMS } from './emojiData'
 import styles from './MediaPicker.module.css'
 
-const TABS = [
+const DEFAULT_TABS = [
   { key: 'gifs', label: 'GIFs' },
   { key: 'stickers', label: 'Stickers' },
 ]
@@ -11,8 +12,8 @@ const TABS = [
 const PER_PAGE = 24
 const DEBOUNCE_MS = 350
 
-export default function MediaPicker({ onSelect, onClose }) {
-  const [kind, setKind] = useState('gifs')
+export default function MediaPicker({ onSelect, onClose, tabs = DEFAULT_TABS }) {
+  const [kind, setKind] = useState(tabs[0].key)
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [items, setItems] = useState([])
@@ -38,6 +39,7 @@ export default function MediaPicker({ onSelect, onClose }) {
 
   const load = useCallback(
     async (nextPage, { append }) => {
+      if (kind === 'emoji') return
       const ticket = ++requestId.current
       setStatus(append ? 'loadingMore' : 'loading')
       setError(null)
@@ -67,6 +69,14 @@ export default function MediaPicker({ onSelect, onClose }) {
     load(1, { append: false })
   }, [load])
 
+  // Emoji is a static local list — filtered on every keystroke, no debounce
+  // or network round trip needed the way the KLIPY-backed tabs require.
+  const emojiItems = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const matches = q ? EMOJI_ITEMS.filter((e) => e.name.includes(q)) : EMOJI_ITEMS
+    return matches.map((e) => ({ id: e.char, title: e.name, char: e.char }))
+  }, [query])
+
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') {
       e.stopPropagation()
@@ -75,13 +85,15 @@ export default function MediaPicker({ onSelect, onClose }) {
   }
 
   const skeletons = useMemo(() => Array.from({ length: 9 }, (_, i) => i), [])
-  const isInitialLoad = status === 'loading'
+  const isEmoji = kind === 'emoji'
+  const displayItems = isEmoji ? emojiItems : items
+  const isInitialLoad = !isEmoji && status === 'loading'
 
   return (
     <div className={styles.panel} onKeyDown={handleKeyDown}>
       <div className={styles.header}>
         <div className={styles.tabs} role="tablist" aria-label="Media type">
-          {TABS.map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.key}
               type="button"
@@ -105,7 +117,7 @@ export default function MediaPicker({ onSelect, onClose }) {
         <input
           ref={inputRef}
           className={styles.searchInput}
-          placeholder={`Search ${kind === 'gifs' ? 'GIFs' : 'stickers'}`}
+          placeholder={`Search ${kind === 'gifs' ? 'GIFs' : kind === 'stickers' ? 'stickers' : 'emoji'}`}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label={`Search ${kind}`}
@@ -117,37 +129,41 @@ export default function MediaPicker({ onSelect, onClose }) {
         )}
       </div>
 
-      {!debouncedQuery && !isInitialLoad && status !== 'error' && items.length > 0 && (
+      {!isEmoji && !debouncedQuery && !isInitialLoad && status !== 'error' && items.length > 0 && (
         <div className={styles.sectionLabel}>Trending</div>
       )}
 
-      <div className={styles.grid} role="list">
+      <div className={`${styles.grid} ${isEmoji ? styles.gridEmoji : ''}`} role="list">
         {isInitialLoad
           ? skeletons.map((i) => <div key={i} className={styles.skeleton} />)
-          : items.map((item) => (
+          : displayItems.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 role="listitem"
-                className={styles.thumbBtn}
+                className={`${styles.thumbBtn} ${isEmoji ? styles.emojiBtn : ''}`}
                 onClick={() => {
-                  onSelect?.(item)
-                  onClose?.()
+                  onSelect?.(item, kind)
+                  if (!isEmoji) onClose?.()
                 }}
                 title={item.title || 'Select'}
               >
-                <img
-                  className={styles.thumbImg}
-                  src={item.previewUrl}
-                  alt={item.title || ''}
-                  loading="lazy"
-                  decoding="async"
-                />
+                {isEmoji ? (
+                  <span className={styles.emojiGlyph}>{item.char}</span>
+                ) : (
+                  <img
+                    className={styles.thumbImg}
+                    src={item.previewUrl}
+                    alt={item.title || ''}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                )}
               </button>
             ))}
       </div>
 
-      {status === 'error' && (
+      {!isEmoji && status === 'error' && (
         <div className={styles.state} role="alert">
           <AlertCircle size={15} />
           <span>{error}</span>
@@ -157,25 +173,27 @@ export default function MediaPicker({ onSelect, onClose }) {
         </div>
       )}
 
-      {status !== 'error' && !isInitialLoad && items.length === 0 && (
+      {status !== 'error' && !isInitialLoad && displayItems.length === 0 && (
         <div className={styles.state}>
-          <span>No results{debouncedQuery ? ` for “${debouncedQuery}”` : ''}.</span>
+          <span>No results{(isEmoji ? query.trim() : debouncedQuery) ? ` for “${isEmoji ? query.trim() : debouncedQuery}”` : ''}.</span>
         </div>
       )}
 
-      <div className={styles.footer}>
-        {hasNext && status !== 'error' && (
-          <button
-            type="button"
-            className={styles.moreBtn}
-            onClick={() => load(page + 1, { append: true })}
-            disabled={status === 'loadingMore'}
-          >
-            {status === 'loadingMore' ? 'Loading…' : 'Load more'}
-          </button>
-        )}
-        <span className={styles.attribution}>Powered by KLIPY</span>
-      </div>
+      {!isEmoji && (
+        <div className={styles.footer}>
+          {hasNext && status !== 'error' && (
+            <button
+              type="button"
+              className={styles.moreBtn}
+              onClick={() => load(page + 1, { append: true })}
+              disabled={status === 'loadingMore'}
+            >
+              {status === 'loadingMore' ? 'Loading…' : 'Load more'}
+            </button>
+          )}
+          <span className={styles.attribution}>Powered by KLIPY</span>
+        </div>
+      )}
     </div>
   )
 }

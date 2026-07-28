@@ -70,6 +70,12 @@ filed.
       mobile controls in `CommentItem`/`PollBuilder`, and six breakpoint
       comments naming the wrong token (low). The residue of T-065; filed
       rather than reopening it, since T-065's core claims hold
+- [x] T-073 — Chat redesign: typing indicator sits too close to the input,
+      bubble/input visuals want the cyberpunk neon-glow treatment
+      PostComposer already has, plus three new features: seen receipts,
+      and an emoji/GIF/sticker drawer (medium). Closed 2026-07-28: all
+      acceptance criteria verified live against local Supabase across two
+      browser sessions; see the ticket's "Fix applied" section
 
 ## Non-goals
 

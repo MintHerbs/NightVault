@@ -1,10 +1,20 @@
+/* Floats above the input rather than sitting in flow above it — it used to
+   sit with only 6px of padding between it and the input, which read as
+   glued to it. Absolute + a real offset gives it deliberate breathing room
+   and stops it nudging the input's position as peers start/stop typing. */
 .wrapper {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 100%;
+  z-index: 2;
+  margin-bottom: 14px;
   width: min(800px, 90vw);
-  margin: 0 auto;
+  margin-left: auto;
+  margin-right: auto;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 4px 6px;
   animation: typingEnter 0.18s ease-out;
 }
 
@@ -39,8 +49,9 @@
   height: 24px;
   padding: 0 10px;
   border-radius: 12px;
-  background: rgba(var(--color-fg-rgb), 0.09);
-  border: 1px solid rgba(var(--color-fg-rgb), 0.08);
+  background: rgba(var(--color-accent-rgb), 0.1);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.22);
+  box-shadow: 0 0 10px rgba(var(--color-accent-rgb), 0.12);
 }
 
 .dot {
