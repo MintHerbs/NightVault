@@ -744,6 +744,7 @@ function AdminEditorContent() {
               ref={noteEditorRef}
               content={content}
               onChange={handleContentChange}
+              resetKey={`${moduleId}/${subfolder}/${slug}`}
             />
           ) : (
             <Editor

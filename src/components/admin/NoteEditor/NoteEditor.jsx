@@ -24,7 +24,7 @@ import {
 import { gfm, toggleStrikethroughCommand } from '@milkdown/kit/preset/gfm'
 import { listener, listenerCtx } from '@milkdown/kit/plugin/listener'
 import { history } from '@milkdown/kit/plugin/history'
-import { math } from '@milkdown/plugin-math'
+import { math, katexOptionsCtx } from '@milkdown/plugin-math'
 import {
   callCommand,
   replaceAll,
@@ -664,6 +664,14 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
       .config((ctx) => {
         ctx.set(rootCtx, root)
         ctx.set(defaultValueCtx, '')
+        // Unlike rehype-katex (MarkdownRenderer's reader path), the math
+        // plugin's toDOM calls katex.render() with no try/catch, so a
+        // malformed formula (e.g. stray `\=`, a real KaTeX command that needs
+        // an argument) throws straight through ProseMirror's view update with
+        // nothing to catch it — see EditorErrorBoundary for the same failure
+        // mode from any other source. throwOnError: false makes KaTeX render
+        // a red inline error span instead, matching the reader's degradation.
+        ctx.set(katexOptionsCtx, { throwOnError: false })
         ctx.get(listenerCtx).markdownUpdated((_, markdown) => {
           if (applyingExternal.current) {
             applyingExternal.current = false
