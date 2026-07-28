@@ -140,9 +140,9 @@ exists in `src/styles/global.css`, and all 32 `#FF5FA2` and
 defined once in `:root` and overridden once in a new `[data-mode='light']`
 block, on the same reasoning that keeps the vote green/red flat: error is
 one system semantic, not a brand accent. It needed a light override because
-`#FF5FA2` measures 7.1:1 on the dark surfaces but only 2.7:1 on the light
-ones, so it had been failing AA as text on every light theme everywhere it
-was used. `CodeBlock.module.css` is untouched, as the criterion exempts it.
+`#FF5FA2` measures 6.98:1 on the dark surfaces but only 2.71:1 on the light
+ones (all nine light themes share exactly `#fafafa`), so it had been failing
+AA as text on every light theme everywhere it was used as text. `CodeBlock.module.css` is untouched, as the criterion exempts it.
 
 What still remains under this criterion — `#f87171`, the `#dc2626` family
 in `CommentItem`'s delete-confirm, and some `rgba(0, 0, 0, …)` shadows — is

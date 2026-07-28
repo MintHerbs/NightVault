@@ -47,7 +47,7 @@ requirement, so these may be correct as literals.
 
 **Controls below 40px on mobile.**
 
-- `CommentItem.module.css:350-353` — `.actionBtn` is raised to 36px, not
+- `CommentItem.module.css:355-358` — `.actionBtn` is raised to 36px, not
   40px, in the `max-width: 640px` block. This is the upvote / downvote /
   reply / delete row, the most-tapped control in a thread
 - `PollBuilder.module.css` — has **zero** `@media` rules, despite T-065
@@ -55,7 +55,7 @@ requirement, so these may be correct as literals.
   `PollBuilder` as one of the five. `.input` computes to roughly 32px,
   `.removeBtn` to 28px and `.addBtn` to 22px at every viewport width
 
-**Breakpoint comments name the wrong token.** `docs/design.md:98-100`
+**Breakpoint comments name the wrong token.** `docs/design.md:99-101`
 defines `--breakpoint-sm: 480px`, `--breakpoint-md: 640px`,
 `--breakpoint-lg: 768px`, and requires a comment naming the token above
 each rule because CSS custom properties cannot be read inside a `@media`
