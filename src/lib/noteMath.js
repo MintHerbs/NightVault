@@ -55,9 +55,19 @@ const COMMAND_RE = /\\[a-zA-Z]+\*?/g
 
 const MATH_ENV_RE = /\\begin\s*\{([a-zA-Z*]+)\}[\s\S]*?\\end\s*\{\1\}/g
 // Closing delimiters tolerate a missing backslash (`\[ … ]`), which some
-// sources produce.
-const TEX_DISPLAY_RE = /\\\[([\s\S]*?)\\?\]/g
-const TEX_INLINE_RE = /\\\(([\s\S]*?)\\?\)/g
+// sources produce. Group 2 records whether that backslash was actually there,
+// because the tolerant form collides with a Markdown-escaped literal bracket:
+// `\[E(X)]^2` is prose-authored `[E(X)]^2`, not display maths. A bare closing
+// is therefore honoured only when the body holds a LaTeX control word (T-074);
+// a properly paired `\[ … \]` is trusted exactly as before.
+const TEX_DISPLAY_RE = /\\\[([\s\S]*?)(\\?)\]/g
+const TEX_INLINE_RE = /\\\(([\s\S]*?)(\\?)\)/g
+
+/** A run of backslash-escaped dollars: `\$`, `\$\$`, … Each `\$` is 2 chars. */
+const ESCAPED_DOLLAR_RUN_RE = /(?:\\\$)+/g
+/** A body that is a single bare variable, so `\$X\$` still reads as maths while
+ *  `\$5\$` (a currency amount) does not. */
+const LONE_MATH_VARIABLE_RE = /^\s*[A-Za-z]\s*$/
 
 /** Gap between two formula fragments that is itself pure maths, so the two are
  *  one run (`\alpha + \beta` is one formula, not two). Deliberately excludes
@@ -84,9 +94,14 @@ export const MATH_DELIMITED_RE = /\$\$[\s\S]*?\$\$|\$[^$\n]+\$/
  * a subscript instead of a literal underscore — Markdown does not process
  * escapes inside `$…$`, so KaTeX would otherwise receive the backslash).
  * Never touches `\\` (a LaTeX row break) or `\{` / `\}`.
+ *
+ * `[` / `]` are in the set because Markdown escapes them as link syntax, so a
+ * pasted `[E(X)]^2` arrives as `\[E(X)]^2`; `\[` is not valid inside an already
+ * delimited formula, so leaving it would render a KaTeX error where the author
+ * meant literal brackets (T-074).
  */
 function unescapeMath(body) {
-  return body.replace(/\\([_*#~|])/g, '$1')
+  return body.replace(/\\([_*#~|[\]])/g, '$1')
 }
 
 function countDoubleDollar(text) {
@@ -101,11 +116,66 @@ function countDoubleDollar(text) {
 }
 
 /**
+ * Paired runs of backslash-escaped dollars, as
+ * `{ start, end, body, count, repairable }`.
+ *
+ * A source that Markdown-escapes its output (an LLM answer, a converted doc)
+ * turns `$$x$$` into `\$\$x\$\$`. That shape is invisible to the scan below:
+ * the bytes are `\`,`$`,`\`,`$`, so there is no *adjacent* `$$` for
+ * `countDoubleDollar` or `INLINE_PROTECT_RE`'s `$$…$$` branch to find, and the
+ * body is left unprotected for rules 3 and 4 to wrap a fragment of. The result
+ * is a live maths node stranded inside literal `$$` text (T-074).
+ *
+ * `repairable` is the guard that separates the author's maths from prose about
+ * money: a body qualifies only if it carries a LaTeX control word or is a lone
+ * variable, so `it costs \$5 and \$10` never becomes a formula. Non-repairable
+ * pairs are still returned, because they must be protected from rules 3 and 4
+ * rather than merely left un-rewritten.
+ */
+function escapedDollarRegions(md) {
+  const runs = []
+  ESCAPED_DOLLAR_RUN_RE.lastIndex = 0
+  let match
+  while ((match = ESCAPED_DOLLAR_RUN_RE.exec(md)) !== null) {
+    runs.push({ index: match.index, length: match[0].length, count: match[0].length / 2 })
+  }
+
+  const regions = []
+  for (let i = 0; i < runs.length - 1; i += 1) {
+    const open = runs[i]
+    const close = runs[i + 1]
+    // Only a like-for-like pair is a delimiter pair, and only `$`/`$$` are
+    // delimiters at all; anything longer is a degenerate run, left alone.
+    if (open.count !== close.count || open.count > 2) continue
+    const body = md.slice(open.index + open.length, close.index)
+    // Delimiters never span a line here: a stray `\$` far below would
+    // otherwise pair up and swallow the prose between the two.
+    if (body.includes('\n')) continue
+    regions.push({
+      start: open.index,
+      end: close.index + close.length,
+      body,
+      count: open.count,
+      repairable: LATEX_COMMAND_RE.test(body) || LONE_MATH_VARIABLE_RE.test(body),
+    })
+    i += 1
+  }
+  return regions
+}
+
+/**
  * Marks the regions that must not be rewritten: code (fenced, indented,
  * inline) and anything already delimited as maths. Also returns the line table,
  * since both this scan and the line-level rules need it.
  *
- * → { isProtected(start, end), lines: { start, end, text, open }[] }
+ * → { isProtected(start, end), isCode(start, end),
+ *     lines: { start, end, text, open }[] }
+ *
+ * `isCode` is the code-only subset of `isProtected` (fenced, indented, inline
+ * code, but not the maths regions). Escaped-delimiter repair needs it: a `\$\$`
+ * sample written inside a fenced block is documentation about the syntax and
+ * must survive verbatim, and the full `isProtected` mask cannot answer that
+ * question because it also covers every line carrying a loose `$`.
  *
  * `open: false` means "skip this line entirely" and covers the two cases a
  * marked region can't express: a line inside a multi-line `$$ … $$` block, and
@@ -119,6 +189,7 @@ function countDoubleDollar(text) {
  */
 function scanProtected(md) {
   const marked = new Uint8Array(md.length)
+  const code = new Uint8Array(md.length)
   const lines = []
   let offset = 0
   let fence = null
@@ -135,12 +206,14 @@ function scanProtected(md) {
       // length closes it, so ``` inside a ~~~ block stays content.
       if (fenceMatch && fenceMatch[1][0] === fence.char && fenceMatch[1].length >= fence.length) fence = null
       marked.fill(1, start, end)
+      code.fill(1, start, end)
       lines.push({ start, end, text, open: false })
       continue
     }
     if (fenceMatch) {
       fence = { char: fenceMatch[1][0], length: fenceMatch[1].length }
       marked.fill(1, start, end)
+      code.fill(1, start, end)
       lines.push({ start, end, text, open: false })
       continue
     }
@@ -152,6 +225,7 @@ function scanProtected(md) {
     }
     if (INDENTED_CODE_RE.test(text)) {
       marked.fill(1, start, end)
+      code.fill(1, start, end)
       lines.push({ start, end, text, open: false })
       continue
     }
@@ -162,6 +236,9 @@ function scanProtected(md) {
     let match
     while ((match = INLINE_PROTECT_RE.exec(text)) !== null) {
       marked.fill(1, start + match.index, start + match.index + match[0].length)
+      // match[1] is the backtick run, set only by the inline-code branch of
+      // INLINE_PROTECT_RE; the other two branches are maths, not code.
+      if (match[1] !== undefined) code.fill(1, start + match.index, start + match.index + match[0].length)
       masked = masked.slice(0, match.index) + ' '.repeat(match[0].length) + masked.slice(match.index + match[0].length)
     }
 
@@ -174,11 +251,16 @@ function scanProtected(md) {
   }
 
   const protectedBefore = new Int32Array(md.length + 1)
-  for (let i = 0; i < md.length; i += 1) protectedBefore[i + 1] = protectedBefore[i] + marked[i]
+  const codeBefore = new Int32Array(md.length + 1)
+  for (let i = 0; i < md.length; i += 1) {
+    protectedBefore[i + 1] = protectedBefore[i] + marked[i]
+    codeBefore[i + 1] = codeBefore[i] + code[i]
+  }
 
   return {
     lines,
     isProtected: (start, end) => protectedBefore[end] - protectedBefore[start] > 0,
+    isCode: (start, end) => codeBefore[end] - codeBefore[start] > 0,
   }
 }
 
@@ -294,18 +376,44 @@ export function normalizeNoteMath(input) {
   // No backslash means no LaTeX, and that is the overwhelming majority of notes.
   if (!md.includes('\\')) return md
 
-  const { isProtected, lines } = scanProtected(md)
+  const { isProtected, isCode, lines } = scanProtected(md)
+  // A `\$…\$` sample inside a code block is documentation about the syntax, so
+  // it is excluded here and never repaired.
+  const escaped = escapedDollarRegions(md).filter((r) => !isCode(r.start, r.end))
+  const overlapsEscaped = (start, end) => escaped.some((r) => start < r.end && end > r.start)
   const edits = []
   const add = (priority, start, end, text) => {
     if (isProtected(start, end)) return
+    // An escaped pair is settled by rule 0 alone: a rule that reached inside one
+    // would either double-wrap a body rule 0 is already rewriting, or inject a
+    // live `$` into text the author escaped on purpose.
+    if (overlapsEscaped(start, end)) return
     edits.push({ priority, start, end, text })
+  }
+
+  // 0. An over-escaped delimiter pair is the author's maths written through a
+  //    Markdown-escaping source. Pushed directly rather than through `add`,
+  //    because these spans are deliberately fenced off from every other rule
+  //    (and the lines carrying them are `open: false` anyway, since an escaped
+  //    `$` still reads as a loose dollar to the scan).
+  for (const region of escaped) {
+    if (!region.repairable) continue
+    const fence = '$'.repeat(region.count)
+    edits.push({
+      priority: 0,
+      start: region.start,
+      end: region.end,
+      text: `${fence}${unescapeMath(region.body.trim())}${fence}`,
+    })
   }
 
   // 1. TeX's own delimiters.
   for (const m of md.matchAll(TEX_DISPLAY_RE)) {
+    if (!m[2] && !LATEX_COMMAND_RE.test(m[1])) continue
     add(1, m.index, m.index + m[0].length, `$$\n${unescapeMath(m[1].trim())}\n$$`)
   }
   for (const m of md.matchAll(TEX_INLINE_RE)) {
+    if (!m[2] && !LATEX_COMMAND_RE.test(m[1])) continue
     add(1, m.index, m.index + m[0].length, `$${unescapeMath(m[1].trim())}$`)
   }
 
