@@ -1,94 +1,34 @@
 // About page — the team behind the project as Material You (M3) profile cards.
-// Grouped into Founders and Contributors. The global Starfield + sidebar live in
-// App.jsx, so this page is a transparent M3 surface like the Grade Toolkit.
+// Grouped into Founders and Contributors, sourced from contributor_cards
+// (T-072) instead of a hardcoded array — admins self-serve their own card via
+// /admin/settings rather than a developer editing this file. The global
+// Starfield + sidebar live in App.jsx, so this page is a transparent M3
+// surface like the Grade Toolkit.
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, ArrowLeft } from 'lucide-react'
 import { InstagramIcon, GithubIcon, LinkedinIcon } from './BrandIcons'
-import moonPhoto from '../../img/team/moon.jpeg'
-import tanooPhoto from '../../img/team/tanoo.png'
-import atishPhoto from '../../img/team/atish.png'
-import nooriePhoto from '../../img/team/noorie.png'
-import nusaibahPhoto from '../../img/team/nusaibah.png'
-import nahlaPhoto from '../../img/team/nahla.png'
-import ismailPhoto from '../../img/team/ismail.png'
+import { listContributorCards } from '../../lib/contributorCardsApi'
 import styles from './AboutPage.module.css'
 
-// `photoFocus` re-frames a photo onto the face inside the circular crop:
-// translate brings the face to the centre, scale zooms in. Omit for photos
-// that already frame well centred (e.g. Atish).
-const FOUNDERS = [
-  {
-    name: 'Munazir Ramjhun',
-    photo: moonPhoto,
-    photoFocus: 'translate(-12%, 20%) scale(1.35)',
-    role: 'Founder & Developer',
-    socials: {
-      instagram: 'https://www.instagram.com/offrian',
-      linkedin: 'https://www.linkedin.com/in/offrian/',
-      github: 'https://github.com/MintHerbs',
-    },
-  },
-  {
-    name: 'Tanoo Joyekurun',
-    photo: tanooPhoto,
-    photoFocus: 'translate(21%, 27%) scale(1.6)',
-    role: 'Co-Founder & Creator of Grade Toolkit',
-    socials: {
-      instagram: 'https://www.instagram.com/msieur_sunshine',
-      linkedin: 'https://www.linkedin.com/in/tanoojoy/',
-      github: 'https://github.com/tanoojoy',
-    },
-  },
-  {
-    name: 'Atish Joottun',
-    photo: atishPhoto,
-    role: 'Co-Founder & Developer',
-    socials: {
-      linkedin: 'https://www.linkedin.com/in/atish-joottun-31a9aa321/',
-      github: 'https://github.com/JoottunAtish/JoottunAtish',
-    },
-  },
-]
-
-const CONTRIBUTORS = [
-  {
-    name: 'Saihah Noorie Ossen',
-    photo: nooriePhoto,
-    photoFocus: 'translate(2%, 34%) scale(1.75)',
-    role: 'Wrote the database notes',
-    socials: {
-      instagram: 'https://instagram.com/_noorie.07._',
-      linkedin: 'https://www.linkedin.com/in/noorie-ossen-7049b52b6',
-    },
-  },
-  {
-    name: 'Nusaibah Banu Khodabocus',
-    photo: nusaibahPhoto,
-    role: 'Wrote the Maths semester 2 notes',
-    socials: {
-      instagram: 'https://www.instagram.com/nusaibah_2205',
-    },
-  },
-  {
-    name: 'Nahla Aalyah Dinmahamed',
-    photo: nahlaPhoto,
-    role: 'Lead Coordinator',
-    socials: {
-      instagram: 'https://www.instagram.com/nahla.dna',
-      linkedin: 'https://www.linkedin.com/in/nahla-aalyah-dinmahamed-76712b319/',
-    },
-  },
-  {
-    name: 'Mohammad Ismail Iftikhar Oozeerally',
-    photo: ismailPhoto,
-    socials: {
-      instagram: 'https://instagram.com/urhomeboyismail',
-      linkedin: 'https://mu.linkedin.com/in/mohammad-ismail-oozeerally-31b8a334b',
-    },
-  },
-]
+// contributor_cards row → the shape MemberCard/PhotoLightbox render. Kept as
+// a mapping (rather than renaming MemberCard's props to match the DB
+// columns) so this file's history of `photo`/`photoFocus`/`socials` naming —
+// and the components below — didn't need to change at all.
+function toMember(row) {
+  return {
+    // Carried purely as a React key. `name` used to be safe for that when
+    // these were developer-authored literals, but a card's name is now typed
+    // by its owner in Settings, so two people can collide on it.
+    id: row.admin_user_id,
+    name: row.name,
+    photo: row.photo_url,
+    photoFocus: row.photo_focus,
+    role: row.role_text,
+    socials: row.socials || {},
+  }
+}
 
 // Ordered so the icon row stays consistent across cards.
 const SOCIALS = [
@@ -110,20 +50,30 @@ function MemberCard({ member, index, reduceMotion, onExpand }) {
         ease: [0.2, 0, 0, 1],
       }}
     >
+      {/* Disabled rather than just inert when there's no photo: a card whose
+          owner hasn't uploaded one yet has nothing to expand, and a focusable
+          control announcing "Expand photo of X" that does nothing is worse
+          than no control. Photoless cards couldn't happen while this list was
+          a hardcoded array; they can now that people self-serve. */}
       <button
         type="button"
         className={styles.avatarRing}
         onClick={() => onExpand(member)}
+        disabled={!member.photo}
         aria-label={`Expand photo of ${member.name}`}
       >
         <div className={styles.avatarClip}>
-          <img
-            className={styles.avatar}
-            src={member.photo}
-            alt={member.name}
-            loading="lazy"
-            style={member.photoFocus ? { transform: member.photoFocus } : undefined}
-          />
+          {member.photo ? (
+            <img
+              className={styles.avatar}
+              src={member.photo}
+              alt={member.name}
+              loading="lazy"
+              style={member.photoFocus ? { transform: member.photoFocus } : undefined}
+            />
+          ) : (
+            <span className={styles.avatarFallback}>{member.name.charAt(0).toUpperCase()}</span>
+          )}
         </div>
       </button>
 
@@ -155,7 +105,7 @@ function Section({ heading, members, reduceMotion, onExpand }) {
       <div className={styles.grid}>
         {members.map((member, i) => (
           <MemberCard
-            key={member.name}
+            key={member.id ?? member.name}
             member={member}
             index={i}
             reduceMotion={reduceMotion}
@@ -229,6 +179,9 @@ function AboutPage() {
   const navigate = useNavigate()
   const [reduceMotion, setReduceMotion] = useState(false)
   const [expanded, setExpanded] = useState(null)
+  const [founders, setFounders] = useState([])
+  const [contributors, setContributors] = useState([])
+  const [loading, setLoading] = useState(true)
 
   // Go back to wherever the user came from; fall back to the tree if this page
   // was opened directly (no in-app history to pop).
@@ -244,6 +197,22 @@ function AboutPage() {
     const onChange = e => setReduceMotion(e.matches)
     query.addEventListener('change', onChange)
     return () => query.removeEventListener('change', onChange)
+  }, [])
+
+  // contributor_cards (T-072) replaces the old hardcoded FOUNDERS/CONTRIBUTORS
+  // arrays — a contributor with no card yet (Rheva, Maisara, Zakiyyah until
+  // they make one via Settings) simply isn't in either list.
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([listContributorCards('founder'), listContributorCards('contributor')])
+      .then(([founderRows, contributorRows]) => {
+        if (cancelled) return
+        setFounders(founderRows.map(toMember))
+        setContributors(contributorRows.map(toMember))
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
   }, [])
 
   return (
@@ -269,18 +238,22 @@ function AboutPage() {
           <p className={styles.pageSubtitle}>The people behind the project.</p>
         </motion.header>
 
-        <Section
-          heading="Founders"
-          members={FOUNDERS}
-          reduceMotion={reduceMotion}
-          onExpand={setExpanded}
-        />
-        <Section
-          heading="Contributors"
-          members={CONTRIBUTORS}
-          reduceMotion={reduceMotion}
-          onExpand={setExpanded}
-        />
+        {!loading && founders.length > 0 && (
+          <Section
+            heading="Founders"
+            members={founders}
+            reduceMotion={reduceMotion}
+            onExpand={setExpanded}
+          />
+        )}
+        {!loading && contributors.length > 0 && (
+          <Section
+            heading="Contributors"
+            members={contributors}
+            reduceMotion={reduceMotion}
+            onExpand={setExpanded}
+          />
+        )}
       </div>
 
       <AnimatePresence>

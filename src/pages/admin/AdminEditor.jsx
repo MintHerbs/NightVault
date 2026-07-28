@@ -14,7 +14,6 @@ import { useAdmin } from './useAdmin'
 import EditorNavbar from '../../components/admin/EditorNavbar'
 import PreviewModal from '../../components/admin/PreviewModal'
 import ImageCleanupDrawer from '../../components/admin/ImageCleanupDrawer'
-import ChangePasswordModal from '../../components/admin/ChangePasswordModal'
 import FormulaModal from '../../components/admin/FormulaModal'
 import SocialLinkModal from '../../components/admin/SocialLinkModal'
 import ToastNotification, { useToast } from '../../components/admin/ToastNotification'
@@ -213,7 +212,6 @@ function AdminEditorContent() {
     title, setTitle, content, setContent,
     unsaved, setUnsaved, saving, setSaving,
     previewOpen, setPreviewOpen,
-    changePasswordOpen, setChangePasswordOpen,
     formulaModalOpen, setFormulaModalOpen, socialLinkModalOpen, setSocialLinkModalOpen,
     selectedPath, setSelectedPath, originalPath, setOriginalPath,
     currentStyle, setCurrentStyle,
@@ -672,12 +670,6 @@ function AdminEditorContent() {
         />
       )}
 
-      <ChangePasswordModal
-        open={changePasswordOpen}
-        onClose={() => setChangePasswordOpen(false)}
-        userEmail={user?.email}
-      />
-
       <FormulaModal
         open={formulaModalOpen}
         onClose={() => setFormulaModalOpen(false)}
@@ -712,7 +704,7 @@ function AdminEditorContent() {
         roleLabel={isPrimaryOwner ? 'Primary owner' : profile?.role === 'owner' ? 'Owner' : profile?.role === 'admin' ? 'Admin' : 'Contributor'}
         username={profile?.username}
         onSignOut={handleSignOut}
-        onChangePassword={() => setChangePasswordOpen(true)}
+        onOpenSettings={() => navigate('/admin/settings')}
         editorRef={editorRef}
         onFormatAction={onFormat}
         onInsertImage={() => fileInputRef.current?.click()}

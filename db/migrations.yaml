@@ -19,7 +19,7 @@
 # See db/README.md for how to apply migrations against a Supabase project.
 
 project: b-tree
-schema_version: 42
+schema_version: 43
 
 migrations:
   - id: "0001"
@@ -357,3 +357,10 @@ migrations:
     created: 2026-07-28
     applied_envs: []
     related_issues: ["T-071", "E-009"]
+  - id: "0043"
+    file: sql/0043_contributor_settings.sql
+    description: "T-072: contributor_cards (self-row RLS, public read, backs /about and Settings' contributor-card form), admin_update_own_profile SECURITY DEFINER RPC (writes only admin_users.display_name/avatar_url, the two public-safe columns 0042 added), and the avatars Storage bucket (public read; insert/update scoped to the caller's own admin_user_id via the path's second segment, profile/{id}/... and contributor-card/{id}/...). Note that revoking EXECUTE from PUBLIC is NOT sufficient to keep anon out of the RPC on this project: default privileges grant EXECUTE on new public-schema functions directly to anon, so anon is revoked explicitly too (verified against a local stack by reading pg_proc.proacl back). Applied to prod 2026-07-28 via the Studio SQL editor; scripts/migrate-team-to-contributor-cards.mjs run immediately after (7/7 cards, photos confirmed resolving over HTTP)."
+    author: agent
+    created: 2026-07-28
+    applied_envs: ["prod"]
+    related_issues: ["T-072", "E-009"]
