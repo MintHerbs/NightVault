@@ -74,9 +74,7 @@ export default function useChat(isChatOpen) {
     }
   }, [])
 
-  const sendMessage = useCallback(async (content) => {
-    if (!content.trim()) return
-
+  const insertMessage = useCallback(async ({ content = '', attachmentUrl = null, attachmentType = null }) => {
     const sessionId = localStorage.getItem('session_id')
 
     if (!sessionId) {
@@ -87,19 +85,20 @@ export default function useChat(isChatOpen) {
     setIsLoading(true)
 
     try {
-      console.log('[Chat] Sending message:', content)
-      
       // Ensure session exists in sessions table before inserting message
       await supabase
         .from('sessions')
         .upsert({ id: sessionId, last_seen: new Date().toISOString() })
 
-      // Now insert the message
       const { error } = await supabase
         .from('messages')
-        .insert({ session_id: sessionId, content: content.trim() })
+        .insert({
+          session_id: sessionId,
+          content,
+          attachment_url: attachmentUrl,
+          attachment_type: attachmentType,
+        })
 
-      console.log('[Chat] Send result:', error)
       if (error) {
         console.error('Error sending message:', error)
       }
@@ -110,9 +109,20 @@ export default function useChat(isChatOpen) {
     }
   }, [])
 
+  const sendMessage = useCallback((content) => {
+    if (!content.trim()) return
+    return insertMessage({ content: content.trim() })
+  }, [insertMessage])
+
+  const sendAttachment = useCallback((url, kind) => {
+    if (!url) return
+    return insertMessage({ attachmentUrl: url, attachmentType: kind })
+  }, [insertMessage])
+
   return {
     messages,
     sendMessage,
+    sendAttachment,
     isLoading,
     unreadCount,
     markAsRead,

@@ -1,6 +1,7 @@
 // Chat input: auto-growing pill field with an always-present send action
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send } from 'lucide-react'
+import { Send, Smile } from 'lucide-react'
+import MediaPicker from '../../../../components/ui/MediaPicker/MediaPicker'
 import styles from './ChatInput.module.css'
 
 const MAX_WORDS = 500
@@ -9,10 +10,16 @@ const RATE_LIMIT_WINDOW_MS = 5000 // 5 seconds
 const LINE_HEIGHT = 22
 const MAX_LINES = 8
 const HINT_MS = 2200
+const DRAWER_TABS = [
+  { key: 'emoji', label: 'Emoji' },
+  { key: 'gifs', label: 'GIFs' },
+  { key: 'stickers', label: 'Stickers' },
+]
 
-export default function ChatInput({ onSend, onTyping, onIdle, disabled = false }) {
+export default function ChatInput({ onSend, onSendMedia, onTyping, onIdle, disabled = false }) {
   const [value, setValue] = useState('')
   const [hint, setHint] = useState(null)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const textareaRef = useRef(null)
   const messageTimes = useRef([]) // Track message timestamps for rate limiting
   const hintTimer = useRef(null)
@@ -74,6 +81,26 @@ export default function ChatInput({ onSend, onTyping, onIdle, disabled = false }
     }
   }
 
+  const handleDrawerSelect = (item, kind) => {
+    // Emoji inserts into the field and leaves the drawer open for picking
+    // more than one; GIFs/stickers are a discrete attachment, sent at once.
+    if (kind === 'emoji') {
+      setValue((prev) => prev + item.char)
+      textareaRef.current?.focus()
+      return
+    }
+
+    if (disabled) return
+    if (isRateLimited()) {
+      showHint('Slow down a moment before sending again')
+      return
+    }
+
+    messageTimes.current.push(Date.now())
+    onSendMedia?.(item.fullUrl, kind)
+    setIsDrawerOpen(false)
+  }
+
   const handleChange = (e) => {
     const newValue = e.target.value
     if (countWords(newValue) > MAX_WORDS) {
@@ -94,7 +121,28 @@ export default function ChatInput({ onSend, onTyping, onIdle, disabled = false }
 
   return (
     <div className={styles.wrapper}>
+      {isDrawerOpen && (
+        <div className={styles.drawerWrapper}>
+          <MediaPicker
+            tabs={DRAWER_TABS}
+            onSelect={handleDrawerSelect}
+            onClose={() => setIsDrawerOpen(false)}
+          />
+        </div>
+      )}
+
       <div className={styles.container}>
+        <button
+          type="button"
+          className={`${styles.drawerButton} ${isDrawerOpen ? styles.drawerButtonActive : ''}`}
+          onClick={() => setIsDrawerOpen((v) => !v)}
+          disabled={disabled}
+          aria-label="Open emoji, GIF and sticker drawer"
+          aria-expanded={isDrawerOpen}
+        >
+          <Smile size={18} aria-hidden="true" />
+        </button>
+
         <textarea
           ref={textareaRef}
           className={styles.textarea}

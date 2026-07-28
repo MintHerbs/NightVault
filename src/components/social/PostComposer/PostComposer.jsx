@@ -6,7 +6,7 @@ import AgentAvatar from '../../effects/smoothui/agent-avatar'
 import PollBuilder from './PollBuilder/PollBuilder'
 import CodeAttachment from './CodeAttachment/CodeAttachment'
 import TitleModal from './TitleModal/TitleModal'
-import MediaPicker from './MediaPicker/MediaPicker'
+import MediaPicker from '../../ui/MediaPicker/MediaPicker'
 import { detectCodeLanguage, normalizeLanguage } from '../../../lib/social/codeHighlighter'
 import styles from './PostComposer.module.css'
 

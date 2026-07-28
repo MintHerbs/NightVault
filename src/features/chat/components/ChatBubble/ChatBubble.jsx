@@ -13,8 +13,21 @@ export default function ChatBubble({ message, isOwnMessage }) {
       <ChatAvatar sessionId={message.session_id} size={32} />
       
       <div className={styles.bubbleWrapper}>
-        <div className={`${styles.bubble} ${isOwnMessage ? styles.ownBubble : styles.otherBubble}`}>
-          {message.content}
+        <div
+          className={`${styles.bubble} ${isOwnMessage ? styles.ownBubble : styles.otherBubble} ${
+            message.attachment_url ? styles.mediaBubble : ''
+          }`}
+        >
+          {message.attachment_url ? (
+            <img
+              className={styles.attachmentImg}
+              src={message.attachment_url}
+              alt={message.attachment_type === 'sticker' ? 'Sticker' : 'GIF'}
+              loading="lazy"
+            />
+          ) : (
+            message.content
+          )}
         </div>
         <div className={styles.timestamp}>{timestamp}</div>
       </div>

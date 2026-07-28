@@ -207,6 +207,22 @@
   display: block;
 }
 
+/* Emoji tab: same square-tile grid as GIFs/stickers, denser columns since a
+   glyph needs far less room than a thumbnail. */
+.gridEmoji {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.emojiGlyph {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
 .skeleton {
   width: 100%;
   height: 0;
@@ -282,6 +298,10 @@
   .grid {
     grid-template-columns: repeat(2, 1fr);
     max-height: 240px;
+  }
+
+  .gridEmoji {
+    grid-template-columns: repeat(5, 1fr);
   }
 
   .tab {
