@@ -15,7 +15,8 @@ import ToastNotification, { useToast } from '../../components/admin/ToastNotific
 import Loading from '../../components/ui/Loading'
 import { ADMIN_ICON_OPTIONS, getIconNameForComponent } from '../../components/admin/adminIconOptions'
 import {
-  subfoldersForModule, filesForFolder, rootFilesForModule,
+  subfoldersForModule, filesForFolder, rootFilesForModule, baseName,
+  compareRowsByCreated, compareRowsByName,
   subfolderToSegment, segmentToSubfolder, authorsForFolder, authorsForModule,
 } from '../../lib/notesApi'
 import AvatarGroup from '../../components/common/AvatarGroup/AvatarGroup'
@@ -205,7 +206,7 @@ function AdminBrowserContent() {
   const [view, setView] = useState('list')       // 'list' | 'grid'
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all') // 'all' | 'folders' | 'files'
-  const [sort, setSort] = useState({ key: 'name', dir: 'asc' })
+  const [sort, setSort] = useState({ key: 'created', dir: 'asc' })
 
   // Interaction state
   const [renaming, setRenaming] = useState(null) // { kind, key, value }
@@ -242,7 +243,8 @@ function AdminBrowserContent() {
   // `holder` is the folder a file lives in, or null at the Subject root; it
   // only decides which URL segment the editor link carries.
   const fileItem = (f, holder) => ({
-    kind: 'file', key: f.path, name: f.name, hidden: !!f.hidden, date: f.updatedAt,
+    kind: 'file', key: f.path, name: f.name, hidden: !!f.hidden, sortKey: baseName(f.path),
+    date: f.updatedAt, created: f.createdAt,
     onOpen: () => navigate(
       `/admin/editor/${moduleId}/${subfolderToSegment(holder)}/${encodeURIComponent(f.path)}`
     ),
@@ -284,10 +286,14 @@ function AdminBrowserContent() {
     }
     if (typeFilter === 'folders') arr = arr.filter(i => i.kind !== 'file')
     if (typeFilter === 'files') arr = arr.filter(i => i.kind === 'file')
+    // Default 'created' and a natural name comparator, both shared with the
+    // public browser via notesApi so the two lists can't order differently
+    // (T-076). The old plain localeCompare here read 1, 10, 11, 2.
     arr = [...arr].sort((a, b) => {
       let cmp
       if (sort.key === 'date') cmp = new Date(a.date || 0) - new Date(b.date || 0)
-      else cmp = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+      else if (sort.key === 'created') cmp = compareRowsByCreated(a, b)
+      else cmp = compareRowsByName(a, b)
       return sort.dir === 'asc' ? cmp : -cmp
     })
     return arr
@@ -727,13 +733,14 @@ function AdminBrowserContent() {
 
             <Popover.Root>
               <Popover.Trigger asChild>
-                <button className={`${styles.chip} ${sort.key === 'date' ? styles.chipActive : ''}`}>
-                  Modified
+                <button className={`${styles.chip} ${sort.key !== 'created' ? styles.chipActive : ''}`}>
+                  {sort.key === 'created' ? 'Sort' : sort.key === 'date' ? 'Modified' : 'Name'}
                   <CaretDown size={14} weight="bold" />
                 </button>
               </Popover.Trigger>
               <Popover.Portal>
                 <Popover.Content className={styles.menuContent} sideOffset={5} align="start">
+                  <button className={styles.menuItem} onClick={() => setSort({ key: 'created', dir: 'asc' })}>Date created</button>
                   <button className={styles.menuItem} onClick={() => setSort({ key: 'date', dir: 'desc' })}>Newest first</button>
                   <button className={styles.menuItem} onClick={() => setSort({ key: 'date', dir: 'asc' })}>Oldest first</button>
                   <button className={styles.menuItem} onClick={() => setSort({ key: 'name', dir: 'asc' })}>Name (A–Z)</button>
@@ -756,8 +763,8 @@ function AdminBrowserContent() {
                   Name {sortArrow('name')}
                 </button>
                 <div className={styles.thOwner}>Owner</div>
-                <button className={`${styles.thDate} ${styles.thSortable}`} onClick={() => toggleSort('date')}>
-                  Date modified {sortArrow('date')}
+                <button className={`${styles.thDate} ${styles.thSortable}`} onClick={() => toggleSort(sort.key === 'created' ? 'created' : 'date')}>
+                  {sort.key === 'created' ? 'Date created' : 'Date modified'} {sortArrow(sort.key === 'created' ? 'created' : 'date')}
                 </button>
                 <div className={styles.thSize}>File size</div>
                 <div className={styles.thMenu} />
@@ -782,7 +789,7 @@ function AdminBrowserContent() {
                     <div className={styles.cellOwner}>
                       <AvatarGroup authors={item.authors} size={26} />
                     </div>
-                    <div className={styles.cellDate}>{formatDate(item.date)}</div>
+                    <div className={styles.cellDate}>{formatDate(sort.key === 'created' ? item.created : item.date)}</div>
                     <div className={styles.cellSize}>—</div>
                     <div className={styles.cellMenu}>
                       <RowMenu items={menuFor(item)} />

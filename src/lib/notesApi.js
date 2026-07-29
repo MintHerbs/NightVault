@@ -62,6 +62,88 @@ export function baseName(path) {
   return stripMd(String(path || '').split('/').pop() || '')
 }
 
+// ─── Ordering (T-076) ───────────────────────────────────────────────────────
+
+/** Natural ("human") ordering, so ch2 sorts before ch10 rather than after it.
+ *  `numeric` is what does that; without it any run of digits compares
+ *  character by character. */
+const NATURAL = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+
+/** 'YYYY-MM-DD' for a timestamp, or '' when there isn't one. */
+function createdDay(value) {
+  if (!value) return ''
+  const t = Date.parse(value)
+  return Number.isNaN(t) ? '' : new Date(t).toISOString().slice(0, 10)
+}
+
+/**
+ * Ordering for the files inside one folder: **oldest day first, then by
+ * number/name within that day.**
+ *
+ * Compared at DAY granularity, not by raw timestamp, and that is the whole
+ * point. A batch of chapters written on the same day gets millisecond-apart
+ * `created_at` values that reflect nothing but insert order, so sorting on the
+ * full timestamp would scatter ch01..ch20 arbitrarily. Collapsing to the day
+ * lets the natural-name tiebreak produce 1, 2, 3, … while still putting a note
+ * genuinely written later below the earlier batch.
+ *
+ * Notes with no `created_at` (an environment where migration 0046 has not been
+ * applied) sort as '' — all equal — so the whole list falls through to the name
+ * comparison and stays sensible instead of ordering at random.
+ *
+ * Ties break on the filename rather than the display label: the label is
+ * author-editable and often duplicated ("Chapter 2: …"), while the path is
+ * unique per Subject, so this is a total order with no arbitrary residue.
+ */
+export function compareNotes(a, b) {
+  const dayA = createdDay(a.createdAt)
+  const dayB = createdDay(b.createdAt)
+  if (dayA !== dayB) {
+    // A missing day sorts last, so un-backfilled rows don't jump to the top.
+    if (!dayA) return 1
+    if (!dayB) return -1
+    return dayA < dayB ? -1 : 1
+  }
+  return NATURAL.compare(baseName(a.path ?? ''), baseName(b.path ?? ''))
+}
+
+/**
+ * The same ordering for a browser ROW (`{ name, created }`) rather than a note
+ * record. Both the public notes browser and the admin browser build rows and
+ * then sort them for their own column headers, so they need a comparator that
+ * speaks their shape — sharing this one is what keeps the two lists identical.
+ *
+ * Compares on the display name rather than the path, because that is the column
+ * the user is looking at, and does it naturally: plain `localeCompare` orders
+ * "Chapter 10" before "Chapter 2", which is what these lists used to show.
+ */
+export function compareRowsByCreated(a, b) {
+  const dayA = createdDay(a.created)
+  const dayB = createdDay(b.created)
+  if (dayA !== dayB) {
+    if (!dayA) return 1
+    if (!dayB) return -1
+    return dayA < dayB ? -1 : 1
+  }
+  return compareRowsByName(a, b)
+}
+
+/**
+ * Natural ordering on a row: 1, 2, …, 9, 10, 11, not 1, 10, 11, 2.
+ *
+ * Prefers `sortKey` (the filename, for a file row) over `name` (the title).
+ * The filename is the author's deliberate ordering key — it is why chapters get
+ * zero-padded as `ch01` — whereas the title is prose and need not encode order
+ * at all. For these notes both give the same 1…20 run, but only the filename
+ * puts an index note (`00-module-overview`, titled "Web & Mobile Development…")
+ * at the top where it belongs rather than filing it under W.
+ */
+export function compareRowsByName(a, b) {
+  const keyA = a.sortKey ?? a.name ?? ''
+  const keyB = b.sortKey ?? b.name ?? ''
+  return NATURAL.compare(String(keyA), String(keyB))
+}
+
 /**
  * Merge DB note + folder rows into a copy of the structural MODULES array,
  * attaching `notes` and `subfolders` in the shape existing consumers expect.
@@ -80,6 +162,7 @@ export function mergeNotesIntoModules(modules, notes, folders = [], authorsByNot
       label: n.title || `${baseName(n.path)}.md`,
       hidden: !!n.hidden,
       updatedAt: n.updatedAt ?? null,
+      createdAt: n.createdAt ?? null,
       authors: authorsByNoteId.get(n.id) ?? [],
     })
   }
@@ -97,7 +180,12 @@ export function mergeNotesIntoModules(modules, notes, folders = [], authorsByNot
     // still renders as "coming soon" in ExpandedView (its check keys off the
     // presence of the property), exactly as before.
     if (moduleNotes && moduleNotes.length > 0) {
-      next.notes = moduleNotes
+      // Ordered here as well as in filesForFolder (T-076) so that anything
+      // reading `module.notes` straight off a merged Subject inherits the same
+      // order, instead of the order depending on which helper the caller used.
+      // compareNotes reads `path`, which is `filename` in this shape.
+      next.notes = [...moduleNotes].sort((a, b) =>
+        compareNotes({ ...a, path: a.filename }, { ...b, path: b.filename }))
     } else {
       delete next.notes
     }
@@ -141,8 +229,15 @@ export function filesForFolder(module, subfolder) {
       moduleId: module.id,
       hidden: n.hidden,
       updatedAt: n.updatedAt,
+      createdAt: n.createdAt ?? null,
       authors: n.authors ?? [],
     }))
+    // Sorted here rather than in listNotes' SQL: natural ("ch2 before ch10")
+    // ordering isn't expressible in a PostgREST `order`, and this is the single
+    // function both the live notes browser and the admin browser read their
+    // file lists from — so the two surfaces cannot drift out of agreement about
+    // the order. See compareNotes.
+    .sort(compareNotes)
 }
 
 /** Notes sitting directly under the Subject, in no folder. */
@@ -184,12 +279,32 @@ export function authorsForModule(module) {
 // ─── Reads ─────────────────────────────────────────────────────────────────
 
 /** Every note's identity + label (no content) — for building the registry. */
+const NOTE_COLUMNS = 'id, module_id, path, title, updated_at, updated_by, hidden'
+
 export async function listNotes() {
-  const { data, error } = await supabase
+  // `created_at` arrived in migration 0046 (T-076). Asking for a column that
+  // doesn't exist makes PostgREST reject the whole request, which would take
+  // the entire notes listing — and with it the sidebar and the public browser —
+  // down on any environment the migration hasn't reached yet. So it's requested
+  // optimistically and retried without on failure, the same way listNoteAuthors
+  // tolerates 0042 being absent. Ordering degrades to name-only there
+  // (compareNotes treats a missing created_at as equal), which is what the list
+  // did before this column existed.
+  let { data, error } = await supabase
     .from('notes')
-    .select('id, module_id, path, title, updated_at, updated_by, hidden')
+    .select(`${NOTE_COLUMNS}, created_at`)
     .order('module_id', { ascending: true })
+    .order('created_at', { ascending: true })
     .order('path', { ascending: true })
+
+  if (error) {
+    ({ data, error } = await supabase
+      .from('notes')
+      .select(NOTE_COLUMNS)
+      .order('module_id', { ascending: true })
+      .order('path', { ascending: true }))
+  }
+
   if (error) throw new Error(error.message)
   return (data ?? []).map((r) => ({
     id: r.id,
@@ -197,6 +312,7 @@ export async function listNotes() {
     path: r.path,
     title: r.title,
     updatedAt: r.updated_at,
+    createdAt: r.created_at ?? null,
     updatedBy: r.updated_by,
     hidden: !!r.hidden,
   }))
@@ -403,15 +519,19 @@ export async function renameFolder(moduleId, oldName, newName) {
   const targets = notes.filter(
     (n) => n.moduleId === moduleId && n.path.startsWith(`${oldName}/`)
   )
-  for (const n of targets) {
-    const rest = n.path.slice(oldName.length + 1)
-    await moveNote({
-      fromModuleId: moduleId,
-      fromPath: n.path,
-      toModuleId: moduleId,
-      toPath: `${newName}/${rest}`,
+  // Each note's move is independent (distinct paths), so run them
+  // concurrently rather than one round trip at a time.
+  await Promise.all(
+    targets.map((n) => {
+      const rest = n.path.slice(oldName.length + 1)
+      return moveNote({
+        fromModuleId: moduleId,
+        fromPath: n.path,
+        toModuleId: moduleId,
+        toPath: `${newName}/${rest}`,
+      })
     })
-  }
+  )
   // Move the explicit folder row (delete old, add new) if it exists.
   const { error: delErr } = await supabase
     .from('note_folders')
@@ -438,9 +558,9 @@ export async function deleteFolder(moduleId, subfolder) {
   const targets = notes.filter(
     (n) => n.moduleId === moduleId && deriveSubfolder(n.path) === subfolder
   )
-  for (const n of targets) {
-    await deleteNote(moduleId, n.path)
-  }
+  // Each note's delete is independent, so run them concurrently rather than
+  // one round trip at a time.
+  await Promise.all(targets.map((n) => deleteNote(moduleId, n.path)))
   const { error } = await supabase
     .from('note_folders')
     .delete()
