@@ -19,7 +19,7 @@
 # See db/README.md for how to apply migrations against a Supabase project.
 
 project: b-tree
-schema_version: 48
+schema_version: 50
 
 migrations:
   - id: "0001"
@@ -404,3 +404,19 @@ migrations:
     created: 2026-07-29
     applied_envs: []
     related_issues: ["T-078"]
+
+  - id: "0049"
+    file: sql/0049_courses_hidden.sql
+    description: "T-077: adds courses.hidden (default false) so the primary owner can hide a course from the public site without deleting it — Subjects, notes and admin_users rows scoped to the course are untouched; only the home grid and the course's own /courses/:id and /notes-browser/:id routes are gated. Read policy follows sidebar_modules' precedent (using (true), hidden filtered client-side) rather than folding is_primary_owner() into the SELECT predicate, since that function is only granted EXECUTE to authenticated and Postgres doesn't guarantee OR short-circuit for the anon role. Writes stay under 0026's existing primary-owner update policy — hidden is just another column on a row only the primary owner may update. Additive and deliberately schema-agnostic about courses.id's type (dev's 0024 table uses uuid, prod's pre-existing one uses text — see 0025's header); this is NOT the place to reconcile that drift. NUMBERING: authored as 0046 and merged in PR #72 under the filename 0046_courses_hidden.sql, which collided with 0046_notes_created_at.sql (T-076) already registered here; renumbered to 0049 in this follow-up. Safe to renumber because it was never applied anywhere and never went through the npm run db:migrate runner (0024's pre-existing drift still blocks every application, see 0024/0044), so no environment holds a schema_migrations row binding it to an id. Not yet applied to any environment: apply via docker exec psql for dev, and confirm prod's actual courses schema before running against prod."
+    author: agent
+    created: 2026-07-30
+    applied_envs: []
+    related_issues: ["T-077"]
+
+  - id: "0050"
+    file: sql/0050_courses_cover.sql
+    description: "T-077 follow-on: courses.cover_preset/cover_ascii/cover_anim let the primary owner choose a card's ASCII cover animation in the admin panel, either a named preset or an uploaded image converted to character art client-side (src/lib/asciiArt/imageToAscii.js). The grid is stored as ~3 KB of text rather than the image as a Storage file, so a card needs no second round trip and there is no orphan-cleanup lifecycle to own (cf. T-002 for note images); the source image is deliberately not retained. CHECK constraints bound cover_anim to the animation names in bitmapField.js (keep the two in step) and cover_ascii to 20 KB. No new RLS: 0049 already grants public SELECT, and writes stay under 0026's primary-owner update policy. Additive and schema-agnostic about courses.id's type — see 0049's header. NUMBERING: authored as 0047 and merged in PR #72 under the filename 0047_courses_cover.sql, which collided with 0047_social_write_hardening.sql (T-078) already registered here; renumbered to 0050 in this follow-up, same reasoning as 0049. Not yet applied to any environment."
+    author: agent
+    created: 2026-07-30
+    applied_envs: []
+    related_issues: ["T-077"]

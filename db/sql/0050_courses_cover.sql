@@ -1,4 +1,4 @@
--- 0047_courses_cover.sql
+-- 0050_courses_cover.sql
 -- T-077 follow-on: lets the primary owner choose a course card's ASCII cover
 -- animation from the admin panel — either a named preset or an image uploaded
 -- and converted to character art in the browser.
@@ -16,9 +16,9 @@
 -- Additive only, and schema-agnostic about `courses.id`'s type: dev's courses
 -- table (0024) uses `id uuid`, prod's pre-existing one (see 0025's header)
 -- uses `id text`. New independent columns are safe either way. Do NOT use this
--- migration to reconcile that drift — see 0046's header.
+-- migration to reconcile that drift — see 0049's header.
 --
--- No new RLS policy: 0046 already grants public SELECT on this table (covers
+-- No new RLS policy: 0049 already grants public SELECT on this table (covers
 -- must be readable by anonymous visitors to render), and writes stay gated by
 -- the existing "courses primary owner update" policy from 0026 — a cover is
 -- just another column on a row only the primary owner may update.
