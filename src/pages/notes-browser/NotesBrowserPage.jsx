@@ -11,7 +11,8 @@ import Loading from '../../components/ui/Loading'
 import { useNotesRegistry } from '../../hooks/useNotesRegistry'
 import {
   subfoldersForModule, filesForFolder, rootFilesForModule, segmentToSubfolder,
-  authorsForFolder, authorsForModule,
+  authorsForFolder, authorsForModule, baseName,
+  compareRowsByCreated, compareRowsByName,
 } from '../../lib/notesApi'
 import AvatarGroup from '../../components/common/AvatarGroup/AvatarGroup'
 import { noteRoute } from '../../components/layout/Sidebar/modules'
@@ -36,6 +37,10 @@ function formatDate(iso) {
   if (Number.isNaN(d.getTime())) return '—'
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
+
+// Chip label per sort key (T-076). 'created' is the default, so its chip reads
+// as the neutral "Sort" rather than as an active filter.
+const SORT_LABEL = { created: 'Sort', date: 'Modified', name: 'Name' }
 
 // Drive-style breadcrumb, read-only: every segment but the last is a link;
 // the last is the current location's plain title. "Home" always behaves as
@@ -75,7 +80,9 @@ export default function NotesBrowserPage() {
   const [view, setView] = useState('list')
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all') // 'all' | 'folders' | 'files'
-  const [sort, setSort] = useState({ key: 'name', dir: 'asc' })
+  // Defaults to date created (T-076): a numbered set then reads 1, 2, 3 … 20,
+  // and a note genuinely written earlier sits above a later batch.
+  const [sort, setSort] = useState({ key: 'created', dir: 'asc' })
 
   const activeModule = moduleId ? modules.find((m) => m.id === moduleId) : null
   const activeSubfolder = segmentToSubfolder(subfolder)
@@ -124,7 +131,11 @@ export default function NotesBrowserPage() {
   useEffect(() => cancelWarm, [])
 
   const fileItem = (f) => ({
-    kind: 'file', key: f.path, name: f.name, date: f.updatedAt,
+    // sortKey is the filename, not the display label: the label is prose and
+    // need not encode order, while an index note called `00-module-overview`
+    // but titled "Web & Mobile Development…" has to sort first, not under W.
+    kind: 'file', key: f.path, name: f.name, sortKey: baseName(f.path),
+    date: f.updatedAt, created: f.createdAt,
     onOpen: () => navigate(noteRoute(moduleId, f.path)),
     onWarm: warmNote(f.path),
     onWarmCancel: cancelWarm,
@@ -163,10 +174,14 @@ export default function NotesBrowserPage() {
     }
     if (typeFilter === 'folders') arr = arr.filter((i) => i.kind !== 'file')
     if (typeFilter === 'files') arr = arr.filter((i) => i.kind === 'file')
+    // Comparators live in notesApi and are shared with the admin browser, so the
+    // two listings cannot order differently (T-076). The plain localeCompare
+    // this replaced had no `numeric` option, so it read 1, 10, 11, 2.
     arr = [...arr].sort((a, b) => {
-      const cmp = sort.key === 'date'
-        ? new Date(a.date || 0) - new Date(b.date || 0)
-        : a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+      let cmp
+      if (sort.key === 'date') cmp = new Date(a.date || 0) - new Date(b.date || 0)
+      else if (sort.key === 'created') cmp = compareRowsByCreated(a, b)
+      else cmp = compareRowsByName(a, b)
       return sort.dir === 'asc' ? cmp : -cmp
     })
     return arr
@@ -240,13 +255,14 @@ export default function NotesBrowserPage() {
 
             <Popover.Root>
               <Popover.Trigger asChild>
-                <button className={`${styles.chip} ${sort.key === 'date' ? styles.chipActive : ''}`}>
-                  Modified
+                <button className={`${styles.chip} ${sort.key !== 'created' ? styles.chipActive : ''}`}>
+                  {SORT_LABEL[sort.key] ?? 'Sort'}
                   <CaretDown size={14} weight="bold" />
                 </button>
               </Popover.Trigger>
               <Popover.Portal>
                 <Popover.Content className={styles.menuContent} sideOffset={5} align="start">
+                  <button className={styles.menuItem} onClick={() => setSort({ key: 'created', dir: 'asc' })}>Date created</button>
                   <button className={styles.menuItem} onClick={() => setSort({ key: 'date', dir: 'desc' })}>Newest first</button>
                   <button className={styles.menuItem} onClick={() => setSort({ key: 'date', dir: 'asc' })}>Oldest first</button>
                   <button className={styles.menuItem} onClick={() => setSort({ key: 'name', dir: 'asc' })}>Name (A–Z)</button>
@@ -267,8 +283,12 @@ export default function NotesBrowserPage() {
                 Name {sortArrow('name')}
               </button>
               <div className={styles.thOwner}>Author</div>
-              <button className={`${styles.thDate} ${styles.thSortable}`} onClick={() => toggleSort('date')}>
-                Date modified {sortArrow('date')}
+              <button
+                className={`${styles.thDate} ${styles.thSortable}`}
+                onClick={() => toggleSort(sort.key === 'created' ? 'created' : 'date')}
+              >
+                {sort.key === 'created' ? 'Date created' : 'Date modified'}{' '}
+                {sortArrow(sort.key === 'created' ? 'created' : 'date')}
               </button>
             </div>
 
@@ -292,7 +312,9 @@ export default function NotesBrowserPage() {
                   <div className={styles.cellOwner}>
                     <AvatarGroup authors={item.authors} size={24} />
                   </div>
-                  <div className={styles.cellDate}>{formatDate(item.date)}</div>
+                  <div className={styles.cellDate}>
+                    {formatDate(sort.key === 'created' ? item.created : item.date)}
+                  </div>
                 </div>
               ))
             )}

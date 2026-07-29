@@ -8,6 +8,7 @@ const AdminLogin = lazy(() => import('../pages/admin/AdminLogin'))
 const AdminBrowser = lazy(() => import('../pages/admin/AdminBrowser'))
 const AdminEditor = lazy(() => import('../pages/admin/AdminEditor'))
 const AdminUsers = lazy(() => import('../pages/admin/AdminUsers'))
+const AdminSettingsPage = lazy(() => import('../pages/admin/AdminSettingsPage'))
 
 export function AppRoutes({ onAIStateChange, onChatOpen }) {
   return (
@@ -42,6 +43,7 @@ export function AppRoutes({ onAIStateChange, onChatOpen }) {
       <Route path="/admin/editor/:moduleId/:subfolder/new" element={<AdminEditor />} />
       <Route path="/admin/editor/:moduleId/:subfolder/:slug" element={<AdminEditor />} />
       <Route path="/admin/users" element={<AdminUsers />} />
+      <Route path="/admin/settings" element={<AdminSettingsPage />} />
     </Routes>
   )
 }

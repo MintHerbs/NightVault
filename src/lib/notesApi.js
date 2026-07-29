@@ -87,7 +87,7 @@ function createdDay(value) {
  * lets the natural-name tiebreak produce 1, 2, 3, … while still putting a note
  * genuinely written later below the earlier batch.
  *
- * Notes with no `created_at` (an environment where migration 0045 has not been
+ * Notes with no `created_at` (an environment where migration 0046 has not been
  * applied) sort as '' — all equal — so the whole list falls through to the name
  * comparison and stays sensible instead of ordering at random.
  *
@@ -282,7 +282,7 @@ export function authorsForModule(module) {
 const NOTE_COLUMNS = 'id, module_id, path, title, updated_at, updated_by, hidden'
 
 export async function listNotes() {
-  // `created_at` arrived in migration 0045 (T-076). Asking for a column that
+  // `created_at` arrived in migration 0046 (T-076). Asking for a column that
   // doesn't exist makes PostgREST reject the whole request, which would take
   // the entire notes listing — and with it the sidebar and the public browser —
   // down on any environment the migration hasn't reached yet. So it's requested

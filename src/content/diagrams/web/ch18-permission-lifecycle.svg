@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 736 274" width="736" height="274" font-family="ui-monospace, Menlo, Consolas, monospace" role="img" aria-label="The permission lifecycle from first request through denial and the settings app">
+  <rect width="736" height="274" fill="#0b0d17"/>
+  <defs>
+    <marker id="ar18" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#5f6b7a"/>
+    </marker>
+    <marker id="ar18b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#c1440e"/>
+    </marker>
+  </defs>
+  <g transform="translate(18, 18)">
+    <text x="350" y="10" fill="#5f6b7a" font-size="10" text-anchor="middle">check, request, handle the answer, read, then stop reading</text>
+
+    <rect x="0" y="30" width="150" height="44" rx="8" fill="#14162a" stroke="#e2703a"/>
+    <text x="75" y="50" fill="#fff" font-size="10" text-anchor="middle" font-weight="bold">check first</text>
+    <text x="75" y="65" fill="#5f6b7a" font-size="8" text-anchor="middle">already granted?</text>
+
+    <rect x="200" y="30" width="150" height="44" rx="8" fill="#14162a" stroke="#f0b45e"/>
+    <text x="275" y="50" fill="#fff" font-size="10" text-anchor="middle" font-weight="bold">explain, then ask</text>
+    <text x="275" y="65" fill="#5f6b7a" font-size="8" text-anchor="middle">at the point of use</text>
+
+    <rect x="400" y="0" width="150" height="44" rx="8" fill="#14162a" stroke="#8fd694"/>
+    <text x="475" y="20" fill="#fff" font-size="10" text-anchor="middle" font-weight="bold">granted</text>
+    <text x="475" y="35" fill="#8fd694" font-size="8" text-anchor="middle">read the sensor</text>
+
+    <rect x="400" y="60" width="150" height="44" rx="8" fill="#14162a" stroke="#c1440e"/>
+    <text x="475" y="80" fill="#fff" font-size="10" text-anchor="middle" font-weight="bold">refused</text>
+    <text x="475" y="95" fill="#c1440e" font-size="8" text-anchor="middle">use the fallback</text>
+
+    <rect x="400" y="120" width="150" height="44" rx="8" fill="#14162a" stroke="#c1440e"/>
+    <text x="475" y="140" fill="#fff" font-size="10" text-anchor="middle" font-weight="bold">refused twice</text>
+    <text x="475" y="155" fill="#c1440e" font-size="8" text-anchor="middle">no prompt ever again</text>
+
+    <rect x="590" y="0" width="110" height="44" rx="8" fill="#14162a" stroke="#8fd694"/>
+    <text x="645" y="20" fill="#fff" font-size="10" text-anchor="middle" font-weight="bold">stop</text>
+    <text x="645" y="35" fill="#5f6b7a" font-size="8" text-anchor="middle">when done</text>
+
+    <rect x="590" y="120" width="110" height="44" rx="8" fill="#14162a" stroke="#5f6b7a"/>
+    <text x="645" y="136" fill="#d6d8ea" font-size="9" text-anchor="middle">only the</text>
+    <text x="645" y="150" fill="#d6d8ea" font-size="9" text-anchor="middle">settings app</text>
+    <text x="645" y="160" fill="#5f6b7a" font-size="8" text-anchor="middle">can undo it</text>
+
+    <path d="M152,52 L196,52" stroke="#5f6b7a" stroke-width="1.2" fill="none" marker-end="url(#ar18)"/>
+    <text x="174" y="46" fill="#5f6b7a" font-size="8" text-anchor="middle">no</text>
+
+    <path d="M352,46 L376,46 L376,22 L396,22" stroke="#5f6b7a" stroke-width="1.2" fill="none" marker-end="url(#ar18)"/>
+    <path d="M352,58 L376,58 L376,82 L396,82" stroke="#c1440e" stroke-width="1.2" fill="none" marker-end="url(#ar18b)"/>
+
+    <path d="M475,104 L475,116" stroke="#c1440e" stroke-width="1.2" fill="none" stroke-dasharray="3 3" marker-end="url(#ar18b)"/>
+    <text x="490" y="114" fill="#c1440e" font-size="8">asked again</text>
+
+    <path d="M552,22 L586,22" stroke="#5f6b7a" stroke-width="1.2" fill="none" marker-end="url(#ar18)"/>
+    <path d="M552,142 L586,142" stroke="#5f6b7a" stroke-width="1.2" fill="none" marker-end="url(#ar18)"/>
+
+    <path d="M75,74 L75,190" stroke="#8fd694" stroke-width="1.2" fill="none" stroke-dasharray="3 3"/>
+    <path d="M75,190 L396,190" stroke="#8fd694" stroke-width="1.2" fill="none" marker-end="url(#ar18)"/>
+    <text x="235" y="184" fill="#8fd694" font-size="8" text-anchor="middle">yes, already granted: skip straight to reading</text>
+
+    <rect x="0" y="212" width="700" height="34" rx="8" fill="#14162a" stroke="#c1440e"/>
+    <text x="350" y="226" fill="#fff" font-size="9" text-anchor="middle">Prompting for everything on first launch is how you lose a capability permanently.</text>
+    <text x="350" y="240" fill="#d6d8ea" font-size="9" text-anchor="middle">Every sensor feature needs a working path for "no".</text>
+  </g>
+</svg>

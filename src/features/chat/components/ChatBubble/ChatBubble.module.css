@@ -23,16 +23,39 @@
   font-size: 14px;
   line-height: 1.4;
   word-wrap: break-word;
+  border: 1px solid transparent;
+  transition: box-shadow 0.2s ease;
 }
 
+/* Own messages get the neon-accent treatment (same accent-glow idiom as
+   PostComposer's focus state); other people's stay a plain glass surface
+   so the accent reads as "you", not as decoration on every bubble. */
 .ownBubble {
-  background: var(--md-surface-container-low);
+  background: linear-gradient(135deg, rgba(var(--color-accent-rgb), 0.24), rgba(var(--color-accent-rgb), 0.08));
+  border-color: rgba(var(--color-accent-rgb), 0.35);
+  box-shadow: 0 0 14px rgba(var(--color-accent-rgb), 0.14);
   border-radius: 18px 18px 4px 18px;
 }
 
 .otherBubble {
   background: var(--md-surface-container-low);
+  border-color: rgba(var(--color-fg-rgb), 0.08);
   border-radius: 18px 18px 18px 4px;
+}
+
+.mediaBubble {
+  padding: 4px;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.attachmentImg {
+  display: block;
+  max-width: 220px;
+  max-height: 220px;
+  border-radius: 14px;
+  object-fit: contain;
 }
 
 .timestamp {

@@ -1,4 +1,5 @@
 .wrapper {
+  position: relative;
   width: min(800px, 90vw);
   margin: 0 auto;
   display: flex;
@@ -7,21 +8,75 @@
 }
 
 /* One row rather than a column with a reserved action strip: the field grows,
-   the send button stays pinned to the bottom-right of it. */
+   the send button stays pinned to the bottom-right of it. A faint accent
+   glow sits on the border at rest (the cyberpunk signature carried over
+   from PostComposer) and brightens further on focus. */
 .container {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: 6px;
   background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.28);
   border-radius: 24px;
-  padding: 8px 8px 8px 16px;
+  padding: 6px 6px 6px 6px;
+  box-shadow: 0 0 10px rgba(var(--color-accent-rgb), 0.08);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .container:focus-within {
-  border-color: rgba(var(--color-accent-rgb), 0.5);
-  box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.14);
+  border-color: rgba(var(--color-accent-rgb), 0.6);
+  box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.14), 0 0 20px rgba(var(--color-accent-rgb), 0.22);
+}
+
+.drawerWrapper {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 12px);
+  z-index: 3;
+  animation: drawerEnter 0.16s ease-out;
+}
+
+@keyframes drawerEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.drawerButton {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--md-on-surface-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.drawerButton:hover:not(:disabled) {
+  background: rgba(var(--color-accent-rgb), 0.12);
+  color: var(--color-accent-bright);
+}
+
+.drawerButton:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.8);
+  outline-offset: 2px;
+}
+
+.drawerButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.drawerButtonActive {
+  color: var(--color-accent-bright);
+  background: rgba(var(--color-accent-rgb), 0.16);
 }
 
 .textarea {
@@ -119,10 +174,11 @@
   }
 
   .container {
-    padding: 8px 8px 8px 14px;
+    padding: 8px;
   }
 
-  .sendButton {
+  .sendButton,
+  .drawerButton {
     width: 40px;
     height: 40px;
   }
@@ -138,5 +194,9 @@
   .sendButton:hover:not(:disabled),
   .sendButton:active:not(:disabled) {
     transform: none;
+  }
+
+  .drawerWrapper {
+    animation: none;
   }
 }

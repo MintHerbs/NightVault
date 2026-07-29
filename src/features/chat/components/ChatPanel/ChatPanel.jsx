@@ -3,20 +3,28 @@ import { useEffect, useRef } from 'react'
 import ChatBubble from '../ChatBubble/ChatBubble'
 import ChatInput from '../ChatInput/ChatInput'
 import TypingIndicator from '../TypingIndicator/TypingIndicator'
+import SeenIndicator from '../SeenIndicator/SeenIndicator'
 import Starfield from '../../../../components/effects/Starfield/Starfield'
 import Loading from '../../../../components/ui/Loading'
 import useChat from '../../../../hooks/useChat'
 import useTypingIndicator from '../../../../hooks/useTypingIndicator'
+import useReadReceipts from '../../../../hooks/useReadReceipts'
 import styles from './ChatPanel.module.css'
 
 export default function ChatPanel({ isOpen, onClose, sessionId }) {
-  const { messages, sendMessage, isLoading } = useChat()
+  const { messages, sendMessage, sendAttachment, isLoading } = useChat()
   const { typingSessions, notifyTyping, notifyStopped } = useTypingIndicator(sessionId)
+  const { seenAt, markRead } = useReadReceipts(sessionId)
   const messagesEndRef = useRef(null)
 
   const handleSend = (content) => {
     notifyStopped()
     sendMessage(content)
+  }
+
+  const handleSendMedia = (url, kind) => {
+    notifyStopped()
+    sendAttachment(url, kind)
   }
 
   // Auto-scroll to bottom when new messages arrive
@@ -25,6 +33,20 @@ export default function ChatPanel({ isOpen, onClose, sessionId }) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages])
+
+  // Only counts as "read" while the panel is actually open — the hook stays
+  // subscribed regardless, so peers keep seeing whatever was last marked.
+  const lastMessage = messages[messages.length - 1]
+  useEffect(() => {
+    if (!isOpen || !lastMessage) return
+    markRead(lastMessage.created_at)
+  }, [isOpen, lastMessage, markRead])
+
+  const seenByIds = lastMessage
+    ? Object.entries(seenAt)
+        .filter(([, at]) => at >= lastMessage.created_at)
+        .map(([id]) => id)
+    : []
 
   return (
     <div className={`${styles.panel} ${isOpen ? styles.open : ''}`}>
@@ -52,6 +74,7 @@ export default function ChatPanel({ isOpen, onClose, sessionId }) {
                 isOwnMessage={message.session_id === sessionId}
               />
             ))}
+            <SeenIndicator sessionIds={seenByIds} />
             <div ref={messagesEndRef} />
           </div>
         )}
@@ -60,7 +83,12 @@ export default function ChatPanel({ isOpen, onClose, sessionId }) {
       {/* Input Area */}
       <div className={styles.inputArea}>
         <TypingIndicator sessionIds={typingSessions} />
-        <ChatInput onSend={handleSend} onTyping={notifyTyping} onIdle={notifyStopped} />
+        <ChatInput
+          onSend={handleSend}
+          onSendMedia={handleSendMedia}
+          onTyping={notifyTyping}
+          onIdle={notifyStopped}
+        />
       </div>
     </div>
   )

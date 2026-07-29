@@ -93,7 +93,7 @@ export default function useChat(isChatOpen) {
       // Routed through an RPC (T-078): messages' INSERT grant is gone from
       // anon, since a direct REST insert could flood the room unthrottled —
       // chat had no rate limit at all, client-side or otherwise, before this.
-      // See db/sql/0048_social_write_hardening.sql.
+      // See db/sql/0047_social_write_hardening.sql.
       const { data: res, error } = await supabase.rpc('send_message', {
         p_session_id: sessionId,
         p_content: content,
