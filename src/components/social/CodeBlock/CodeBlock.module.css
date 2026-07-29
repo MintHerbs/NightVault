@@ -95,6 +95,18 @@
   text-transform: uppercase;
 }
 
+/* Optional source label (a filename, or what the snippet is). Monospace so a
+   path reads as a path, and truncated rather than wrapped so a long one can
+   never push the header taller than one line. */
+.title {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .spacer {
   flex-shrink: 0;
   width: 54px;

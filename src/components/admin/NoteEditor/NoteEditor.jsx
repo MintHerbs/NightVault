@@ -4,6 +4,8 @@ import { Editor, rootCtx, defaultValueCtx, editorViewCtx, schemaCtx, serializerC
 import { Plugin, PluginKey, TextSelection } from '@milkdown/kit/prose/state'
 import remarkDirective from 'remark-directive'
 import CodeBlock from '../../social/CodeBlock/CodeBlock'
+import NotePlayground from '../../markdown/NotePlayground'
+import { PLAYGROUND_ID_RE } from '../../../constants/notePlaygrounds'
 import { resolveDraftSrc } from '../../../lib/draftImagePreviews'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../../lib/noteImageSrc'
 import { parseImageTitle, formatImageTitle, MIN_IMAGE_WIDTH } from '../../../lib/noteImageWidth'
@@ -203,6 +205,77 @@ const youtubeSchema = $nodeSchema('youtube', () => ({
   },
 }))
 
+// Playground embed — a block atom round-tripping to `::playground{id="…"}`
+// (T-075). Same shape as youtubeSchema above and for the same reason: without a
+// schema declaring this node, Milkdown has no rule matching the directive, so
+// the parser drops it and the author's next save writes the note back with the
+// playground gone.
+//
+// The id is all that lives in the Markdown. Its HTML/CSS/JS come from the
+// code-defined registry, so there is nothing here to upload, validate against a
+// remote service, or keep in sync with the note body.
+const playgroundSchema = $nodeSchema('playground', () => ({
+  inline: false,
+  group: 'block',
+  atom: true,
+  selectable: true,
+  isolating: true,
+  attrs: { playgroundId: { default: '', validate: 'string' } },
+  parseDOM: [{
+    tag: 'div[data-type="playground"]',
+    getAttrs: (dom) => {
+      if (!(dom instanceof HTMLElement)) return false
+      const id = dom.getAttribute('data-playground-id') || ''
+      return PLAYGROUND_ID_RE.test(id) ? { playgroundId: id } : false
+    },
+  }],
+  toDOM: (node) => ['div', { 'data-type': 'playground', 'data-playground-id': node.attrs.playgroundId }],
+  parseMarkdown: {
+    match: (node) => node.type === 'leafDirective' && node.name === 'playground',
+    runner: (state, node, type) => {
+      const id = node.attributes?.id || ''
+      if (!PLAYGROUND_ID_RE.test(id)) return
+      state.addNode(type, { playgroundId: id })
+    },
+  },
+  toMarkdown: {
+    match: (node) => node.type.name === 'playground',
+    runner: (state, node) => {
+      state.addNode('leafDirective', undefined, undefined, {
+        name: 'playground',
+        attributes: { id: node.attrs.playgroundId },
+      })
+    },
+  },
+}))
+
+// Playground node view: the real reader component, so the author sees and can
+// drive the same live document a visitor gets. Mirrors codeBlockView's
+// react-dom-root approach; deferred a microtask for the same reason.
+const playgroundNodeView = $view(playgroundSchema, () => (node) => {
+  const dom = document.createElement('div')
+  const root = createRoot(dom)
+  const render = (n) => queueMicrotask(() => {
+    try {
+      root.render(<NotePlayground playgroundId={n.attrs.playgroundId} />)
+    } catch { /* editor may have torn down */ }
+  })
+  render(node)
+  return {
+    dom,
+    update: (updated) => {
+      if (updated.type !== node.type) return false
+      render(updated)
+      return true
+    },
+    ignoreMutation: () => true,
+    // The playground owns its own buttons, tabs and editor panes — ProseMirror
+    // must not treat clicks inside them as document selection changes.
+    stopEvent: () => true,
+    destroy: () => queueMicrotask(() => root.unmount()),
+  }
+})
+
 // YouTube node view: rounded thumbnail + play button (mirrors imageWrap's
 // rounded-corner treatment), swapped for a lazy-mounted iframe on click so
 // no third-party embed/tracker loads until a viewer opts in.
@@ -326,6 +399,53 @@ function createYoutubeAutoEmbed(isLoadingRef) {
   }))
 }
 
+/**
+ * Teaches commonmark's `code_block` about the fence's *meta* string — the part
+ * after the language, which notes use for the block's source label
+ * (```python recruitment/models.py, see CodeBlock's `title` prop).
+ *
+ * The preset's own schema models only `language`: its parseMarkdown reads
+ * `node.lang` and its toMarkdown writes `{ lang }`, so meta is dropped on
+ * parse and cannot come back on serialise. Since every change round-trips
+ * Markdown → doc → Markdown, that silently deletes the label from every code
+ * block in a note the moment it is opened and saved here (T-075).
+ *
+ * Patches the schema's ctx slice rather than replacing the plugin: `$nodeSchema`
+ * keeps its factory in `.key` (the same indirection `katexOptionsCtx.key` uses
+ * below), so wrapping that factory extends the preset's schema in place and
+ * leaves its commands, input rules and keymaps alone. `extendSchema()` would
+ * instead build a second schema with the same node id, which then has to
+ * displace the preset's.
+ */
+function configureCodeBlockMeta(ctx) {
+  ctx.update(codeBlockSchema.key, (previous) => (innerCtx) => {
+    const base = previous(innerCtx)
+    return {
+      ...base,
+      attrs: { ...base.attrs, meta: { default: '', validate: 'string' } },
+      parseMarkdown: {
+        ...base.parseMarkdown,
+        runner: (state, node, type) => {
+          state.openNode(type, { language: node.lang ?? '', meta: node.meta ?? '' })
+          if (node.value) state.addText(node.value)
+          state.closeNode()
+        },
+      },
+      toMarkdown: {
+        ...base.toMarkdown,
+        runner: (state, node) => {
+          state.addNode('code', undefined, node.content.firstChild?.text || '', {
+            lang: node.attrs.language,
+            // An empty string would serialise as a trailing space on the fence
+            // line, which then reparses as meta `''` and churns the document.
+            meta: node.attrs.meta || null,
+          })
+        },
+      },
+    }
+  })
+}
+
 // Render fenced code blocks with the shared social CodeBlock (themed, read-only)
 // so the editor matches the reader. Reuses the real React component via a
 // react-dom root; no contentDOM => not inline-editable here (reveal-to-edit is
@@ -337,7 +457,13 @@ const codeBlockView = $view(codeBlockSchema, () => (node) => {
   const root = createRoot(dom)
   const render = (n) => queueMicrotask(() => {
     try {
-      root.render(<CodeBlock code={n.textContent} language={n.attrs.language || 'auto'} />)
+      root.render(
+        <CodeBlock
+          code={n.textContent}
+          language={n.attrs.language || 'auto'}
+          title={n.attrs.meta || undefined}
+        />
+      )
     } catch { /* editor may have torn down */ }
   })
   render(node)
@@ -677,6 +803,7 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
         // same `.key` or it throws "Context not found" against the plugin
         // function instead of the slice.
         ctx.set(katexOptionsCtx.key, { throwOnError: false })
+        configureCodeBlockMeta(ctx)
         ctx.get(listenerCtx).markdownUpdated((_, markdown) => {
           if (applyingExternal.current) {
             applyingExternal.current = false
@@ -699,6 +826,8 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
       .use(youtubeSchema)
       .use(youtubeNodeViewPlugin)
       .use(createYoutubeAutoEmbed(applyingExternal))
+      .use(playgroundSchema)
+      .use(playgroundNodeView)
       .use(markdownClipboard)
       .use(codeBlockView)
       .use(imageDeleteView)

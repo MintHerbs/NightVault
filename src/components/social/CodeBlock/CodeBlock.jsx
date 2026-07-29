@@ -2,7 +2,14 @@ import { memo, useMemo } from 'react'
 import { detectCodeLanguage, getLanguageLabel, normalizeLanguage, tokenizeCodeLine } from '../../../lib/social/codeHighlighter'
 import styles from './CodeBlock.module.css'
 
-function CodeBlock({ code, language }) {
+/**
+ * `title` is the optional source label shown on the right of the header —
+ * a filename ("recruitment/models.py"), or a short description of what the
+ * snippet is. Notes supply it as fence meta (```python recruitment/models.py);
+ * the social feed has no way to set one and renders without it, exactly as
+ * before. See MarkdownRenderer's `code` component.
+ */
+function CodeBlock({ code, language, title }) {
   // Detection runs a dozen regexes over the whole file and tokenising runs one
   // per line, so doing this in the render body meant re-highlighting every code
   // block in the feed on every unrelated state change.
@@ -28,6 +35,7 @@ function CodeBlock({ code, language }) {
           </div>
           <span className={styles.language}>{label}</span>
         </div>
+        {title && <span className={styles.title} title={title}>{title}</span>}
       </div>
 
       <pre className={styles.pre}>

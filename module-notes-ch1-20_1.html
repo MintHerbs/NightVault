@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web & Mobile Development: Module Notes</title>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<style>
+/* ===================== PLAIN NOTES SHELL (kept simple on purpose) ===================== */
+:root{
+  --ink:#1a1a1a; --sub:#555; --line:#ddd; --bg:#fff; --panel:#f6f6f6;
+  --accent:#c1440e; --accent-lt:#e2703a;
+  --code-bg:#14162a; --code-ink:#d6d8ea;
+  --tag:#7fb3ff; --attr:#f0b45e; --string:#8fd694; --comment:#8a91b4;
+  --keyword:#e2703a; --fn:#c792ea; --num:#f78c6c;
+  --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55;margin:0}
+.wrap{max-width:900px;margin:0 auto;padding:0 22px}
+header.top{background:var(--ink);color:#fff;padding:34px 22px}
+header.top h1{margin:0 0 6px;font-size:1.7rem}
+header.top p{margin:0;color:#bbb;font-size:.95rem}
+nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 20px;margin:24px 0}
+nav.toc h2{font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;color:var(--sub);margin:0 0 10px}
+nav.toc ol{margin:0;padding-left:1.1em;columns:2;column-gap:28px;font-size:.92rem}
+nav.toc li{margin-bottom:6px}
+nav.toc a{color:var(--ink);text-decoration:none}
+nav.toc a:hover{color:var(--accent)}
+
+section{padding:38px 0;border-bottom:1px solid var(--line)}
+section:last-child{border-bottom:none}
+h2{font-size:1.5rem;margin:0 0 6px;color:#111}
+h3{font-size:1.15rem;margin:26px 0 8px}
+h4{font-size:1rem;margin:18px 0 6px}
+p{margin:0 0 12px;max-width:74ch}
+ul,ol{margin:0 0 12px 1.2em;max-width:72ch}
+li{margin-bottom:4px}
+code.inl{font-family:var(--mono);font-size:.87em;background:var(--panel);border:1px solid var(--line);padding:.05em .35em;border-radius:4px;color:#8a3410}
+
+.meta{display:flex;gap:10px;flex-wrap:wrap;font-size:.82rem;color:var(--sub);margin:8px 0 20px}
+.meta span{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:3px 9px}
+.meta a{color:var(--accent)}
+
+.note,.warn{border-left:3px solid var(--accent);background:var(--panel);border-radius:6px;padding:10px 14px;margin:14px 0;font-size:.93rem}
+.warn{border-left-color:#b34700}
+.note b, .warn b{color:var(--accent)}
+
+table.tbl{border-collapse:collapse;width:100%;margin:14px 0;font-size:.9rem}
+table.tbl th,table.tbl td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+table.tbl th{background:var(--panel)}
+table.tbl code{font-family:var(--mono);font-size:.85em;color:#8a3410}
+
+.code{background:var(--code-bg);border-radius:8px;margin:14px 0;overflow:hidden}
+.code .bar{padding:6px 12px;font-family:var(--mono);font-size:.72rem;color:#8a91b4;background:#1c1f38}
+.code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:.82rem;line-height:1.6;color:var(--code-ink)}
+.t{color:var(--tag)}.a{color:var(--attr)}.s{color:var(--string)}.c{color:var(--comment);font-style:italic}
+.k{color:var(--keyword)}.p{color:#c9cbe0}.fn{color:var(--fn)}.num{color:var(--num)}
+.hl{display:block;background:rgba(226,112,58,.18);border-left:3px solid var(--accent-lt);margin:0 -16px;padding:0 13px}
+
+.preview{border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:16px 0}
+.preview .pv-bar{background:var(--panel);padding:7px 12px;font-family:var(--mono);font-size:.72rem;color:var(--sub);display:flex;justify-content:space-between}
+.preview .pv-bar .live{color:#1a9e4b}
+
+footer{background:var(--ink);color:#999;text-align:center;padding:26px;font-size:.85rem}
+
+/* ===================== MARS SANDBOX THEME (this is the part that must look right) ===================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+.marspv{
+  --void:#0b0d17;--dust:#c1440e;--dust-lt:#e2703a;--sand:#f4ede4;
+  background:var(--void);color:var(--sand);font-family:"Inter",sans-serif;position:relative;overflow:hidden
+}
+.marspv *{box-sizing:border-box}
+.marspv .nav{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.marspv .brand{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:1.05rem}
+.marspv .brand span{color:var(--dust-lt)}
+.marspv .nav-links{display:flex;gap:6px;align-items:center;font-size:.9rem}
+.marspv .nav-links button.link{background:none;border:none;color:#c9cbe0;font-size:.9rem;cursor:pointer;font-family:"Inter",sans-serif;padding:8px 12px;border-radius:7px}
+.marspv .nav-links button.link:hover{background:rgba(255,255,255,.06);color:#fff}
+.marspv .nav-links button.link.active{color:#fff;background:rgba(226,112,58,.22)}
+.marspv .apply-btn{background:var(--dust);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-weight:600;font-size:.88rem;cursor:pointer;font-family:"Inter",sans-serif}
+.marspv .apply-btn:hover{background:var(--dust-lt)}
+@keyframes pulseBtn{0%{box-shadow:0 0 0 0 rgba(193,68,14,.6)}70%{box-shadow:0 0 0 12px rgba(193,68,14,0)}100%{box-shadow:0 0 0 0 rgba(193,68,14,0)}}
+.marspv .apply-btn.pulse{animation:pulseBtn 1.6s infinite}
+.marspv .page{display:none;padding:40px 24px 50px}
+.marspv .page.active{display:block}
+.marspv .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dust-lt);margin-bottom:12px}
+.marspv h1.big{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:1.9rem;line-height:1.1;max-width:16ch;margin:0 0 12px}
+.marspv p.lead{color:#c9cbe0;max-width:46ch;margin:0 0 20px;font-size:.96rem}
+.marspv .cta{background:var(--dust);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-weight:600;font-size:1rem;cursor:pointer}
+.marspv .cta:hover{background:var(--dust-lt)}
+.marspv .stat-row{display:flex;gap:24px;margin-top:24px;flex-wrap:wrap}
+.marspv .stat .n{font-family:"Space Grotesk",sans-serif;font-size:1.7rem;font-weight:700;color:#fff}
+.marspv .stat .l{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:#8a91b4}
+.marspv table.crew{width:100%;border-collapse:collapse;margin-top:10px;font-size:.85rem}
+.marspv table.crew th,.marspv table.crew td{border:1px solid rgba(255,255,255,.12);padding:8px 10px;text-align:left}
+.marspv table.crew th{background:rgba(255,255,255,.05);color:#fff}
+.marspv table.crew td{color:#c9cbe0}
+.marspv label{display:block;font-size:.82rem;color:#c9cbe0;margin:12px 0 5px;font-weight:500}
+.marspv input[type=text],.marspv input[type=email],.marspv select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:#14162a;color:var(--sand);font-size:.9rem;font-family:"Inter",sans-serif}
+.marspv .radio-row,.marspv .check-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:6px}
+.marspv .radio-row label,.marspv .check-row label{display:flex;align-items:center;gap:6px;font-size:.86rem;color:#c9cbe0;margin:0}
+.marspv .submit{margin-top:18px;width:100%;background:var(--dust);color:#fff;border:none;padding:12px;border-radius:9px;font-weight:600;font-size:.96rem;cursor:pointer}
+.marspv .submit:hover{background:var(--dust-lt)}
+.marspv .result{margin-top:14px;padding:11px 13px;border-radius:9px;font-size:.87rem;display:none}
+.marspv .result.ok{display:block;background:rgba(143,214,148,.12);border:1px solid rgba(143,214,148,.4);color:#b6e8bb}
+.marspv .result.err{display:block;background:rgba(255,95,86,.1);border:1px solid rgba(255,95,86,.4);color:#ffb3ad}
+.marspv .result.load{display:block;background:rgba(127,179,255,.1);border:1px solid rgba(127,179,255,.4);color:#bcd4ff}
+.marspv .form-card{max-width:400px}
+.marspv .card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px 18px;margin-bottom:12px}
+.marspv .card h3{font-family:"Space Grotesk",sans-serif;color:#fff;margin:0 0 4px;font-size:1.02rem}
+.marspv .card p{color:#9aa0c0;font-size:.86rem;margin:0}
+.marspv a.img-link{display:inline-block;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:3px}
+.marspv a.img-link img{display:block;border-radius:6px}
+.marspv .valid{outline:2px solid #4caf6d}
+.marspv .invalid{outline:2px solid #e25555}
+/* raw/unstyled preview mode: strip the styling to show default browser look */
+.rawpv{background:#fff !important;color:#000 !important;font-family:Times,serif !important}
+.rawpv *{all:revert}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>Web &amp; Mobile Development: Module Notes</h1>
+    <p>Chronological course notes. Each chapter matches the module map. Short and to the point, polish is added later.</p>
+  </div>
+</header>
+<div class="wrap">
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#ch1">Ch1: How the web works (Sarah's text)</a></li>
+    <li><a href="#ch2">Ch2: HTML &amp; CSS</a></li>
+    <li><a href="#ch3">Ch3: Models &amp; Migrations</a></li>
+    <li><a href="#ch4">Ch4: Submitting &amp; processing data (JS/jQuery/AJAX intro)</a></li>
+    <li><a href="#ch5">Ch5: Validating &amp; saving data (server side)</a></li>
+    <li><a href="#ch6">Ch6: The Django admin site</a></li>
+    <li><a href="#ch7">Ch7: jQuery for forms</a></li>
+    <li><a href="#ch8">Ch8: jQuery real-time validation</a></li>
+    <li><a href="#ch9">Ch9: AJAX</a></li>
+    <li><a href="#ch10">Ch10: JSON</a></li>
+    <li><a href="#ch11">Ch11: API programming</a></li>
+    <li><a href="#ch12">Ch12: API integration</a></li>
+    <li><a href="#ch13">Ch13: Security issues</a></li>
+    <li><a href="#ch14">Ch14: Mitigation strategies</a></li>
+    <li><a href="#ch15">Ch15: Mobile app considerations</a></li>
+    <li><a href="#ch16">Ch16: Platforms</a></li>
+    <li><a href="#ch17">Ch17: Mobile apps landscape</a></li>
+    <li><a href="#ch18">Ch18: Sensor-aware apps</a></li>
+    <li><a href="#ch19">Ch19: Connecting to your API</a></li>
+    <li><a href="#ch20">Ch20: Testing &amp; deploying</a></li>
+  </ol>
+</nav>
+</div>
+<main class="wrap">
+
+<!-- ================= CHAPTER 1 ================= -->
+<section id="ch1">
+  <h2>Chapter 1: How the web works</h2>
+  <div class="meta">
+    <span>Week 1</span><span>2+1 hrs</span>
+    <span>Lab: PGP exercise (security)</span>
+    <span><a href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started/Web_standards/How_the_web_works" target="_blank">MDN: How the web works</a></span>
+    <span><a href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Howto/Web_mechanics/How_does_the_Internet_work" target="_blank">MDN: How does the internet work</a></span>
+  </div>
+
+  <h3>Case study: Sarah sends a text</h3>
+  <p>Sarah is on a messaging app. She types a message to her ex: <em>"We're done. You're the worst person I've dated."</em> She hits send. That single tap sets off a chain of network steps most people never think about. Let's follow it, hop by hop.</p>
+
+  <h4>Step 1: DNS, finding the address</h4>
+  <p>Sarah's phone doesn't know where "the messaging server" physically is. It only knows a domain name, e.g. <code class="inl">api.chatapp.com</code>. Computers route traffic using numbers, not names, so the phone asks a <strong>DNS server</strong> (Domain Name System) to translate the name into an <strong>IP address</strong>, e.g. <code class="inl">104.18.32.7</code>.</p>
+  <div class="note"><b>Analogy:</b> DNS is a phone book. You know a business by its name, DNS looks up the actual number to dial.</div>
+
+  <div class="preview">
+    <div class="pv-bar"><span>Diagram: the DNS lookup</span></div>
+    <div style="background:#0b0d17;padding:18px">
+      <svg viewBox="0 0 700 130" style="width:100%;height:auto;font-family:monospace" role="img" aria-label="DNS lookup diagram">
+        <defs><marker id="arrDns" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 Z" fill="#e2703a"/></marker></defs>
+        <rect x="20" y="40" width="140" height="50" rx="8" fill="#14162a" stroke="#e2703a"/>
+        <text x="90" y="69" fill="#fff" font-size="11" text-anchor="middle">Sarah's phone</text>
+        <rect x="530" y="40" width="150" height="50" rx="8" fill="#14162a" stroke="#7fb3ff"/>
+        <text x="605" y="69" fill="#fff" font-size="11" text-anchor="middle">DNS resolver</text>
+        <path d="M160,55 L530,55" stroke="#e2703a" stroke-width="1.5" marker-end="url(#arrDns)"/>
+        <text x="345" y="46" fill="#d6d8ea" font-size="10" text-anchor="middle">"what's the IP for api.chatapp.com?"</text>
+        <path d="M530,80 L160,80" stroke="#8fd694" stroke-width="1.5" marker-end="url(#arrDns)"/>
+        <text x="345" y="102" fill="#8fd694" font-size="10" text-anchor="middle">"104.18.32.7"</text>
+      </svg>
+    </div>
+  </div>
+
+  <h4>Step 2: IP addresses and packets</h4>
+  <p>Data doesn't travel as one lump. It's chopped into small chunks called <strong>packets</strong>, each stamped with a source IP and a destination IP, like a shipping label. Packets can take different routes across different <strong>routers</strong> and get reassembled at the end, in order.</p>
+  <table class="tbl">
+    <tr><th>Term</th><th>What it means</th></tr>
+    <tr><td>IPv4</td><td>Address format like <code>104.18.32.7</code>. About 4 billion possible addresses, running out.</td></tr>
+    <tr><td>IPv6</td><td>Newer format like <code>2606:4700::6810:2007</code>. Basically unlimited addresses.</td></tr>
+    <tr><td>Packet</td><td>A small chunk of data with a header, where it's from, where it's going.</td></tr>
+    <tr><td>Router</td><td>A device that looks at a packet's destination and forwards it toward the next hop.</td></tr>
+  </table>
+
+  <div class="preview">
+    <div class="pv-bar"><span>Diagram: one message, three packets, different paths</span></div>
+    <div style="background:#0b0d17;padding:18px">
+      <svg viewBox="0 0 700 170" style="width:100%;height:auto;font-family:monospace" role="img" aria-label="Packet routing diagram">
+        <defs><marker id="arrPkt" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 Z" fill="#f0b45e"/></marker></defs>
+        <rect x="10" y="65" width="90" height="40" rx="6" fill="#14162a" stroke="#e2703a"/><text x="55" y="89" fill="#fff" font-size="10" text-anchor="middle">Message</text>
+
+        <rect x="160" y="10" width="70" height="34" rx="6" fill="#14162a" stroke="#f0b45e"/><text x="195" y="31" fill="#f0b45e" font-size="9" text-anchor="middle">P1 → Router A</text>
+        <rect x="160" y="68" width="70" height="34" rx="6" fill="#14162a" stroke="#f0b45e"/><text x="195" y="89" fill="#f0b45e" font-size="9" text-anchor="middle">P2 → Router B</text>
+        <rect x="160" y="126" width="70" height="34" rx="6" fill="#14162a" stroke="#f0b45e"/><text x="195" y="147" fill="#f0b45e" font-size="9" text-anchor="middle">P3 → Router C</text>
+
+        <rect x="410" y="10" width="70" height="34" rx="6" fill="#14162a" stroke="#7fb3ff"/><text x="445" y="31" fill="#7fb3ff" font-size="9" text-anchor="middle">Router A</text>
+        <rect x="410" y="68" width="70" height="34" rx="6" fill="#14162a" stroke="#7fb3ff"/><text x="445" y="89" fill="#7fb3ff" font-size="9" text-anchor="middle">Router B</text>
+        <rect x="410" y="126" width="70" height="34" rx="6" fill="#14162a" stroke="#7fb3ff"/><text x="445" y="147" fill="#7fb3ff" font-size="9" text-anchor="middle">Router C</text>
+
+        <rect x="600" y="65" width="90" height="40" rx="6" fill="#14162a" stroke="#8fd694"/><text x="645" y="89" fill="#8fd694" font-size="10" text-anchor="middle">Server</text>
+        <text x="645" y="120" fill="#5f6b7a" font-size="8" text-anchor="middle">reassembles in order</text>
+
+        <path d="M100,80 L160,27" stroke="#f0b45e" stroke-width="1" marker-end="url(#arrPkt)"/>
+        <path d="M100,85 L160,85" stroke="#f0b45e" stroke-width="1" marker-end="url(#arrPkt)"/>
+        <path d="M100,90 L160,143" stroke="#f0b45e" stroke-width="1" marker-end="url(#arrPkt)"/>
+
+        <path d="M230,27 L410,27" stroke="#7fb3ff" stroke-width="1" marker-end="url(#arrPkt)"/>
+        <path d="M230,85 L410,85" stroke="#7fb3ff" stroke-width="1" marker-end="url(#arrPkt)"/>
+        <path d="M230,143 L410,143" stroke="#7fb3ff" stroke-width="1" marker-end="url(#arrPkt)"/>
+
+        <path d="M480,27 L600,75" stroke="#8fd694" stroke-width="1" marker-end="url(#arrPkt)"/>
+        <path d="M480,85 L600,85" stroke="#8fd694" stroke-width="1" marker-end="url(#arrPkt)"/>
+        <path d="M480,143 L600,95" stroke="#8fd694" stroke-width="1" marker-end="url(#arrPkt)"/>
+      </svg>
+    </div>
+  </div>
+
+  <h4>Step 3: TCP, the handshake</h4>
+  <p>Before any message data is sent, Sarah's phone and the server agree to talk using <strong>TCP</strong> (Transmission Control Protocol). This is the three-way handshake:</p>
+  <div class="preview">
+    <div class="pv-bar"><span>Diagram: the TCP three-way handshake</span></div>
+    <div style="background:#0b0d17;padding:18px">
+      <svg viewBox="0 0 700 150" style="width:100%;height:auto;font-family:monospace" role="img" aria-label="TCP handshake diagram">
+        <defs><marker id="arrTcp" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 Z" fill="#e2703a"/></marker></defs>
+        <rect x="20" y="5" width="120" height="34" rx="6" fill="#14162a" stroke="#e2703a"/><text x="80" y="27" fill="#fff" font-size="11" text-anchor="middle">Phone</text>
+        <rect x="560" y="5" width="120" height="34" rx="6" fill="#14162a" stroke="#7fb3ff"/><text x="620" y="27" fill="#fff" font-size="11" text-anchor="middle">Server</text>
+        <line x1="80" y1="39" x2="80" y2="140" stroke="#333" stroke-width="1"/>
+        <line x1="620" y1="39" x2="620" y2="140" stroke="#333" stroke-width="1"/>
+
+        <path d="M80,55 L620,55" stroke="#e2703a" stroke-width="1.3" marker-end="url(#arrTcp)"/>
+        <text x="350" y="49" fill="#e2703a" font-size="10" text-anchor="middle">SYN, "can we talk?"</text>
+
+        <path d="M620,85 L80,85" stroke="#f0b45e" stroke-width="1.3" marker-end="url(#arrTcp)"/>
+        <text x="350" y="79" fill="#f0b45e" font-size="10" text-anchor="middle">SYN-ACK, "yes, ready"</text>
+
+        <path d="M80,115 L620,115" stroke="#8fd694" stroke-width="1.3" marker-end="url(#arrTcp)"/>
+        <text x="350" y="109" fill="#8fd694" font-size="10" text-anchor="middle">ACK, "great, here we go"</text>
+      </svg>
+    </div>
+  </div>
+  <p>TCP guarantees packets arrive complete and in order. This matters, because if packets arrived scrambled, the server might read her message as garbage instead of an insult.</p>
+
+  <h4>Step 4: TLS, locking the envelope</h4>
+  <p>Modern apps use <strong>HTTPS</strong>, which wraps the connection in <strong>TLS</strong> encryption. Phone and server swap keys and scramble the data so anyone snooping on the network, a coffee shop wifi, an ISP, sees gibberish, not "You're the worst person I've dated."</p>
+
+  <h4>Step 5: the HTTP request</h4>
+  <p>Now the actual message is sent, as an HTTP request:</p>
+  <div class="code"><div class="bar">the request Sarah's phone sends</div>
+<pre><span class="k">POST</span> /messages/send <span class="k">HTTP/1.1</span>
+<span class="a">Host:</span> api.chatapp.com
+<span class="a">Content-Type:</span> application/json
+
+<span class="p">{</span> <span class="s">"to"</span><span class="p">:</span> <span class="s">"ex_id_92"</span><span class="p">,</span> <span class="s">"text"</span><span class="p">:</span> <span class="s">"We're done. You're the worst person I've dated."</span> <span class="p">}</span></pre>
+  </div>
+
+  <h4>Step 6: the CDN, on the way in</h4>
+  <p>Before this request even reaches the main servers, it likely passes through a <strong>CDN</strong> (Content Delivery Network) edge node, a server geographically close to Sarah. CDNs mainly cache static files, images, app JS/CSS, so they load fast from nearby, instead of one distant server serving the whole planet. Not every request is cacheable, Sarah's message is unique and private, so it isn't cached, but the CDN still often acts as the first point of contact, forwarding dynamic requests onward to the real origin server.</p>
+
+  <div class="preview">
+    <div class="pv-bar"><span>Diagram: CDN edge node vs the distant origin server</span></div>
+    <div style="background:#0b0d17;padding:18px">
+      <svg viewBox="0 0 700 150" style="width:100%;height:auto;font-family:monospace" role="img" aria-label="CDN diagram">
+        <defs><marker id="arrCdn" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 Z" fill="#e2703a"/></marker></defs>
+        <rect x="10" y="55" width="110" height="40" rx="6" fill="#14162a" stroke="#e2703a"/><text x="65" y="79" fill="#fff" font-size="10" text-anchor="middle">Sarah, Mauritius</text>
+        <rect x="280" y="55" width="140" height="40" rx="6" fill="#14162a" stroke="#f0b45e"/><text x="350" y="79" fill="#fff" font-size="10" text-anchor="middle">CDN edge, Réunion</text>
+        <rect x="560" y="55" width="130" height="40" rx="6" fill="#14162a" stroke="#7fb3ff"/><text x="625" y="79" fill="#fff" font-size="10" text-anchor="middle">Origin server, Europe</text>
+        <path d="M120,70 L280,70" stroke="#8fd694" stroke-width="1.5" marker-end="url(#arrCdn)"/>
+        <text x="200" y="62" fill="#8fd694" font-size="9" text-anchor="middle">fast, nearby</text>
+        <path d="M420,80 L560,80" stroke="#e2703a" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrCdn)"/>
+        <text x="490" y="100" fill="#e2703a" font-size="9" text-anchor="middle">only if not cached</text>
+      </svg>
+    </div>
+  </div>
+
+  <h4>Step 7: load balancer and app server</h4>
+  <p>The request lands on a <strong>load balancer</strong>, which spreads incoming traffic across many app servers so no single machine gets overwhelmed. One server picks it up, checks Sarah is logged in, and processes the request.</p>
+
+  <h4>Step 8: the database</h4>
+  <p>The server saves the message as a row in a <strong>database</strong>, sender, receiver, text, timestamp. This is the permanent record. If the server crashed one second later, the message would still exist.</p>
+
+  <h4>Step 9: pushing it to the ex's phone</h4>
+  <p>The ex isn't sitting there refreshing the app. Instead, the server tells a <strong>push notification service</strong>, like Apple's APNs or Google's FCM, to wake up the ex's phone. The ex's phone gets a notification, taps it, and the app makes its own GET request to fetch the new message from the server.</p>
+
+  <h4>Aside: what about crawlers?</h4>
+  <p>A <strong>web crawler</strong>, like Googlebot, is a bot that visits public web pages to index them for search engines. Sarah's message is private, sent through an API, never a public page, so no crawler ever sees it. Crawlers only matter for public content, like a blog post or a company website.</p>
+
+  <h3>The whole trip, end to end</h3>
+  <div class="preview">
+    <div class="pv-bar"><span>Diagram: the full journey of Sarah's message</span></div>
+    <div style="background:#0b0d17;padding:20px">
+      <svg viewBox="0 0 720 160" style="width:100%;height:auto;font-family:monospace" role="img" aria-label="Message journey diagram">
+        <defs><marker id="arrJourney" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 Z" fill="#e2703a"/></marker></defs>
+        <g font-size="10" fill="#d6d8ea">
+          <rect x="10" y="60" width="90" height="40" rx="6" fill="#14162a" stroke="#e2703a"/><text x="55" y="84" text-anchor="middle">Sarah's phone</text>
+          <rect x="150" y="60" width="90" height="40" rx="6" fill="#14162a" stroke="#7fb3ff"/><text x="195" y="84" text-anchor="middle">DNS + CDN</text>
+          <rect x="290" y="60" width="90" height="40" rx="6" fill="#14162a" stroke="#7fb3ff"/><text x="335" y="84" text-anchor="middle">Load balancer</text>
+          <rect x="430" y="60" width="90" height="40" rx="6" fill="#14162a" stroke="#8fd694"/><text x="475" y="84" text-anchor="middle">App server</text>
+          <rect x="570" y="10" width="90" height="40" rx="6" fill="#14162a" stroke="#f0b45e"/><text x="615" y="34" text-anchor="middle">Database</text>
+          <rect x="570" y="110" width="90" height="40" rx="6" fill="#14162a" stroke="#e2703a"/><text x="615" y="134" text-anchor="middle">Ex's phone</text>
+        </g>
+        <path d="M100,80 L150,80" stroke="#e2703a" stroke-width="1.5" marker-end="url(#arrJourney)"/>
+        <path d="M240,80 L290,80" stroke="#e2703a" stroke-width="1.5" marker-end="url(#arrJourney)"/>
+        <path d="M380,80 L430,80" stroke="#e2703a" stroke-width="1.5" marker-end="url(#arrJourney)"/>
+        <path d="M520,70 L570,40" stroke="#e2703a" stroke-width="1.5" marker-end="url(#arrJourney)"/>
+        <path d="M520,90 L570,120" stroke="#e2703a" stroke-width="1.5" marker-end="url(#arrJourney)"/>
+      </svg>
+    </div>
+  </div>
+  <p>All of this happens in well under a second. Every website you build this semester runs on this same foundation: DNS to find it, TCP/IP to move the bytes, HTTP to speak the same language, and a server plus database to store and answer.</p>
+</section>
+
+<!-- ================= CHAPTER 2 ================= -->
+<section id="ch2">
+  <h2>Chapter 2: HTML and CSS</h2>
+  <div class="meta">
+    <span>Week 2</span><span>2+1 hrs</span>
+    <span>Lab 2: first Django app</span>
+    <span>Assignment: PGP</span>
+  </div>
+
+  <p>Here is what we're building by the end of this chapter: the Ares Colony site. Fully clickable already, so you know the target before we write a single tag.</p>
+
+  <div class="preview">
+    <div class="pv-bar"><span>Target: what we're building</span><span class="live">Live</span></div>
+    <div class="marspv" id="siteTarget">
+      <nav class="nav">
+        <div class="brand" data-go="t-home">Ares<span>Colony</span></div>
+        <div class="nav-links">
+          <button class="link active" data-go="t-home">Mission</button>
+          <button class="link" data-go="t-crew">Crew</button>
+          <button class="apply-btn" data-go="t-apply">Apply</button>
+        </div>
+      </nav>
+      <div class="page active" data-page="t-home">
+        <div class="kicker">Recruitment window open</div>
+        <h1 class="big">Be among the first to live on Mars.</h1>
+        <p class="lead">24 colonists. 2031 launch. No prior spaceflight required.</p>
+        <a class="img-link" href="https://placehold.co/900x600/c1440e/fff?text=Ares+Colony" target="_blank">
+          <img src="https://placehold.co/220x140/c1440e/fff?text=Habitat" alt="Habitat module, click to enlarge" width="220">
+        </a>
+        <div class="stat-row">
+          <div class="stat"><div class="n">24</div><div class="l">Seats</div></div>
+          <div class="stat"><div class="n">2031</div><div class="l">Launch</div></div>
+        </div>
+      </div>
+      <div class="page" data-page="t-crew">
+        <div class="kicker">Confirmed crew</div>
+        <h1 class="big">Meet the crew.</h1>
+        <table class="crew">
+          <tr><th>Name</th><th>Role</th></tr>
+          <tr><td>Mr Big Balls</td><td>Botanist</td></tr>
+          <tr><td>D. Pillay</td><td>Engineer</td></tr>
+        </table>
+      </div>
+      <div class="page" data-page="t-apply">
+        <div class="kicker">Application</div>
+        <h1 class="big">Apply to be an astronaut.</h1>
+        <div class="form-card">
+          <label>Full name</label>
+          <input type="text" placeholder="Neil Armstrong">
+          <label>Preferred role</label>
+          <div class="radio-row">
+            <label><input type="radio" name="rolet" checked> Engineer</label>
+            <label><input type="radio" name="rolet"> Botanist</label>
+          </div>
+          <div class="check-row"><label><input type="checkbox"> I accept it's a one-way trip</label></div>
+          <button class="submit">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Part 1: HTML, the skeleton</h3>
+  <p>Every page starts the same way:</p>
+  <div class="code"><div class="bar">index.html</div>
+<pre><span class="t">&lt;!DOCTYPE html&gt;</span>
+<span class="t">&lt;html</span> <span class="a">lang</span>=<span class="s">"en"</span><span class="t">&gt;</span>
+<span class="t">&lt;head&gt;</span>
+  <span class="t">&lt;meta</span> <span class="a">charset</span>=<span class="s">"UTF-8"</span><span class="t">&gt;</span>
+  <span class="t">&lt;title&gt;</span>Ares Colony<span class="t">&lt;/title&gt;</span>
+<span class="t">&lt;/head&gt;</span>
+<span class="t">&lt;body&gt;</span>
+  <span class="c">&lt;!-- everything visible goes here --&gt;</span>
+<span class="t">&lt;/body&gt;</span>
+<span class="t">&lt;/html&gt;</span></pre>
+  </div>
+  <p><code class="inl">head</code> = invisible metadata. <code class="inl">body</code> = what people see. That's it.</p>
+
+  <h4>Structure tags</h4>
+  <table class="tbl">
+    <tr><th>Tag</th><th>Use for</th></tr>
+    <tr><td><code>&lt;nav&gt;</code></td><td>The navigation bar.</td></tr>
+    <tr><td><code>&lt;section&gt;</code></td><td>A distinct chunk of the page.</td></tr>
+    <tr><td><code>&lt;h1&gt;</code> to <code>&lt;h6&gt;</code></td><td>Headings, biggest to smallest. One <code>h1</code> per page.</td></tr>
+    <tr><td><code>&lt;p&gt;</code></td><td>A paragraph of text.</td></tr>
+    <tr><td><code>&lt;div&gt;</code></td><td>A generic invisible box, for grouping.</td></tr>
+  </table>
+
+  <h4>Tables</h4>
+  <p>Use tables for actual tabular data, like a crew roster. Not for layout, that's what CSS is for.</p>
+  <div class="code"><div class="bar">a crew table</div>
+<pre><span class="t">&lt;table&gt;</span>
+  <span class="t">&lt;tr&gt;</span><span class="t">&lt;th&gt;</span>Name<span class="t">&lt;/th&gt;</span><span class="t">&lt;th&gt;</span>Role<span class="t">&lt;/th&gt;</span><span class="t">&lt;/tr&gt;</span>
+  <span class="t">&lt;tr&gt;</span><span class="t">&lt;td&gt;</span>Mr Big Balls<span class="t">&lt;/td&gt;</span><span class="t">&lt;td&gt;</span>Botanist<span class="t">&lt;/td&gt;</span><span class="t">&lt;/tr&gt;</span>
+<span class="t">&lt;/table&gt;</span></pre>
+  </div>
+  <p><code class="inl">tr</code> = table row. <code class="inl">th</code> = header cell (bold by default). <code class="inl">td</code> = data cell.</p>
+
+  <h4>Radio buttons and checkboxes</h4>
+  <p>Both are <code class="inl">&lt;input&gt;</code> with a different <code class="inl">type</code>. The difference is behaviour, not looks:</p>
+  <table class="tbl">
+    <tr><th>Type</th><th>Behaviour</th></tr>
+    <tr><td><code>radio</code></td><td>Pick <b>one</b> option out of a group. Group them with the same <code>name</code>.</td></tr>
+    <tr><td><code>checkbox</code></td><td>Pick <b>any number</b> independently, including zero.</td></tr>
+  </table>
+  <div class="code"><div class="bar">radio group + checkbox</div>
+<pre><span class="c">&lt;!-- same name = only one can be picked --&gt;</span>
+<span class="t">&lt;input</span> <span class="a">type</span>=<span class="s">"radio"</span> <span class="a">name</span>=<span class="s">"role"</span> <span class="a">checked</span><span class="t">&gt;</span> Engineer
+<span class="t">&lt;input</span> <span class="a">type</span>=<span class="s">"radio"</span> <span class="a">name</span>=<span class="s">"role"</span><span class="t">&gt;</span> Botanist
+
+<span class="c">&lt;!-- independent, can tick or not --&gt;</span>
+<span class="t">&lt;input</span> <span class="a">type</span>=<span class="s">"checkbox"</span><span class="t">&gt;</span> I accept it's a one-way trip</pre>
+  </div>
+
+  <h4><code class="inl">href</code> on images: making a picture clickable</h4>
+  <p><code class="inl">&lt;img&gt;</code> displays a picture using <code class="inl">src</code>. It's not a link by itself. Wrap it in <code class="inl">&lt;a href&gt;</code> to make the picture clickable, usually to open a bigger version:</p>
+  <div class="code"><div class="bar">clickable image</div>
+<pre><span class="t">&lt;a</span> <span class="a">href</span>=<span class="s">"habitat-full.jpg"</span> <span class="a">target</span>=<span class="s">"_blank"</span><span class="t">&gt;</span>
+  <span class="t">&lt;img</span> <span class="a">src</span>=<span class="s">"habitat-thumb.jpg"</span> <span class="a">alt</span>=<span class="s">"Habitat module"</span> <span class="a">width</span>=<span class="s">"220"</span><span class="t">&gt;</span>
+<span class="t">&lt;/a&gt;</span></pre>
+  </div>
+  <p><code class="inl">alt</code> is required, it's the text shown if the image fails to load, and what screen readers read aloud. <code class="inl">target="_blank"</code> opens the link in a new tab.</p>
+
+  <h3>The scaffolding, before any CSS</h3>
+  <p>This is the exact same HTML as our target, with zero CSS. This is what "just HTML" looks like. Everything works, nothing looks good yet.</p>
+  <div class="preview">
+    <div class="pv-bar"><span>Raw HTML, no styling</span></div>
+    <div style="background:#fff;color:#000;padding:16px;font-family:Times,serif">
+      <div><b>AresColony</b></div>
+      <div><a href="#">Mission</a> <a href="#">Crew</a> <button>Apply</button></div>
+      <h1>Be among the first to live on Mars.</h1>
+      <p>24 colonists. 2031 launch. No prior spaceflight required.</p>
+      <a href="https://placehold.co/900x600/c1440e/fff?text=Ares+Colony" target="_blank">
+        <img src="https://placehold.co/160x100/c1440e/fff?text=Habitat" alt="Habitat module" width="160">
+      </a>
+      <table border="1" cellpadding="5">
+        <tr><th>Name</th><th>Role</th></tr>
+        <tr><td>Mr Big Balls</td><td>Botanist</td></tr>
+      </table>
+      <p>Full name: <input type="text"></p>
+      <p><input type="radio" name="rraw" checked> Engineer <input type="radio" name="rraw"> Botanist</p>
+      <p><input type="checkbox"> I accept it's a one-way trip</p>
+      <button>Submit</button>
+    </div>
+  </div>
+  <div class="note">This is browser default styling. Black Times New Roman text, blue underlined links, grey buttons. Every browser has slightly different defaults. CSS is how we take control instead of leaving it to chance.</div>
+
+  <h3>Part 2: CSS, taking control of the look</h3>
+  <p>A CSS rule has a selector (what to style) and properties (how). Recap:</p>
+  <div class="code"><div class="bar">anatomy</div>
+<pre><span class="fn">.apply-btn</span> <span class="p">{</span>
+  <span class="a">background</span><span class="p">:</span> <span class="s">#c1440e</span><span class="p">;</span>
+  <span class="a">color</span><span class="p">:</span> <span class="s">white</span><span class="p">;</span>
+<span class="p">}</span></pre>
+  </div>
+  <table class="tbl">
+    <tr><th>Selector</th><th>Matches</th></tr>
+    <tr><td><code>button</code></td><td>Every <code>&lt;button&gt;</code> tag</td></tr>
+    <tr><td><code>.apply-btn</code></td><td>Every element with <code>class="apply-btn"</code></td></tr>
+    <tr><td><code>#seatNum</code></td><td>The one element with <code>id="seatNum"</code></td></tr>
+  </table>
+
+  <h4>The box model</h4>
+  <p>Every element is a box with four layers, from inside out: <code class="inl">content</code>, <code class="inl">padding</code> (space inside the border), <code class="inl">border</code>, <code class="inl">margin</code> (space outside, pushing other elements away).</p>
+
+  <h4>Core properties you'll use constantly</h4>
+  <table class="tbl">
+    <tr><th>Property</th><th>Controls</th></tr>
+    <tr><td><code>background</code>, <code>color</code></td><td>Fill colour, text colour</td></tr>
+    <tr><td><code>padding</code>, <code>margin</code></td><td>Spacing inside / outside</td></tr>
+    <tr><td><code>border</code>, <code>border-radius</code></td><td>Outline, rounded corners</td></tr>
+    <tr><td><code>font-size</code>, <code>font-weight</code></td><td>Text size and boldness</td></tr>
+    <tr><td><code>display: flex</code></td><td>Line children up in a row (or column) with control over spacing</td></tr>
+    <tr><td><code>:hover</code></td><td>Style applied only while the mouse is over the element</td></tr>
+    <tr><td><code>transition</code></td><td>Animate a property change smoothly instead of snapping</td></tr>
+  </table>
+
+  <h4>Checkpoint 1: colours and spacing added, no flexbox yet</h4>
+  <p>We add background colour, text colour, padding. We have NOT added <code class="inl">display:flex</code> yet, so the navbar items still stack, since that's still just default block flow.</p>
+  <div class="preview">
+    <div class="pv-bar"><span>Checkpoint 1</span></div>
+    <div style="background:#0b0d17;color:#f4ede4;font-family:sans-serif;padding:16px">
+      <div style="font-weight:700;color:#e2703a;padding:8px 0">AresColony</div>
+      <div style="padding:4px 0"><a href="#" style="color:#c9cbe0">Mission</a></div>
+      <div style="padding:4px 0"><a href="#" style="color:#c9cbe0">Crew</a></div>
+      <button style="background:#c1440e;color:#fff;padding:8px 14px;border:none;margin-top:6px">Apply</button>
+      <h1 style="font-size:1.6rem;margin-top:20px">Be among the first to live on Mars.</h1>
+      <p style="color:#c9cbe0">24 colonists. 2031 launch.</p>
+      <table style="border-collapse:collapse;margin-top:10px">
+        <tr><th style="border:1px solid #444;padding:6px">Name</th><th style="border:1px solid #444;padding:6px">Role</th></tr>
+        <tr><td style="border:1px solid #444;padding:6px">Mr Big Balls</td><td style="border:1px solid #444;padding:6px">Botanist</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="note">Better already, colours are on-brand. But the navbar is stacked vertically and the button has square corners. That's what <code class="inl">display:flex</code> and <code class="inl">border-radius</code> fix next.</div>
+
+  <h4>Checkpoint 2: final, flexbox layout + rounded corners + hover + transitions</h4>
+  <div class="code"><div class="bar">the finishing touches</div>
+<pre><span class="fn">.nav</span> <span class="p">{</span> <span class="a">display</span><span class="p">:</span> <span class="s">flex</span><span class="p">;</span> <span class="a">justify-content</span><span class="p">:</span> <span class="s">space-between</span><span class="p">;</span> <span class="p">}</span>
+<span class="fn">.apply-btn</span> <span class="p">{</span> <span class="a">border-radius</span><span class="p">:</span> <span class="num">8px</span><span class="p">;</span> <span class="a">transition</span><span class="p">:</span> <span class="a">background</span> <span class="num">.15s</span><span class="p">;</span> <span class="p">}</span>
+<span class="fn">.apply-btn:hover</span> <span class="p">{</span> <span class="a">background</span><span class="p">:</span> <span class="s">#e2703a</span><span class="p">;</span> <span class="p">}</span></pre>
+  </div>
+  <p>That's it, that's the same target preview from the top of this chapter. Scroll up and try clicking around it again, now you know exactly which lines of HTML and CSS produce every part of it.</p>
+</section>
+
+<!-- ================= CHAPTER 3 ================= -->
+<section id="ch3">
+  <h2>Chapter 3: Models and Migrations</h2>
+  <div class="meta">
+    <span>Week 3</span><span>2+1 hrs</span>
+    <span>Lab 3: Database design</span>
+    <span>Deliverable: Project specification document</span>
+  </div>
+
+  <h3>Why we need a database</h3>
+  <p>HTML/CSS/JS live in the browser and vanish on refresh. Anything that needs to survive, like an applicant's details, has to be stored somewhere permanent: a <strong>database</strong>. A relational database stores data in <strong>tables</strong> (rows and columns), like a very strict spreadsheet.</p>
+  <table class="tbl">
+    <tr><th>Term</th><th>Meaning</th></tr>
+    <tr><td>Table</td><td>A collection of one type of thing, e.g. all applicants.</td></tr>
+    <tr><td>Row</td><td>One record, e.g. one applicant.</td></tr>
+    <tr><td>Column</td><td>One field, e.g. email.</td></tr>
+    <tr><td>Primary key (PK)</td><td>A unique id for every row.</td></tr>
+    <tr><td>Foreign key (FK)</td><td>A column that points to another table's PK. This is how tables relate.</td></tr>
+  </table>
+
+  <h3>The ERD (Entity-Relationship Diagram)</h3>
+  <p>Before writing code, draw the tables and how they connect. Ours for the recruitment feature:</p>
+  <div class="preview">
+    <div class="pv-bar"><span>ERD: Mission, Role, Applicant</span></div>
+    <div style="background:#0b0d17;padding:20px">
+      <svg viewBox="0 0 700 320" style="width:100%;height:auto;font-family:monospace" role="img" aria-label="ERD">
+        <rect x="30" y="20" width="180" height="110" rx="8" fill="#14162a" stroke="#e2703a"/>
+        <text x="120" y="40" fill="#fff" font-size="12" text-anchor="middle" font-weight="bold">Mission</text>
+        <text x="44" y="62" fill="#f0b45e" font-size="10">id (PK)</text>
+        <text x="44" y="80" fill="#d6d8ea" font-size="10">name</text>
+        <text x="44" y="98" fill="#d6d8ea" font-size="10">launch_year</text>
+        <text x="44" y="116" fill="#d6d8ea" font-size="10">total_seats</text>
+
+        <rect x="480" y="20" width="180" height="90" rx="8" fill="#14162a" stroke="#e2703a"/>
+        <text x="570" y="40" fill="#fff" font-size="12" text-anchor="middle" font-weight="bold">Role</text>
+        <text x="494" y="62" fill="#f0b45e" font-size="10">id (PK)</text>
+        <text x="494" y="80" fill="#d6d8ea" font-size="10">title</text>
+        <text x="494" y="98" fill="#d6d8ea" font-size="10">description</text>
+
+        <rect x="220" y="190" width="220" height="110" rx="8" fill="#14162a" stroke="#8fd694"/>
+        <text x="330" y="210" fill="#fff" font-size="12" text-anchor="middle" font-weight="bold">Applicant</text>
+        <text x="234" y="232" fill="#f0b45e" font-size="10">id (PK)</text>
+        <text x="234" y="250" fill="#d6d8ea" font-size="10">full_name, email</text>
+        <text x="234" y="268" fill="#7fb3ff" font-size="10">mission_id (FK)</text>
+        <text x="234" y="286" fill="#7fb3ff" font-size="10">role_id (FK)</text>
+
+        <path d="M120,130 L120,245 L220,245" stroke="#e2703a" stroke-width="1.5" fill="none"/>
+        <path d="M570,110 L570,245 L440,245" stroke="#e2703a" stroke-width="1.5" fill="none"/>
+        <text x="360" y="20" fill="#5f6b7a" font-size="10" text-anchor="middle">one Mission / one Role → many Applicants</text>
+      </svg>
+    </div>
+  </div>
+
+  <h3>Models: tables written as Python</h3>
+  <p>In Django, you don't write SQL to create tables. You write a <strong>model</strong>, a Python class, and Django builds the table for you.</p>
+  <div class="code"><div class="bar">recruitment/models.py</div>
+<pre><span class="k">from</span> django.db <span class="k">import</span> models
+
+<span class="k">class</span> <span class="fn">Role</span><span class="p">(</span>models.Model<span class="p">):</span>
+    title <span class="p">=</span> models.<span class="fn">CharField</span><span class="p">(</span>max_length<span class="p">=</span><span class="num">60</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="fn">Mission</span><span class="p">(</span>models.Model<span class="p">):</span>
+    name <span class="p">=</span> models.<span class="fn">CharField</span><span class="p">(</span>max_length<span class="p">=</span><span class="num">100</span><span class="p">)</span>
+    total_seats <span class="p">=</span> models.<span class="fn">IntegerField</span><span class="p">(</span>default<span class="p">=</span><span class="num">24</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="fn">Applicant</span><span class="p">(</span>models.Model<span class="p">):</span>
+    full_name <span class="p">=</span> models.<span class="fn">CharField</span><span class="p">(</span>max_length<span class="p">=</span><span class="num">120</span><span class="p">)</span>
+    email     <span class="p">=</span> models.<span class="fn">EmailField</span><span class="p">()</span>
+    role      <span class="p">=</span> models.<span class="fn">ForeignKey</span><span class="p">(</span>Role<span class="p">,</span> on_delete<span class="p">=</span>models.PROTECT<span class="p">)</span>
+    mission   <span class="p">=</span> models.<span class="fn">ForeignKey</span><span class="p">(</span>Mission<span class="p">,</span> on_delete<span class="p">=</span>models.CASCADE<span class="p">)</span></pre>
+  </div>
+  <p><code class="inl">ForeignKey</code> is the PK/FK link from the ERD, written in Python.</p>
+
+  <h3>Migrations: what and why</h3>
+  <p>A <strong>migration</strong> is a file describing one change to the database schema: create this table, add this column, etc. Django compares your models to the last known schema and writes the migration for you.</p>
+  <div class="code"><div class="bar">terminal</div>
+<pre>python manage.py makemigrations   <span class="c"># write the migration file</span>
+python manage.py migrate          <span class="c"># actually apply it to the DB</span></pre>
+  </div>
+  <p>Why this matters:</p>
+  <ul>
+    <li><b>History.</b> Every schema change is a tracked file, like git commits for your database shape.</li>
+    <li><b>Team safety.</b> Everyone runs the same migrations, so everyone's database ends up identical.</li>
+    <li><b>No manual SQL.</b> You never hand-write <code class="inl">CREATE TABLE</code> or <code class="inl">ALTER TABLE</code>, Django does it correctly.</li>
+    <li><b>Reversible.</b> Migrations can be undone if something goes wrong.</li>
+  </ul>
+  <div class="warn"><b>Rule of thumb:</b> change a model, then always <code class="inl">makemigrations</code> and <code class="inl">migrate</code> right away. Forgetting this is the most common Django bug: the code expects a column the database doesn't have yet.</div>
+</section>
+
+<!-- ================= CHAPTER 4 ================= -->
+<section id="ch4">
+  <h2>Chapter 4: Submitting and processing data</h2>
+  <div class="meta">
+    <span>Week 4</span><span>2+1 hrs</span>
+    <span>Lab 4</span>
+    <span><a href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/Django/Forms" target="_blank">MDN: Django forms</a></span>
+    <span>Quiz 1</span>
+    <span>Deliverable: Collaborative Interface Design (web+mobile)</span>
+  </div>
+
+  <p>Back to the Ares Colony form from Chapter 2. It's built in HTML and styled in CSS, but nothing happens when you click Submit. Notice the Apply button below is pulsing, that's a CSS animation nudging the user to click it.</p>
+
+  <div class="preview">
+    <div class="pv-bar"><span>Same scaffold as Chapter 2, button now pulsing</span><span class="live">Live</span></div>
+    <div class="marspv" id="site4">
+      <nav class="nav">
+        <div class="brand" data-go4="c4-home">Ares<span>Colony</span></div>
+        <div class="nav-links">
+          <button class="link active" data-go4="c4-home">Mission</button>
+          <button class="apply-btn pulse" data-go4="c4-apply">Apply</button>
+        </div>
+      </nav>
+      <div class="page active" data-page4="c4-home">
+        <div class="kicker">Recruitment window open</div>
+        <h1 class="big">Be among the first to live on Mars.</h1>
+        <p class="lead">Click Apply. Right now it does nothing, that's what we fix today.</p>
+      </div>
+      <div class="page" data-page4="c4-apply">
+        <div class="kicker">Application form</div>
+        <h1 class="big">Apply to be an astronaut.</h1>
+        <div class="form-card">
+          <form id="apply4">
+            <label>Full name</label>
+            <input id="n4" type="text" placeholder="Neil Armstrong">
+            <label>Email</label>
+            <input id="e4" type="email" placeholder="you@earth.com">
+            <button type="submit" class="submit">Submit</button>
+            <div id="r4" class="result"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>We built the shape with HTML/CSS. Now we build the behaviour with JavaScript, a full pass on the language, then we point it at this exact form.</p>
+
+  <h3>JavaScript language guide</h3>
+
+  <h4>Variables</h4>
+  <div class="code"><div class="bar">variables</div>
+<pre><span class="k">const</span> name <span class="p">=</span> <span class="s">"Sarah"</span><span class="p">;</span>   <span class="c">// won't be reassigned</span>
+<span class="k">let</span> age <span class="p">=</span> <span class="num">21</span><span class="p">;</span>          <span class="c">// will change</span>
+age <span class="p">=</span> <span class="num">22</span><span class="p">;</span>                <span class="c">// fine, it's `let`</span></pre>
+  </div>
+  <p>Use <code class="inl">const</code> by default, <code class="inl">let</code> only when the value must change.</p>
+
+  <h4>Data types</h4>
+  <table class="tbl">
+    <tr><th>Type</th><th>Example</th></tr>
+    <tr><td>String</td><td><code>"hello"</code></td></tr>
+    <tr><td>Number</td><td><code>24</code>, <code>3.14</code></td></tr>
+    <tr><td>Boolean</td><td><code>true</code>, <code>false</code></td></tr>
+    <tr><td>Array</td><td><code>["Engineer", "Botanist"]</code></td></tr>
+    <tr><td>Object</td><td><code>{ name: "Sarah", age: 21 }</code></td></tr>
+  </table>
+
+  <h4>Operators</h4>
+  <table class="tbl">
+    <tr><th>Operator</th><th>Meaning</th></tr>
+    <tr><td><code>===</code></td><td>Equal to (always use this, not <code>==</code>)</td></tr>
+    <tr><td><code>!==</code></td><td>Not equal to</td></tr>
+    <tr><td><code>&amp;&amp;</code> / <code>||</code> / <code>!</code></td><td>AND / OR / NOT</td></tr>
+    <tr><td><code>+= -= ++</code></td><td>Add and reassign, subtract and reassign, increment by 1</td></tr>
+  </table>
+
+  <h4>Conditionals</h4>
+  <div class="code"><div class="bar">if / else</div>
+<pre><span class="k">if</span> <span class="p">(</span>age <span class="p">&gt;=</span> <span class="num">18</span><span class="p">) {</span>
+  <span class="fn">console.log</span><span class="p">(</span><span class="s">"adult"</span><span class="p">);</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+  <span class="fn">console.log</span><span class="p">(</span><span class="s">"minor"</span><span class="p">);</span>
+<span class="p">}</span></pre>
+  </div>
+
+  <h4>Loops</h4>
+  <div class="code"><div class="bar">for / while</div>
+<pre><span class="k">for</span> <span class="p">(</span><span class="k">let</span> i <span class="p">=</span> <span class="num">0</span><span class="p">;</span> i <span class="p">&lt;</span> <span class="num">5</span><span class="p">;</span> i<span class="p">++)</span> <span class="p">{</span>
+  <span class="fn">console.log</span><span class="p">(</span>i<span class="p">);</span>            <span class="c">// 0 1 2 3 4</span>
+<span class="p">}</span>
+
+<span class="k">const</span> roles <span class="p">=</span> <span class="p">[</span><span class="s">"Engineer"</span><span class="p">,</span> <span class="s">"Botanist"</span><span class="p">];</span>
+roles.<span class="fn">forEach</span><span class="p">(</span><span class="k">function</span> <span class="p">(</span>r<span class="p">) {</span> <span class="fn">console.log</span><span class="p">(</span>r<span class="p">);</span> <span class="p">});</span></pre>
+  </div>
+
+  <h4>Functions, the plain way and the short way</h4>
+  <div class="code"><div class="bar">functions</div>
+<pre><span class="c">// plain function, named, reusable</span>
+<span class="k">function</span> <span class="fn">greet</span><span class="p">(</span>name<span class="p">) {</span>
+  <span class="k">return</span> <span class="s">"Welcome, "</span> <span class="p">+</span> name<span class="p">;</span>
+<span class="p">}</span>
+<span class="fn">greet</span><span class="p">(</span><span class="s">"Sarah"</span><span class="p">);</span>              <span class="c">// "Welcome, Sarah"</span>
+
+<span class="c">// arrow function, same thing, shorter</span>
+<span class="k">const</span> <span class="fn">greet2</span> <span class="p">=</span> <span class="p">(</span>name<span class="p">)</span> <span class="k">=&gt;</span> <span class="s">"Welcome, "</span> <span class="p">+</span> name<span class="p">;</span></pre>
+  </div>
+  <p>A function is a named block of steps. You define it once, call it as many times as you like, with different inputs each time.</p>
+
+  <h4>Talking to the page: DOM and events</h4>
+  <table class="tbl">
+    <tr><th>Task</th><th>Code</th></tr>
+    <tr><td>Find an element</td><td><code>document.querySelector("#name")</code></td></tr>
+    <tr><td>Read a typed value</td><td><code>.value</code></td></tr>
+    <tr><td>Change visible text</td><td><code>.textContent</code></td></tr>
+    <tr><td>React to a click / submit</td><td><code>.addEventListener("click", fn)</code></td></tr>
+  </table>
+
+  <h3>Now, wire it to the form</h3>
+  <p>Grab the fields, listen for submit, stop the page reloading, check the values, show a result.</p>
+  <div class="code"><div class="bar">apply4.js</div>
+<pre><span class="k">const</span> form <span class="p">=</span> <span class="fn">document.querySelector</span><span class="p">(</span><span class="s">"#apply4"</span><span class="p">);</span>
+<span class="k">const</span> result <span class="p">=</span> <span class="fn">document.querySelector</span><span class="p">(</span><span class="s">"#r4"</span><span class="p">);</span>
+
+form.<span class="fn">addEventListener</span><span class="p">(</span><span class="s">"submit"</span><span class="p">,</span> <span class="k">function</span> <span class="p">(</span>event<span class="p">) {</span>
+  event.<span class="fn">preventDefault</span><span class="p">();</span>                 <span class="c">// stop reload</span>
+  <span class="k">const</span> name <span class="p">=</span> <span class="fn">document.querySelector</span><span class="p">(</span><span class="s">"#n4"</span><span class="p">).</span>value<span class="p">;</span>
+  <span class="k">const</span> email <span class="p">=</span> <span class="fn">document.querySelector</span><span class="p">(</span><span class="s">"#e4"</span><span class="p">).</span>value<span class="p">;</span>
+
+  <span class="k">if</span> <span class="p">(!</span>name <span class="p">||</span> <span class="p">!</span>email.<span class="fn">includes</span><span class="p">(</span><span class="s">"@"</span><span class="p">)) {</span>
+    result.className <span class="p">=</span> <span class="s">"result err"</span><span class="p">;</span>
+    result.textContent <span class="p">=</span> <span class="s">"Fill in a name and valid email."</span><span class="p">;</span>
+    <span class="k">return</span><span class="p">;</span>
+  <span class="p">}</span>
+  result.className <span class="p">=</span> <span class="s">"result ok"</span><span class="p">;</span>
+  result.textContent <span class="p">=</span> <span class="s">"Welcome aboard, "</span> <span class="p">+</span> name <span class="p">+</span> <span class="s">"!"</span><span class="p">;</span>
+<span class="p">});</span></pre>
+  </div>
+  <p>Try it above, submit empty, submit with a bad email, then submit properly.</p>
+
+  <h3>Enter jQuery</h3>
+  <p>Same logic, jQuery spelling. <code class="inl">$("#n4").val()</code> instead of <code class="inl">document.querySelector("#n4").value</code>. Shorter, same idea.</p>
+  <div class="code"><div class="bar">same thing, jQuery</div>
+<pre><span class="fn">$</span><span class="p">(</span><span class="s">"#apply4"</span><span class="p">).</span><span class="fn">on</span><span class="p">(</span><span class="s">"submit"</span><span class="p">,</span> <span class="k">function</span> <span class="p">(</span>e<span class="p">) {</span>
+  e.<span class="fn">preventDefault</span><span class="p">();</span>
+  <span class="k">const</span> name <span class="p">=</span> <span class="fn">$</span><span class="p">(</span><span class="s">"#n4"</span><span class="p">).</span><span class="fn">val</span><span class="p">();</span>
+  <span class="fn">$</span><span class="p">(</span><span class="s">"#r4"</span><span class="p">).</span><span class="fn">text</span><span class="p">(</span><span class="s">"Welcome, "</span> <span class="p">+</span> name<span class="p">).</span><span class="fn">fadeIn</span><span class="p">();</span>
+<span class="p">});</span></pre>
+  </div>
+
+  <h3>A first taste of AJAX</h3>
+  <p>Right now the form only shows a message, it never leaves the browser. <strong>AJAX</strong> means sending that data to a server in the background, no reload, using <code class="inl">fetch</code>:</p>
+  <div class="code"><div class="bar">preview of what's coming</div>
+<pre><span class="hl"><span class="fn">fetch</span><span class="p">(</span><span class="s">"/api/apply/"</span><span class="p">,</span> <span class="p">{</span> method<span class="p">:</span> <span class="s">"POST"</span><span class="p">,</span> body<span class="p">:</span> <span class="fn">JSON.stringify</span><span class="p">({</span>name<span class="p">,</span>email<span class="p">})</span> <span class="p">})</span></span>
+  .<span class="fn">then</span><span class="p">(</span>res <span class="k">=&gt;</span> res.<span class="fn">json</span><span class="p">())</span>
+  .<span class="fn">then</span><span class="p">(</span>data <span class="k">=&gt;</span> <span class="fn">console.log</span><span class="p">(</span><span class="s">"saved as"</span><span class="p">,</span> data.id<span class="p">));</span></pre>
+  </div>
+  <div class="note">This is exactly how the form will eventually reach Django's database. Full AJAX deep dive is Chapter 9, once we've built the server side in Chapters 5-6.</div>
+</section>
+
+<!-- ================= CHAPTER 5 ================= -->
+<section id="ch5">
+  <h2>Chapter 5: Validating and saving data (server side)</h2>
+  <div class="meta"><span>Week 5</span><span>2+1 hrs</span><span>Quiz 2</span></div>
+
+  <p>Client-side JS validation (Chapter 4) is for UX, it's not security. Anyone can open dev tools and bypass it. The server must validate again. Django does this with <strong>forms</strong>.</p>
+
+  <div class="code"><div class="bar">recruitment/forms.py</div>
+<pre><span class="k">from</span> django <span class="k">import</span> forms
+<span class="k">from</span> .models <span class="k">import</span> Applicant
+
+<span class="k">class</span> <span class="fn">ApplicantForm</span><span class="p">(</span>forms.ModelForm<span class="p">):</span>
+    <span class="k">class</span> <span class="fn">Meta</span><span class="p">:</span>
+        model  <span class="p">=</span> Applicant
+        fields <span class="p">=</span> <span class="p">[</span><span class="s">"full_name"</span><span class="p">,</span> <span class="s">"email"</span><span class="p">,</span> <span class="s">"role"</span><span class="p">,</span> <span class="s">"mission"</span><span class="p">]</span>
+
+    <span class="c"># custom rule: reject names under 2 characters</span>
+    <span class="k">def</span> <span class="fn">clean_full_name</span><span class="p">(</span>self<span class="p">):</span>
+        name <span class="p">=</span> self.cleaned_data<span class="p">[</span><span class="s">"full_name"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="fn">len</span><span class="p">(</span>name<span class="p">)</span> <span class="p">&lt;</span> <span class="num">2</span><span class="p">:</span>
+            <span class="k">raise</span> forms.ValidationError<span class="p">(</span><span class="s">"Name too short"</span><span class="p">)</span>
+        <span class="k">return</span> name</pre>
+  </div>
+
+  <div class="code"><div class="bar">recruitment/views.py</div>
+<pre><span class="k">def</span> <span class="fn">apply_view</span><span class="p">(</span>request<span class="p">):</span>
+    <span class="k">if</span> request.method <span class="p">==</span> <span class="s">"POST"</span><span class="p">:</span>
+        form <span class="p">=</span> <span class="fn">ApplicantForm</span><span class="p">(</span>request.POST<span class="p">)</span>
+        <span class="k">if</span> form.<span class="fn">is_valid</span><span class="p">():</span>
+            form.<span class="fn">save</span><span class="p">()</span>                     <span class="c"># writes the row to the DB</span>
+            <span class="k">return</span> <span class="fn">redirect</span><span class="p">(</span><span class="s">"success"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        form <span class="p">=</span> <span class="fn">ApplicantForm</span><span class="p">()</span>
+    <span class="k">return</span> <span class="fn">render</span><span class="p">(</span>request<span class="p">,</span> <span class="s">"apply.html"</span><span class="p">,</span> <span class="p">{</span><span class="s">"form"</span><span class="p">:</span> form<span class="p">})</span></pre>
+  </div>
+  <p><code class="inl">is_valid()</code> runs every field's checks (required, email format, your custom <code class="inl">clean_</code> methods). Only if everything passes does <code class="inl">.save()</code> run.</p>
+  <div class="note"><b>Defense in depth:</b> JS checks for a nice experience, Django checks because it must. Never trust the client.</div>
+</section>
+
+<!-- ================= CHAPTER 6 ================= -->
+<section id="ch6">
+  <h2>Chapter 6: The Django admin site</h2>
+  <div class="meta"><span>Week 6</span><span>2+1 hrs</span><span>Quiz 3</span>
+    <span><a href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/Django/Admin_site" target="_blank">MDN: Admin site</a></span>
+  </div>
+
+  <p>Django gives you a working admin dashboard for free, just by registering your models. No extra code needed to browse, add, edit, or delete rows.</p>
+  <div class="code"><div class="bar">terminal</div>
+<pre>python manage.py createsuperuser   <span class="c"># make an admin login</span></pre>
+  </div>
+  <div class="code"><div class="bar">recruitment/admin.py</div>
+<pre><span class="k">from</span> django.contrib <span class="k">import</span> admin
+<span class="k">from</span> .models <span class="k">import</span> Applicant<span class="p">,</span> Role<span class="p">,</span> Mission
+
+admin.site.<span class="fn">register</span><span class="p">(</span>Role<span class="p">)</span>
+admin.site.<span class="fn">register</span><span class="p">(</span>Mission<span class="p">)</span>
+
+<span class="a">@admin.register</span><span class="p">(</span>Applicant<span class="p">)</span>
+<span class="k">class</span> <span class="fn">ApplicantAdmin</span><span class="p">(</span>admin.ModelAdmin<span class="p">):</span>
+    list_display <span class="p">=</span> <span class="p">[</span><span class="s">"full_name"</span><span class="p">,</span> <span class="s">"email"</span><span class="p">,</span> <span class="s">"role"</span><span class="p">,</span> <span class="s">"status"</span><span class="p">]</span>
+    search_fields <span class="p">=</span> <span class="p">[</span><span class="s">"full_name"</span><span class="p">,</span> <span class="s">"email"</span><span class="p">]</span>
+    list_filter <span class="p">=</span> <span class="p">[</span><span class="s">"status"</span><span class="p">]</span></pre>
+  </div>
+  <p>Visit <code class="inl">/admin/</code>, log in, and you get a full table view of applicants: sortable, searchable, filterable. This is where staff will review real applications, without ever touching the database directly.</p>
+  <table class="tbl">
+    <tr><th>Option</th><th>Does</th></tr>
+    <tr><td><code>list_display</code></td><td>Which columns show in the list view</td></tr>
+    <tr><td><code>search_fields</code></td><td>Adds a search box over these fields</td></tr>
+    <tr><td><code>list_filter</code></td><td>Adds a sidebar filter</td></tr>
+  </table>
+</section>
+
+<!-- ================= CHAPTER 7 ================= -->
+<section id="ch7">
+  <h2>Chapter 7: jQuery for forms</h2>
+  <div class="meta"><span>Week 7</span><span>2+1 hrs</span><span>Quiz 4</span></div>
+
+  <p>Chapter 4 introduced jQuery briefly. Now we use it properly on forms: reading multiple fields, chaining methods, and validating the whole form at once before it's allowed to submit.</p>
+
+  <h3>Reading and writing with jQuery</h3>
+  <table class="tbl">
+    <tr><th>Method</th><th>Does</th></tr>
+    <tr><td><code>.val()</code></td><td>Get/set an input's value</td></tr>
+    <tr><td><code>.text()</code></td><td>Get/set an element's plain text</td></tr>
+    <tr><td><code>.html()</code></td><td>Get/set an element's inner HTML</td></tr>
+    <tr><td><code>.attr(name)</code></td><td>Get/set an HTML attribute</td></tr>
+    <tr><td><code>.addClass()</code> / <code>.removeClass()</code></td><td>Add or remove a CSS class</td></tr>
+    <tr><td><code>.on(event, fn)</code></td><td>Listen for an event: click, submit, focus, blur</td></tr>
+  </table>
+  <p>jQuery methods return the jQuery object itself, so you can <strong>chain</strong> them:</p>
+  <div class="code"><div class="bar">chaining</div>
+<pre><span class="fn">$</span><span class="p">(</span><span class="s">"#result"</span><span class="p">)</span>
+  .<span class="fn">text</span><span class="p">(</span><span class="s">"Checking..."</span><span class="p">)</span>
+  .<span class="fn">removeClass</span><span class="p">(</span><span class="s">"ok err"</span><span class="p">)</span>
+  .<span class="fn">addClass</span><span class="p">(</span><span class="s">"load"</span><span class="p">);</span></pre>
+  </div>
+
+  <h3>Validating a whole form before it submits</h3>
+  <p>Instead of checking one field, collect every problem into a list, then decide.</p>
+  <div class="preview">
+    <div class="pv-bar"><span>Check every field at once</span><span class="live">Live</span></div>
+    <div class="marspv" style="padding:26px">
+      <label>Full name</label>
+      <input id="c7name" type="text" placeholder="Neil Armstrong">
+      <label>Email</label>
+      <input id="c7email" type="text" placeholder="you@earth.com">
+      <button class="cta" id="c7btn" style="margin-top:14px">Check my answers</button>
+      <div id="c7msg" class="result" style="margin-top:12px"></div>
+    </div>
+  </div>
+  <div class="code"><div class="bar">check-all.js</div>
+<pre><span class="fn">$</span><span class="p">(</span><span class="s">"#c7btn"</span><span class="p">).</span><span class="fn">on</span><span class="p">(</span><span class="s">"click"</span><span class="p">,</span> <span class="k">function</span> <span class="p">() {</span>
+  <span class="k">const</span> problems <span class="p">=</span> <span class="p">[];</span>                       <span class="c">// collect every issue found</span>
+
+  <span class="k">if</span> <span class="p">(!</span><span class="fn">$</span><span class="p">(</span><span class="s">"#c7name"</span><span class="p">).</span><span class="fn">val</span><span class="p">())</span> problems.<span class="fn">push</span><span class="p">(</span><span class="s">"name is required"</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(!</span><span class="fn">$</span><span class="p">(</span><span class="s">"#c7email"</span><span class="p">).</span><span class="fn">val</span><span class="p">().</span><span class="fn">includes</span><span class="p">(</span><span class="s">"@"</span><span class="p">))</span> problems.<span class="fn">push</span><span class="p">(</span><span class="s">"email looks wrong"</span><span class="p">);</span>
+
+  <span class="k">if</span> <span class="p">(</span>problems.length <span class="p">&gt;</span> <span class="num">0</span><span class="p">) {</span>
+    <span class="fn">$</span><span class="p">(</span><span class="s">"#c7msg"</span><span class="p">).</span><span class="fn">attr</span><span class="p">(</span><span class="s">"class"</span><span class="p">,</span> <span class="s">"result err"</span><span class="p">).</span><span class="fn">text</span><span class="p">(</span>problems.<span class="fn">join</span><span class="p">(</span><span class="s">", "</span><span class="p">));</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="fn">$</span><span class="p">(</span><span class="s">"#c7msg"</span><span class="p">).</span><span class="fn">attr</span><span class="p">(</span><span class="s">"class"</span><span class="p">,</span> <span class="s">"result ok"</span><span class="p">).</span><span class="fn">text</span><span class="p">(</span><span class="s">"All good."</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">});</span></pre>
+  </div>
+  <p>This pattern, collect every problem then report them together, scales to any number of fields, and is exactly what Chapter 8's live version builds on.</p>
+</section>
+
+<!-- ================= CHAPTER 8 ================= -->
+<section id="ch8">
+  <h2>Chapter 8: jQuery real-time validation</h2>
+  <div class="meta"><span>Week 8</span><span>2+1 hrs</span></div>
+
+  <p>Checking on submit is fine, but better UX tells the user immediately, as they type, using <code class="inl">.on("input", ...)</code>, which fires on every keystroke.</p>
+
+  <div class="preview">
+    <div class="pv-bar"><span>Live real-time validation</span><span class="live">Live</span></div>
+    <div class="marspv" style="padding:26px">
+      <label>Email</label>
+      <input id="liveEmail" type="text" placeholder="you@earth.com">
+      <div id="liveMsg" style="margin-top:8px;font-size:.85rem;color:#9aa0c0"></div>
+    </div>
+  </div>
+
+  <div class="code"><div class="bar">live-validate.js</div>
+<pre><span class="fn">$</span><span class="p">(</span><span class="s">"#liveEmail"</span><span class="p">).</span><span class="fn">on</span><span class="p">(</span><span class="s">"input"</span><span class="p">,</span> <span class="k">function</span> <span class="p">() {</span>
+  <span class="k">const</span> value <span class="p">=</span> <span class="fn">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="fn">val</span><span class="p">();</span>          <span class="c">// `this` = the input just typed in</span>
+  <span class="k">const</span> looksOk <span class="p">=</span> value.<span class="fn">includes</span><span class="p">(</span><span class="s">"@"</span><span class="p">)</span> <span class="p">&amp;&amp;</span> value.<span class="fn">includes</span><span class="p">(</span><span class="s">"."</span><span class="p">);</span>
+
+  <span class="fn">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="fn">toggleClass</span><span class="p">(</span><span class="s">"valid"</span><span class="p">,</span> looksOk<span class="p">).</span><span class="fn">toggleClass</span><span class="p">(</span><span class="s">"invalid"</span><span class="p">,</span> <span class="p">!</span>looksOk<span class="p">);</span>
+  <span class="fn">$</span><span class="p">(</span><span class="s">"#liveMsg"</span><span class="p">).</span><span class="fn">text</span><span class="p">(</span>looksOk <span class="p">?</span> <span class="s">"Looks good"</span> <span class="p">:</span> <span class="s">"Needs an @ and a ."</span><span class="p">);</span>
+<span class="p">});</span></pre>
+  </div>
+  <p><code class="inl">.toggleClass(name, condition)</code> adds the class if <code class="inl">condition</code> is true, removes it otherwise. <code class="inl">"input"</code> fires on every keystroke, unlike <code class="inl">"change"</code> which only fires when you click away.</p>
+
+  <h3>Doing it properly with regex</h3>
+  <p>Checking for "@" and "." is a rough approximation. A <strong>regular expression</strong> (regex) is a pattern that checks text shape properly.</p>
+  <div class="code"><div class="bar">a real email pattern</div>
+<pre><span class="k">const</span> emailPattern <span class="p">=</span> <span class="s">/^[^\s@]+@[^\s@]+\.[^\s@]+$/</span><span class="p">;</span>
+<span class="k">const</span> looksOk <span class="p">=</span> emailPattern.<span class="fn">test</span><span class="p">(</span>value<span class="p">);</span></pre>
+  </div>
+  <p><code class="inl">.test(value)</code> returns <code class="inl">true</code> or <code class="inl">false</code>. Reading the pattern: some characters, then <code class="inl">@</code>, then some characters, then <code class="inl">.</code>, then some characters, nothing else.</p>
+  <div class="warn">Regex is a whole topic on its own. For this course, know that <code class="inl">.test()</code> exists and what it's for, you don't need to write patterns from memory, plenty of tested ones exist online for emails, phone numbers, and passwords.</div>
+</section>
+
+
+<!-- ================= CHAPTER 9 ================= -->
+<section id="ch9">
+  <h2>Chapter 9: AJAX</h2>
+  <div class="meta"><span>Week 9</span><span>2+1 hrs</span></div>
+
+  <p>Full recap: AJAX = talk to a server in the background, no page reload. <code class="inl">fetch</code> is the built-in way, it returns a <strong>promise</strong> (an IOU for a future answer).</p>
+  <div class="code"><div class="bar">fetch, GET and POST</div>
+<pre><span class="c">// GET</span>
+<span class="hl"><span class="fn">fetch</span><span class="p">(</span><span class="s">"/api/seats/"</span><span class="p">)</span></span>
+  .<span class="fn">then</span><span class="p">(</span>res <span class="k">=&gt;</span> res.<span class="fn">json</span><span class="p">())</span>
+  .<span class="fn">then</span><span class="p">(</span>data <span class="k">=&gt;</span> <span class="fn">console.log</span><span class="p">(</span>data.seats_left<span class="p">));</span>
+
+<span class="c">// POST, with async/await instead of .then chains</span>
+<span class="k">async function</span> <span class="fn">apply</span><span class="p">(</span>payload<span class="p">) {</span>
+  <span class="hl">  <span class="k">const</span> res <span class="p">=</span> <span class="k">await</span> <span class="fn">fetch</span><span class="p">(</span><span class="s">"/api/apply/"</span><span class="p">,</span> <span class="p">{</span></span>
+  <span class="hl">    method<span class="p">:</span> <span class="s">"POST"</span><span class="p">,</span></span>
+  <span class="hl">    headers<span class="p">:</span> <span class="p">{</span><span class="s">"Content-Type"</span><span class="p">:</span><span class="s">"application/json"</span><span class="p">},</span></span>
+  <span class="hl">    body<span class="p">:</span> <span class="fn">JSON.stringify</span><span class="p">(</span>payload<span class="p">)</span></span>
+  <span class="hl">  <span class="p">});</span></span>
+  <span class="k">return</span> <span class="k">await</span> res.<span class="fn">json</span><span class="p">();</span>
+<span class="p">}</span></pre>
+  </div>
+  <p>The highlighted lines are always the actual request. Everything else is prep (before) or reaction (after).</p>
+
+  <div class="preview">
+    <div class="pv-bar"><span>Live AJAX against a simulated endpoint</span><span class="live">Live</span></div>
+    <div class="marspv" style="padding:26px">
+      <button class="cta" id="ajaxBtn9">Check seat availability</button>
+      <div id="ajaxRes9" class="result" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <h4>jQuery's version</h4>
+  <div class="code"><div class="bar">$.ajax</div>
+<pre><span class="hl"><span class="fn">$</span><span class="p">.</span><span class="fn">ajax</span><span class="p">({</span> url<span class="p">:</span><span class="s">"/api/seats/"</span><span class="p">,</span> method<span class="p">:</span><span class="s">"GET"</span><span class="p">,</span></span>
+<span class="hl">  success<span class="p">:</span> data <span class="k">=&gt;</span> <span class="fn">console.log</span><span class="p">(</span>data<span class="p">),</span></span>
+<span class="hl">  error<span class="p">:</span> <span class="p">()</span> <span class="k">=&gt;</span> <span class="fn">console.log</span><span class="p">(</span><span class="s">"failed"</span><span class="p">)</span> <span class="p">});</span></span></pre>
+  </div>
+  <table class="tbl">
+    <tr><th>fetch</th><th>jQuery</th></tr>
+    <tr><td><code>fetch(url)</code></td><td><code>$.get(url, cb)</code></td></tr>
+    <tr><td><code>.then(data =&gt; ..)</code></td><td><code>success: data =&gt; ..</code></td></tr>
+    <tr><td><code>.catch(err =&gt; ..)</code></td><td><code>error: () =&gt; ..</code></td></tr>
+  </table>
+</section>
+
+<!-- ================= CHAPTER 10 ================= -->
+<section id="ch10">
+  <h2>Chapter 10: Data exchange with JSON</h2>
+  <div class="meta"><span>Week 10</span><span>2+1 hrs</span><span>Assignment 1</span><span>Test 1 (scheduled separately)</span></div>
+
+  <p><strong>JSON</strong> (JavaScript Object Notation) is the text format almost every API uses. It looks like a JS object, but it's just text, any language can read and write it.</p>
+  <div class="code"><div class="bar">a JSON payload</div>
+<pre><span class="p">{</span>
+  <span class="s">"full_name"</span><span class="p">:</span> <span class="s">"Mr Big Balls"</span><span class="p">,</span>
+  <span class="s">"role"</span><span class="p">:</span> <span class="num">2</span><span class="p">,</span>
+  <span class="s">"accepted_risk"</span><span class="p">:</span> <span class="k">true</span>
+<span class="p">}</span></pre>
+  </div>
+  <table class="tbl">
+    <tr><th>Rule</th><th>Detail</th></tr>
+    <tr><td>Keys are strings</td><td>Always in double quotes: <code>"full_name"</code></td></tr>
+    <tr><td>Values</td><td>String, number, boolean, array, object, or <code>null</code></td></tr>
+    <tr><td>No trailing commas</td><td>The last item in a list has no comma after it</td></tr>
+  </table>
+  <div class="code"><div class="bar">converting between JS objects and JSON text</div>
+<pre><span class="k">const</span> obj <span class="p">=</span> <span class="p">{</span> name<span class="p">:</span> <span class="s">"Sarah"</span> <span class="p">};</span>
+
+<span class="k">const</span> text <span class="p">=</span> <span class="fn">JSON.stringify</span><span class="p">(</span>obj<span class="p">);</span>   <span class="c">// object → JSON text, for sending</span>
+<span class="k">const</span> back <span class="p">=</span> <span class="fn">JSON.parse</span><span class="p">(</span>text<span class="p">);</span>     <span class="c">// JSON text → object, for reading</span></pre>
+  </div>
+  <p>Every <code class="inl">fetch</code> body you send is <code class="inl">JSON.stringify</code>'d. Every response you read is <code class="inl">.json()</code>'d (which does the parsing for you). On the Django side, DRF serializers do this same job in Python.</p>
+</section>
+
+<!-- ================= CHAPTER 11 ================= -->
+<section id="ch11">
+  <h2>Chapter 11: API programming</h2>
+  <div class="meta"><span>Week 11</span><span>2+1 hrs</span></div>
+
+  <p>An <strong>API</strong> is a set of URLs a server exposes so other programs, our frontend, can read and write its data. We use <strong>Django REST Framework</strong> (DRF) to build ours.</p>
+
+  <h3>REST, in plain terms</h3>
+  <p>REST just means: use URLs to name <em>things</em> (<code class="inl">/api/applicants/</code>), and use the HTTP method to say what you want to <em>do</em> to them.</p>
+  <table class="tbl">
+    <tr><th>HTTP method</th><th>Means</th></tr>
+    <tr><td>GET</td><td>Read data</td></tr>
+    <tr><td>POST</td><td>Create new data</td></tr>
+    <tr><td>PUT / PATCH</td><td>Update existing data</td></tr>
+    <tr><td>DELETE</td><td>Remove data</td></tr>
+  </table>
+  <table class="tbl">
+    <tr><th>Status code</th><th>Means</th></tr>
+    <tr><td>200</td><td>OK</td></tr>
+    <tr><td>201</td><td>Created</td></tr>
+    <tr><td>400</td><td>Bad request, your data was invalid</td></tr>
+    <tr><td>404</td><td>Not found</td></tr>
+    <tr><td>500</td><td>Server error</td></tr>
+  </table>
+
+  <h3>Building it: three files, same pattern every time</h3>
+  <div class="code"><div class="bar">1. serializers.py: Python objects to and from JSON</div>
+<pre><span class="k">class</span> <span class="fn">ApplicantSerializer</span><span class="p">(</span>serializers.ModelSerializer<span class="p">):</span>
+    <span class="k">class</span> <span class="fn">Meta</span><span class="p">:</span>
+        model  <span class="p">=</span> Applicant
+        fields <span class="p">=</span> <span class="p">[</span><span class="s">"id"</span><span class="p">,</span> <span class="s">"full_name"</span><span class="p">,</span> <span class="s">"email"</span><span class="p">,</span> <span class="s">"role"</span><span class="p">,</span> <span class="s">"status"</span><span class="p">]</span></pre>
+  </div>
+  <div class="code"><div class="bar">2. views.py: what runs per request</div>
+<pre><span class="a">@api_view</span><span class="p">([</span><span class="s">"GET"</span><span class="p">])</span>
+<span class="k">def</span> <span class="fn">seats_left</span><span class="p">(</span>request<span class="p">):</span>
+    mission <span class="p">=</span> Mission.objects.<span class="fn">get</span><span class="p">(</span>name<span class="p">=</span><span class="s">"Ares-1"</span><span class="p">)</span>
+    left <span class="p">=</span> mission.total_seats <span class="p">-</span> mission.applicant_set.<span class="fn">count</span><span class="p">()</span>
+    <span class="k">return</span> <span class="fn">Response</span><span class="p">({</span><span class="s">"seats_left"</span><span class="p">:</span> left<span class="p">})</span>
+
+<span class="a">@api_view</span><span class="p">([</span><span class="s">"POST"</span><span class="p">])</span>
+<span class="k">def</span> <span class="fn">apply</span><span class="p">(</span>request<span class="p">):</span>
+    serializer <span class="p">=</span> <span class="fn">ApplicantSerializer</span><span class="p">(</span>data<span class="p">=</span>request.data<span class="p">)</span>
+    <span class="k">if</span> serializer.<span class="fn">is_valid</span><span class="p">():</span>
+        serializer.<span class="fn">save</span><span class="p">()</span>
+        <span class="k">return</span> <span class="fn">Response</span><span class="p">(</span>serializer.data<span class="p">,</span> status<span class="p">=</span><span class="num">201</span><span class="p">)</span>
+    <span class="k">return</span> <span class="fn">Response</span><span class="p">(</span>serializer.errors<span class="p">,</span> status<span class="p">=</span><span class="num">400</span><span class="p">)</span></pre>
+  </div>
+  <div class="code"><div class="bar">3. urls.py: the addresses</div>
+<pre>urlpatterns <span class="p">=</span> <span class="p">[</span>
+    <span class="fn">path</span><span class="p">(</span><span class="s">"seats/"</span><span class="p">,</span> views.seats_left<span class="p">),</span>   <span class="c"># GET  /api/seats/</span>
+    <span class="fn">path</span><span class="p">(</span><span class="s">"apply/"</span><span class="p">,</span> views.apply<span class="p">),</span>       <span class="c"># POST /api/apply/</span>
+<span class="p">]</span></pre>
+  </div>
+  <p>That's a working, testable API. Chapter 12 is where our frontend actually calls it.</p>
+</section>
+
+<!-- ================= CHAPTER 12 ================= -->
+<section id="ch12">
+  <h2>Chapter 12: API integration</h2>
+  <div class="meta"><span>Week 12</span><span>2+1 hrs</span></div>
+
+  <p>Programming the API gets it running. <strong>Integration</strong> is connecting a real client, our frontend, to it, and handling the practical issues that come with two separate programs talking to each other.</p>
+
+  <h3>Testing it stands alone first</h3>
+  <p>Before wiring up JavaScript, confirm the API itself works, from the terminal:</p>
+  <div class="code"><div class="bar">terminal</div>
+<pre>curl http://localhost:8000/api/seats/
+<span class="c"># → {"seats_left": 22}</span>
+
+curl <span class="p">-</span>X POST http://localhost:8000/api/apply/ \
+  <span class="p">-</span>H <span class="s">"Content-Type: application/json"</span> \
+  <span class="p">-</span>d <span class="s">'{"full_name":"Mr Big Balls","email":"bb@earth.com","role":1,"mission":1}'</span></pre>
+  </div>
+
+  <h3>CORS: letting the browser in</h3>
+  <p>Browsers block a page on one address from calling an API on a different address, for security. Our frontend and Django count as different origins during development. <strong>CORS</strong> settings allow it explicitly:</p>
+  <div class="code"><div class="bar">settings.py</div>
+<pre>CORS_ALLOWED_ORIGINS <span class="p">=</span> <span class="p">[</span>
+    <span class="s">"http://localhost:5500"</span><span class="p">,</span>
+<span class="p">]</span></pre>
+  </div>
+
+  <h3>Calling it from the frontend</h3>
+  <div class="preview">
+    <div class="pv-bar"><span>Calling our own API from the browser</span><span class="live">Live</span></div>
+    <div class="marspv" style="padding:26px">
+      <button class="cta" id="apiBtn">GET /api/seats/</button>
+      <div id="apiRes" class="result" style="margin-top:12px"></div>
+      <div style="margin-top:14px;background:#0a0b14;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px 12px;font-family:monospace;font-size:.76rem;color:#7fb3ff">
+        <div style="color:#5f6b7a">// response body</div>
+        <div id="apiLog" style="color:#8fd694"></div>
+      </div>
+    </div>
+  </div>
+  <div class="code"><div class="bar">fetch, then jQuery, same call</div>
+<pre><span class="hl"><span class="k">const</span> res <span class="p">=</span> <span class="k">await</span> <span class="fn">fetch</span><span class="p">(</span><span class="s">"http://localhost:8000/api/seats/"</span><span class="p">);</span></span>
+<span class="k">const</span> data <span class="p">=</span> <span class="k">await</span> res.<span class="fn">json</span><span class="p">();</span>
+
+<span class="c">// jQuery equivalent</span>
+<span class="hl"><span class="fn">$</span><span class="p">.</span><span class="fn">get</span><span class="p">(</span><span class="s">"http://localhost:8000/api/seats/"</span><span class="p">,</span> data <span class="k">=&gt;</span> <span class="fn">console.log</span><span class="p">(</span>data<span class="p">));</span></span></pre>
+  </div>
+  <div class="note">Integration is where most real bugs live: wrong URL, missing CORS setting, a typo in a field name between the serializer and the frontend. Always test the API alone with curl first, so you know if a bug is on the server or in your JavaScript.</div>
+</section>
+
+
+<!-- ================= CHAPTER 13 ================= -->
+<section id="ch13">
+  <h2>Chapter 13: Security issues in web and mobile development</h2>
+  <div class="meta"><span>Week 13</span><span>2+1 hrs</span></div>
+
+  <p>Three attacks every web and mobile developer must recognise before we look at how frameworks defend against them.</p>
+
+  <h3>SQL injection</h3>
+  <p>An attacker types something like <code class="inl">' OR 1=1</code> into a form field, hoping your code pastes it directly into a database query, changing its meaning entirely.</p>
+  <div class="code"><div class="bar">the danger, string-built SQL</div>
+<pre><span class="c"># NEVER do this:</span>
+query <span class="p">=</span> <span class="s">"SELECT * FROM users WHERE name = '"</span> <span class="p">+</span> user_input <span class="p">+</span> <span class="s">"'"</span>
+<span class="c"># if user_input is: x' OR '1'='1
+# the query now returns EVERY row, not just one user</span></pre>
+  </div>
+
+  <h3>XSS, cross-site scripting</h3>
+  <p>An attacker submits <code class="inl">&lt;script&gt;stealCookies()&lt;/script&gt;</code> as a name or comment. If your page displays that text without escaping it, the script actually runs in every visitor's browser who views that page.</p>
+
+  <h3>CSRF, cross-site request forgery</h3>
+  <p>A malicious site tricks a logged-in user's own browser into silently submitting a request to your site, using their existing session, without them knowing.</p>
+
+  <h3>Mobile-specific concerns</h3>
+  <p>Mobile apps add their own risks on top of the above: API keys hard-coded into an app can be extracted from the installed package, local data storage on the device can be read if the device is compromised, and traffic must use HTTPS since public wifi is common.</p>
+
+  <div class="note">Chapter 14 covers exactly how frameworks like Django close each of these off by default.</div>
+</section>
+
+<!-- ================= CHAPTER 14 ================= -->
+<section id="ch14">
+  <h2>Chapter 14: Mitigation strategies by frameworks</h2>
+  <div class="meta"><span>Week 14</span><span>2+1 hrs</span></div>
+
+  <p>Django was built with Chapter 13's attacks in mind. Here is exactly what blocks each one.</p>
+  <table class="tbl">
+    <tr><th>Attack</th><th>Django's mitigation</th></tr>
+    <tr><td>SQL injection</td><td>The ORM (<code>Model.objects.filter(...)</code>) parameterizes every query automatically. You never concatenate raw SQL strings.</td></tr>
+    <tr><td>XSS</td><td>Django templates auto-escape all output by default. <code>&lt;script&gt;</code> becomes harmless text on screen. Never disable this with the <code>|safe</code> filter on user-submitted input.</td></tr>
+    <tr><td>CSRF</td><td><code>{% csrf_token %}</code> in every form, a hidden token Django checks matches on every POST, PUT, PATCH, DELETE.</td></tr>
+  </table>
+  <div class="code"><div class="bar">the CSRF token, in a Django template</div>
+<pre><span class="t">&lt;form</span> <span class="a">method</span>=<span class="s">"POST"</span><span class="t">&gt;</span>
+  <span class="p">{%</span> csrf_token <span class="p">%}</span>
+  <span class="c">&lt;!-- fields --&gt;</span>
+<span class="t">&lt;/form&gt;</span></pre>
+  </div>
+
+  <h3>For mobile, the equivalent good habits</h3>
+  <table class="tbl">
+    <tr><th>Risk</th><th>Mitigation</th></tr>
+    <tr><td>Hard-coded secrets</td><td>Keep API keys on the server, never ship them inside the app package.</td></tr>
+    <tr><td>Insecure storage</td><td>Use the platform's secure storage (Keychain on iOS, Keystore on Android), never plain text files.</td></tr>
+    <tr><td>Unencrypted traffic</td><td>HTTPS only, always, no exceptions for "internal" traffic.</td></tr>
+  </table>
+  <div class="warn"><b>Golden rule:</b> never trust input from the browser or the app. Validate on the server, escape on output, use the ORM instead of raw SQL, and let a framework's built-in protections run, don't turn them off "to make it work."</div>
+</section>
+
+<!-- ================= CHAPTER 15 ================= -->
+<section id="ch15">
+  <h2>Chapter 15: Considerations for your mobile app</h2>
+  <div class="meta"><span>Week 15</span><span>2+1 hrs</span></div>
+
+  <p>Before writing a line of mobile code, decide how it will be built. Same core skills, HTML/CSS/JS, APIs, data, apply, mobile changes the platform and constraints, not the fundamentals.</p>
+  <table class="tbl">
+    <tr><th>Approach</th><th>What it means</th><th>Trade-off</th></tr>
+    <tr><td>Responsive web</td><td>Your existing website, adapted with CSS to work on small screens. Same codebase.</td><td>Fastest, but no real device hardware access, no app store presence.</td></tr>
+    <tr><td>Native</td><td>Built per platform, Swift for iOS, Kotlin for Android.</td><td>Best performance and full device access, but two separate codebases.</td></tr>
+    <tr><td>Hybrid / cross-platform</td><td>One JavaScript codebase, React Native or Flutter, compiles to both iOS and Android.</td><td>One codebase, most device access, small performance cost.</td></tr>
+  </table>
+  <h3>Questions to ask before choosing</h3>
+  <ul>
+    <li>Does the app need camera, GPS, or push notifications? If yes, responsive web alone usually isn't enough.</li>
+    <li>Is there budget and time for two native codebases, or does the team need to move fast with one?</li>
+    <li>Does it need to be discoverable in an app store, or is a mobile-friendly website enough?</li>
+  </ul>
+  <div class="note">Our Ares Colony API from Chapters 11 and 12 doesn't care which of these you pick. Any of them can call the same <code class="inl">/api/apply/</code> endpoint. The decision is entirely about the client, not the server.</div>
+</section>
+
+<!-- ================= CHAPTER 16 ================= -->
+<section id="ch16">
+  <h2>Chapter 16: Platforms</h2>
+  <div class="meta"><span>Week 16</span><span>2+1 hrs</span></div>
+
+  <p>Two platforms dominate. Each has its own store, review process, and expectations.</p>
+  <table class="tbl">
+    <tr><th></th><th>iOS</th><th>Android</th></tr>
+    <tr><td>Store</td><td>App Store</td><td>Google Play</td></tr>
+    <tr><td>Language</td><td>Swift</td><td>Kotlin</td></tr>
+    <tr><td>Review process</td><td>Manual human review, stricter, can take days</td><td>Mostly automated, faster, still has policy checks</td></tr>
+    <tr><td>Distribution</td><td>Store only (mostly)</td><td>Store, or install the file directly (APK)</td></tr>
+  </table>
+  <h3>What this means for you</h3>
+  <ul>
+    <li>Every app update goes through a review queue, budget time for it, don't plan a launch for the same day you submit.</li>
+    <li>Both platforms have strict rules on data privacy and permissions, asking for a permission (like location) you don't clearly use gets apps rejected.</li>
+    <li>Cross-platform tools (Chapter 15) still ultimately compile down to these two native platforms and their stores.</li>
+  </ul>
+</section>
+
+<!-- ================= CHAPTER 17 ================= -->
+<section id="ch17">
+  <h2>Chapter 17: The mobile apps landscape</h2>
+  <div class="meta"><span>Week 17</span><span>2+1 hrs</span></div>
+
+  <p>A quick zoom-out on where mobile apps sit today, useful context before you design one.</p>
+  <ul>
+    <li>Most people spend the majority of their phone time inside a small number of apps they already have installed, not browsing for new ones. Getting discovered is genuinely hard.</li>
+    <li>Apps typically fall into a few broad categories: utility (get in, do a task, get out), social/communication, commerce, and entertainment. Know which one yours is, it shapes every design decision.</li>
+    <li>Monetization models: free with ads, subscription, one-time purchase, or free with in-app purchases. This decision affects your backend too, e.g. a subscription needs an endpoint that checks active status.</li>
+  </ul>
+  <h3>Where our recruitment app fits</h3>
+  <p>Ares Colony's mobile app would be a utility app: someone opens it, checks seats or applies, leaves. No ads, no subscription, it's a straightforward extension of the same Django API.</p>
+</section>
+
+<!-- ================= CHAPTER 18 ================= -->
+<section id="ch18">
+  <h2>Chapter 18: Sensor-aware applications</h2>
+  <div class="meta"><span>Week 18</span><span>2+1 hrs</span></div>
+
+  <p>What makes a mobile app different from a website in the browser: direct access to device hardware.</p>
+  <table class="tbl">
+    <tr><th>Sensor</th><th>Typical use</th></tr>
+    <tr><td>GPS / location</td><td>Maps, "near me" features, geofencing</td></tr>
+    <tr><td>Accelerometer / gyroscope</td><td>Step counting, screen orientation, games</td></tr>
+    <tr><td>Camera</td><td>QR scanning, photo capture, augmented reality</td></tr>
+    <tr><td>Push notifications</td><td>Waking the app with a server-sent alert</td></tr>
+  </table>
+
+  <h3>Push notifications, tying back to Chapter 1</h3>
+  <p>This is the exact same mechanism that woke up Sarah's ex's phone in Chapter 1's case study: your server tells a push service (Apple's APNs or Google's FCM) to deliver an alert, the OS wakes the app, the app then makes its own API call to fetch the details.</p>
+  <div class="preview">
+    <div class="pv-bar"><span>Diagram: your server pushing a notification</span></div>
+    <div style="background:#0b0d17;padding:18px">
+      <svg viewBox="0 0 700 130" style="width:100%;height:auto;font-family:monospace" role="img" aria-label="Push notification diagram">
+        <defs><marker id="arrPush" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 Z" fill="#e2703a"/></marker></defs>
+        <rect x="10" y="45" width="130" height="40" rx="6" fill="#14162a" stroke="#8fd694"/><text x="75" y="69" fill="#fff" font-size="10" text-anchor="middle">Django server</text>
+        <rect x="280" y="45" width="150" height="40" rx="6" fill="#14162a" stroke="#7fb3ff"/><text x="355" y="69" fill="#fff" font-size="10" text-anchor="middle">Push service (FCM/APNs)</text>
+        <rect x="560" y="45" width="130" height="40" rx="6" fill="#14162a" stroke="#e2703a"/><text x="625" y="69" fill="#fff" font-size="10" text-anchor="middle">User's phone</text>
+        <path d="M140,65 L280,65" stroke="#8fd694" stroke-width="1.5" marker-end="url(#arrPush)"/>
+        <path d="M430,65 L560,65" stroke="#8fd694" stroke-width="1.5" marker-end="url(#arrPush)"/>
+        <text x="625" y="105" fill="#5f6b7a" font-size="9" text-anchor="middle">app wakes up, calls the API to fetch details</text>
+      </svg>
+    </div>
+  </div>
+  <div class="note">Sensors are accessed through the platform's own APIs (Swift/Kotlin) or a cross-platform library's wrapper around them. The pattern is always the same: ask permission, read the sensor, react to the value.</div>
+</section>
+
+<!-- ================= CHAPTER 19 ================= -->
+<section id="ch19">
+  <h2>Chapter 19: Connecting the mobile app to your API</h2>
+  <div class="meta"><span>Week 19</span><span>2+1 hrs</span></div>
+
+  <p>A mobile app is simply another client calling the same Django API from Chapters 11 and 12, no new backend concepts, just a different caller.</p>
+  <table class="tbl">
+    <tr><th>Frontend client</th><th>How it calls the API</th></tr>
+    <tr><td>Browser (this semester's site)</td><td><code>fetch(...)</code> or <code>$.ajax(...)</code></td></tr>
+    <tr><td>React Native app</td><td><code>fetch(...)</code>, same JavaScript function, it works there too</td></tr>
+    <tr><td>Native Swift/Kotlin app</td><td>Platform networking libraries (<code>URLSession</code>, <code>Retrofit</code>), same HTTP request underneath</td></tr>
+  </table>
+  <p>Whatever the client, it's making the same kind of request:</p>
+  <div class="code"><div class="bar">the request, from any mobile client</div>
+<pre><span class="k">POST</span> /api/apply/ <span class="k">HTTP/1.1</span>
+<span class="a">Host:</span> ares-backend.com
+<span class="a">Content-Type:</span> application/json
+
+<span class="p">{</span> <span class="s">"full_name"</span><span class="p">:</span> <span class="s">"Mr Big Balls"</span><span class="p">,</span> <span class="s">"email"</span><span class="p">:</span> <span class="s">"bb@earth.com"</span><span class="p">,</span> <span class="s">"role"</span><span class="p">:</span> <span class="num">1</span> <span class="p">}</span></pre>
+  </div>
+  <div class="warn"><b>Mobile-specific detail:</b> mobile apps can't rely on browser cookies for login the way a website can. Most mobile APIs use a token (a long random string) sent in a header instead, <code class="inl">Authorization: Bearer &lt;token&gt;</code>, issued once at login and stored securely on the device.</div>
+</section>
+
+<!-- ================= CHAPTER 20 ================= -->
+<section id="ch20">
+  <h2>Chapter 20: Testing and deploying mobile apps</h2>
+  <div class="meta"><span>Week 20</span><span>2+1 hrs</span></div>
+
+  <p>The course closes where a real project would: getting the app in front of users.</p>
+  <h3>Testing</h3>
+  <ul>
+    <li>Test on real devices, not just an emulator, screen sizes and sensor behaviour genuinely differ.</li>
+    <li>Test with a slow or dropped connection deliberately, mobile networks are unreliable, your error handling from Chapter 9's AJAX work matters here.</li>
+    <li>Beta test with a small group before a public release, both app stores support this directly (TestFlight for iOS, internal testing tracks for Android).</li>
+  </ul>
+  <h3>Deploying</h3>
+  <table class="tbl">
+    <tr><th>Piece</th><th>Where it lives</th></tr>
+    <tr><td>Django backend</td><td>A hosting provider, with the database, running behind HTTPS</td></tr>
+    <tr><td>Mobile app build</td><td>Submitted to the App Store and Google Play</td></tr>
+    <tr><td>Config</td><td>The app's API base URL points at your live server, not <code>localhost</code></td></tr>
+  </table>
+  <div class="note">Everything from Chapter 1 onward has been building toward this single moment: a real user, on a real phone, filling in a form that reaches a real server you built, that saves to a real database, exactly like Sarah's message did in Chapter 1, except this time it's your code carrying it.</div>
+</section>
+
+</main>
+<footer>Web &amp; Mobile Development: module notes, chapters 1 to 20.</footer>
+
+<script>
+$(function () {
+
+  /* generic nav binder, reused across chapters */
+  function bindNav(rootSel, goAttr, pageAttr) {
+    $(rootSel).find("[" + goAttr + "]").on("click", function () {
+      var target = $(this).attr(goAttr);
+      $(rootSel).find("[" + pageAttr + "]").removeClass("active");
+      $(rootSel).find("[" + pageAttr + '="' + target + '"]').addClass("active");
+      $(rootSel).find(".link").removeClass("active");
+      $(rootSel).find('.link[' + goAttr + '="' + target + '"]').addClass("active");
+    });
+  }
+  bindNav("#siteTarget", "data-go", "data-page");
+  bindNav("#site4", "data-go4", "data-page4");
+
+  /* Chapter 4: vanilla JS form on the pulsing-button form */
+  (function () {
+    var form = document.querySelector("#apply4");
+    var result = document.querySelector("#r4");
+    if (!form) return;
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var name = document.querySelector("#n4").value.trim();
+      var email = document.querySelector("#e4").value.trim();
+      if (!name || !email.includes("@")) {
+        result.className = "result err";
+        result.textContent = "Fill in a name and valid email.";
+        return;
+      }
+      result.className = "result ok";
+      result.textContent = "Welcome aboard, " + name + "!";
+      form.reset();
+    });
+  })();
+
+  /* Chapter 7: check-all-fields-at-once demo */
+  $("#c7btn").on("click", function () {
+    var problems = [];
+    if (!$("#c7name").val()) problems.push("name is required");
+    if (!$("#c7email").val().includes("@")) problems.push("email looks wrong");
+
+    if (problems.length > 0) {
+      $("#c7msg").attr("class", "result err").text(problems.join(", "));
+    } else {
+      $("#c7msg").attr("class", "result ok").text("All good.");
+    }
+  });
+
+  /* Chapter 8: real-time email validation */
+  $("#liveEmail").on("input", function () {
+    var value = $(this).val();
+    var looksOk = value.includes("@") && value.includes(".");
+    $(this).toggleClass("valid", looksOk).toggleClass("invalid", !looksOk);
+    $("#liveMsg").text(value.length ? (looksOk ? "Looks good" : "Needs an @ and a .") : "");
+  });
+
+  /* Simulated server, stands in for Django, used by Ch9 and Ch12 demos */
+  var fakeDB = { total: 24, taken: 2 };
+  function fakeFetchSeats() {
+    return new Promise(function (resolve) {
+      setTimeout(function () {
+        resolve({ seats_left: fakeDB.total - fakeDB.taken, total: fakeDB.total });
+      }, 700);
+    });
+  }
+
+  /* Chapter 9: AJAX live demo */
+  (function () {
+    var btn = document.querySelector("#ajaxBtn9");
+    var res = document.querySelector("#ajaxRes9");
+    if (!btn) return;
+    btn.addEventListener("click", async function () {
+      res.className = "result load";
+      res.textContent = "Contacting server...";
+      var data = await fakeFetchSeats();
+      res.className = "result ok";
+      res.textContent = data.seats_left + " of " + data.total + " seats available.";
+    });
+  })();
+
+  /* Chapter 12: API call demo with visible response body */
+  (function () {
+    var btn = document.querySelector("#apiBtn");
+    var res = document.querySelector("#apiRes");
+    var log = document.querySelector("#apiLog");
+    if (!btn) return;
+    btn.addEventListener("click", async function () {
+      res.className = "result load";
+      res.textContent = "Requesting...";
+      log.textContent = "pending...";
+      var data = await fakeFetchSeats();
+      res.className = "result ok";
+      res.textContent = "200 OK";
+      log.textContent = JSON.stringify(data);
+    });
+  })();
+
+});
+</script>
+</body>
+</html>

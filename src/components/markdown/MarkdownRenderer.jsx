@@ -5,6 +5,8 @@ import remarkGfm from 'remark-gfm'
 import remarkDirective from 'remark-directive'
 import { visit } from 'unist-util-visit'
 import CodeBlock from '../social/CodeBlock/CodeBlock'
+import NotePlayground from './NotePlayground'
+import { PLAYGROUND_ID_RE } from '../../constants/notePlaygrounds'
 import RichTooltip, { YouTubeIcon, InstagramIcon, LinkedInIcon } from '../ui/smoothui/rich-popover/index.tsx'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../lib/noteImageSrc'
 import { parseImageTitle } from '../../lib/noteImageWidth'
@@ -49,6 +51,18 @@ function remarkNoteDirectives() {
         if (!YOUTUBE_ID_RE.test(id)) return
         data.hName = 'youtube-embed'
         data.hProperties = { videoId: id }
+        return
+      }
+      // `::playground{id="ch02-target"}` (T-075). The id names an entry in the
+      // code-defined registry under src/content/playgrounds — note content
+      // supplies no markup of its own, so this adds a live editable document to
+      // the reader without weakening the no-raw-HTML rule above. Validated for
+      // shape here and resolved (or dropped) in NotePlayground.
+      if (node.type === 'leafDirective' && node.name === 'playground') {
+        const id = attrs.id || ''
+        if (!PLAYGROUND_ID_RE.test(id)) return
+        data.hName = 'note-playground'
+        data.hProperties = { playgroundId: id }
       }
     })
   }
@@ -181,9 +195,15 @@ const markdownComponents = {
     const language = match ? match[1] : ''
     const codeString = String(children).replace(/\n$/, '')
     const isBlock = Boolean(match) || codeString.includes('\n')
+    // Anything after the language on the fence line is the block's source
+    // label: ```python recruitment/models.py. mdast-util-to-hast preserves it
+    // on the code element as `data.meta` (it is dropped from `className`,
+    // which only ever carries the first word), so this is the only place it
+    // can be read from.
+    const title = typeof node?.data?.meta === 'string' ? node.data.meta.trim() : ''
 
     return isBlock ? (
-      <CodeBlock code={codeString} language={language || 'auto'} />
+      <CodeBlock code={codeString} language={language || 'auto'} title={title || undefined} />
     ) : (
       <code className={styles.inlineCode} {...props}>
         {children}
@@ -241,6 +261,9 @@ const markdownComponents = {
   },
   'youtube-embed': function YouTubeEmbedComponent({ videoId }) {
     return <YouTubeEmbed videoId={videoId} />
+  },
+  'note-playground': function NotePlaygroundComponent({ playgroundId }) {
+    return <NotePlayground playgroundId={playgroundId} />
   },
   img({ src, alt, title }) {
     // The image title carries the width chosen in the editor (`w=<px>`), so the
