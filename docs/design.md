@@ -249,19 +249,42 @@ state name. Nothing else may write to `data-state`.
    holds ~2s, then collapses to `idle`. Skipped entirely under
    `prefers-reduced-motion`
 2. `idle` — small pill, green dot only
-3. `hover` — same width, online count text fades in
+3. `hover` — segmented: green dot + online count, divider, then a music icon
+   and a timer icon. The pill body still opens music
 4. `music` — expanded music player, with a progress ring around the art
-5. `chat` — coalesced chat notification, dot + count + snippet
-6. `observing` — blue pulse GridLoader + "Observing"
-7. `waiting` — white stagger GridLoader + "Waiting"
-8. `thinking` — amber stagger GridLoader + "Thinking"
-9. `generating` — white stagger GridLoader + "Generating"
-10. `error` — red dot + message, auto-collapses after 3s
+5. `timer` — study timer transport: readout, 5/15/25/50 presets, play/pause,
+   reset. The readout itself is the button into `timer-set`
+6. `timer-set` — the one state that grows the pill into a real panel: hours
+   and minutes fields with steppers, Cancel / Start
+7. `timer-running` — ambient collapsed countdown, so a running timer is
+   visible without opening anything
+8. `timer-done` — green timer icon + "Time's up", clears after 10s
+9. `break` — violet `wave-tb` GridLoader + the hourly break reminder
+10. `chat` — coalesced chat notification, dot + count + snippet
+11. `return` — hover-only "← Back", offered for 60s after the island itself
+    opened chat
+12. `observing` — blue pulse GridLoader + "Observing"
+13. `waiting` — white stagger GridLoader + "Waiting"
+14. `thinking` — amber stagger GridLoader + "Thinking"
+15. `generating` — white stagger GridLoader + "Generating"
+16. `error` — red dot + message, auto-collapses after 3s
 
-**Precedence** (highest first): `music` beats a live AI state beats `chat`
-beats `greeting` beats `hover` beats `idle`. Chat is deliberately last: it
-never preempts an open music panel or AI feedback the visitor is waiting on,
-and a notification blocked by either is dropped rather than deferred.
+**Precedence** (highest first): an open panel (`music`, `timer`, `timer-set`)
+beats a live AI state, beats `break`, beats `timer-done`, beats `chat`, beats
+`return`, beats `greeting`, beats `hover`, beats `timer-running`, beats
+`idle`. Chat is deliberately near-last: it never preempts an open panel or AI
+feedback the visitor is waiting on, and a notification blocked by either is
+dropped rather than deferred. The break reminder is the opposite — it is
+deferred until it can be shown, because it is hourly and deliberate.
+
+**Dismissal is two-tier:** clicking away closes the island outright, while
+Escape steps back one level (`timer-set` → `timer`), matching that view's own
+Cancel button.
+
+**No timer sound.** Completion is visual only, a deliberate call (T-081). If
+one is ever added, note it should fire regardless of tab visibility, unlike
+the break reminder, which is suppressed while hidden — a timer finishing in a
+background tab is exactly when a chime matters most.
 
 **Entrance phase** is tracked separately on `data-phase`
 (`hidden` → `greeting` → `collapsed`), because a pill that hasn't been

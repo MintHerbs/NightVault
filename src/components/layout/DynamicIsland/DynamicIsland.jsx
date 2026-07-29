@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { Play, Pause, SkipBack, SkipForward } from 'lucide-react'
+import { ArrowLeft, Music, Pause, Play, SkipBack, SkipForward, Timer } from 'lucide-react'
 import AIStateContent from './AIStateContent'
 import ChatNotificationContent from './ChatNotificationContent'
+import BreakReminderContent from './BreakReminderContent'
+import TimerPanel from './TimerPanel'
+import TimerSetPanel from './TimerSetPanel'
 import useChatNotification from '../../../hooks/useChatNotification'
+import useStudyTimer from '../../../hooks/useStudyTimer'
+import useBreakReminder, { BREAK_INTERVAL_MS } from '../../../hooks/useBreakReminder'
 import styles from './DynamicIsland.module.css'
 
 // Entrance timing. The pill drops in already expanded, holds its greeting for
@@ -15,6 +20,15 @@ const REVEAL_DELAY_MS = 3000
 const REVEAL_CAP_MS = 5000
 const GREETING_HOLD_MS = 2000
 
+// How long after opening chat from the island the "Back" shortcut stays on
+// offer. Past this the island reverts to its normal behaviour and closing
+// chat is manual again (owner decision, T-080).
+const RETURN_WINDOW_MS = 60000
+
+const BREAK_DISMISS_MS = 8000
+const TIMER_DONE_DISMISS_MS = 10000
+const BREAK_MESSAGE = "It's been an hour, reminder to take a break"
+
 const PROGRESS_POLL_MS = 500
 const RING_RADIUS = 18
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
@@ -23,22 +37,41 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
  * The pill has two independent axes, deliberately kept apart:
  *
  *   phase  — entrance lifecycle: hidden → greeting → collapsed
- *   intent — what the visitor is doing: idle | hover | music
+ *   intent — what the visitor is doing: idle | hover | music | timer
  *
- * Everything else the pill can show (live AI state, a chat notification) is
- * derived from props, never stored. An earlier version stashed a synthetic
- * 'ai-active' value into the same variable the CSS reads, which permanently
- * disabled the hover state once any AI activity had fired; the precedence
- * chain in displayStateFor() replaces that.
+ * Everything else the pill can show (live AI state, a chat notification, a
+ * break reminder, a running timer) is derived, never stored. An earlier
+ * version stashed a synthetic 'ai-active' value into the same variable the
+ * CSS reads, which permanently disabled the hover state once any AI activity
+ * had fired; this precedence chain replaces that.
  */
-function displayStateFor({ intent, aiState, notification, phase }) {
-  // The visitor is actively interacting — nothing preempts this.
+function displayStateFor({
+  intent,
+  aiState,
+  notification,
+  phase,
+  breakDue,
+  timerFinished,
+  timerRunning,
+  returnAvailable,
+  isHovered
+}) {
+  // An open panel means the visitor is actively interacting — nothing preempts it.
   if (intent === 'music') return 'music'
+  if (intent === 'timer') return 'timer'
+  if (intent === 'timer-set') return 'timer-set'
   // Task feedback the visitor is waiting on outranks anything ambient.
   if (aiState !== 'idle') return aiState
+  // Hourly and deliberate, so it outranks chat.
+  if (breakDue) return 'break'
+  if (timerFinished) return 'timer-done'
   if (notification) return 'chat'
+  // Hover-only offer: the collapsed pill stays a plain dot until pointed at.
+  if (returnAvailable && isHovered) return 'return'
   if (phase === 'greeting') return 'greeting'
   if (intent === 'hover') return 'hover'
+  // Ambient countdown, so a running timer is visible without opening anything.
+  if (timerRunning) return 'timer-running'
   return 'idle'
 }
 
@@ -55,7 +88,10 @@ export default function DynamicIsland({
   getProgress,
   lastIncoming = null,
   isChatOpen = false,
-  onOpenChat
+  chatOpenedFromIsland = false,
+  onOpenChat,
+  onCloseChat,
+  breakIntervalMs = BREAK_INTERVAL_MS
 }) {
   const [phase, setPhase] = useState('hidden')
   const [intent, setIntent] = useState('idle')
@@ -66,14 +102,25 @@ export default function DynamicIsland({
   const [progress, setProgress] = useState(0)
   const [revealDelayElapsed, setRevealDelayElapsed] = useState(false)
   const [revealCapElapsed, setRevealCapElapsed] = useState(false)
+  const [returnWindowOpen, setReturnWindowOpen] = useState(false)
   const pillRef = useRef(null)
 
   const reducedMotion = useReducedMotion()
+  const timer = useStudyTimer()
+  const breakReminder = useBreakReminder(breakIntervalMs)
 
-  // Chat is the island's lowest-priority occupant: it must never preempt the
-  // music panel, live AI feedback, or the entrance animation.
+  const isPanelOpen = intent === 'music' || intent === 'timer' || intent === 'timer-set'
+  const returnAvailable = isChatOpen && chatOpenedFromIsland && returnWindowOpen
+
+  // Chat is the island's lowest-priority occupant: it must never preempt an
+  // open panel, live AI feedback, the entrance, a break reminder or a
+  // finished timer.
   const notificationsBlocked =
-    intent === 'music' || aiState !== 'idle' || phase !== 'collapsed'
+    isPanelOpen ||
+    aiState !== 'idle' ||
+    phase !== 'collapsed' ||
+    breakReminder.isDue ||
+    timer.hasFinished
 
   const { notification, acknowledge } = useChatNotification({
     lastIncoming,
@@ -82,8 +129,17 @@ export default function DynamicIsland({
     paused: isHovered
   })
 
-  const displayState = displayStateFor({ intent, aiState, notification, phase })
-  const isMusicOpen = intent === 'music'
+  const displayState = displayStateFor({
+    intent,
+    aiState,
+    notification,
+    phase,
+    breakDue: breakReminder.isDue,
+    timerFinished: timer.hasFinished,
+    timerRunning: timer.isRunning,
+    returnAvailable,
+    isHovered
+  })
 
   useEffect(() => {
     const delay = setTimeout(() => setRevealDelayElapsed(true), REVEAL_DELAY_MS)
@@ -113,25 +169,42 @@ export default function DynamicIsland({
 
   useEffect(() => {
     if (phase !== 'greeting') return undefined
-    const timer = setTimeout(() => setPhase('collapsed'), GREETING_HOLD_MS)
-    return () => clearTimeout(timer)
+    const timeout = setTimeout(() => setPhase('collapsed'), GREETING_HOLD_MS)
+    return () => clearTimeout(timeout)
   }, [phase])
 
+  // The return shortcut's lifetime. Closing chat by any route, or opening it
+  // from anywhere other than the island, ends the offer immediately.
   useEffect(() => {
-    // Close the music panel on outside click or Escape. Returning to 'idle'
-    // is all that's needed — if an AI state is still live, displayStateFor()
-    // picks it up again on the next render.
-    const close = () => setIntent('idle')
+    if (!isChatOpen || !chatOpenedFromIsland) {
+      setReturnWindowOpen(false)
+      return undefined
+    }
 
+    setReturnWindowOpen(true)
+    const timeout = setTimeout(() => setReturnWindowOpen(false), RETURN_WINDOW_MS)
+    return () => clearTimeout(timeout)
+  }, [isChatOpen, chatOpenedFromIsland])
+
+  useEffect(() => {
+    // Dismissing to 'idle' is all that's needed — if an AI state is still
+    // live, displayStateFor() picks it up again on the next render.
+    const dismiss = () => setIntent('idle')
+
+    // Clicking away means "I'm done with the island", so it closes outright.
     const handleClickOutside = (e) => {
-      if (pillRef.current && !pillRef.current.contains(e.target)) close()
+      if (pillRef.current && !pillRef.current.contains(e.target)) dismiss()
     }
 
+    // Escape steps back one level instead: from the set-time view it returns
+    // to the transport, matching that view's own Cancel button. Escaping
+    // straight past it to a closed island contradicted Cancel.
     const handleEscape = (e) => {
-      if (e.key === 'Escape') close()
+      if (e.key !== 'Escape') return
+      setIntent((current) => (current === 'timer-set' ? 'timer' : 'idle'))
     }
 
-    if (!isMusicOpen) return undefined
+    if (!isPanelOpen) return undefined
 
     document.addEventListener('mousedown', handleClickOutside)
     document.addEventListener('keydown', handleEscape)
@@ -140,23 +213,44 @@ export default function DynamicIsland({
       document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('keydown', handleEscape)
     }
-  }, [isMusicOpen])
+  }, [isPanelOpen])
 
   // Progress ring. Polled rather than pushed: the YouTube API has no
   // time-update event, and this only runs while the panel is actually open.
   useEffect(() => {
-    if (!isMusicOpen || typeof getProgress !== 'function') return undefined
+    if (intent !== 'music' || typeof getProgress !== 'function') return undefined
 
     setProgress(getProgress())
     const id = setInterval(() => setProgress(getProgress()), PROGRESS_POLL_MS)
     return () => clearInterval(id)
-  }, [isMusicOpen, getProgress, currentSong])
+  }, [intent, getProgress, currentSong])
+
+  // Both of these auto-clear once actually on screen, and hovering holds them
+  // open — same contract as a chat notification.
+  useEffect(() => {
+    if (displayState !== 'break' || isHovered) return undefined
+    const timeout = setTimeout(breakReminder.dismiss, BREAK_DISMISS_MS)
+    return () => clearTimeout(timeout)
+  }, [displayState, isHovered, breakReminder.dismiss])
+
+  useEffect(() => {
+    if (displayState !== 'timer-done' || isHovered) return undefined
+    const timeout = setTimeout(timer.acknowledgeFinish, TIMER_DONE_DISMISS_MS)
+    return () => clearTimeout(timeout)
+  }, [displayState, isHovered, timer.acknowledgeFinish])
 
   const handleMouseEnter = () => {
     setIsHovered(true)
-    // Hovering a notification holds it open (via `paused`) rather than
-    // replacing it with the online count.
-    if (phase === 'collapsed' && intent === 'idle' && aiState === 'idle' && !notification) {
+    // Hovering a notification, reminder or finished timer holds it open rather
+    // than replacing it with the online count.
+    if (
+      phase === 'collapsed' &&
+      intent === 'idle' &&
+      aiState === 'idle' &&
+      !notification &&
+      !breakReminder.isDue &&
+      !timer.hasFinished
+    ) {
       setIntent('hover')
     }
   }
@@ -166,26 +260,41 @@ export default function DynamicIsland({
     if (intent === 'hover') setIntent('idle')
   }
 
+  // Keyed off what's actually on screen rather than off the underlying flags,
+  // so a state that is present but outranked never captures the click.
   const handleActivate = () => {
-    // Keyed off what's actually on screen, not just whether a notification
-    // exists: for the render or two between an AI state firing and the
-    // notification being cleared, the pill is showing the AI state, and a
-    // click then means "open the music player".
+    if (displayState === 'return') {
+      onCloseChat?.()
+      return
+    }
     if (displayState === 'chat') {
       acknowledge()
       onOpenChat?.()
       return
     }
-    if (!isMusicOpen) setIntent('music')
+    if (displayState === 'break') {
+      breakReminder.dismiss()
+      return
+    }
+    if (displayState === 'timer-done') {
+      timer.acknowledgeFinish()
+      return
+    }
+    if (!isPanelOpen) setIntent('music')
   }
 
   const handleKeyDown = (e) => {
-    if (isMusicOpen) return
+    if (isPanelOpen) return
     if (e.key === 'Enter' || e.key === ' ') {
       // Space would otherwise scroll the page.
       e.preventDefault()
       handleActivate()
     }
+  }
+
+  const openPanel = (which) => (e) => {
+    e.stopPropagation()
+    setIntent(which)
   }
 
   const handlePlayPauseClick = (e) => {
@@ -203,9 +312,11 @@ export default function DynamicIsland({
     onSkipForward?.()
   }
 
-  const pillLabel = displayState === 'chat'
-    ? 'New chat message, open chat'
-    : `${onlineCount} online, open music player`
+  let pillLabel = `${onlineCount} online, open music player`
+  if (displayState === 'return') pillLabel = 'Back to the page'
+  else if (displayState === 'chat') pillLabel = 'New chat message, open chat'
+  else if (displayState === 'break') pillLabel = BREAK_MESSAGE
+  else if (displayState === 'timer-done') pillLabel = 'Timer finished'
 
   // Announced from a stable node below rather than from the content div: a
   // live region that is itself removed and re-added (which the content div is,
@@ -216,6 +327,10 @@ export default function DynamicIsland({
     announcement = notification.count === 1
       ? 'New chat message'
       : `${notification.count} new chat messages`
+  } else if (displayState === 'break') {
+    announcement = BREAK_MESSAGE
+  } else if (displayState === 'timer-done') {
+    announcement = 'Timer finished'
   } else if (displayState === 'error') {
     announcement = errorMessage
   } else if (aiState !== 'idle') {
@@ -260,11 +375,11 @@ export default function DynamicIsland({
           animate={phase === 'hidden'
             ? (reducedMotion ? { opacity: 0 } : { opacity: 0, y: -24 })
             : { opacity: 1, y: 0 }}
-          // A collapsed pill is a button; an open music panel is a container
-          // of buttons, and nesting interactive roles would be invalid.
-          role={isMusicOpen ? 'group' : 'button'}
-          tabIndex={isMusicOpen ? -1 : 0}
-          aria-label={isMusicOpen ? 'Music player' : pillLabel}
+          // A collapsed pill is a button; an open panel is a container of
+          // buttons, and nesting interactive roles would be invalid.
+          role={isPanelOpen ? 'group' : 'button'}
+          tabIndex={isPanelOpen ? -1 : 0}
+          aria-label={isPanelOpen ? 'Island panel' : pillLabel}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           onClick={handleActivate}
@@ -278,8 +393,17 @@ export default function DynamicIsland({
               {...contentMotion}
             >
               {/* AI states: observing, waiting, processing, thinking, generating, error */}
-              {aiState !== 'idle' && !isMusicOpen && (
+              {aiState !== 'idle' && !isPanelOpen && (
                 <AIStateContent aiState={aiState} errorMessage={errorMessage} />
+              )}
+
+              {displayState === 'break' && <BreakReminderContent message={BREAK_MESSAGE} />}
+
+              {displayState === 'timer-done' && (
+                <div className={styles.timerDonePanel}>
+                  <Timer size={16} className={styles.timerDoneIcon} />
+                  <span className={styles.timerDoneText}>Time&apos;s up</span>
+                </div>
               )}
 
               {displayState === 'chat' && (
@@ -289,15 +413,82 @@ export default function DynamicIsland({
                 />
               )}
 
-              {(displayState === 'idle' || displayState === 'greeting' || displayState === 'hover') && (
+              {displayState === 'return' && (
+                <div className={styles.returnPanel}>
+                  <ArrowLeft size={14} />
+                  <span className={styles.returnText}>Back</span>
+                </div>
+              )}
+
+              {displayState === 'idle' && <div className={styles.greenDot} />}
+
+              {displayState === 'timer-running' && (
                 <>
                   <div className={styles.greenDot} />
-                  {displayState !== 'idle' && (
-                    <span className={styles.onlineText}>
-                      {displayState === 'greeting' ? greetingCount : onlineCount} online
-                    </span>
-                  )}
+                  <span className={styles.onlineText}>{timer.remainingLabel}</span>
                 </>
+              )}
+
+              {displayState === 'greeting' && (
+                <>
+                  <div className={styles.greenDot} />
+                  <span className={styles.onlineText}>{greetingCount} online</span>
+                </>
+              )}
+
+              {/* Segmented hover: the count, then a way into each panel. The
+                  pill body still opens music, so nothing already learned
+                  changes (owner decision, T-080). */}
+              {displayState === 'hover' && (
+                <>
+                  <div className={styles.greenDot} />
+                  <span className={styles.onlineText}>{onlineCount} online</span>
+                  <span className={styles.segmentDivider} />
+                  <button
+                    type="button"
+                    className={styles.segmentButton}
+                    onClick={openPanel('music')}
+                    aria-label="Open music player"
+                  >
+                    <Music size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.segmentButton}
+                    onClick={openPanel('timer')}
+                    aria-label="Open study timer"
+                  >
+                    <Timer size={14} />
+                  </button>
+                </>
+              )}
+
+              {displayState === 'timer' && (
+                <TimerPanel
+                  presets={timer.presets}
+                  activePreset={timer.activePreset}
+                  durationLabel={timer.durationLabel}
+                  remainingLabel={timer.remainingLabel}
+                  isRunning={timer.isRunning}
+                  isArmed={timer.isArmed}
+                  onSelectMinutes={timer.selectMinutes}
+                  onOpenCustom={() => setIntent('timer-set')}
+                  onToggle={timer.toggle}
+                  onReset={timer.reset}
+                />
+              )}
+
+              {displayState === 'timer-set' && (
+                <TimerSetPanel
+                  durationMs={timer.durationMs}
+                  onStart={(ms) => {
+                    timer.start(ms)
+                    // Straight back to the transport, so the countdown the
+                    // visitor just set is what they see.
+                    setIntent('timer')
+                  }}
+                  onCancel={() => setIntent('timer')}
+                />
               )}
 
               {displayState === 'music' && currentSong && (

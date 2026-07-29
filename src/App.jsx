@@ -24,6 +24,10 @@ function AppContent() {
   const [errorMessage, setErrorMessage] = useState('')
   const [activeChild, setActiveChild] = useState('btree')
   const [isChatOpen, setIsChatOpen] = useState(false)
+  // Which surface opened chat. The island only offers its "Back" shortcut for
+  // a chat it opened itself (T-080), so this has to be state rather than a
+  // ref — the island re-renders on it.
+  const [chatSource, setChatSource] = useState(null)
   // Single source of truth for the track: the island used to keep its own
   // index alongside this, synced one way, free to drift.
   const [currentSongIndex, setCurrentSongIndex] = useState(0)
@@ -91,6 +95,20 @@ function AppContent() {
   // changes, so an inline arrow would restart it on every render.
   const getProgress = useCallback(() => musicPlayerRef.current?.getProgress() ?? 0, [])
 
+  const openChatFromIsland = useCallback(() => {
+    setChatSource('island')
+    setIsChatOpen(true)
+  }, [])
+
+  const closeChat = useCallback(() => setIsChatOpen(false), [])
+
+  // Sidebar toggles with a functional updater, so this has to forward whatever
+  // it passes rather than assuming a boolean.
+  const setChatOpenFromSidebar = useCallback((next) => {
+    setChatSource('sidebar')
+    setIsChatOpen(next)
+  }, [])
+
   const handleAIStateChange = (newState, message = '') => {
     setAIState(newState)
     setErrorMessage(message)
@@ -121,7 +139,9 @@ function AppContent() {
         getProgress={getProgress}
         lastIncoming={lastIncoming}
         isChatOpen={isChatOpen}
-        onOpenChat={() => setIsChatOpen(true)}
+        chatOpenedFromIsland={chatSource === 'island'}
+        onOpenChat={openChatFromIsland}
+        onCloseChat={closeChat}
       />
       {/* Global sidebar - persists on every route EXCEPT admin, which has its
           own AdminBrowser + EditorNavbar chrome (owner decision 2026-07-23:
@@ -132,7 +152,7 @@ function AppContent() {
           activeChild={activeChild}
           onChildSelect={setActiveChild}
           isChatOpen={isChatOpen}
-          setIsChatOpen={setIsChatOpen}
+          setIsChatOpen={setChatOpenFromSidebar}
           unreadCount={unreadCount}
         />
       )}
@@ -168,7 +188,7 @@ function AppContent() {
       {/* Chat panel outside the fading wrapper */}
       <ChatPanel
         isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
+        onClose={closeChat}
         sessionId={sessionId}
       />
     </>

@@ -294,16 +294,22 @@ first. Nothing is stored under a state name, and nothing else writes
 
 | State | Trigger | Animation | Label |
 |---|---|---|---|
-| `music` | Click or Enter on pill | Music player expands, progress ring polls the player | — |
+| `music` | Click or Enter on pill, or the hover music icon | Music player expands, progress ring polls the player | — |
+| `timer` | Hover timer icon | Transport: readout, presets, play/pause, reset | `"25:00"` |
+| `timer-set` | Click the timer readout | Pill grows into a two-field panel | `"SET A TIMER"` |
 | `thinking` | Insert/Delete (tree), JSON paste (ERD), proof submit | Amber stagger + frame | `"Thinking"` |
 | `waiting` | Question submitted (ERD step 2) | White stagger + frame | `"Waiting"` |
 | `observing` | User types in PillInput | Blue pulse + plus-full | `"Observing"` |
 | `generating` | No caller yet | White stagger + frame | `"Generating"` |
 | `processing` | No caller yet | White stagger + frame | `"Thinking"` |
 | `error` | No caller yet; auto-clears after 3s | Red dot + message | error string |
+| `break` | One hour of visible time; deferred, not dropped, while busy | Violet `wave-tb` stagger, rounded | `"It's been an hour…"` |
+| `timer-done` | Timer reaches zero; clears after 10s | Green timer icon | `"Time's up"` |
 | `chat` | Message from another session, subject to the gates below | Pill expands with count + snippet | `"New message"` / `"{n} new messages"` |
+| `return` | Hover within 60s of the island opening chat | — | `"← Back"` |
 | `greeting` | Entrance only, once per page load | Drops in expanded, holds ~2s, collapses | `"{n} online"` |
-| `hover` | Mouse over pill | Online count fades in | `"{n} online"` |
+| `hover` | Mouse over pill | Count + divider + music and timer icons | `"{n} online"` |
+| `timer-running` | A timer is running and nothing outranks it | Ambient collapsed countdown | `"24:59"` |
 | `idle` | Default | Green dot only | — |
 
 `generating`, `processing` and `error` are wired and reachable but no page
@@ -311,6 +317,21 @@ fires them yet — only `idle`, `observing`, `waiting` and `thinking` have
 callers. The entrance lifecycle is exposed separately on `data-phase`
 (`hidden` → `greeting` → `collapsed`), since an unrevealed pill still reports
 `data-state="idle"`.
+
+**Timer** (`src/hooks/useStudyTimer.js`): deadline-based rather than
+decrement-based, since a background tab throttles `setInterval` and a fixed
+step per tick would drift over a long sit. Duration is held in milliseconds so
+an arbitrary hours + minutes selection sits alongside the presets; the
+countdown only shows hours once they exist (`25:00`, but `1:30:00`). A
+finished timer restarts from its full duration when play is pressed. There is
+no completion sound, deliberately.
+
+**Break reminder** (`src/hooks/useBreakReminder.js`): counts *visible* time
+only, so a tab left open overnight cannot bank reminders. Unlike a chat
+notification it is deferred rather than dropped when the island is busy.
+
+**Dismissal**: clicking away closes the island; Escape steps back one level
+(`timer-set` → `timer`), matching that view's Cancel button.
 
 **Chat notification gating** (`src/hooks/useChatNotification.js`): the island
 is the transient, strictly-budgeted channel and the Sidebar unread badge is
