@@ -288,16 +288,43 @@ TreePage conditionally renders either a landing screen or the visualizer based o
 
 ## Dynamic Island States
 
+Resolved by precedence in `displayStateFor()` (`DynamicIsland.jsx`), highest
+first. Nothing is stored under a state name, and nothing else writes
+`data-state`.
+
 | State | Trigger | Animation | Label |
 |---|---|---|---|
-| `idle` | Default | Green dot only | — |
-| `hover` | Mouse over pill | Online count fades in | `"{n} online"` |
-| `music` | Click pill | Music player expands | — |
-| `observing` | User types in PillInput | Blue pulse + plus-full | `"Observing"` |
+| `music` | Click or Enter on pill | Music player expands, progress ring polls the player | — |
+| `thinking` | Insert/Delete (tree), JSON paste (ERD), proof submit | Amber stagger + frame | `"Thinking"` |
 | `waiting` | Question submitted (ERD step 2) | White stagger + frame | `"Waiting"` |
-| `thinking` | Insert/Delete (tree) or JSON paste (ERD) | Amber stagger + frame | `"Thinking"` |
-| `generating` | Reserved for future AI generation | Blue pulse + plus-full | `"Generating"` |
-| `error` | Any API failure | Red dot + message | error string |
+| `observing` | User types in PillInput | Blue pulse + plus-full | `"Observing"` |
+| `generating` | No caller yet | White stagger + frame | `"Generating"` |
+| `processing` | No caller yet | White stagger + frame | `"Thinking"` |
+| `error` | No caller yet; auto-clears after 3s | Red dot + message | error string |
+| `chat` | Message from another session, subject to the gates below | Pill expands with count + snippet | `"New message"` / `"{n} new messages"` |
+| `greeting` | Entrance only, once per page load | Drops in expanded, holds ~2s, collapses | `"{n} online"` |
+| `hover` | Mouse over pill | Online count fades in | `"{n} online"` |
+| `idle` | Default | Green dot only | — |
+
+`generating`, `processing` and `error` are wired and reachable but no page
+fires them yet — only `idle`, `observing`, `waiting` and `thinking` have
+callers. The entrance lifecycle is exposed separately on `data-phase`
+(`hidden` → `greeting` → `collapsed`), since an unrevealed pill still reports
+`data-state="idle"`.
+
+**Chat notification gating** (`src/hooks/useChatNotification.js`): the island
+is the transient, strictly-budgeted channel and the Sidebar unread badge is
+the lossless one, so every gate below drops rather than defers.
+
+| Gate | Behaviour |
+|---|---|
+| Chat panel open | Never notifies |
+| Own `session_id` | Filtered out in `useChat` before it counts or notifies |
+| Burst coalescing | One pill per burst, relabelled with a count; 4s of silence dismisses it |
+| Hover | Holds the pill open past its dismiss window |
+| Cooldown | 30s after a dismissal, messages only bump the badge |
+| Session budget | 5 pops per page load, then silence until chat is opened |
+| Priority | Never preempts `music` or a live AI state |
 
 ---
 

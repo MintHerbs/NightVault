@@ -241,15 +241,31 @@ src/components/layout/
 
 **Positioning:** Fixed wrapper `100vw` wide at `top: 16px`, flex center.
 
-**States:**
-1. `idle` — small pill, green dot only
-2. `hover` — same width, online count text fades in
-3. `music` — expanded music player
-4. `observing` — blue pulse GridLoader + "Observing"
-5. `waiting` — white stagger GridLoader + "Waiting"
-6. `thinking` — amber stagger GridLoader + "Thinking"
-7. `generating` — blue pulse GridLoader + "Generating"
-8. `error` — red dot + message, auto-collapses after 3s
+**States:** the authoritative list is `displayStateFor()` in
+`DynamicIsland.jsx`, which resolves them by precedence rather than storing a
+state name. Nothing else may write to `data-state`.
+
+1. `greeting` — entrance only: drops in expanded with dot + online count,
+   holds ~2s, then collapses to `idle`. Skipped entirely under
+   `prefers-reduced-motion`
+2. `idle` — small pill, green dot only
+3. `hover` — same width, online count text fades in
+4. `music` — expanded music player, with a progress ring around the art
+5. `chat` — coalesced chat notification, dot + count + snippet
+6. `observing` — blue pulse GridLoader + "Observing"
+7. `waiting` — white stagger GridLoader + "Waiting"
+8. `thinking` — amber stagger GridLoader + "Thinking"
+9. `generating` — white stagger GridLoader + "Generating"
+10. `error` — red dot + message, auto-collapses after 3s
+
+**Precedence** (highest first): `music` beats a live AI state beats `chat`
+beats `greeting` beats `hover` beats `idle`. Chat is deliberately last: it
+never preempts an open music panel or AI feedback the visitor is waiting on,
+and a notification blocked by either is dropped rather than deferred.
+
+**Entrance phase** is tracked separately on `data-phase`
+(`hidden` → `greeting` → `collapsed`), because a pill that hasn't been
+revealed yet still reports `data-state="idle"`.
 
 **Pill colour:** Always `#000`. Box-shadow is the only separator from black background.
 

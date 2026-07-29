@@ -1,8 +1,29 @@
 import { forwardRef, useImperativeHandle, useEffect, useRef } from 'react'
 import styles from './MusicPlayer.module.css'
 
-const MusicPlayer = forwardRef(({ videoId = 'wjJ3-SzxhCk' }, ref) => {
+// YouTube IFrame API player state codes.
+const YT_ENDED = 0
+const YT_PLAYING = 1
+const YT_PAUSED = 2
+
+const MusicPlayer = forwardRef(({
+  videoId = 'wjJ3-SzxhCk',
+  autoplayOnChange = true,
+  onPlayingChange,
+  onTrackEnd
+}, ref) => {
   const playerRef = useRef(null)
+  // The YT event handlers are captured once, at player construction, so they
+  // have to read through refs or they close over first-render props forever.
+  const videoIdRef = useRef(videoId)
+  const autoplayOnChangeRef = useRef(autoplayOnChange)
+  const onPlayingChangeRef = useRef(onPlayingChange)
+  const onTrackEndRef = useRef(onTrackEnd)
+
+  videoIdRef.current = videoId
+  autoplayOnChangeRef.current = autoplayOnChange
+  onPlayingChangeRef.current = onPlayingChange
+  onTrackEndRef.current = onTrackEnd
 
   useImperativeHandle(ref, () => ({
     play: () => {
@@ -13,6 +34,15 @@ const MusicPlayer = forwardRef(({ videoId = 'wjJ3-SzxhCk' }, ref) => {
     },
     unmute: () => {
       playerRef.current?.unMute()
+    },
+    // Polled by the island's music panel for its progress ring. Returns a
+    // 0..1 fraction, or 0 while the player can't answer yet.
+    getProgress: () => {
+      const player = playerRef.current
+      if (!player || typeof player.getDuration !== 'function') return 0
+      const duration = player.getDuration()
+      if (!duration) return 0
+      return Math.min(player.getCurrentTime() / duration, 1)
     }
   }))
 
@@ -27,19 +57,35 @@ const MusicPlayer = forwardRef(({ videoId = 'wjJ3-SzxhCk' }, ref) => {
 
     const initPlayer = () => {
       playerRef.current = new window.YT.Player('yt-player', {
-        videoId: videoId,
+        // Through the ref, not the prop: the track can change before the
+        // API finishes loading, and the closure would pin the stale one.
+        videoId: videoIdRef.current,
         playerVars: {
           autoplay: 1,
-          loop: 1,
-          playlist: videoId,
           controls: 0,
+          // No loop/playlist pair here on purpose. Those only apply to the
+          // video the player was constructed with, so after the first
+          // loadVideoById looping silently stopped working and the track
+          // fell silent at its end. onStateChange handles ENDED instead,
+          // which also lets the playlist advance (T-079).
           // Start muted: browsers block unmuted autoplay without prior
           // user interaction. We unmute on the page's first click/keypress.
           mute: 1,
           origin: window.location.origin
         },
         events: {
-          onReady: (e) => e.target.playVideo()
+          onReady: (e) => e.target.playVideo(),
+          onStateChange: (e) => {
+            if (e.data === YT_ENDED) {
+              onTrackEndRef.current?.()
+              return
+            }
+            // Only committed play/pause transitions are reported. Buffering
+            // and cued are transient, and forwarding them would make the
+            // pill's icon flicker mid-load.
+            if (e.data === YT_PLAYING) onPlayingChangeRef.current?.(true)
+            if (e.data === YT_PAUSED) onPlayingChangeRef.current?.(false)
+          }
         }
       })
     }
@@ -60,10 +106,18 @@ const MusicPlayer = forwardRef(({ videoId = 'wjJ3-SzxhCk' }, ref) => {
   // Load new video when videoId prop changes
   useEffect(() => {
     if (!videoId) return
-    
-    // If the YouTube player is ready, load the new video
-    if (playerRef.current && typeof playerRef.current.loadVideoById === 'function') {
-      playerRef.current.loadVideoById(videoId)
+
+    const player = playerRef.current
+    if (!player || typeof player.loadVideoById !== 'function') return
+
+    // loadVideoById always autoplays, which is right when a track ended and
+    // the playlist is rolling on, and wrong when the visitor skipped while
+    // paused — that used to start audio while the pill still showed ▶.
+    // cueVideoById loads without playing, leaving the transport honest.
+    if (autoplayOnChangeRef.current) {
+      player.loadVideoById(videoId)
+    } else {
+      player.cueVideoById(videoId)
     }
   }, [videoId])
 

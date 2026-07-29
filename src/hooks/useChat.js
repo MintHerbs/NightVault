@@ -4,10 +4,24 @@ import { supabase } from '../lib/supabaseClient'
 
 console.log('[Chat] Supabase client created')
 
+// Read fresh on every message rather than cached at mount: usePresence is
+// what creates session_id, and there's no ordering guarantee that it has
+// run before this hook's subscription receives its first row.
+function ownSessionId() {
+  try {
+    return localStorage.getItem('session_id')
+  } catch {
+    return null
+  }
+}
+
 export default function useChat(isChatOpen) {
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  // Most recent message from someone else, for the Dynamic Island's
+  // notification pill. Own messages never land here.
+  const [lastIncoming, setLastIncoming] = useState(null)
   const isChatOpenRef = useRef(false)
   const lastReadAtRef = useRef(new Date().toISOString())
   // Unique channel name per hook instance — prevents collision when
@@ -57,13 +71,20 @@ export default function useChat(isChatOpen) {
           table: 'messages',
         },
         (payload) => {
-          console.log('[Chat] New message received:', payload.new)
-          setMessages((prev) => [...prev, payload.new])
+          const message = payload.new
+          console.log('[Chat] New message received:', message)
+          setMessages((prev) => [...prev, message])
 
-          if (!isChatOpenRef.current) {
-            if (payload.new.created_at > lastReadAtRef.current) {
-              setUnreadCount(prev => Math.min(prev + 1, 10))
-            }
+          // Your own message is not news. Nothing filtered on session_id
+          // before, and the only reason it didn't inflate the badge is that
+          // the panel has to be open to send — close it quickly enough
+          // after sending and you used to notify yourself (T-079).
+          if (message.session_id === ownSessionId()) return
+
+          setLastIncoming(message)
+
+          if (!isChatOpenRef.current && message.created_at > lastReadAtRef.current) {
+            setUnreadCount(prev => Math.min(prev + 1, 10))
           }
         }
       )
@@ -115,6 +136,7 @@ export default function useChat(isChatOpen) {
     sendMessage,
     isLoading,
     unreadCount,
+    lastIncoming,
     markAsRead,
   }
 }
