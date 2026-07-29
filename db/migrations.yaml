@@ -19,7 +19,7 @@
 # See db/README.md for how to apply migrations against a Supabase project.
 
 project: b-tree
-schema_version: 44
+schema_version: 45
 
 migrations:
   - id: "0001"
@@ -373,3 +373,10 @@ migrations:
     created: 2026-07-28
     applied_envs: ["dev"]
     related_issues: ["T-073", "E-008"]
+  - id: "0045"
+    file: sql/0045_contributor_photo_syncs_avatar.sql
+    description: "T-072 follow-up: a contributor_cards.photo_url now doubles as admin_users.avatar_url via a SECURITY DEFINER trigger (contributor_cards_sync_avatar), one-directional only (card photo -> profile avatar, never the reverse) so a card's photo shows up in T-071's author avatars and the admin dropdowns without uploading it twice. Implemented as a trigger rather than app code so the invariant holds regardless of how photo_url gets written (Settings page, a future admin tool, or a one-off script). Backfills the 7 rows scripts/migrate-team-to-contributor-cards.mjs already wrote before this migration existed, guarded on avatar_url is null so it can never clobber a profile picture someone set separately. Verified against a local Postgres inside a rolled-back transaction: fires on INSERT, re-fires when photo_url changes, leaves an unrelated/already-set avatar_url untouched when photo_url is null or unchanged, and the backfill only ever fills a null."
+    author: agent
+    created: 2026-07-28
+    applied_envs: []
+    related_issues: ["T-072", "E-009"]
