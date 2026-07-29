@@ -19,7 +19,7 @@
 # See db/README.md for how to apply migrations against a Supabase project.
 
 project: b-tree
-schema_version: 46
+schema_version: 48
 
 migrations:
   - id: "0001"
@@ -388,3 +388,19 @@ migrations:
     created: 2026-07-29
     applied_envs: ["dev", "prod"]
     related_issues: ["T-076", "E-004"]
+
+  - id: "0047"
+    file: sql/0047_social_write_hardening.sql
+    description: "T-078: closes the security audit's two critical social-feed findings. (1) session_id was returned in every bulk read of posts/comments/post_votes/comment_votes/poll_votes/post_flags and is the only ownership check vote_post/vote_comment/flag_post/update_own_post/soft_delete_post/soft_delete_comment (0041) trust — reading a stranger's off any feed/thread response was enough to impersonate them into those RPCs. Column-level GRANTs (verified locally: PostgREST returns 42501 for both `select=session_id` and `.eq('session_id', ...)` once the grant is gone) now keep that column out of every anon/authenticated read on those six tables; new get_my_post_votes/get_my_comment_votes/get_my_poll_votes/get_my_post_flags SECURITY DEFINER RPCs answer 'is this mine' from a caller-supplied session_id parameter instead. Deliberately NOT applied to messages — chat has no edit/delete/vote surface for a leaked session_id to be replayed into, and ChatBubble's avatar uses it as a deliberate pseudonymous seed. (2) insert_posts/insert_comments/insert_votes/insert_comment_votes/insert_poll_votes/insert_flags/insert_blacklist and messages' insert policy (0036, 0001) are all WITH CHECK (true); check_bot_blacklist/check_and_increment_rate_limit (0037) are calls the CLIENT chooses to make before inserting, so a direct REST write skipped both. New create_post/create_comment/send_message/vote_poll SECURITY DEFINER RPCs perform those checks themselves before writing; vote_post/vote_comment gain the rate-limit call they were missing (votes had none at all before this); the matching table INSERT/UPDATE/DELETE grants are revoked from anon/authenticated so the direct-REST path is gone, not just discouraged. Also revokes the ambient DELETE/TRUNCATE grants Supabase's project-init default handed every one of these tables (TRUNCATE isn't RLS-aware at all). Residual, documented limitations: session_id is still an unauthenticated client-generated value, so a sybil attacker minting a fresh UUID per request is slowed by check_bot_blacklist's content heuristics, not stopped; and Realtime's postgres_changes payload is built off the replication stream, not a PostgREST-authorized SELECT, so an actively-connected subscriber may still see session_id in payload.new/old at the moment of a change. Applied to local dev via docker exec psql, not npm run db:migrate (still blocked by 0024's pre-existing drift) — verified end-to-end against a locally-rebuilt copy of the 0001-0041 schema (see the ticket for why: this repo's shared local dev database had drifted far past what those migrations describe), not against this exact database. RENUMBERED from 0048 to 0047 when merging against main, which had since taken 0047 for a different, already-merged migration (0045-046 above) by the time this branch caught up. See T-078."
+    author: agent
+    created: 2026-07-29
+    applied_envs: []
+    related_issues: ["T-078"]
+
+  - id: "0048"
+    file: sql/0048_storage_limits_and_api_calls_lockdown.sql
+    description: "T-078: two independent, low-risk tightenings. (1) note-images and avatars (0023, 0043) were created with no file_size_limit/allowed_mime_types, so Supabase Storage enforced neither and a direct API upload could bypass imageToWebp.js's client-side conversion entirely; caps both at 8 MiB and image/* MIME types. (2) api_calls (0003) shipped with fully open insert/update RLS, flagged as temporary in its own header comment since server-side quota enforcement never happened; closed now since src/lib/geminiService.js and src/hooks/useApiCalls.js are both confirmed dead code (unreferenced elsewhere), leaving anon/authenticated with SELECT only. Applied to local dev via docker exec psql, not npm run db:migrate (still blocked by 0024's drift); the storage UPDATE only affected note-images locally since avatars (0043) had not been applied to that database at the time — idempotent, so it will pick up avatars whenever 0043 runs. RENUMBERED from 0049 to 0048 alongside 0047 above."
+    author: agent
+    created: 2026-07-29
+    applied_envs: []
+    related_issues: ["T-078"]

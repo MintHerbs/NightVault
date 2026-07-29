@@ -1,8 +1,14 @@
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4'
 
+// Scoped to the deployed app's own origin rather than '*': this function
+// performs privileged writes (GitHub commits) gated only by a Bearer JWT, so
+// a wildcard origin is defense-in-depth debt even though a cookie-less
+// Bearer token isn't riding along with a cross-site request the way a
+// cookie would. Falls back to '*' only if ALLOWED_ORIGIN was never set, so
+// an unconfigured deploy keeps working instead of silently breaking CORS.
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') || '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
@@ -16,9 +22,33 @@ const corsHeaders = {
 // this function used to expose (uploadImage, listDirectory, deleteFile,
 // deleteModule, cleanupFile, getFileContent, getFileSha) is gone along with
 // the client code that called them.
+// Resolves `.`/`..` segments the same way the eventual `fetch()` call to the
+// GitHub API would (URL path normalization), so a payload like
+// `src/content/notes/<allowed-dir>/../../../.github/workflows/x.yml` cannot
+// pass a literal prefix check here and then land somewhere else entirely
+// once it reaches the network layer. Any path that still contains `..`
+// after normalization (i.e. tries to climb above the repo root) is rejected
+// outright rather than resolved further.
+function normalizePath(path: string): string | null {
+  const segments = path.split('/')
+  const resolved: string[] = []
+  for (const segment of segments) {
+    if (segment === '' || segment === '.') continue
+    if (segment === '..') {
+      if (resolved.length === 0) return null
+      resolved.pop()
+      continue
+    }
+    resolved.push(segment)
+  }
+  return resolved.join('/')
+}
+
 function isPathAllowed(path: string, role: string, allowedDirectories: string[]): boolean {
+  const normalized = normalizePath(path)
+  if (normalized === null || normalized !== path) return false
   if (role === 'owner') return true
-  return allowedDirectories.some(dir => path.startsWith(`src/content/notes/${dir}/`))
+  return allowedDirectories.some(dir => normalized.startsWith(`src/content/notes/${dir}/`))
 }
 
 serve(async (req) => {

@@ -22,9 +22,8 @@ export default function CommentSection({ postId, sessionId, isOpen }) {
     if (isOpen) setShouldInit(true)
   }, [isOpen])
 
-  const { comments, isLoading, createComment, voteComment, deleteComment, getUserCommentVote } = useComments(
-    shouldInit ? postId : null
-  )
+  const { comments, isLoading, createComment, voteComment, deleteComment, getUserCommentVote, isOwnComment } =
+    useComments(shouldInit ? postId : null)
 
   const isExpanded = useMemo(() => {
     if (!newContent) return false
@@ -171,11 +170,13 @@ export default function CommentSection({ postId, sessionId, isOpen }) {
                       key={c.id}
                       comment={c}
                       sessionId={sessionId}
+                      isOwn={isOwnComment(c.id)}
                       depth={0}
                       onVote={(commentId, voteType) => voteComment?.(commentId, voteType)}
                       onReply={handleReply}
                       onDelete={(commentId) => deleteComment?.(commentId)}
                       getUserVote={getUserCommentVote}
+                      isOwnComment={isOwnComment}
                     />
                   ))
                 )}

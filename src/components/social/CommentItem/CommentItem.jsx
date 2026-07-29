@@ -22,11 +22,13 @@ function formatRelativeTime(iso) {
 export default function CommentItem({
   comment,
   sessionId,
+  isOwn = false,
   depth,
   onVote,
   onReply,
   onDelete,
   getUserVote,
+  isOwnComment,
   isLast = true,
 }) {
   const [showReply, setShowReply] = useState(false)
@@ -36,7 +38,6 @@ export default function CommentItem({
 
   const replyRef = useRef(null)
 
-  const isOwn = comment?.session_id && sessionId && comment.session_id === sessionId
   const timeLabel = useMemo(() => formatRelativeTime(comment?.created_at), [comment?.created_at])
 
   const userVote = getUserVote?.(comment?.id) ?? null
@@ -114,7 +115,9 @@ export default function CommentItem({
       <div className={styles.body}>
         <div className={`${styles.row} ${hasReplies ? styles.spineSegment : ''}`}>
           <div className={styles.avatar}>
-            <AgentAvatar seed={comment?.session_id || 'anon'} size={24} animated={true} />
+            {/* Seeded on the comment's own id, not session_id (T-078) — see
+                PostCard.jsx's identical trade-off note. */}
+            <AgentAvatar seed={comment?.id || 'anon'} size={24} animated={true} />
           </div>
 
           <div className={styles.bubble}>
@@ -224,6 +227,7 @@ export default function CommentItem({
               key={r.id}
               comment={r}
               sessionId={sessionId}
+              isOwn={isOwnComment ? isOwnComment(r.id) : false}
               depth={1}
               isLast={i === replies.length - 1}
               onVote={onVote}

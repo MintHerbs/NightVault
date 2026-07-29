@@ -128,25 +128,34 @@ export function useEditorImages({ selectedPath, showToast, noteEditorRef, useWys
     )
 
     ;(async () => {
-      let failed = 0
-      for (const token of fresh) {
-        try {
-          const realSrc = await uploadNoteImage(dataUriToFile(unescapeDataUri(token)), selectedPath.moduleId)
-          if (cancelled) return
-          if (useWysiwyg && noteEditorRef?.current?.updateImageSrc) {
-            // The node attribute holds the unescaped URI; the Markdown may
-            // carry either form, so try both rather than guessing.
-            noteEditorRef.current.updateImageSrc(unescapeDataUri(token), realSrc)
-            noteEditorRef.current.updateImageSrc(token, realSrc)
-          } else {
-            setContent((prev) => prev.replaceAll(token, realSrc))
-          }
-        } catch (error) {
-          console.error('Inline image upload failed:', error)
-          failed++
-        }
-      }
+      // Uploads run concurrently rather than one at a time — each is an
+      // independent network round trip keyed to its own token, so a note
+      // with several pasted images used to pay their sum in latency instead
+      // of the slowest one.
+      const results = await Promise.allSettled(
+        fresh.map((token) => uploadNoteImage(dataUriToFile(unescapeDataUri(token)), selectedPath.moduleId))
+      )
       if (cancelled) return
+
+      let failed = 0
+      results.forEach((result, i) => {
+        const token = fresh[i]
+        if (result.status === 'rejected') {
+          console.error('Inline image upload failed:', result.reason)
+          failed++
+          return
+        }
+        const realSrc = result.value
+        if (useWysiwyg && noteEditorRef?.current?.updateImageSrc) {
+          // The node attribute holds the unescaped URI; the Markdown may
+          // carry either form, so try both rather than guessing.
+          noteEditorRef.current.updateImageSrc(unescapeDataUri(token), realSrc)
+          noteEditorRef.current.updateImageSrc(token, realSrc)
+        } else {
+          setContent((prev) => prev.replaceAll(token, realSrc))
+        }
+      })
+
       if (failed) showToast(`${failed} pasted image(s) could not be optimised`, 'error')
       else showToast('Pasted images optimised', 'success')
     })()

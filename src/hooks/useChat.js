@@ -90,17 +90,19 @@ export default function useChat(isChatOpen) {
         .from('sessions')
         .upsert({ id: sessionId, last_seen: new Date().toISOString() })
 
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          session_id: sessionId,
-          content,
-          attachment_url: attachmentUrl,
-          attachment_type: attachmentType,
-        })
+      // Routed through an RPC (T-078): messages' INSERT grant is gone from
+      // anon, since a direct REST insert could flood the room unthrottled —
+      // chat had no rate limit at all, client-side or otherwise, before this.
+      // See db/sql/0047_social_write_hardening.sql.
+      const { data: res, error } = await supabase.rpc('send_message', {
+        p_session_id: sessionId,
+        p_content: content,
+        p_attachment_url: attachmentUrl,
+        p_attachment_type: attachmentType,
+      })
 
-      if (error) {
-        console.error('Error sending message:', error)
+      if (error || !res?.success) {
+        console.error('Error sending message:', error || res?.error)
       }
     } catch (err) {
       console.error('Failed to send message:', err)

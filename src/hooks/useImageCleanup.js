@@ -59,13 +59,18 @@ export function useImageCleanup({ modules, isOwner }) {
       scannedCount++
     }
 
-    // 2. Images actually stored per module (Storage), served live.
+    // 2. Images actually stored per module (Storage), served live. Each
+    // module's listing is independent, so run them concurrently rather than
+    // one round trip at a time.
+    const perModuleFiles = await Promise.all(
+      modulesToScan.map((mod) =>
+        supabase.storage.from(NOTE_IMAGES_BUCKET).list(mod.id)
+          .then(({ data, error: listError }) => ({ mod, files: listError ? null : data }))
+      )
+    )
     const allStoredImages = []
-    for (const mod of modulesToScan) {
-      const { data: files, error: listError } = await supabase.storage
-        .from(NOTE_IMAGES_BUCKET)
-        .list(mod.id)
-      if (listError || !files) continue // no images for this module yet
+    for (const { mod, files } of perModuleFiles) {
+      if (!files) continue // no images for this module yet
       files.forEach(f => {
         const path = `/notes/img/${mod.id}/${f.name}`
         allStoredImages.push({
