@@ -9,6 +9,7 @@ import PageShell from '../../components/layout/PageShell'
 import BackButton from '../../components/common/BackButton/BackButton'
 import Loading from '../../components/ui/Loading'
 import { useNotesRegistry } from '../../hooks/useNotesRegistry'
+import { listCourses } from '../../lib/coursesApi'
 import {
   subfoldersForModule, filesForFolder, rootFilesForModule, segmentToSubfolder,
   authorsForFolder, authorsForModule, baseName,
@@ -20,11 +21,14 @@ import { prefetchNote } from '../../lib/noteCache'
 import styles from './NotesBrowserPage.module.css'
 
 /**
- * Public, read-only Drive-style browser: Subjects → folders → files.
- * Same navigation model as the admin AdminBrowser (T-045), rebuilt without
- * any create/rename/delete/hide/move affordance and without its auth gate —
- * data comes from useNotesRegistry(), which already drops hidden
- * Subjects/folders/notes before this component ever sees them.
+ * Public, read-only Drive-style browser: Subjects → folders → files, scoped
+ * to a single course (T-077) — reached from that course's own landing page,
+ * never as a cross-course listing. Same navigation model as the admin
+ * AdminBrowser (T-045), rebuilt without any create/rename/delete/hide/move
+ * affordance and without its auth gate — data comes from useNotesRegistry(),
+ * which already drops hidden Subjects/folders/notes before this component
+ * ever sees them; the course scoping below mirrors the same filter
+ * AdminBrowser.jsx already applies for its own course switcher.
  */
 
 // subfoldersForModule / filesForFolder come from notesApi (T-053); this page
@@ -74,8 +78,34 @@ function RowIcon({ kind }) {
 
 export default function NotesBrowserPage() {
   const navigate = useNavigate()
-  const { moduleId, subfolder } = useParams()
-  const { modules, loading } = useNotesRegistry()
+  const { courseId, moduleId, subfolder } = useParams()
+  const { modules: allModules, loading } = useNotesRegistry()
+
+  // Course-scoped (T-077): a Subject belongs to exactly one course
+  // (sidebar_modules.course_id), so the Subjects-level listing must filter to
+  // the course this page was opened from — mirrors the one-line filter
+  // AdminBrowser.jsx already applies for its own course switcher. Without
+  // this, every course's Subjects showed up mixed together here.
+  const modules = useMemo(
+    () => allModules.filter((m) => m.courseId === courseId),
+    [allModules, courseId],
+  )
+
+  // Hiding a course has to actually take its notes out of reach, not just off
+  // the home grid — otherwise /notes-browser/<hidden course> stays a public
+  // door into the content the hide was meant to withhold (T-077).
+  // `undefined` = still resolving, `null` = no such course, or hidden.
+  const [course, setCourse] = useState(undefined)
+
+  useEffect(() => {
+    let cancelled = false
+    listCourses()
+      .then((rows) => {
+        if (!cancelled) setCourse(rows.find((c) => c.id === courseId && !c.hidden) ?? null)
+      })
+      .catch(() => { if (!cancelled) setCourse(null) })
+    return () => { cancelled = true }
+  }, [courseId])
 
   const [view, setView] = useState('list')
   const [search, setSearch] = useState('')
@@ -91,9 +121,9 @@ export default function NotesBrowserPage() {
   // Discrete "go up one directory" step, distinct from the breadcrumb's jump
   // to an arbitrary ancestor — mirrors NotesPage's deterministic handleBack.
   const goUp = () => {
-    if (level === 'files') navigate(`/notes-browser/${moduleId}`)
-    else if (level === 'folders') navigate('/notes-browser')
-    else navigate('/home')
+    if (level === 'files') navigate(`/notes-browser/${courseId}/${moduleId}`)
+    else if (level === 'folders') navigate(`/notes-browser/${courseId}`)
+    else navigate(`/courses/${courseId}`)
   }
 
   // Opening a note costs a Supabase round trip plus, for a maths note, the
@@ -152,7 +182,7 @@ export default function NotesBrowserPage() {
       return [
         ...subfoldersForModule(activeModule).map((name) => ({
           kind: 'folder', key: name, name, date: null,
-          onOpen: () => navigate(`/notes-browser/${moduleId}/${encodeURIComponent(name)}`),
+          onOpen: () => navigate(`/notes-browser/${courseId}/${moduleId}/${encodeURIComponent(name)}`),
           authors: authorsForFolder(activeModule, name),
         })),
         ...rootFilesForModule(activeModule).map(fileItem),
@@ -160,11 +190,11 @@ export default function NotesBrowserPage() {
     }
     return modules.map((m) => ({
       kind: 'module', key: m.id, name: m.label, date: null,
-      onOpen: () => navigate(`/notes-browser/${m.id}`),
+      onOpen: () => navigate(`/notes-browser/${courseId}/${m.id}`),
       authors: authorsForModule(m),
     }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level, activeModule, activeSubfolder, moduleId, modules, navigate])
+  }, [level, activeModule, activeSubfolder, courseId, moduleId, modules, navigate])
 
   const displayItems = useMemo(() => {
     let arr = items
@@ -188,9 +218,9 @@ export default function NotesBrowserPage() {
   }, [items, search, typeFilter, sort])
 
   const crumbs = [{ key: 'home', label: 'Home', to: () => navigate('/home') }]
-  crumbs.push({ key: 'root', label: 'Subjects', to: () => navigate('/notes-browser') })
+  crumbs.push({ key: 'root', label: 'Subjects', to: () => navigate(`/notes-browser/${courseId}`) })
   if (moduleId && activeModule) {
-    crumbs.push({ key: 'module', label: activeModule.label, to: () => navigate(`/notes-browser/${moduleId}`) })
+    crumbs.push({ key: 'module', label: activeModule.label, to: () => navigate(`/notes-browser/${courseId}/${moduleId}`) })
   }
   if (activeSubfolder) crumbs.push({ key: 'folder', label: activeSubfolder })
 
@@ -198,6 +228,17 @@ export default function NotesBrowserPage() {
   const sortArrow = (key) => (sort.key !== key ? null : (sort.dir === 'asc' ? <ArrowUp size={12} weight="bold" /> : <ArrowDown size={12} weight="bold" />))
 
   const notFound = Boolean(moduleId) && !loading && !activeModule
+
+  // Unknown or hidden course: refuse the whole page rather than render an
+  // empty Subjects list, which would imply the course exists but is bare.
+  if (course === null) {
+    return (
+      <PageShell variant="content">
+        <BackButton onClick={() => navigate('/home')} />
+        <div className={styles.emptyState}>This course doesn&apos;t exist.</div>
+      </PageShell>
+    )
+  }
 
   return (
     <PageShell variant="content">

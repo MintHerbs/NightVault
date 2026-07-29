@@ -1,4 +1,4 @@
--- 0046_courses_hidden.sql
+-- 0049_courses_hidden.sql
 -- T-077: lets the primary owner hide a course from the public site without
 -- deleting it (Subjects, notes, and admin_users rows scoped to it are
 -- untouched — this only gates whether the home page and that course's own

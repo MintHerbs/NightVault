@@ -50,10 +50,21 @@ function NotesPage() {
     // link or a shared URL has no "back" to fall through to, so back always
     // returns to the read-only browser at this note's own folder, or to the
     // Subject itself when the note sits at the root (T-053).
+    //
+    // The browser is course-scoped (T-077), so the target needs this Subject's
+    // course as its first segment; `modules` already carries courseId, and the
+    // reader only renders once it has loaded. A Subject with no course_id has
+    // nowhere course-scoped to go back to, so it falls back to the home page
+    // rather than building a URL whose first segment isn't a course at all.
     const folder = deriveSubfolder(subpath)
+    const courseId = modules.find((m) => m.id === section)?.courseId
+    if (!courseId) {
+      navigate('/home')
+      return
+    }
     navigate(folder
-      ? `/notes-browser/${section}/${encodeURIComponent(folder)}`
-      : `/notes-browser/${section}`)
+      ? `/notes-browser/${courseId}/${section}/${encodeURIComponent(folder)}`
+      : `/notes-browser/${courseId}/${section}`)
   }
 
   useEffect(() => {

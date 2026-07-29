@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { lazy } from 'react'
-import { routeComponents, NotesPage, NotesBrowserPage, preloadAcademiaRoutes } from './academiaRoutes'
+import { routeComponents, NotesPage, NotesBrowserPage, CourseLandingPage, preloadAcademiaRoutes } from './academiaRoutes'
 import { HomeFeedPage, GuidelinesPage, SocialChatRoute, preloadSocialRoutes } from './socialRoutes'
 
 // Admin routes
@@ -24,10 +24,17 @@ export function AppRoutes({ onAIStateChange, onChatOpen }) {
       ))}
       <Route path="/notes/:section/*" element={<NotesPage />} />
 
-      {/* Public read-only Drive-style browser (T-049) — Subjects → folders → files */}
-      <Route path="/notes-browser" element={<NotesBrowserPage />} />
-      <Route path="/notes-browser/:moduleId" element={<NotesBrowserPage />} />
-      <Route path="/notes-browser/:moduleId/:subfolder" element={<NotesBrowserPage />} />
+      {/* One course's own landing page — Notes + every tool (T-077) */}
+      <Route path="/courses/:courseId" element={<CourseLandingPage />} />
+
+      {/* Public read-only Drive-style browser (T-049), scoped to one course
+          (T-077) — Subjects → folders → files, never mixed across courses.
+          The bare path had no course to scope to, so it redirects home rather
+          than listing every course's Subjects together. */}
+      <Route path="/notes-browser" element={<Navigate to="/home" replace />} />
+      <Route path="/notes-browser/:courseId" element={<NotesBrowserPage />} />
+      <Route path="/notes-browser/:courseId/:moduleId" element={<NotesBrowserPage />} />
+      <Route path="/notes-browser/:courseId/:moduleId/:subfolder" element={<NotesBrowserPage />} />
 
       <Route path="/social/feed" element={<HomeFeedPage onAIStateChange={onAIStateChange} onChatOpen={onChatOpen} />} />
       <Route path="/social/chat" element={<SocialChatRoute onChatOpen={onChatOpen} />} />

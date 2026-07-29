@@ -16,7 +16,7 @@ import { RAMP, MONO_ASPECT } from './renderAsciiField'
 // getting unwieldy. MAX_ROWS is a hard cap, not a formality: rows are derived
 // from the source aspect, so a tall image (200x2000) would otherwise produce
 // 432 rows -> a 31k-character grid that violates the 20k CHECK on
-// courses.cover_ascii (db/sql/0047), and something like 10x3000 would ask for
+// courses.cover_ascii (db/sql/0050), and something like 10x3000 would ask for
 // a 72x12960 canvas. Extreme aspects now shrink the column count instead, so
 // the art stays undistorted and the grid stays bounded.
 const MAX_COLS = 72

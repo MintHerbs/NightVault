@@ -19,14 +19,14 @@ import { supabase } from './supabaseClient'
 // `*` rather than an explicit column list, deliberately. Naming
 // `hidden`/`cover_*` here would make every read of this table a hard failure
 // (PostgREST 400, `column courses.cover_ascii does not exist`) on any
-// environment where migrations 0046/0047 haven't been applied yet — and since
+// environment where migrations 0049/0050 haven't been applied yet — and since
 // listCourses backs the public home page, that failure mode is "the site shows
 // no courses at all" until the migration lands. `*` returns whatever the
 // environment actually has and toCourse fills in the absent columns, so code
 // and schema can deploy in either order.
 //
 // This is not a wider exposure than naming columns: the client can request any
-// column its grants allow either way, so RLS and the grants in 0046 are what
+// column its grants allow either way, so RLS and the grants in 0049 are what
 // bound this, not the select list.
 const COURSE_COLUMNS = '*'
 
@@ -68,13 +68,13 @@ export async function setCourseHidden(id, hidden) {
 }
 
 /**
- * Set a course card's ASCII cover (T-077, migration 0047).
+ * Set a course card's ASCII cover (T-077, migration 0050).
  *
  * Exactly one of `preset` / `ascii` wins, so the two can't disagree — passing
  * an `ascii` grid clears any preset and vice versa, and `{}` clears both,
  * returning the card to the hashed default from pickPresetForId(). `anim` only
  * applies to an uploaded grid (the presets carry their own motion); its
- * allowed values are constrained by the DB, see 0047.
+ * allowed values are constrained by the DB, see 0050.
  */
 export async function setCourseCover(id, { preset = null, ascii = null, anim = null } = {}) {
   const { error } = await supabase

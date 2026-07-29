@@ -174,7 +174,7 @@ old colour indefinitely.
 
 ### 1b. Admin-authored covers
 
-`courses.cover_preset` / `cover_ascii` / `cover_anim` (migration `0047`)
+`courses.cover_preset` / `cover_ascii` / `cover_anim` (migration `0050`)
 let the primary owner pick a cover from `/admin/users` → a course's
 Change cover, via `src/components/admin/CoverPicker/`:
 
@@ -295,15 +295,29 @@ of a global root.
       the new cover-animation card design.
 - [ ] Opening a course card navigates to `/courses/:courseId`, showing a
       Notes card and every tool card (B+ Tree, ERD, Code Complexity,
-      Recurrence Relation, Grade Toolkit) in the same design.
+      Recurrence Relation, Grade Toolkit) in the same design. *(The
+      `/courses/:courseId` route was missing from `src/routes/index.jsx`
+      entirely in PR #72 — `CourseLandingPage` was lazily imported but never
+      rendered, and with no catch-all route every course card led to a blank
+      page. Route added in the T-077 follow-up; verified statically, the app
+      was not driven in that pass.)*
 - [ ] Clicking Notes from a course page opens a notes browser scoped to
       that course only — Subjects/folders from other courses never appear,
       confirmed with at least two courses that each have at least one
-      Subject. *(Scoping verified, but only against one populated course:
-      local dev's second course has 0 Subjects, so the two-populated-courses
-      case is still untested.)*
+      Subject. *(The course filter and the `/notes-browser/:courseId/...`
+      route shape were both absent from PR #72 — `NotesBrowserPage.jsx` was
+      never committed, so the leak this ticket exists to fix was still live on
+      `main`, and `CourseLandingPage`'s Notes link fell through to the old
+      `/notes-browser/:moduleId` route and listed every course's Subjects.
+      Both landed in the T-077 follow-up. Still only exercised against one
+      populated course: local dev's second course has 0 Subjects, so the
+      two-populated-courses case remains untested.)*
 - [x] The old unscoped `/notes-browser` route no longer shows a mixed list
-      of every course's Subjects (404s or redirects).
+      of every course's Subjects (404s or redirects). *(Was checked off
+      prematurely: PR #72 shipped `HomePage`/`CourseLandingPage` without the
+      route table or `NotesBrowserPage` changes, so on `main` the bare and
+      `/:moduleId` routes were still live and still unscoped. Wired in the
+      T-077 follow-up — the bare path now redirects to `/home`.)*
 - [ ] Primary owner can toggle a course's visibility from `/admin/users`;
       a hidden course disappears from the home grid and its
       `/courses/:courseId` and `/notes-browser/:courseId` URLs 404 for a
@@ -331,13 +345,13 @@ of a global root.
 ## Deployment order
 
 `listCourses()` selects `*` rather than naming the T-077 columns, precisely so
-this can ship before `0046`/`0047` reach an environment — naming them would
+this can ship before `0049`/`0050` reach an environment — naming them would
 make every read a PostgREST 400 and the public home page would render **no
 course cards at all** until the migration landed. Reads are therefore
 order-independent.
 
 Writes are not: `setCourseHidden` / `setCourseCover` target the new columns
-directly, so until `0046`/`0047` are applied, the admin Hide and Change-cover
+directly, so until `0049`/`0050` are applied, the admin Hide and Change-cover
 actions will fail with a visible error toast. Apply both migrations to prod
 before relying on either.
 
@@ -349,7 +363,7 @@ the remote/prod project. Two items are worth knowing about:
 - **`courses.display_name` was added to local dev by hand**, outside any
   migration. `coursesApi.js` targets prod's shape (`display_name`), while dev's
   `courses` still carries 0024's `name`/`slug`, so without that shim every
-  course read 400s locally. It is *not* in `0046`/`0047` on purpose — the real
+  course read 400s locally. It is *not* in `0049`/`0050` on purpose — the real
   fix is T-051's dev/prod reconciliation. A `supabase db reset` will drop it and
   local course reads will start failing again until it's re-added.
 - Computer Science has `cover_preset = 'computer'` set directly in dev, and the
