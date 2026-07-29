@@ -149,6 +149,61 @@ verbatim copies of `0042`'s already-shipped pattern, but re-running
 `.selfreview-verify.mjs` (deleted; trivially recreated) once Docker is back
 would confirm them.
 
+**2026-07-28/29 update — shipped, plus a follow-up (missing from this file
+until now, which is itself the finding a second self-review pass caught —
+see below).** PR #62 merged (`a865b4a`). `0042` and `0043` both applied to
+prod via the Studio SQL editor, and `scripts/migrate-team-to-contributor-cards.mjs`
+run for real: 7/7 cards created, every `photo_url` independently confirmed
+resolving over HTTP. The dry-run caught a real bug first: prod's
+`admin_users.username` for Noorie is `Noorie` (capitalized), not `noorie`
+as transcribed from this ticket's own evidence section — fixed in the
+script before the real run touched anything.
+
+User then asked for a follow-up: a contributor-card photo should also
+become that person's `admin_users.avatar_url` (profile picture), one-way
+only. Shipped as `0045_contributor_photo_syncs_avatar.sql` (PR #65,
+squash-merged as `6a75d6c`) — a `SECURITY DEFINER` trigger
+(`contributor_cards_sync_avatar`), not app code, matching this project's
+`0039`/`0040` precedent that a sync living only in JS eventually misses a
+write path. Verified against a real local Postgres in a rolled-back
+transaction across 7 scenarios (fires on INSERT, re-fires on changed
+photo, leaves an existing/null avatar alone when photo is null/unchanged,
+later photo *does* overwrite a manual avatar, ACL locked down, backfill
+only fills nulls) before merging, then applied to prod via the Studio SQL
+editor and independently re-verified there: all 7 people's `avatar_url`
+now match their card's `photo_url` exactly; the 5 people without a card
+still have `avatar_url = null`.
+
+## Self-review (2026-07-29, second pass)
+
+Triggered by "execute self review" after the `0045` follow-up. Found and
+fixed one real bug, plus the doc-drift above (this file had no record of
+`0045`/PR #65 at all until this pass):
+
+1. **`saveCard()`'s optimistic local-state update could show a value the
+   database never wrote.** The trigger only re-syncs `avatar_url` when
+   `photo_url` actually changes (`tg_op = 'INSERT' or new.photo_url is
+   distinct from old.photo_url` — verified by this session's own test case
+   5). The client code did `if (saved.photo_url) setAvatarUrl(saved.photo_url)`
+   unconditionally on every save, regardless of whether the photo changed.
+   Concrete failure: admin has a card with photo X (synced previously),
+   later uploads a *different* manual profile photo Y via the "Profile
+   photo" section (`avatar_url` = Y in the database, untouched by the
+   card). They edit the card's role text only and save — the trigger
+   correctly does nothing (photo unchanged), so the real `avatar_url`
+   stays Y, but the old client code fired `setAvatarUrl(X)` anyway, since
+   `saved.photo_url` was merely truthy. The Settings page would show X
+   until the next reload flipped it back to Y — a real UI/DB divergence,
+   not a cosmetic nit. Fixed by gating on `cardPhotoChanged` (already
+   tracked in state, read before it's reset), so the optimistic update
+   only fires exactly when the trigger itself would have.
+
+`npm run build` and `stylelint` re-run clean on the fix, verified against
+an isolated worktree off the current `origin/main`, not the shared,
+multi-session working tree (which has several other sessions' unrelated
+uncommitted work in it, plus my own stale pre-0045 leftovers from before
+this session started using isolated worktrees — neither touched).
+
 ## Summary
 
 Admins have no way to manage their own public identity. The avatar dropdown
