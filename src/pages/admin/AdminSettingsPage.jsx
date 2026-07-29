@@ -186,6 +186,11 @@ function AdminSettingsContent() {
       })
       setCard(saved)
       setCardPhotoChanged(false)
+      // contributor_cards_sync_avatar (0045) just did this same write in the
+      // database — mirroring it in local state means the "Profile photo"
+      // section above updates immediately instead of looking stale until a
+      // reload happens to refetch `profile`.
+      if (saved.photo_url) setAvatarUrl(saved.photo_url)
       showToast('Contributor card saved', 'success')
     } catch (err) {
       showToast(`Failed to save contributor card: ${err.message}`, 'error')
@@ -261,6 +266,7 @@ function AdminSettingsContent() {
           ) : (
             <div className={styles.cardForm}>
               <AvatarPicker photoUrl={cardPhotoUrl} name={cardName} onPick={setCardCropFile} />
+              <p className={styles.hint}>This photo becomes your profile picture too.</p>
 
               <label className={styles.formGroup}>
                 <span className={styles.label}>Name</span>
