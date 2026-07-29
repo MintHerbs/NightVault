@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 736 300" width="736" height="300" font-family="ui-monospace, Menlo, Consolas, monospace" role="img" aria-label="The CORS preflight exchange before the real POST request">
+  <rect width="736" height="300" fill="#0b0d17"/>
+  <defs>
+    <marker id="ar12" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#e2703a"/>
+    </marker>
+    <marker id="ar12b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#8fd694"/>
+    </marker>
+  </defs>
+  <g transform="translate(18, 18)">
+    <rect x="20" y="0" width="180" height="34" rx="8" fill="#14162a" stroke="#8fd694"/>
+    <text x="110" y="16" fill="#fff" font-size="10" text-anchor="middle" font-weight="bold">browser</text>
+    <text x="110" y="28" fill="#5f6b7a" font-size="8" text-anchor="middle">localhost:5500</text>
+
+    <rect x="500" y="0" width="180" height="34" rx="8" fill="#14162a" stroke="#7fb3ff"/>
+    <text x="590" y="16" fill="#fff" font-size="10" text-anchor="middle" font-weight="bold">Django</text>
+    <text x="590" y="28" fill="#5f6b7a" font-size="8" text-anchor="middle">localhost:8000</text>
+
+    <path d="M110,34 L110,250" stroke="#2a2d45" stroke-width="1.5"/>
+    <path d="M590,34 L590,250" stroke="#2a2d45" stroke-width="1.5"/>
+
+    <text x="350" y="58" fill="#f0b45e" font-size="9" text-anchor="middle">1. the preflight, which you never wrote</text>
+    <path d="M112,72 L586,72" stroke="#e2703a" stroke-width="1.5" fill="none" marker-end="url(#ar12)"/>
+    <text x="350" y="68" fill="#d6d8ea" font-size="9" text-anchor="middle">OPTIONS /api/apply/</text>
+    <text x="350" y="86" fill="#5f6b7a" font-size="8" text-anchor="middle">Origin: localhost:5500  ·  may I POST with Content-Type: application/json?</text>
+
+    <path d="M588,112 L114,112" stroke="#8fd694" stroke-width="1.5" fill="none" marker-end="url(#ar12b)"/>
+    <text x="350" y="108" fill="#d6d8ea" font-size="9" text-anchor="middle">200 OK</text>
+    <text x="350" y="126" fill="#8fd694" font-size="8" text-anchor="middle">Access-Control-Allow-Origin: http://localhost:5500</text>
+
+    <text x="350" y="156" fill="#f0b45e" font-size="9" text-anchor="middle">2. only now does the real request go</text>
+    <path d="M112,170 L586,170" stroke="#e2703a" stroke-width="1.5" fill="none" marker-end="url(#ar12)"/>
+    <text x="350" y="166" fill="#d6d8ea" font-size="9" text-anchor="middle">POST /api/apply/</text>
+
+    <path d="M588,196 L114,196" stroke="#8fd694" stroke-width="1.5" fill="none" marker-end="url(#ar12b)"/>
+    <text x="350" y="192" fill="#d6d8ea" font-size="9" text-anchor="middle">201 Created</text>
+
+    <rect x="20" y="216" width="660" height="46" rx="8" fill="#14162a" stroke="#c1440e"/>
+    <text x="350" y="234" fill="#fff" font-size="9" text-anchor="middle">If step 1 comes back without a matching Allow-Origin, step 2 never happens.</text>
+    <text x="350" y="252" fill="#d6d8ea" font-size="9" text-anchor="middle">The browser blocks it and your fetch rejects. The fix is on the server, not in the JavaScript.</text>
+  </g>
+</svg>
