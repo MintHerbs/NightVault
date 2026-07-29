@@ -222,7 +222,18 @@
   cursor: pointer;
 }
 
-.courseCardName { font-size: 16px; font-weight: 500; }
+.courseCardName { font-size: 16px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+
+.hiddenBadge {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-border);
+  color: var(--color-text-muted);
+}
 .courseCardMeta { font-size: 13px; color: var(--color-text-muted); }
 
 .courseCardMenu {

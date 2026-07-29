@@ -1,0 +1,78 @@
+/* AsciiCard — animated-cover card (T-077). Tokens: --color-* / --md-* in
+   src/styles/global.css. Distinct shape from ui/Card: cover on top, solid
+   CTA bar footer, versus the M3 icon-header layout. */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--md-shape-lg);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+a.card:hover,
+a.card:focus-visible {
+  border-color: var(--color-accent);
+}
+
+a.card:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+/* Square, so the field's [-1,1] x [-1,1] domain maps to equal horizontal and
+   vertical screen distance — on a 4:3 cover every circular motif rendered as
+   a visibly squashed ellipse. Also closer to the reference design. */
+.cover {
+  aspect-ratio: 1 / 1;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.body {
+  padding: 16px 18px 4px;
+  flex: 1;
+}
+
+.title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: rgba(var(--color-fg-rgb), 0.95);
+  margin: 0 0 8px;
+}
+
+.description {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: rgba(var(--color-fg-rgb), 0.5);
+  margin: 0;
+}
+
+.ctaBar {
+  margin: 16px 18px 18px;
+  padding: 10px 16px;
+  border-radius: var(--md-shape-sm);
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

@@ -1,0 +1,215 @@
+/* CoverPicker (T-077). Follows the admin panel's convention of consuming
+   adminTokens.css's aliases rather than reaching into global.css — same as
+   AdminUsers.module.css, whose dialog styling this deliberately mirrors. */
+
+/* Anchored near the TOP of the viewport, not its centre.
+   Radix places Popover.Content *below* its anchor, so a centre anchor sends a
+   tall panel off the bottom of the screen — which is exactly what happened
+   here: the panel opened at mid-screen and its lower half was unreachable.
+   The small dialogs in AdminUsers.module.css can use a centre anchor because
+   they're short enough for collision-shifting to rescue them; this one isn't.
+   Anchoring at the top and capping the height keeps it fully on screen at any
+   viewport size. */
+.topAnchor {
+  position: fixed;
+  top: 4vh;
+  left: 50%;
+  pointer-events: none;
+}
+
+.panel {
+  background: var(--md-surface-container-high);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+  width: min(520px, 92vw);
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* ── Live preview ───────────────────────────────────────────────────────── */
+
+.previewRow {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.preview {
+  width: 160px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.previewMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.previewLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.select {
+  background: var(--color-input);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--color-text);
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.select:focus { border-color: var(--color-accent); }
+
+/* ── Upload ─────────────────────────────────────────────────────────────── */
+
+.uploadButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-accent-bright);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.uploadButton:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.uploadButton:disabled { opacity: 0.6; cursor: progress; }
+
+.fileInput { display: none; }
+
+/* ── Preset grid ────────────────────────────────────────────────────────── */
+
+.presetsLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.presetGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 10px;
+}
+
+.presetCell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+
+.presetCell:hover { border-color: var(--color-accent); color: var(--color-text); }
+
+.presetActive {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.presetCanvas {
+  display: block;
+  aspect-ratio: 1 / 1;
+  background: var(--color-bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.presetName {
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Actions ────────────────────────────────────────────────────────────── */
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btnText, .btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 18px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.btnText { background: transparent; color: var(--color-accent-bright); }
+.btnText:hover { background: var(--color-accent-soft); }
+.btnPrimary { background: var(--color-accent); color: var(--color-text); }
+.btnPrimary:hover { background: var(--color-accent-hover); }
+.btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }

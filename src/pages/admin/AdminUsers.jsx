@@ -9,9 +9,10 @@ import { colors } from '../../constants/colors'
 import { supabase } from '../../lib/supabaseClient'
 import { useAdmin } from './useAdmin'
 import { useActiveCourse } from '../../hooks/useActiveCourse'
-import { listCourses, createCourse, updateCourse, deleteCourse } from '../../lib/coursesApi'
+import { listCourses, createCourse, updateCourse, deleteCourse, setCourseHidden } from '../../lib/coursesApi'
 import { listModules } from '../../lib/modulesApi'
 import ToastNotification, { useToast } from '../../components/admin/ToastNotification'
+import CoverPicker from '../../components/admin/CoverPicker/CoverPicker'
 import Loading from '../../components/ui/Loading'
 import '../../styles/adminTokens.css'
 import styles from './AdminUsers.module.css'
@@ -71,6 +72,7 @@ function AdminUsersContent() {
   const [deleting, setDeleting] = useState(false)
   const [courseRename, setCourseRename] = useState(null)
   const [courseDeleteConfirm, setCourseDeleteConfirm] = useState(null)
+  const [coverEditing, setCoverEditing] = useState(null)
   const [deletingCourse, setDeletingCourse] = useState(false)
 
   // Primary owner lands on a "which course" picker; everyone else has only
@@ -145,6 +147,23 @@ function AdminUsersContent() {
   // primary-owner-gated, but the real boundary is the DB policy, not this.
   const courseMenuFor = (c) => [
     { label: 'Rename', onSelect: () => setCourseRename({ id: c.id, name: c.name }) },
+    { label: 'Change cover', onSelect: () => setCoverEditing(c) },
+    {
+      // Hide/unhide from the public site (T-077) — Subjects, notes, and
+      // members stay untouched; this only affects home-page visibility and
+      // the course's own /courses/:id and /notes-browser/:id routes.
+      label: c.hidden ? 'Unhide on live site' : 'Hide on live site',
+      onSelect: async () => {
+        const nextHidden = !c.hidden
+        try {
+          await setCourseHidden(c.id, nextHidden)
+          setCourses((prev) => prev.map((row) => (row.id === c.id ? { ...row, hidden: nextHidden } : row)))
+          showToast(nextHidden ? `${c.name} hidden from the live site` : `${c.name} unhidden`, 'success')
+        } catch (error) {
+          showToast(`Failed to update visibility: ${error.message}`, 'error')
+        }
+      },
+    },
     {
       label: 'Delete',
       onSelect: () => {
@@ -282,7 +301,10 @@ function AdminUsersContent() {
                     className={styles.courseCardMain}
                     onClick={() => { setActiveCourseId(c.id); setShowCards(false) }}
                   >
-                    <span className={styles.courseCardName}>{c.name}</span>
+                    <span className={styles.courseCardName}>
+                      {c.name}
+                      {c.hidden && <span className={styles.hiddenBadge}>Hidden</span>}
+                    </span>
                     <span className={styles.courseCardMeta}>
                       {memberCount(c.id)} {memberCount(c.id) === 1 ? 'person' : 'people'}
                     </span>
@@ -417,6 +439,15 @@ function AdminUsersContent() {
             </Popover.Content>
           </Popover.Portal>
         </Popover.Root>
+      )}
+
+      {coverEditing && (
+        <CoverPicker
+          course={coverEditing}
+          onClose={() => setCoverEditing(null)}
+          onSaved={(updated) => setCourses((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))}
+          showToast={showToast}
+        />
       )}
 
       {courseRename && (
