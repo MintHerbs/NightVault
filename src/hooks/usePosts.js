@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { useRateLimit } from './useRateLimit'
 
 const FEED_LIMIT = 50
 
@@ -33,54 +32,66 @@ function sortByCreatedAtDesc(items) {
  * the caller's own vote falls out of the same response as the totals.
  */
 async function loadFeedExtras(postIds, sessionId) {
-  const empty = { countsById: {}, pollsByPostId: {}, userVotes: {}, userFlags: {} }
+  const empty = { pollsByPostId: {}, userVotes: {}, userFlags: {}, userPosts: {} }
   if (!postIds.length) return empty
 
-  const [voteRes, commentRes, pollRes, flagRes] = await Promise.all([
-    supabase.from('post_votes').select('post_id, session_id, vote_type').in('post_id', postIds),
+  // post_votes/post_flags/posts no longer expose session_id to anon (T-078 —
+  // it was the only "ownership" check vote_post/soft_delete_post trust, and
+  // reading a stranger's off a bulk row let anyone impersonate them). Vote
+  // *counts* now come straight off posts.upvotes/downvotes (denormalised,
+  // trigger-maintained since 0039) instead of being re-tallied here; "mine"
+  // (including "is this my own post", which PostCard used to get by comparing
+  // post.session_id directly) comes from RPCs that take the caller's own
+  // session_id as a parameter instead of a column.
+  const [commentRes, pollRes, myVotesRes, myFlagsRes, myPostsRes] = await Promise.all([
     supabase.from('comments').select('post_id').in('post_id', postIds).eq('is_deleted', false),
     supabase.from('polls').select('id, post_id, options').in('post_id', postIds),
     sessionId
-      ? supabase.from('post_flags').select('post_id').eq('session_id', sessionId).in('post_id', postIds)
+      ? supabase.rpc('get_my_post_votes', { p_post_ids: postIds, p_session_id: sessionId })
+      : Promise.resolve({ data: [] }),
+    sessionId
+      ? supabase.rpc('get_my_post_flags', { p_post_ids: postIds, p_session_id: sessionId })
+      : Promise.resolve({ data: [] }),
+    sessionId
+      ? supabase.rpc('get_my_post_ids', { p_post_ids: postIds, p_session_id: sessionId })
       : Promise.resolve({ data: [] }),
   ])
 
-  const countsById = {}
-  for (const id of postIds) countsById[id] = { upvotes: 0, downvotes: 0, comment_count: 0 }
+  const commentCountById = {}
+  for (const row of commentRes.data || []) {
+    commentCountById[row.post_id] = (commentCountById[row.post_id] || 0) + 1
+  }
 
   const userVotes = {}
-  for (const row of voteRes.data || []) {
-    const bucket = countsById[row.post_id]
-    if (!bucket) continue
-    if (row.vote_type === 'up') bucket.upvotes += 1
-    else if (row.vote_type === 'down') bucket.downvotes += 1
-    if (sessionId && row.session_id === sessionId) userVotes[row.post_id] = row.vote_type
-  }
-
-  for (const row of commentRes.data || []) {
-    const bucket = countsById[row.post_id]
-    if (bucket) bucket.comment_count += 1
-  }
+  for (const row of myVotesRes.data || []) userVotes[row.post_id] = row.vote_type
 
   const userFlags = {}
-  for (const row of flagRes.data || []) userFlags[row.post_id] = true
+  for (const row of myFlagsRes.data || []) userFlags[row.post_id] = true
+
+  const userPosts = {}
+  for (const row of myPostsRes.data || []) userPosts[row.post_id] = true
 
   const pollRows = pollRes.data || []
   const pollsByPostId = {}
 
   if (pollRows.length) {
     const pollIds = pollRows.map((p) => p.id)
-    const { data: pollVoteRows } = await supabase
-      .from('poll_votes')
-      .select('poll_id, session_id, option_index')
-      .in('poll_id', pollIds)
+    const [{ data: pollVoteRows }, { data: myPollVoteRows }] = await Promise.all([
+      supabase.from('poll_votes').select('poll_id, option_index').in('poll_id', pollIds),
+      sessionId
+        ? supabase.rpc('get_my_poll_votes', { p_poll_ids: pollIds, p_session_id: sessionId })
+        : Promise.resolve({ data: [] }),
+    ])
 
+    const myOptionByPoll = new Map((myPollVoteRows || []).map((r) => [r.poll_id, r.option_index]))
     const votesByPollId = new Map()
     for (const row of pollVoteRows || []) {
       const entry = votesByPollId.get(row.poll_id) || { counts: new Map(), mine: null }
       entry.counts.set(row.option_index, (entry.counts.get(row.option_index) || 0) + 1)
-      if (sessionId && row.session_id === sessionId) entry.mine = row.option_index
       votesByPollId.set(row.poll_id, entry)
+    }
+    for (const [pollId, entry] of votesByPollId) {
+      entry.mine = myOptionByPoll.has(pollId) ? myOptionByPoll.get(pollId) : null
     }
 
     for (const row of pollRows) {
@@ -88,7 +99,7 @@ async function loadFeedExtras(postIds, sessionId) {
     }
   }
 
-  return { countsById, pollsByPostId, userVotes, userFlags }
+  return { commentCountById, pollsByPostId, userVotes, userFlags, userPosts }
 }
 
 function buildPoll(pollRow, voteEntry) {
@@ -105,15 +116,16 @@ function buildPoll(pollRow, voteEntry) {
 
 /** Poll + counts for a single post, used when realtime hands us a row we have not seen. */
 async function hydratePost(post, sessionId) {
-  const { countsById, pollsByPostId, userVotes, userFlags } = await loadFeedExtras([post.id], sessionId)
+  const { commentCountById, pollsByPostId, userVotes, userFlags, userPosts } = await loadFeedExtras([post.id], sessionId)
   return {
     merged: {
       ...post,
-      ...(countsById[post.id] || { upvotes: 0, downvotes: 0, comment_count: 0 }),
+      comment_count: commentCountById[post.id] || 0,
       poll: pollsByPostId[post.id] ?? null,
     },
     userVote: userVotes[post.id] ?? null,
     hasFlag: !!userFlags[post.id],
+    isMine: !!userPosts[post.id],
   }
 }
 
@@ -152,6 +164,7 @@ export function usePosts() {
   const [isLoading, setIsLoading] = useState(false)
   const [userVotes, setUserVotes] = useState({})
   const [userFlags, setUserFlags] = useState({})
+  const [userPosts, setUserPosts] = useState({})
   const channelName = useRef(`posts-${Date.now()}-${Math.random().toString(36).slice(2)}`)
 
   // Mirrored into refs so the mutation callbacks below can read current state
@@ -165,8 +178,6 @@ export function usePosts() {
   postsRef.current = posts
   const sessionIdRef = useRef(null)
 
-  const { checkLimit, recordAction, isBlacklisted } = useRateLimit()
-
   useEffect(() => {
     let isActive = true
 
@@ -175,9 +186,15 @@ export function usePosts() {
       const sessionId = getOrCreateSessionId()
       sessionIdRef.current = sessionId
 
+      // Explicit column list, not select('*'): posts.session_id has no grant
+      // for anon/authenticated any more (T-078), and PostgREST 401s the whole
+      // projection — not just the ungranted column — if `*` is asked to
+      // expand over one.
       const { data, error } = await supabase
         .from('posts')
-        .select('*')
+        .select(
+          'id, title, content, code, code_language, gif_url, upvotes, downvotes, flag_count, is_flagged, is_deleted, is_edited, created_at, updated_at'
+        )
         .eq('is_deleted', false)
         .eq('is_flagged', false)
         .order('created_at', { ascending: false })
@@ -198,12 +215,13 @@ export function usePosts() {
       setPosts(
         rows.map((post) => ({
           ...post,
-          ...(extras.countsById[post.id] || { upvotes: 0, downvotes: 0, comment_count: 0 }),
+          comment_count: extras.commentCountById[post.id] || 0,
           poll: extras.pollsByPostId[post.id] ?? null,
         }))
       )
       setUserVotes(extras.userVotes)
       setUserFlags(extras.userFlags)
+      setUserPosts(extras.userPosts)
       setIsLoading(false)
     }
 
@@ -223,7 +241,8 @@ export function usePosts() {
         async (payload) => {
           const next = payload.new
           if (!next?.id || next.is_deleted || next.is_flagged) return
-          const { merged } = await hydratePost(next, sessionIdRef.current)
+          const { merged, isMine } = await hydratePost(next, sessionIdRef.current)
+          if (isMine) setUserPosts((prev) => ({ ...prev, [merged.id]: true }))
           setPosts((prev) => {
             if (prev.some((p) => p.id === merged.id)) return prev
             return sortByCreatedAtDesc([merged, ...prev]).slice(0, FEED_LIMIT)
@@ -249,7 +268,8 @@ export function usePosts() {
             return
           }
 
-          const { merged } = await hydratePost(next, sessionIdRef.current)
+          const { merged, isMine } = await hydratePost(next, sessionIdRef.current)
+          if (isMine) setUserPosts((prev) => ({ ...prev, [merged.id]: true }))
           setPosts((prev) =>
             prev.some((p) => p.id === merged.id)
               ? prev
@@ -354,19 +374,6 @@ export function usePosts() {
   const createPost = useCallback(
     async (data) => {
       const sessionId = getOrCreateSessionId()
-      const allowed = await checkLimit('post')
-      if (!allowed) {
-        const { data: blacklistRow } = await supabase
-          .from('bot_blacklist')
-          .select('session_id')
-          .eq('session_id', sessionId)
-          .maybeSingle()
-
-        if (blacklistRow?.session_id || isBlacklisted) return { error: 'Unable to post at this time' }
-        return { error: 'Rate limited' }
-      }
-
-      if (isBlacklisted) return { error: 'Unable to post at this time' }
 
       await supabase.from('sessions').upsert({ id: sessionId, last_seen: new Date().toISOString() })
 
@@ -374,39 +381,32 @@ export function usePosts() {
       if (content.length > 1000) return { error: 'Content too long' }
 
       const title = data?.title != null && String(data.title).trim() !== '' ? stripHtmlTags(data.title).trim() : null
+      const pollOptions = data?.poll ? (Array.isArray(data.poll?.options) ? data.poll.options : data.poll) : null
 
-      const insertPayload = {
-        session_id: sessionId,
-        title,
-        content,
-        code: data?.code ?? null,
-        code_language: data?.codeLanguage ?? data?.code_language ?? null,
-        gif_url: data?.gifUrl ?? data?.gif_url ?? null,
-      }
-
-      const { data: botCheck } = await supabase.rpc('check_bot_blacklist', {
+      // Bot-blacklist and rate-limit checks, and the poll insert, all happen
+      // inside create_post now — a direct REST insert used to be able to skip
+      // both (T-078). See db/sql/0048_social_write_hardening.sql.
+      const { data: res, error } = await supabase.rpc('create_post', {
         p_session_id: sessionId,
+        p_title: title,
+        p_content: content,
+        p_code: data?.code ?? null,
+        p_code_language: data?.codeLanguage ?? data?.code_language ?? null,
+        p_gif_url: data?.gifUrl ?? data?.gif_url ?? null,
+        p_poll_options: pollOptions,
       })
-      if (botCheck?.is_blacklisted) return { error: 'Unable to post at this time' }
 
-      const { data: postRow, error: postError } = await supabase
-        .from('posts')
-        .insert(insertPayload)
-        .select('*')
-        .single()
+      if (error || !res?.success) return { error: res?.error || 'Failed to create post' }
 
-      if (postError) return { error: 'Failed to create post' }
-
-      if (data?.poll) {
-        const options = Array.isArray(data.poll?.options) ? data.poll.options : data.poll
-        const { error: pollError } = await supabase.from('polls').insert({ post_id: postRow.id, options })
-        if (pollError) return { error: 'Failed to create poll' }
-      }
-
-      await recordAction('post')
-      return { data: postRow }
+      // Known true without a round trip: this session is the one that just
+      // called create_post with itself as p_session_id. The realtime echo of
+      // this insert will also mark it (belt and suspenders for e.g. a second
+      // tab on the same session), but PostCard's edit/delete controls
+      // shouldn't have to wait on that echo to appear.
+      setUserPosts((prev) => ({ ...prev, [res.post.id]: true }))
+      return { data: res.post }
     },
-    [checkLimit, isBlacklisted, recordAction]
+    []
   )
 
   const updatePost = useCallback(async (id, data) => {
@@ -553,13 +553,18 @@ export function usePosts() {
       })
     )
 
-    const { error } = await supabase
-      .from('poll_votes')
-      .upsert({ poll_id: pollId, session_id: sessionId, option_index: optionIndex }, { onConflict: 'poll_id,session_id' })
+    // Direct upsert replaced by an RPC (T-078): poll_votes' INSERT/UPDATE
+    // grants are gone from anon, so a raw REST write could vote on any poll
+    // unthrottled. vote_poll rate-limits the same as vote_post/vote_comment.
+    const { data: res, error } = await supabase.rpc('vote_poll', {
+      p_poll_id: pollId,
+      p_session_id: sessionId,
+      p_option_index: optionIndex,
+    })
 
-    if (error) {
+    if (error || !res?.success) {
       setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, poll: rollback } : p)))
-      return { error: 'Failed to vote' }
+      return { error: res?.error || 'Failed to vote' }
     }
 
     return { data: optionIndex }
@@ -571,6 +576,7 @@ export function usePosts() {
       isLoading,
       userVotes,
       userFlags,
+      userPosts,
       createPost,
       updatePost,
       deletePost,
@@ -578,6 +584,6 @@ export function usePosts() {
       votePoll,
       flagPost,
     }),
-    [createPost, deletePost, flagPost, isLoading, posts, updatePost, userFlags, userVotes, votePoll, votePost]
+    [createPost, deletePost, flagPost, isLoading, posts, updatePost, userFlags, userPosts, userVotes, votePoll, votePost]
   )
 }

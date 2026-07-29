@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { useRateLimit } from './useRateLimit'
 
 function getOrCreateSessionId() {
   let sessionId = localStorage.getItem('session_id')
@@ -51,6 +50,7 @@ export function useComments(postId) {
   const [comments, setComments] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [userVotes, setUserVotes] = useState({})
+  const [userComments, setUserComments] = useState({})
   const channelName = useRef(`comments-${Date.now()}-${Math.random().toString(36).slice(2)}`)
 
   // Read inside voteComment so its identity stays stable across vote changes,
@@ -60,8 +60,6 @@ export function useComments(postId) {
   // that this has not been worth changing.
   const userVotesRef = useRef(userVotes)
   userVotesRef.current = userVotes
-
-  const { checkLimit, recordAction } = useRateLimit()
 
   const fetchComments = useCallback(async () => {
     if (!postId) {
@@ -73,9 +71,13 @@ export function useComments(postId) {
     setIsLoading(true)
     const sessionId = getOrCreateSessionId()
 
+    // Explicit column list, not select('*'): comments.session_id has no
+    // grant for anon/authenticated any more (T-078), and PostgREST 401s the
+    // whole projection — not just the ungranted column — if `*` is asked to
+    // expand over one.
     const { data, error } = await supabase
       .from('comments')
-      .select('*')
+      .select('id, post_id, parent_comment_id, content, upvotes, downvotes, is_deleted, depth, created_at')
       .eq('post_id', postId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: true })
@@ -89,42 +91,31 @@ export function useComments(postId) {
     const flat = data || []
     const commentIds = flat.map((c) => c.id).filter(Boolean)
 
-    // One request, one pass. This used to be two `comment_votes` queries: one
-    // for the tallies and a second re-reading the same table filtered to our own
-    // session. Asking for `session_id` up front makes the caller's own vote fall
-    // out of the tallies for free, which is what `loadFeedExtras` does for post
-    // votes.
-    const countsById = {}
+    // Vote tallies come straight off comments.upvotes/downvotes (already in
+    // `flat` — denormalised, trigger-maintained since 0039). "My vote" and
+    // "is this my own comment" (CommentItem used to get the latter by
+    // comparing comment.session_id directly) come from RPCs keyed on the
+    // caller's own session_id rather than a bulk `comment_votes`/`comments`
+    // read: that column no longer exposes session_id to anon, since it was
+    // the only "ownership" check vote_comment/soft_delete_comment trusted,
+    // and reading a stranger's off the wire was enough to impersonate them
+    // (T-078).
     const nextVotes = {}
+    const nextOwn = {}
 
     if (commentIds.length) {
-      const { data: voteRows } = await supabase
-        .from('comment_votes')
-        .select('comment_id, session_id, vote_type')
-        .in('comment_id', commentIds)
+      const [{ data: voteRows }, { data: ownRows }] = await Promise.all([
+        supabase.rpc('get_my_comment_votes', { p_comment_ids: commentIds, p_session_id: sessionId }),
+        supabase.rpc('get_my_comment_ids', { p_comment_ids: commentIds, p_session_id: sessionId }),
+      ])
 
-      for (const row of voteRows || []) {
-        let bucket = countsById[row.comment_id]
-        if (!bucket) {
-          bucket = { upvotes: 0, downvotes: 0 }
-          countsById[row.comment_id] = bucket
-        }
-        if (row.vote_type === 'up') bucket.upvotes += 1
-        else if (row.vote_type === 'down') bucket.downvotes += 1
-        if (row.session_id === sessionId) nextVotes[row.comment_id] = row.vote_type
-      }
+      for (const row of voteRows || []) nextVotes[row.comment_id] = row.vote_type
+      for (const row of ownRows || []) nextOwn[row.comment_id] = true
     }
 
-    setComments(
-      buildNestedComments(
-        flat.map((c) => ({
-          ...c,
-          upvotes: countsById[c.id]?.upvotes ?? 0,
-          downvotes: countsById[c.id]?.downvotes ?? 0,
-        }))
-      )
-    )
+    setComments(buildNestedComments(flat))
     setUserVotes(nextVotes)
+    setUserComments(nextOwn)
     setIsLoading(false)
   }, [postId])
 
@@ -163,47 +154,23 @@ export function useComments(postId) {
       if (!postId) return { error: 'Missing postId' }
       const sessionId = getOrCreateSessionId()
 
-      const allowed = await checkLimit('comment')
-      if (!allowed) return { error: 'Rate limited' }
-
       const trimmed = String(content ?? '').trim()
       if (!trimmed) return { error: 'Empty comment' }
 
-      let depth = 0
-      let parentId = parentCommentId ?? null
-
-      if (parentId) {
-        const { data: parentRow } = await supabase
-          .from('comments')
-          .select('id, depth')
-          .eq('id', parentId)
-          .maybeSingle()
-
-        if (!parentRow?.id || parentRow.depth !== 0) return { error: 'Invalid parent comment' }
-        depth = 1
-      }
-
-      const { data: botCheck } = await supabase.rpc('check_bot_blacklist', {
-        p_session_id: localStorage.getItem('session_id')
+      // Bot-blacklist, rate-limit, and parent-depth validation all happen
+      // inside create_comment now — a direct REST insert used to be able to
+      // skip all three (T-078). See db/sql/0048_social_write_hardening.sql.
+      const { data: res, error } = await supabase.rpc('create_comment', {
+        p_session_id: sessionId,
+        p_post_id: postId,
+        p_parent_comment_id: parentCommentId ?? null,
+        p_content: trimmed,
       })
-      if (botCheck?.is_blacklisted) throw new Error('Unable to post at this time.')
 
-      const { data: inserted, error } = await supabase
-        .from('comments')
-        .insert({
-          post_id: postId,
-          parent_comment_id: parentId,
-          session_id: sessionId,
-          content: trimmed,
-          depth,
-        })
-        .select('*')
-        .single()
-
-      if (!error) await recordAction('comment')
-      return { data: inserted ?? null, error: error ?? null }
+      if (error || !res?.success) return { data: null, error: res?.error || error?.message || 'Failed to comment' }
+      return { data: res.comment, error: null }
     },
-    [checkLimit, postId, recordAction]
+    [postId]
   )
 
   /** Move the caller's vote marker and the visible tallies together. */
@@ -265,6 +232,7 @@ export function useComments(postId) {
   }, [])
 
   const getUserCommentVote = useCallback((commentId) => userVotes[commentId] ?? null, [userVotes])
+  const isOwnComment = useCallback((commentId) => !!userComments[commentId], [userComments])
 
   return useMemo(
     () => ({
@@ -274,7 +242,8 @@ export function useComments(postId) {
       voteComment,
       deleteComment,
       getUserCommentVote,
+      isOwnComment,
     }),
-    [comments, createComment, deleteComment, getUserCommentVote, isLoading, voteComment]
+    [comments, createComment, deleteComment, getUserCommentVote, isLoading, isOwnComment, voteComment]
   )
 }

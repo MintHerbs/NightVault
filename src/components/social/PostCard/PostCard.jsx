@@ -33,7 +33,7 @@ function toPercent(value, total) {
 }
 
 const PostCard = forwardRef(function PostCard(
-  { post, sessionId, userVote, hasFlagged, onVote, onFlag, onEdit, onDelete, onPollVote },
+  { post, sessionId, isOwnPost, userVote, hasFlagged, onVote, onFlag, onEdit, onDelete, onPollVote },
   ref
 ) {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -46,8 +46,6 @@ const PostCard = forwardRef(function PostCard(
   const [isVotingPoll, setIsVotingPoll] = useState(false)
 
   const menuRef = useRef(null)
-
-  const isOwnPost = post?.session_id && sessionId && post.session_id === sessionId
 
   const timeLabel = useMemo(() => formatRelativeTime(post?.created_at), [post?.created_at])
 
@@ -155,7 +153,13 @@ const PostCard = forwardRef(function PostCard(
     >
       <div className={styles.header}>
         <div className={styles.avatar}>
-          <AgentAvatar seed={post?.session_id || 'anon'} size={32} animated={true} />
+          {/* Seeded on the post's own id, not session_id: that column has no
+              grant for anon/authenticated any more (T-078), since it's the
+              only thing standing between a reader and impersonating the
+              author into edit/delete/vote RPCs. Trade-off, not an oversight —
+              the same author's avatar is no longer visually consistent across
+              their different posts. */}
+          <AgentAvatar seed={post?.id || 'anon'} size={32} animated={true} />
         </div>
 
         <div className={styles.meta}>

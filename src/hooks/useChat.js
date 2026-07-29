@@ -74,9 +74,7 @@ export default function useChat(isChatOpen) {
     }
   }, [])
 
-  const sendMessage = useCallback(async (content) => {
-    if (!content.trim()) return
-
+  const insertMessage = useCallback(async ({ content = '', attachmentUrl = null, attachmentType = null }) => {
     const sessionId = localStorage.getItem('session_id')
 
     if (!sessionId) {
@@ -87,21 +85,24 @@ export default function useChat(isChatOpen) {
     setIsLoading(true)
 
     try {
-      console.log('[Chat] Sending message:', content)
-      
       // Ensure session exists in sessions table before inserting message
       await supabase
         .from('sessions')
         .upsert({ id: sessionId, last_seen: new Date().toISOString() })
 
-      // Now insert the message
-      const { error } = await supabase
-        .from('messages')
-        .insert({ session_id: sessionId, content: content.trim() })
+      // Routed through an RPC (T-078): messages' INSERT grant is gone from
+      // anon, since a direct REST insert could flood the room unthrottled —
+      // chat had no rate limit at all, client-side or otherwise, before this.
+      // See db/sql/0048_social_write_hardening.sql.
+      const { data: res, error } = await supabase.rpc('send_message', {
+        p_session_id: sessionId,
+        p_content: content,
+        p_attachment_url: attachmentUrl,
+        p_attachment_type: attachmentType,
+      })
 
-      console.log('[Chat] Send result:', error)
-      if (error) {
-        console.error('Error sending message:', error)
+      if (error || !res?.success) {
+        console.error('Error sending message:', error || res?.error)
       }
     } catch (err) {
       console.error('Failed to send message:', err)
@@ -110,9 +111,20 @@ export default function useChat(isChatOpen) {
     }
   }, [])
 
+  const sendMessage = useCallback((content) => {
+    if (!content.trim()) return
+    return insertMessage({ content: content.trim() })
+  }, [insertMessage])
+
+  const sendAttachment = useCallback((url, kind) => {
+    if (!url) return
+    return insertMessage({ attachmentUrl: url, attachmentType: kind })
+  }, [insertMessage])
+
   return {
     messages,
     sendMessage,
+    sendAttachment,
     isLoading,
     unreadCount,
     markAsRead,

@@ -77,6 +77,7 @@ export default function HomeFeedPage({ onAIStateChange }) {
     isLoading,
     userVotes,
     userFlags,
+    userPosts,
     createPost,
     updatePost,
     deletePost,
@@ -142,6 +143,7 @@ export default function HomeFeedPage({ onAIStateChange }) {
                   key={post.id}
                   post={post}
                   sessionId={sessionId}
+                  isOwnPost={!!userPosts[post.id]}
                   userVote={userVotes[post.id] ?? null}
                   hasFlagged={!!userFlags[post.id]}
                   onVote={votePost}
