@@ -16,6 +16,19 @@ const LANGUAGE_ALIASES = {
   html: 'html',
   css: 'css',
   json: 'json',
+  // Shell transcripts and raw HTTP messages have no keyword set below, so they
+  // fall through to the generic tokenizer. They are aliased anyway because
+  // getLanguageLabel echoes an unknown language verbatim, which would print a
+  // lowercase "bash" in the block header instead of a real label.
+  bash: 'bash',
+  sh: 'bash',
+  shell: 'bash',
+  zsh: 'bash',
+  console: 'bash',
+  terminal: 'bash',
+  http: 'http',
+  text: 'text',
+  plaintext: 'text',
   other: 'auto',
 }
 
@@ -33,6 +46,8 @@ const LABELS = {
   html: 'HTML',
   css: 'CSS',
   json: 'JSON',
+  bash: 'Shell',
+  http: 'HTTP',
   text: 'Text',
 }
 

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 140" width="220" height="140" role="img" aria-label="Habitat module placeholder">
+  <rect width="220" height="140" fill="#c1440e"/>
+  <g fill="none" stroke="#f4ede4" stroke-width="2" opacity="0.75">
+    <path d="M40 96h140"/>
+    <path d="M70 96V66a40 40 0 0 1 80 0v30"/>
+    <path d="M110 96V64"/>
+    <circle cx="90" cy="78" r="7"/>
+    <circle cx="130" cy="78" r="7"/>
+  </g>
+  <text x="110" y="122" fill="#fff" font-family="sans-serif" font-size="13" font-weight="600" text-anchor="middle">Habitat</text>
+</svg>

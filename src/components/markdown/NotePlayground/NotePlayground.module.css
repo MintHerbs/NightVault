@@ -1,0 +1,303 @@
+/* Playground chrome (T-075).
+   Deliberately mirrors social/CodeBlock's frame — same border, radius, dots and
+   header rhythm — so a playground reads as a sibling of the code blocks around
+   it in a note rather than as a foreign widget. */
+
+.block {
+  margin-top: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(91, 140, 255, 0.2);
+  border-radius: 12px;
+  background: var(--color-bg);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.6),
+    inset 0 0 60px rgba(91, 140, 255, 0.03);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.block:hover {
+  border-color: rgba(91, 140, 255, 0.4);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.7),
+    inset 0 0 60px rgba(91, 140, 255, 0.05);
+}
+
+/* While editing, break out of the reader's 720px prose column: source and
+   preview side by side inside it leaves each about 340px, narrow enough that
+   every second line of HTML wraps.
+
+   Both the width and the centring are measured against the SAME reference —
+   the prose column, which is this element's containing block. `left: 50%`
+   lands on that column's centre and the translate pulls the wider block back
+   over it, so the overhang is equal on both sides. An earlier version capped
+   the width with `calc(100vw - 48px)`: `100vw` counts the sidebar and the
+   vertical scrollbar, neither of which the column is centred within, so
+   whenever that branch of the `min()` won the block sat visibly left of
+   centre. Nothing here may reference viewport units for that reason. */
+.blockEditing {
+  position: relative;
+  left: 50%;
+  width: calc(100% + 240px);
+  transform: translateX(-50%);
+}
+
+/* Below this the 240px overhang stops fitting, so the panes stack and the
+   block stays inside the column. Kept above the widened width rather than at
+   the old 900px, where the split was still applying with no room for it. */
+@media (max-width: 1040px) {
+  .blockEditing {
+    left: auto;
+    width: 100%;
+    transform: none;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(91, 140, 255, 0.15);
+  background: rgba(var(--color-bg-rgb), 0.95);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--md-surface-container);
+}
+
+.dot:nth-child(1) { background: #5b8cff; box-shadow: 0 0 10px rgba(91, 140, 255, 0.6); }
+.dot:nth-child(2) { background: #8b5bff; box-shadow: 0 0 10px rgba(139, 91, 255, 0.5); }
+.dot:nth-child(3) { background: #5bffd6; box-shadow: 0 0 10px rgba(91, 255, 214, 0.4); }
+
+.kind {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* What this particular playground is. Truncates rather than wrapping so the
+   header stays one line however long the label is. */
+.label {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.action {
+  padding: 5px 11px;
+  border: 1px solid rgba(91, 140, 255, 0.3);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.action:hover {
+  border-color: rgba(91, 140, 255, 0.6);
+  background: rgba(91, 140, 255, 0.12);
+}
+
+.action:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Preview only. */
+.body {
+  display: block;
+}
+
+/* Editing: source beside preview on desktop, stacked once there isn't room for
+   two readable columns. */
+/* Source gets the wider share: it is the pane being read and edited, and code
+   lines are longer than the preview needs to be to stay legible. */
+.bodySplit {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  /* Taller than any playground's own preview height, so opening the editor
+     shows a useful number of lines at once. Both panes share the row, so the
+     preview iframe stretches to match instead of leaving dead space. */
+  height: 620px;
+}
+
+@media (max-width: 1040px) {
+  .bodySplit {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+}
+
+.editorPane {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border-right: 1px solid rgba(91, 140, 255, 0.15);
+  background: #0b0a0a;
+}
+
+@media (max-width: 900px) {
+  .editorPane {
+    border-right: none;
+    border-bottom: 1px solid rgba(91, 140, 255, 0.15);
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px 10px 0;
+}
+
+.tab,
+.tabActive {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 7px 7px 0 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tabActive {
+  background: rgba(91, 140, 255, 0.14);
+  color: var(--color-text);
+}
+
+.tab:focus-visible,
+.tabActive:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+/* flex:1 fills the fixed row height above when editing side by side; the
+   min-height is what applies once the panes stack and the row goes auto. */
+.editorHost {
+  min-height: 340px;
+  flex: 1;
+  /* Monaco measures its own container, so it needs a definite height to lay
+     out against rather than one derived from its content. */
+  overflow: hidden;
+}
+
+.editorHost > :global(section),
+.editorHost > div {
+  height: 100%;
+}
+
+/* Stand-in while the Monaco chunk is in flight, and the permanent editor if it
+   fails to arrive. Same state, same live re-render, fewer affordances. */
+.fallbackEditor {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  padding: 10px 12px;
+  border: none;
+  background: #0b0a0a;
+  color: #f5f5f4;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  resize: vertical;
+  tab-size: 2;
+}
+
+.fallbackEditor:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.previewPane {
+  position: relative;
+  min-width: 0;
+}
+
+/* Side by side: give the pane the row's definite height so the frame's 100%
+   below has something to resolve against. */
+.bodySplit .previewPane {
+  height: 100%;
+}
+
+/* The running document. `background: #fff` matters: a playground whose CSS sets
+   no background (ch02-raw, deliberately) would otherwise show the note page
+   through it and look like it inherited styling it does not have. */
+.frame {
+  display: block;
+  width: 100%;
+  /* Set per playground by the component; see its `--playground-height`. */
+  height: var(--playground-height, 400px);
+  border: none;
+  background: #fff;
+}
+
+/* Side by side, the frame fills the shared row so both panes end level. */
+.bodySplit .frame {
+  height: 100%;
+}
+
+/* Stacked, there is no shared row to fill, so fall back to the playground's
+   own height rather than collapsing against an auto-sized parent. */
+@media (max-width: 1040px) {
+  .bodySplit .frame {
+    height: var(--playground-height, 400px);
+  }
+}
+
+/* Runtime/syntax errors relayed out of the frame. Overlays the bottom of the
+   preview rather than displacing it, so the layout does not jump as a student
+   types through a broken intermediate state. */
+.error {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(239, 68, 68, 0.5);
+  background: rgba(40, 12, 12, 0.94);
+  color: #ffb3ad;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}

@@ -33,3 +33,6 @@ dist-ssr
 
 # Originals kept by scripts/convert-images-to-webp.mjs before it deletes them
 .image-backup
+
+# Generated artifacts (diagram extraction, import SQL)
+build/
