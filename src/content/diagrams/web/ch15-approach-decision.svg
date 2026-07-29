@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 736 300" width="736" height="300" font-family="ui-monospace, Menlo, Consolas, monospace" role="img" aria-label="A decision path from hardware and store requirements to one of the four approaches">
+  <rect width="736" height="300" fill="#0b0d17"/>
+  <defs>
+    <marker id="ar15" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#5f6b7a"/>
+    </marker>
+  </defs>
+  <g transform="translate(18, 18)">
+    <text x="350" y="10" fill="#5f6b7a" font-size="10" text-anchor="middle">work down the questions, and the answer falls out</text>
+
+    <rect x="230" y="26" width="240" height="34" rx="8" fill="#14162a" stroke="#e2703a"/>
+    <text x="350" y="47" fill="#fff" font-size="10" text-anchor="middle">need hardware the web cannot reach?</text>
+
+    <rect x="230" y="94" width="240" height="34" rx="8" fill="#14162a" stroke="#e2703a"/>
+    <text x="350" y="115" fill="#fff" font-size="10" text-anchor="middle">need an app store listing?</text>
+
+    <rect x="230" y="162" width="240" height="34" rx="8" fill="#14162a" stroke="#e2703a"/>
+    <text x="350" y="183" fill="#fff" font-size="10" text-anchor="middle">need to work offline?</text>
+
+    <path d="M350,60 L350,90" stroke="#5f6b7a" stroke-width="1.2" fill="none" marker-end="url(#ar15)"/>
+    <text x="360" y="80" fill="#5f6b7a" font-size="8">no</text>
+    <path d="M350,128 L350,158" stroke="#5f6b7a" stroke-width="1.2" fill="none" marker-end="url(#ar15)"/>
+    <text x="360" y="148" fill="#5f6b7a" font-size="8">no</text>
+
+    <rect x="510" y="26" width="190" height="52" rx="8" fill="#14162a" stroke="#7fb3ff"/>
+    <text x="605" y="46" fill="#fff" font-size="10" text-anchor="middle" font-weight="bold">cross-platform</text>
+    <text x="605" y="62" fill="#5f6b7a" font-size="8" text-anchor="middle">one codebase, both stores</text>
+    <text x="605" y="73" fill="#5f6b7a" font-size="8" text-anchor="middle">native only if perf is the product</text>
+
+    <rect x="510" y="94" width="190" height="40" rx="8" fill="#14162a" stroke="#7fb3ff"/>
+    <text x="605" y="114" fill="#fff" font-size="10" text-anchor="middle" font-weight="bold">cross-platform</text>
+    <text x="605" y="127" fill="#5f6b7a" font-size="8" text-anchor="middle">the store is the reason</text>
+
+    <rect x="510" y="162" width="190" height="40" rx="8" fill="#14162a" stroke="#8fd694"/>
+    <text x="605" y="182" fill="#fff" font-size="10" text-anchor="middle" font-weight="bold">PWA</text>
+    <text x="605" y="195" fill="#5f6b7a" font-size="8" text-anchor="middle">installs, works offline</text>
+
+    <rect x="230" y="230" width="240" height="40" rx="8" fill="#14162a" stroke="#8fd694"/>
+    <text x="350" y="250" fill="#fff" font-size="10" text-anchor="middle" font-weight="bold">responsive web</text>
+    <text x="350" y="263" fill="#5f6b7a" font-size="8" text-anchor="middle">fastest, and often enough</text>
+
+    <path d="M470,43 L506,43" stroke="#5f6b7a" stroke-width="1.2" fill="none" marker-end="url(#ar15)"/>
+    <text x="488" y="37" fill="#8fd694" font-size="8" text-anchor="middle">yes</text>
+    <path d="M470,111 L506,111" stroke="#5f6b7a" stroke-width="1.2" fill="none" marker-end="url(#ar15)"/>
+    <text x="488" y="105" fill="#8fd694" font-size="8" text-anchor="middle">yes</text>
+    <path d="M470,179 L506,179" stroke="#5f6b7a" stroke-width="1.2" fill="none" marker-end="url(#ar15)"/>
+    <text x="488" y="173" fill="#8fd694" font-size="8" text-anchor="middle">yes</text>
+
+    <path d="M350,196 L350,226" stroke="#5f6b7a" stroke-width="1.2" fill="none" marker-end="url(#ar15)"/>
+    <text x="360" y="216" fill="#5f6b7a" font-size="8">no</text>
+
+    <text x="0" y="214" fill="#5f6b7a" font-size="8">two native</text>
+    <text x="0" y="226" fill="#5f6b7a" font-size="8">codebases means</text>
+    <text x="0" y="238" fill="#5f6b7a" font-size="8">every fix, twice,</text>
+    <text x="0" y="250" fill="#5f6b7a" font-size="8">forever</text>
+  </g>
+</svg>

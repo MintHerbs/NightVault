@@ -34,6 +34,7 @@ Monaco; (2) **full-bleed reader** shared by the live page and preview.
 - [ ] T-038 — Retire the eye-icon preview — Part C
 - [ ] T-055 — Text color/highlight marks + YouTube video embeds (modal + bare-link auto-embed)
 - [x] T-075 — Web module notes (ch1-20) + interactive REPL playground node + code-block filenames
+- [x] T-080 — Expand web notes ch10-20 to full depth, with 13 new diagrams
 
 Consolidated 2026-07-22 from an initial 8-ticket breakdown to reduce ticket
 count: former code-theme + reader tickets folded into **T-035**; former

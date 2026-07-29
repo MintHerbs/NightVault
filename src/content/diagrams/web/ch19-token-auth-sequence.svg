@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 736 320" width="736" height="320" font-family="ui-monospace, Menlo, Consolas, monospace" role="img" aria-label="Login exchanging credentials for a token, then authenticated calls carrying that token">
+  <rect width="736" height="320" fill="#0b0d17"/>
+  <defs>
+    <marker id="ar19" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#e2703a"/>
+    </marker>
+    <marker id="ar19b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#8fd694"/>
+    </marker>
+  </defs>
+  <g transform="translate(18, 18)">
+    <rect x="20" y="0" width="180" height="34" rx="8" fill="#14162a" stroke="#8fd694"/>
+    <text x="110" y="16" fill="#fff" font-size="10" text-anchor="middle" font-weight="bold">mobile app</text>
+    <text x="110" y="28" fill="#5f6b7a" font-size="8" text-anchor="middle">on the device</text>
+
+    <rect x="500" y="0" width="180" height="34" rx="8" fill="#14162a" stroke="#7fb3ff"/>
+    <text x="590" y="16" fill="#fff" font-size="10" text-anchor="middle" font-weight="bold">Django API</text>
+    <text x="590" y="28" fill="#5f6b7a" font-size="8" text-anchor="middle">SimpleJWT</text>
+
+    <path d="M110,34 L110,254" stroke="#2a2d45" stroke-width="1.5"/>
+    <path d="M590,34 L590,254" stroke="#2a2d45" stroke-width="1.5"/>
+
+    <text x="350" y="56" fill="#f0b45e" font-size="9" text-anchor="middle">the password travels exactly once</text>
+    <path d="M112,72 L586,72" stroke="#e2703a" stroke-width="1.5" fill="none" marker-end="url(#ar19)"/>
+    <text x="350" y="68" fill="#d6d8ea" font-size="9" text-anchor="middle">POST /login/  { email, password }</text>
+
+    <path d="M588,100 L114,100" stroke="#8fd694" stroke-width="1.5" fill="none" marker-end="url(#ar19b)"/>
+    <text x="350" y="96" fill="#d6d8ea" font-size="9" text-anchor="middle">200  { access, refresh }</text>
+
+    <rect x="20" y="114" width="180" height="32" rx="6" fill="#14162a" stroke="#f0b45e"/>
+    <text x="110" y="128" fill="#f0b45e" font-size="8" text-anchor="middle">stored in Keychain</text>
+    <text x="110" y="140" fill="#f0b45e" font-size="8" text-anchor="middle">or Keystore, never a file</text>
+
+    <text x="350" y="172" fill="#f0b45e" font-size="9" text-anchor="middle">every later request carries the access token</text>
+    <path d="M112,188 L586,188" stroke="#e2703a" stroke-width="1.5" fill="none" marker-end="url(#ar19)"/>
+    <text x="350" y="184" fill="#d6d8ea" font-size="9" text-anchor="middle">GET /api/seats/   Authorization: Bearer eyJ...</text>
+
+    <path d="M588,214 L114,214" stroke="#8fd694" stroke-width="1.5" fill="none" marker-end="url(#ar19b)"/>
+    <text x="350" y="210" fill="#d6d8ea" font-size="9" text-anchor="middle">200  { "seats_left": 22 }</text>
+
+    <path d="M112,244 L586,244" stroke="#5f6b7a" stroke-width="1.2" fill="none" stroke-dasharray="3 3" marker-end="url(#ar19)"/>
+    <text x="350" y="240" fill="#5f6b7a" font-size="9" text-anchor="middle">on 401: POST /refresh/ once, then retry. If that fails too, send the user to login.</text>
+
+    <rect x="0" y="266" width="700" height="18" rx="6" fill="#14162a" stroke="#8fd694"/>
+    <text x="350" y="279" fill="#8fd694" font-size="9" text-anchor="middle">the app attaches the header deliberately, so CSRF does not apply here at all</text>
+  </g>
+</svg>

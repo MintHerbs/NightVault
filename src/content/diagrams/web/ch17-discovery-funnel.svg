@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 736 270" width="736" height="270" font-family="ui-monospace, Menlo, Consolas, monospace" role="img" aria-label="The funnel from a store impression through install to a retained user">
+  <rect width="736" height="270" fill="#0b0d17"/>
+  <g transform="translate(18, 18)">
+    <text x="350" y="10" fill="#5f6b7a" font-size="10" text-anchor="middle">every step loses most of the people who reached it</text>
+
+    <rect x="60" y="26" width="580" height="30" rx="6" fill="#14162a" stroke="#8fd694"/>
+    <text x="350" y="46" fill="#fff" font-size="10" text-anchor="middle">sees your listing in the store</text>
+
+    <rect x="120" y="66" width="460" height="30" rx="6" fill="#14162a" stroke="#8fd694"/>
+    <text x="350" y="86" fill="#fff" font-size="10" text-anchor="middle">taps it (the icon does this work)</text>
+
+    <rect x="180" y="106" width="340" height="30" rx="6" fill="#14162a" stroke="#f0b45e"/>
+    <text x="350" y="126" fill="#fff" font-size="10" text-anchor="middle">installs (screenshots do this work)</text>
+
+    <rect x="230" y="146" width="240" height="30" rx="6" fill="#14162a" stroke="#e2703a"/>
+    <text x="350" y="166" fill="#fff" font-size="10" text-anchor="middle">opens it once</text>
+
+    <rect x="275" y="186" width="150" height="30" rx="6" fill="#14162a" stroke="#c1440e"/>
+    <text x="350" y="206" fill="#fff" font-size="10" text-anchor="middle">comes back</text>
+
+    <text x="655" y="46" fill="#5f6b7a" font-size="8">impression</text>
+    <text x="655" y="86" fill="#5f6b7a" font-size="8">tap</text>
+    <text x="655" y="126" fill="#5f6b7a" font-size="8">install</text>
+    <text x="655" y="166" fill="#5f6b7a" font-size="8">first open</text>
+    <text x="655" y="206" fill="#c1440e" font-size="8">retained</text>
+
+    <text x="0" y="126" fill="#5f6b7a" font-size="8">the early</text>
+    <text x="0" y="138" fill="#5f6b7a" font-size="8">steps matter</text>
+    <text x="0" y="150" fill="#5f6b7a" font-size="8">far more</text>
+    <text x="0" y="162" fill="#5f6b7a" font-size="8">than they</text>
+    <text x="0" y="174" fill="#5f6b7a" font-size="8">feel like</text>
+    <text x="0" y="186" fill="#5f6b7a" font-size="8">they should</text>
+
+    <text x="350" y="230" fill="#8fd694" font-size="9" text-anchor="middle">a PWA removes the install step entirely, which is why it is worth considering</text>
+  </g>
+</svg>
