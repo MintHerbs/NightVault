@@ -1,6 +1,6 @@
 // Router shell — global UI + state. Route table lives in src/routes/index.jsx.
 import { BrowserRouter, useLocation } from 'react-router-dom'
-import { createContext, useRef, useState, Suspense, useEffect } from 'react'
+import { useCallback, useRef, useState, Suspense, useEffect } from 'react'
 import { usePresence } from './hooks/usePresence'
 import useChat from './hooks/useChat'
 import { ThemeProvider } from './hooks/useTheme'
@@ -10,21 +10,34 @@ import Sidebar from './components/layout/Sidebar'
 import Starfield from './components/effects/Starfield/Starfield'
 import { ChatPanel, ChatDimOverlay } from './features/chat/components'
 import { AppRoutes, preloadRoutes } from './routes'
-
-export const OnlineCountContext = createContext(1)
+import { songs } from './config/songs'
 
 function AppContent() {
   const location = useLocation()
-  const { onlineCount } = usePresence()
+  const { onlineCount, presenceSynced } = usePresence()
   const musicPlayerRef = useRef(null)
-  const [isPlaying, setIsPlaying] = useState(true)
+  // Starts false and is corrected by the player's own state events. Assuming
+  // playback here made the pill's icon lie from first paint whenever the
+  // browser blocked autoplay, with nothing to ever correct it (T-079).
+  const [isPlaying, setIsPlaying] = useState(false)
   const [aiState, setAIState] = useState('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const [activeChild, setActiveChild] = useState('btree')
   const [isChatOpen, setIsChatOpen] = useState(false)
-  const [currentSongId, setCurrentSongId] = useState('wjJ3-SzxhCk')
+  // Which surface opened chat. The island only offers its "Back" shortcut for
+  // a chat it opened itself (T-080), so this has to be state rather than a
+  // ref — the island re-renders on it.
+  const [chatSource, setChatSource] = useState(null)
+  // Single source of truth for the track: the island used to keep its own
+  // index alongside this, synced one way, free to drift.
+  const [currentSongIndex, setCurrentSongIndex] = useState(0)
+  // Whether the next track change should start playing or just cue. A track
+  // ending should roll on; a visitor skipping while paused should stay paused.
+  const [autoplayOnTrackChange, setAutoplayOnTrackChange] = useState(true)
   const sessionId = localStorage.getItem('session_id') || 'anonymous'
-  const { unreadCount } = useChat(isChatOpen)
+  const { unreadCount, lastIncoming } = useChat(isChatOpen)
+
+  const currentSong = songs[currentSongIndex]
 
   const isToolsRoute = location.pathname.startsWith('/tools/')
   const isAdminRoute = location.pathname.startsWith('/admin')
@@ -63,8 +76,38 @@ function AppContent() {
     } else {
       musicPlayerRef.current?.play()
     }
-    setIsPlaying(prev => !prev)
+    // Deliberately not flipped optimistically here — the player reports back
+    // through onPlayingChange, which is the only thing that knows what
+    // actually happened (a blocked autoplay, a buffer stall, an ad).
   }
+
+  const skipTrack = (delta) => {
+    setAutoplayOnTrackChange(isPlaying)
+    setCurrentSongIndex((prev) => (prev + delta + songs.length) % songs.length)
+  }
+
+  const handleTrackEnd = () => {
+    setAutoplayOnTrackChange(true)
+    setCurrentSongIndex((prev) => (prev + 1) % songs.length)
+  }
+
+  // Stable identity: the island restarts its progress poll whenever this
+  // changes, so an inline arrow would restart it on every render.
+  const getProgress = useCallback(() => musicPlayerRef.current?.getProgress() ?? 0, [])
+
+  const openChatFromIsland = useCallback(() => {
+    setChatSource('island')
+    setIsChatOpen(true)
+  }, [])
+
+  const closeChat = useCallback(() => setIsChatOpen(false), [])
+
+  // Sidebar toggles with a functional updater, so this has to forward whatever
+  // it passes rather than assuming a boolean.
+  const setChatOpenFromSidebar = useCallback((next) => {
+    setChatSource('sidebar')
+    setIsChatOpen(next)
+  }, [])
 
   const handleAIStateChange = (newState, message = '') => {
     setAIState(newState)
@@ -85,11 +128,20 @@ function AppContent() {
       {isChatOpen && !isToolsRoute && <ChatDimOverlay />}
       <DynamicIsland
         onlineCount={onlineCount}
+        presenceSynced={presenceSynced}
         isPlaying={isPlaying}
         onPlayPause={handlePlayPause}
         aiState={aiState}
         errorMessage={errorMessage}
-        onSongChange={setCurrentSongId}
+        currentSong={currentSong}
+        onSkipBack={() => skipTrack(-1)}
+        onSkipForward={() => skipTrack(1)}
+        getProgress={getProgress}
+        lastIncoming={lastIncoming}
+        isChatOpen={isChatOpen}
+        chatOpenedFromIsland={chatSource === 'island'}
+        onOpenChat={openChatFromIsland}
+        onCloseChat={closeChat}
       />
       {/* Global sidebar - persists on every route EXCEPT admin, which has its
           own AdminBrowser + EditorNavbar chrome (owner decision 2026-07-23:
@@ -100,11 +152,21 @@ function AppContent() {
           activeChild={activeChild}
           onChildSelect={setActiveChild}
           isChatOpen={isChatOpen}
-          setIsChatOpen={setIsChatOpen}
+          setIsChatOpen={setChatOpenFromSidebar}
           unreadCount={unreadCount}
         />
       )}
-      {!isAdminRoute && <MusicPlayer ref={musicPlayerRef} videoId={currentSongId} />}
+      {/* Rendered on every route, including /admin. Gating this on
+          !isAdminRoute destroyed the player mid-song on navigation there and
+          left the island's transport controls no-oping against a null ref
+          while the pill still displayed them (T-079). */}
+      <MusicPlayer
+        ref={musicPlayerRef}
+        videoId={currentSong.id}
+        autoplayOnChange={autoplayOnTrackChange}
+        onPlayingChange={setIsPlaying}
+        onTrackEnd={handleTrackEnd}
+      />
 
       {/* Only routes fade — nothing else */}
       <div style={{
@@ -113,19 +175,20 @@ function AppContent() {
         transition: 'opacity 0.3s ease'
       }}>
         <Suspense fallback={null}>
-          <OnlineCountContext.Provider value={onlineCount}>
-            <AppRoutes
-              onAIStateChange={setAIState}
-              onChatOpen={() => setIsChatOpen(true)}
-            />
-          </OnlineCountContext.Provider>
+          {/* handleAIStateChange, not setAIState: the wrapper is what carries
+              the error message through and auto-clears the error state, and
+              wiring the raw setter here meant neither ever happened. */}
+          <AppRoutes
+            onAIStateChange={handleAIStateChange}
+            onChatOpen={() => setIsChatOpen(true)}
+          />
         </Suspense>
       </div>
 
       {/* Chat panel outside the fading wrapper */}
       <ChatPanel
         isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
+        onClose={closeChat}
         sessionId={sessionId}
       />
     </>

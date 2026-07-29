@@ -3,6 +3,11 @@ import { isSupabaseConfigured, supabase } from '../lib/supabaseClient'
 
 export function usePresence() {
   const [onlineCount, setOnlineCount] = useState(1)
+  // The Dynamic Island's greeting state waits on this before labelling
+  // itself, so it can't announce the placeholder "1 online" and then jump
+  // to the real count mid-hold. Stays false forever when Supabase isn't
+  // configured; callers must carry their own timeout for that case.
+  const [presenceSynced, setPresenceSynced] = useState(false)
 
   useEffect(() => {
     if (!isSupabaseConfigured) return undefined
@@ -22,6 +27,7 @@ export function usePresence() {
     channel.on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState()
       setOnlineCount(Object.keys(state).length)
+      setPresenceSynced(true)
     })
 
     // Subscribe and track this user
@@ -43,5 +49,5 @@ export function usePresence() {
     }
   }, [])
 
-  return { onlineCount }
+  return { onlineCount, presenceSynced }
 }

@@ -1,4 +1,7 @@
-/* DynamicIsland - Three-state pill component */
+/* DynamicIsland - top-centre pill. The full list of states it can display
+   lives in DynamicIsland.jsx's displayStateFor(). The component's spring and
+   entrance animations are gated on prefers-reduced-motion there; the
+   CSS-driven transitions are muted at the bottom of this file. */
 
 /* Wrapper: handles fixed positioning + full width */
 .wrapper {
@@ -13,6 +16,20 @@
   align-items: flex-start;
   z-index: 9999;
   pointer-events: none; /* doesn't block clicks on the page */
+}
+
+/* Stable live region for screen readers. Kept outside the pill so it can't
+   participate in the layout animation. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* Inner center: flex center — never moves */
@@ -48,49 +65,19 @@
   box-shadow: 0 0 0 1px #222;
 }
 
-/* State: idle - just the green dot */
-.pill[data-state="idle"] {
-  cursor: pointer;
-}
-
-/* State: hover - dot + "1 online" text */
-.pill[data-state="hover"] {
-  cursor: pointer;
-}
-
-/* State: music - full expanded panel */
-.pill[data-state="music"] {
-  cursor: default;
-}
-
-/* State: thinking - expanded pill */
-.pill[data-state="thinking"] {
-  cursor: pointer;
-}
-
-/* State: generating - expanded pill */
-.pill[data-state="generating"] {
-  cursor: pointer;
-}
-
-/* State: observing - expanded pill */
-.pill[data-state="observing"] {
-  cursor: pointer;
-}
-
-/* State: waiting - expanded pill */
-.pill[data-state="waiting"] {
-  cursor: pointer;
-}
-
-/* State: processing - expanded pill */
-.pill[data-state="processing"] {
-  cursor: pointer;
-}
-
-/* State: error - show error message */
+/* States: idle, greeting, hover, chat, and the AI states are all clickable,
+   which .pill already covers. Only two aren't: an open music panel (interact
+   with the buttons inside it instead) and an error message (nothing to act
+   on). Every state that reaches data-state is listed in DynamicIsland.jsx's
+   displayStateFor(). */
+.pill[data-state="music"],
 .pill[data-state="error"] {
   cursor: default;
+}
+
+.pill:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 2px;
 }
 
 .content {
@@ -103,6 +90,32 @@
 .pill[data-state="music"] .content {
   padding: 12px 16px;
   width: 280px;
+}
+
+.pill[data-state="chat"] .content {
+  padding: 10px 16px;
+  width: 240px;
+}
+
+.pill[data-state="timer"] .content {
+  padding: 10px 16px;
+  width: 260px;
+}
+
+/* The set-time view is the one state that grows the pill into a real panel
+   rather than a strip. Deliberate: a two-field picker does not fit a pill, and
+   expanding for a task like this is how the pattern behaves on iOS (T-081). */
+.pill[data-state="timer-set"] .content {
+  padding: 14px 16px 12px;
+  width: 268px;
+}
+
+.pill[data-state="break"] .content {
+  padding: 10px 18px;
+}
+
+.pill[data-state="timer-done"] .content {
+  padding: 10px 18px;
 }
 
 /* AI states: thinking, generating, observing, waiting, processing - expanded pill */
@@ -150,15 +163,45 @@
 }
 
 .albumArt {
+  position: relative;
   width: 40px;
   height: 40px;
   background: #0a0a0a;
-  border-radius: 8px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 18px;
   flex-shrink: 0;
+}
+
+.albumEmoji {
+  line-height: 1;
+}
+
+/* Playback progress, drawn as a ring around the album art. Polled from the
+   YouTube player rather than pushed — the IFrame API has no time-update
+   event. */
+.progressRing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.progressTrack {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 2;
+}
+
+.progressBar {
+  fill: none;
+  stroke: #22c55e;
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s linear;
 }
 
 .songInfo {
@@ -218,6 +261,369 @@
   background-color: rgba(255, 255, 255, 0.15);
 }
 
+/* Segmented hover: count on the left, a way into each panel on the right.
+   The divider is the seam between "status" and "controls". */
+.segmentDivider {
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: #2a2a2a;
+  flex-shrink: 0;
+}
+
+.segmentButton {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  padding: 4px;
+  margin: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.segmentButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.segmentButton:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 1px;
+}
+
+/* Study timer panel */
+.timerPanel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* A button, not a label: clicking the time is how you open the custom picker.
+   Styled to stay a readout rather than announce itself as a control, with the
+   affordance appearing on hover and focus. */
+.timerReadout {
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 3px 6px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.timerReadout:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.timerReadout:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 1px;
+}
+
+.timerPresets {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.timerPreset {
+  background: none;
+  border: none;
+  /* 0.5 is the floor LT-001 allows for text here, and matches .artistName /
+     .chatSnippet. The pill is never themed, so --md-* tokens are not an
+     option inside it (docs/design.md) — the selected preset earns its
+     emphasis from a background chip instead of a brighter grey. */
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 3px 5px;
+  margin: 0;
+  border-radius: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.timerPreset:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.timerPreset[data-selected="true"] {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+.timerControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.timerControls .controlButton:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* Set-time view: hours + minutes, stacked rather than crammed into a strip. */
+.timerSetPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.timerSetHeader {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.timerSetFields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timerSetField {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  background: #0a0a0a;
+  border: 1px solid #222;
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.timerStepper {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 5px;
+  margin: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.timerStepper:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.timerStepper:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.timerSetLabelled {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  flex: 1;
+  justify-content: center;
+  cursor: text;
+}
+
+/* The pill sets user-select: none for dragging; an input has to opt back in. */
+.timerSetInput {
+  width: 2.2ch;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  user-select: text;
+}
+
+.timerSetInput:focus {
+  outline: none;
+}
+
+/* Ring on the wrapper, not the input: on the input it cropped the h/m unit
+   sitting immediately to its right. */
+.timerSetLabelled:focus-within {
+  outline: 2px solid #22c55e;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.timerSetUnit {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.timerSetActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.timerSetGhost,
+.timerSetPrimary {
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  margin: 0;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.timerSetGhost {
+  background: none;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.timerSetGhost:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.timerSetPrimary {
+  background-color: #22c55e;
+  color: #04140a;
+}
+
+.timerSetPrimary:hover:not(:disabled) {
+  background-color: #16a34a;
+}
+
+.timerSetPrimary:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* Timer completion */
+.timerDonePanel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timerDoneIcon {
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+.timerDoneText {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+/* Hourly break reminder */
+.breakPanel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.breakText {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+/* Return-to-page shortcut, offered for 60s after the island opened chat */
+.returnPanel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+}
+
+.returnText {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+/* Chat notification. Coalesced: one pill per burst, relabelled with a count,
+   never a queue of pops. Gating lives in src/hooks/useChatNotification.js. */
+.chatPanel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.chatIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+.chatText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.chatTitle {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.chatSnippet {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* AI state text */
 .aiText {
   color: #fff;
@@ -252,6 +658,35 @@
     width: min(280px, calc(100vw - 64px));
   }
 
+  .pill[data-state="chat"] .content {
+    width: min(240px, calc(100vw - 64px));
+  }
+
+  .pill[data-state="timer"] .content {
+    width: min(260px, calc(100vw - 64px));
+  }
+
+  .pill[data-state="timer-set"] .content {
+    width: min(268px, calc(100vw - 64px));
+  }
+
+  .timerStepper {
+    padding: 9px;
+  }
+
+  .pill[data-state="break"] .content,
+  .pill[data-state="timer-done"] .content {
+    max-width: calc(100vw - 64px);
+  }
+
+  .segmentButton {
+    padding: 8px;
+  }
+
+  .timerPreset {
+    padding: 6px 7px;
+  }
+
   .pill[data-state="thinking"] .content,
   .pill[data-state="generating"] .content,
   .pill[data-state="observing"] .content,
@@ -269,5 +704,20 @@
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+}
+
+/* Last in the file so it outranks the transitions it mutes. The spring and
+   entrance animations are handled in JS via Motion's useReducedMotion. */
+@media (prefers-reduced-motion: reduce) {
+  .progressBar,
+  .controlButton,
+  .segmentButton,
+  .timerPreset,
+  .timerReadout,
+  .timerStepper,
+  .timerSetGhost,
+  .timerSetPrimary {
+    transition: none;
   }
 }
