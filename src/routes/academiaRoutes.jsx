@@ -20,6 +20,7 @@ const LogicalEquivalencePage = lazy(() => import('../pages/logic/proof/LogicalEq
 const TableauxPage = lazy(() => import('../pages/logic/tableaux/TableauxPage'))
 const GradeToolkitPage = lazy(() => import('../pages/tools/grade-toolkit/GradeToolkitPage'))
 const HomePage = lazy(() => import('../pages/home/HomePage'))
+export const CourseLandingPage = lazy(() => import('../pages/course/CourseLandingPage'))
 
 // The CPA calculator and "Min effort, max result" tools were fused into the
 // Grade Toolkit. Keep the old paths alive as redirects that deep-link into the
@@ -61,6 +62,7 @@ export function preloadAcademiaRoutes() {
   import('../pages/algo/recurrence/RecurrencePage')
   import('../pages/tools/grade-toolkit/GradeToolkitPage')
   import('../pages/home/HomePage')
+  import('../pages/course/CourseLandingPage')
   import('../pages/notes/NotesPage')
   import('../pages/notes-browser/NotesBrowserPage')
 }

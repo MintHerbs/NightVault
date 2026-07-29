@@ -1,73 +1,42 @@
-import {
-  Calculator,
-  ChartLineUp,
-  Files,
-  Function as FunctionIcon,
-  Globe,
-  Graph,
-  TreeStructure,
-} from '@phosphor-icons/react';
+import { useEffect, useMemo, useState } from 'react';
 import PageShell from '../../components/layout/PageShell';
 import Footer from '../../components/layout/Footer';
-import Card from '../../components/ui/Card';
+import AsciiCard from '../../components/ui/AsciiCard';
+import Loading from '../../components/ui/Loading';
+import { listCourses } from '../../lib/coursesApi';
+import { resolveCoverField } from '../../constants/coverPresets';
+import { TOOLS } from '../../constants/tools';
+import { eye } from '../../lib/asciiArt/fields';
 import styles from './home.module.css';
 
-// Icons come from @phosphor-icons/react — the same set the sidebar uses
-// (see src/components/layout/Sidebar/modules.js). Calculator and Globe are
-// deliberately the sidebar's own icons for these destinations.
-const TOOLS = [
-  {
-    id: 'notes',
-    title: 'Notes',
-    description: 'Browse every subject\'s notes, folder by folder.',
-    Icon: Files,
-    route: '/notes-browser',
-  },
-  {
-    id: 'cpa',
-    title: 'CPA Calculator',
-    description: 'Work out your CPA and see what each module does to it.',
-    Icon: Calculator,
-    route: '/tools/grade-toolkit',
-  },
-  {
-    id: 'btree',
-    title: 'B+ Tree Visualizer',
-    description: 'Insert, delete, and search keys with every step animated.',
-    Icon: TreeStructure,
-    route: '/tree',
-  },
-  {
-    id: 'erd',
-    title: 'ERD Visualizer',
-    description: 'Turn a schema description into an entity relationship diagram.',
-    Icon: Graph,
-    route: '/erd',
-  },
-  {
-    id: 'complexity',
-    title: 'Code Complexity',
-    description: 'Paste code and get its Big-O complexity line by line.',
-    Icon: ChartLineUp,
-    route: '/algo/code-complexity',
-  },
-  {
-    id: 'recurrence',
-    title: 'Recurrence Relation',
-    description: 'Solve recurrences and follow the substitution steps.',
-    Icon: FunctionIcon,
-    route: '/algo/recurrence-relation',
-  },
-  {
-    id: 'socials',
-    title: 'Socials',
-    description: 'Post, read, and reply on the community feed.',
-    Icon: Globe,
-    route: '/social/feed',
-  },
-];
+// Every non-hidden course gets its own animated card, routing into that
+// course's own landing page (Notes + every tool). Grade Toolkit and
+// Socials aren't tied to any one course, so they stay standalone
+// top-level cards instead of moving inside a course page (T-077).
+const GRADE_TOOLKIT = TOOLS.find((t) => t.id === 'grades');
 
 export default function HomePage() {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    listCourses()
+      .then((rows) => { if (!cancelled) setCourses(rows.filter((c) => !c.hidden)); })
+      .catch(() => { if (!cancelled) setCourses([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Resolved once per course list, not per render: an uploaded cover makes
+  // resolveCoverField build a fresh field function each call, and AsciiCanvas
+  // keys its animation loop on that function's identity — recomputing inline
+  // would restart every cover's animation on every parent render.
+  const covers = useMemo(
+    () => new Map(courses.map((c) => [c.id, resolveCoverField(c)])),
+    [courses],
+  );
+
   return (
     <PageShell variant="content" navbar={{ showAbout: true, showDisclaimer: true }}>
       <section className={styles.hero}>
@@ -79,19 +48,38 @@ export default function HomePage() {
 
       <section className={styles.section}>
         <p className={styles.sectionSubtitle}>
-          Pick a tool to get started. Everything runs in your browser.
+          Pick a course to get started. Everything runs in your browser.
         </p>
-        <div className={styles.toolGrid}>
-          {TOOLS.map(({ id, title, description, Icon, route }) => (
-            <Card
-              key={id}
-              title={title}
-              description={description}
-              icon={<Icon size={22} weight="regular" />}
-              to={route}
+        {loading ? (
+          <Loading />
+        ) : (
+          <div className={styles.toolGrid}>
+            {courses.map((course) => (
+              <AsciiCard
+                key={course.id}
+                title={course.name}
+                description="Notes, tools, and everything under this course."
+                field={covers.get(course.id)}
+                to={`/courses/${course.id}`}
+                cta="Get started"
+              />
+            ))}
+            <AsciiCard
+              title={GRADE_TOOLKIT.title}
+              description={GRADE_TOOLKIT.description}
+              field={GRADE_TOOLKIT.field}
+              to={GRADE_TOOLKIT.route}
+              cta="Get started"
             />
-          ))}
-        </div>
+            <AsciiCard
+              title="Socials"
+              description="Post, read, and reply on the community feed."
+              field={eye}
+              to="/social/feed"
+              cta="Get started"
+            />
+          </div>
+        )}
       </section>
 
       <Footer />
