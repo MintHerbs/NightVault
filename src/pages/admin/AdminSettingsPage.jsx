@@ -185,12 +185,18 @@ function AdminSettingsContent() {
         sort_order: card?.sort_order ?? null,
       })
       setCard(saved)
+      // contributor_cards_sync_avatar (0045) mirrors photo_url into
+      // avatar_url in the database, but ONLY when photo_url actually changed
+      // (or on the card's first insert) — an edit that leaves the photo
+      // alone (e.g. just updating role_text) doesn't touch avatar_url there.
+      // Gating on `cardPhotoChanged` here, read before it's reset below,
+      // keeps this optimistic update honest: without it, re-saving an
+      // unrelated field would overwrite a manually-set profile photo in the
+      // UI with the card's (unchanged) photo, even though the database never
+      // made that write — a divergence that would only reveal itself as a
+      // flicker back on the next reload.
+      if (cardPhotoChanged && saved.photo_url) setAvatarUrl(saved.photo_url)
       setCardPhotoChanged(false)
-      // contributor_cards_sync_avatar (0045) just did this same write in the
-      // database — mirroring it in local state means the "Profile photo"
-      // section above updates immediately instead of looking stale until a
-      // reload happens to refetch `profile`.
-      if (saved.photo_url) setAvatarUrl(saved.photo_url)
       showToast('Contributor card saved', 'success')
     } catch (err) {
       showToast(`Failed to save contributor card: ${err.message}`, 'error')
