@@ -111,13 +111,22 @@ export function IdentifyingRelationshipDiamond({ x, y, width, height, label }) {
   )
 }
 
-export function IsATriangle({ x, y, width, height, label }) {
+// Both orientations are in common textbook use for the same hierarchy. Upright
+// points the apex at the superclass; inverted meets it with the flat edge.
+// The label sits toward the wide end so it stays inside the shape.
+export function IsATriangle({ x, y, width, height, label, orientation = 'upright' }) {
   const hw = width / 2
-  const points = `${x},${y - height / 2} ${x + hw},${y + height / 2} ${x - hw},${y + height / 2}`
+  const hh = height / 2
+  const inverted = orientation === 'inverted'
+
+  const points = inverted
+    ? `${x - hw},${y - hh} ${x + hw},${y - hh} ${x},${y + hh}`
+    : `${x},${y - hh} ${x + hw},${y + hh} ${x - hw},${y + hh}`
+
   return (
     <g>
       <polygon points={points} fill="#065f46" stroke="#6ee7b7" strokeWidth="1.5" />
-      <text x={x} y={y + 6} fill="#ffffff" fontSize="13" fontWeight="600"
+      <text x={x} y={inverted ? y - 6 : y + 6} fill="#ffffff" fontSize="12" fontWeight="600"
         textAnchor="middle" dominantBaseline="middle">{label}</text>
     </g>
   )

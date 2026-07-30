@@ -1,95 +1,91 @@
-// Pure async function module for calling Gemini API
-// No React imports - this is a service layer module
+// Client for the server-side ERD generation endpoint.
+//
+// The API key is held by /api/gemini and never reaches the browser (issue #12).
+// This module only ever sends the user's scenario text.
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { parseERD } from './erdParser.js';
+import { parseERD } from './erdParser.js'
+
+const ENDPOINT = '/api/gemini'
+
+// Errors where retrying the same request would fail the same way, so the UI
+// should offer the manual copy/paste flow instead of a retry button.
+const TERMINAL_CODES = new Set(['no_key', 'quota', 'forbidden'])
 
 /**
- * Generic Gemini API caller with custom parser
- * @param {string} prompt - The full prompt string
- * @param {Function} parser - Parser function that takes jsonString and returns {valid, data, error}
- * @returns {Promise<{success: true, data: Object} | {success: false, error: string}>}
+ * Generates an ERD from a scenario description.
+ * @param {string} question - The user's description of their ER scenario
+ * @returns {Promise<{success: true, data: Object} | {success: false, error: string, code: string, terminal: boolean}>}
  */
-export async function callGeminiWithParser(prompt, parser) {
+export async function generateERD(question) {
+  let response
   try {
-    // Initialize Gemini API
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    
-    if (!apiKey) {
-      return {
-        success: false,
-        error: 'Gemini API key not configured'
-      };
-    }
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
-
-    // Log 1: Before API call
-    console.log('[Gemini] Calling with prompt length:', prompt.length);
-
-    // Call Gemini API
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    let text = response.text();
-
-    // Log 2: Raw response
-    console.log('[Gemini] Raw response:', text);
-
-    if (!text) {
-      return {
-        success: false,
-        error: 'Empty response from Gemini API'
-      };
-    }
-
-    // Strip markdown code fences if present
-    // Remove ```json at the start
-    text = text.replace(/^```json\s*/i, '');
-    // Remove ``` at the end
-    text = text.replace(/\s*```\s*$/, '');
-    // Remove any remaining ``` blocks
-    text = text.replace(/```/g, '');
-    // Trim whitespace
-    text = text.trim();
-
-    // Log 3: After stripping fences
-    console.log('[Gemini] After stripping fences:', text);
-
-    // Parse and validate using provided parser
-    const parseResult = parser(text);
-
-    // Log 4: Parse result
-    console.log('[Gemini] Parse result:', parseResult);
-
-    if (!parseResult.valid) {
-      return {
-        success: false,
-        error: `Invalid format: ${parseResult.error}`
-      };
-    }
-
-    // Success!
-    return {
-      success: true,
-      data: parseResult.data
-    };
-
-  } catch (error) {
-    // Catch any errors (network, API, parsing, etc.)
-    console.error('[Gemini] Exception caught:', error);
+    response = await fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ question }),
+    })
+  } catch {
+    // Offline, blocked, or the endpoint does not exist — the case in `vite dev`,
+    // where serverless functions are not served. Manual flow is the way through.
     return {
       success: false,
-      error: error.message || 'Failed to generate response'
-    };
+      error: 'Could not reach the generator',
+      code: 'network',
+      terminal: true,
+    }
   }
-}
 
-/**
- * Calls Gemini API to generate ERD JSON from a prompt
- * @param {string} prompt - The full prompt string from erdPromptBuilder
- * @returns {Promise<{success: true, data: Object} | {success: false, error: string}>}
- */
-export async function callGemini(prompt) {
-  return callGeminiWithParser(prompt, parseERD);
+  // A 404 here means the function is not deployed; treat it like any other
+  // unavailability rather than surfacing an HTML error page to the user.
+  if (response.status === 404) {
+    return {
+      success: false,
+      error: 'Automatic generation is unavailable',
+      code: 'not_deployed',
+      terminal: true,
+    }
+  }
+
+  let payload
+  try {
+    payload = await response.json()
+  } catch {
+    return {
+      success: false,
+      error: 'The generator returned an unreadable response',
+      code: 'bad_response',
+      terminal: true,
+    }
+  }
+
+  if (!response.ok) {
+    const code = payload.code ?? 'upstream'
+    return {
+      success: false,
+      error: payload.error ?? 'Generation failed',
+      code,
+      terminal: TERMINAL_CODES.has(code),
+    }
+  }
+
+  // Strip markdown fences. responseMimeType should prevent these, but models
+  // still emit them often enough that dropping them is cheaper than a retry.
+  const text = String(payload.text ?? '')
+    .replace(/^```json\s*/i, '')
+    .replace(/\s*```\s*$/, '')
+    .replace(/```/g, '')
+    .trim()
+
+  const parsed = parseERD(text)
+  if (!parsed.valid) {
+    // The model answered but broke the schema. Worth one retry, so not terminal.
+    return {
+      success: false,
+      error: `The generated diagram was malformed: ${parsed.error}`,
+      code: 'invalid_schema',
+      terminal: false,
+    }
+  }
+
+  return { success: true, data: parsed.data }
 }

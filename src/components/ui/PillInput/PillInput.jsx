@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from './PillInput.module.css'
 
-function PillInput({ activeTool, onSubmit, onAIStateChange, placeholder, defaultValue = '', inputRef }) {
+function PillInput({ activeTool, onSubmit, onAIStateChange, placeholder, defaultValue = '', inputRef, disabled = false, onValueChange }) {
   const [value, setValue] = useState(defaultValue)
   const internalRef = useRef(null)
   const hasTriggeredObserving = useRef(false)
@@ -20,6 +20,7 @@ function PillInput({ activeTool, onSubmit, onAIStateChange, placeholder, default
   const handleChange = (e) => {
     const newValue = e.target.value
     setValue(newValue)
+    if (typeof onValueChange === 'function') onValueChange(newValue)
 
     // Trigger 'observing' on first keystroke (only once per session)
     if (newValue.length > 0 && !hasTriggeredObserving.current && typeof onAIStateChange === 'function') {
@@ -51,10 +52,11 @@ function PillInput({ activeTool, onSubmit, onAIStateChange, placeholder, default
   }
 
   const handleSubmit = () => {
-    if (value.trim().length === 0) return
-    
+    if (disabled || value.trim().length === 0) return
+
     onSubmit(value)
     setValue('')
+    if (typeof onValueChange === 'function') onValueChange('')
   }
 
   const handleKeyDown = (e) => {
@@ -85,10 +87,11 @@ function PillInput({ activeTool, onSubmit, onAIStateChange, placeholder, default
         onFocus={handleFocus}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
+        disabled={disabled}
       />
       
       {/* Send button - only visible when input has content */}
-      {hasContent && (
+      {hasContent && !disabled && (
         <button 
           className={styles.sendButton}
           onClick={handleSubmit}

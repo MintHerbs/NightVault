@@ -1,6 +1,10 @@
-// ER Diagram Builder page - 3-step paginated flow
-import { useState, useEffect } from 'react'
-import { flushSync } from 'react-dom'
+// ER Diagram Builder page.
+//
+// Primary path: the scenario goes to /api/gemini and the diagram renders directly.
+// Fallback path: if generation is unavailable (not deployed, quota spent, offline)
+// the original copy-the-prompt / paste-the-JSON steps take over, so the tool never
+// hard-fails on someone mid-revision.
+import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Starfield from '../../components/effects/Starfield/Starfield'
 import Navbar from '../../components/layout/Navbar/Navbar'
@@ -11,188 +15,193 @@ import ERDStep3 from '../../features/erd/components/ERDStep3/ERDStep3'
 import ERDCanvas from '../../features/erd/components/ERDCanvas/ERDCanvas'
 import { buildERDPrompt } from '../../lib/erdPromptBuilder'
 import { parseERD } from '../../lib/erdParser'
+import { generateERD } from '../../lib/geminiService'
 import styles from './ERDPage.module.css'
+
+// Long enough to read the success state on the island before it collapses
+const SUCCESS_HOLD_MS = 2000
 
 function ERDPage({ onAIStateChange }) {
   const location = useLocation()
   const navigate = useNavigate()
   const initialQuestion = location.state?.question || ''
-  
+
   const [step, setStep] = useState(1)
+  const [question, setQuestion] = useState('')
   const [prompt, setPrompt] = useState('')
   const [parsedERD, setParsedERD] = useState(null)
   const [error, setError] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [fallbackReason, setFallbackReason] = useState(null)
+  const [canRetry, setCanRetry] = useState(false)
 
-  // Cleanup: set to 'idle' when leaving the page
+  // Guards against resolving a generation after the user has navigated away
+  const activeRequestRef = useRef(0)
+  const successTimerRef = useRef(null)
+
+  const setAIState = (state) => {
+    if (typeof onAIStateChange === 'function') onAIStateChange(state)
+  }
+
   useEffect(() => {
     return () => {
-      if (typeof onAIStateChange === 'function') {
-        onAIStateChange('idle')
-      }
+      activeRequestRef.current += 1
+      if (successTimerRef.current) clearTimeout(successTimerRef.current)
+      setAIState('idle')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // If question provided from landing page, generate prompt and advance to step 2
-  useEffect(() => {
-    if (initialQuestion) {
-      const generatedPrompt = buildERDPrompt(initialQuestion)
-      
-      // Force synchronous state updates for instant transition
-      flushSync(() => {
-        setPrompt(generatedPrompt)
-        setStep(2)
-      })
-      
-      // Transition to 'waiting' state when advancing to step 2
-      if (typeof onAIStateChange === 'function') {
-        onAIStateChange('waiting')
-      }
+  // Attempts automatic generation, dropping to the manual steps on any failure
+  const runGeneration = async (value) => {
+    const requestId = activeRequestRef.current + 1
+    activeRequestRef.current = requestId
+
+    setQuestion(value)
+    setPrompt(buildERDPrompt(value))
+    setIsGenerating(true)
+    setFallbackReason(null)
+    setError(false)
+    setAIState('generating')
+
+    const result = await generateERD(value)
+    if (activeRequestRef.current !== requestId) return // superseded or unmounted
+
+    setIsGenerating(false)
+
+    if (result.success) {
+      setParsedERD(result.data)
+      setAIState('idle')
+      return
     }
+
+    // Manual flow picks up from step 2 with the prompt already built
+    setFallbackReason(result.error)
+    setCanRetry(!result.terminal)
+    setStep(2)
+    setAIState('waiting')
+  }
+
+  // Question handed over from the landing page
+  useEffect(() => {
+    if (initialQuestion) runGeneration(initialQuestion)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuestion])
 
-  // Step 1: User submits question
   const handleStep1Submit = (value) => {
-    const generatedPrompt = buildERDPrompt(value)
-    
-    // Force synchronous state updates for instant transition
-    flushSync(() => {
-      setPrompt(generatedPrompt)
-      setStep(2)
-    })
-    
-    // Transition to 'waiting' state when advancing to step 2
-    if (typeof onAIStateChange === 'function') {
-      onAIStateChange('waiting')
-    }
+    runGeneration(value)
   }
 
-  // Step 2: User copies prompt and advances to step 3
+  // Escape hatch from step 1: skip generation and go straight to the manual steps
+  const handleUseManualFlow = (value) => {
+    activeRequestRef.current += 1
+    setQuestion(value)
+    setPrompt(buildERDPrompt(value))
+    setIsGenerating(false)
+    setFallbackReason(null)
+    setCanRetry(false)
+    setStep(2)
+    setAIState('waiting')
+  }
+
   const handleStep2Next = () => {
     setStep(3)
   }
 
-  // Step 3: User pastes JSON
+  // Step 3: user pastes JSON they generated elsewhere
   const handleStep3Submit = (value) => {
-    // Show 'thinking' state immediately (synchronously, before any setState)
-    if (typeof onAIStateChange === 'function') {
-      onAIStateChange('thinking')
-    }
-    
-    // Use erdParser to validate
+    setAIState('thinking')
     const result = parseERD(value)
-    
+
     if (result.valid) {
-      // Store parsed data
       setParsedERD(result.data)
       setError(false)
-      
-      // After 3 seconds, collapse to 'idle'
-      setTimeout(() => {
-        if (typeof onAIStateChange === 'function') {
-          onAIStateChange('idle')
-        }
-      }, 3000)
+      successTimerRef.current = setTimeout(() => setAIState('idle'), SUCCESS_HOLD_MS)
     } else {
-      // Show error and reset to idle immediately
       setError(true)
-      if (typeof onAIStateChange === 'function') {
-        onAIStateChange('idle')
-      }
+      setAIState('idle')
     }
   }
 
-  // Previous button - go back one step
   const handlePrevious = () => {
     if (step === 2) {
       setStep(1)
       setError(false)
-      // Back to observing state
-      if (typeof onAIStateChange === 'function') {
-        onAIStateChange('observing')
-      }
+      setFallbackReason(null)
+      setAIState('observing')
     } else if (step === 3) {
       setStep(2)
       setError(false)
-      // Back to waiting state
-      if (typeof onAIStateChange === 'function') {
-        onAIStateChange('waiting')
-      }
+      setAIState('waiting')
     }
   }
 
-  // Reset ERD flow
   const handleReset = () => {
+    activeRequestRef.current += 1
     setStep(1)
+    setQuestion('')
     setPrompt('')
     setParsedERD(null)
     setError(false)
-    if (typeof onAIStateChange === 'function') {
-      onAIStateChange('observing')
-    }
+    setIsGenerating(false)
+    setFallbackReason(null)
+    setCanRetry(false)
+    setAIState('observing')
   }
+
+  const showPrevious = !parsedERD && (step === 2 || step === 3)
 
   return (
     <div className={styles.erdPage}>
-      {/* Starfield background - z-index: 0 */}
       <Starfield />
       <BackButton onClick={() => navigate('/home')} />
 
-      {/* Navbar */}
       {parsedERD ? (
-        <Navbar 
-          showNewFormula={true}
-          onNewFormula={handleReset}
-        />
+        <Navbar showNewFormula={true} onNewFormula={handleReset} />
       ) : (
         <Navbar />
       )}
-      
-      {/* Main content */}
+
       <main className={styles.erdMain}>
-        {/* Previous button - show on steps 2 and 3 (before canvas renders) */}
-        {(step === 2 || (step === 3 && !parsedERD)) && (
+        {showPrevious && (
           <button className={styles.previousButton} onClick={handlePrevious}>
             Previous
           </button>
         )}
-        
-        {/* Step 1: User describes scenario */}
-        {step === 1 && (
-          <ERDStep1 
+
+        {step === 1 && !parsedERD && (
+          <ERDStep1
             initialQuestion={initialQuestion}
             onSubmit={handleStep1Submit}
+            onUseManualFlow={handleUseManualFlow}
+            isGenerating={isGenerating}
             onAIStateChange={onAIStateChange}
             currentStep={1}
             totalSteps={3}
           />
         )}
-        
-        {/* Step 2: Copy prompt */}
-        {step === 2 && (
-          <ERDStep2 
+
+        {step === 2 && !parsedERD && (
+          <ERDStep2
             prompt={prompt}
             onNext={handleStep2Next}
+            fallbackReason={fallbackReason}
+            onRetry={canRetry ? () => runGeneration(question) : null}
             currentStep={2}
             totalSteps={3}
           />
         )}
-        
-        {/* Step 3: Paste JSON (before canvas renders) */}
+
         {step === 3 && !parsedERD && (
-          <ERDStep3 
+          <ERDStep3
             onSubmit={handleStep3Submit}
             error={error}
             currentStep={3}
             totalSteps={3}
           />
         )}
-        
-        {/* Canvas: Rendered diagram (after JSON submission) */}
-        {parsedERD && (
-          <ERDCanvas erdData={parsedERD} />
-        )}
+
+        {parsedERD && <ERDCanvas erdData={parsedERD} />}
       </main>
     </div>
   )

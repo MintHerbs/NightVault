@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { calculateERDLayout } from '../../../../lib/erdLayout'
 import {
   EntityRectangle,
@@ -38,11 +38,12 @@ function nodeShape(node) {
 
   if (node.type === 'attribute') {
     const animationDelay = `${(node.animationIndex || 0) * 0.3}s`
+    // Cases must match the canonical types parseERD emits — see ATTRIBUTE_TYPE_ALIASES
     const Component = (() => {
       switch (node.attrType) {
         case 'key':         return KeyAttributeEllipse
-        case 'partial_key': return PartialKeyAttributeEllipse
-        case 'multivalued': return MultiValuedAttributeEllipse
+        case 'partialKey':  return PartialKeyAttributeEllipse
+        case 'multiValued': return MultiValuedAttributeEllipse
         case 'derived':     return DerivedAttributeEllipse
         default:            return AttributeEllipse
       }
@@ -55,7 +56,7 @@ function nodeShape(node) {
   }
 
   if (node.type === 'isa') {
-    return <IsATriangle {...props} label="IS-A" />
+    return <IsATriangle {...props} label="IS-A" orientation={node.orientation} />
   }
 
   return null
@@ -122,22 +123,64 @@ function ERDCanvas({ erdData }) {
   const [viewBox, setViewBox] = useState({ x: -700, y: -200, width: 1400, height: 900 })
   const [isPanning, setIsPanning] = useState(false)
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
-  
-  // Node dragging state
-  const [dragState, setDragState] = useState(null) // { nodeId, startX, startY, offsetX, offsetY, attributeOffsets }
-  const [nodePositions, setNodePositions] = useState({}) // { nodeId: { x, y, manuallyPlaced } }
+  const [isaOrientation, setIsaOrientation] = useState('upright')
 
-  // Touch tracking refs - read directly (not via dragState/isPanning React state) so a
-  // touchmove immediately following a touchstart always sees up-to-date gating, even before
+  // Positions the user has committed by finishing a drag. Deliberately NOT updated
+  // during the drag itself — writing here re-runs the whole layout.
+  const [committedPositions, setCommittedPositions] = useState({})
+
+  // The in-flight drag, as a translation to apply on top of the base layout.
+  const [dragDelta, setDragDelta] = useState(null) // { nodeId, attributeIds, dx, dy }
+
+  // Touch tracking refs - read directly (not via React state) so a touchmove
+  // immediately following a touchstart always sees up-to-date gating, even before
   // React has committed the corresponding state update
-  const touchPinchRef = useRef(null) // { distance, midpoint }
+  const touchPinchRef = useRef(null) // { distance }
   const touchPanRef = useRef(null) // { x, y } - background single-finger pan
-  const dragStateRef = useRef(null) // mirrors dragState for touch reads
+  const dragRef = useRef(null) // live drag bookkeeping, mirrors dragDelta
+  const rafRef = useRef(null)
 
-  const layout = useMemo(
-    () => erdData ? calculateERDLayout(erdData, nodePositions) : { nodes: [], edges: [] },
-    [erdData, nodePositions]
+  // Base layout. calculateERDLayout runs an O(n^2) relaxation, so it must only be
+  // re-run when the diagram actually changes shape — never per pointer event.
+  const baseLayout = useMemo(
+    () => erdData ? calculateERDLayout(erdData, committedPositions) : { nodes: [], edges: [] },
+    [erdData, committedPositions]
   )
+
+  // Applies the live drag as a plain O(n) translation of the dragged node and the
+  // attributes bonded to it, and re-points the affected edges. No relayout.
+  const layout = useMemo(() => {
+    const oriented = {
+      nodes: baseLayout.nodes.map(n =>
+        n.type === 'isa' ? { ...n, orientation: n.orientation ?? isaOrientation } : n
+      ),
+      edges: baseLayout.edges,
+    }
+
+    if (!dragDelta) {
+      const byId = new Map(oriented.nodes.map(n => [n.id, n]))
+      return {
+        nodes: oriented.nodes,
+        edges: oriented.edges.map(e => ({
+          ...e,
+          fromNode: byId.get(e.from) ?? e.fromNode,
+          toNode: byId.get(e.to) ?? e.toNode,
+        })),
+      }
+    }
+
+    const moving = new Set([dragDelta.nodeId, ...dragDelta.attributeIds])
+    const nodes = oriented.nodes.map(n =>
+      moving.has(n.id) ? { ...n, x: n.x + dragDelta.dx, y: n.y + dragDelta.dy } : n
+    )
+    const byId = new Map(nodes.map(n => [n.id, n]))
+    const edges = oriented.edges.map(e => ({
+      ...e,
+      fromNode: byId.get(e.from) ?? e.fromNode,
+      toNode: byId.get(e.to) ?? e.toNode,
+    }))
+    return { nodes, edges }
+  }, [baseLayout, dragDelta, isaOrientation])
 
   // Convert mouse position to SVG coordinates
   const screenToSVG = useCallback((clientX, clientY) => {
@@ -149,131 +192,101 @@ function ERDCanvas({ erdData }) {
     return { x, y }
   }, [viewBox])
 
-  // Start dragging a node
-  const handleNodeMouseDown = useCallback((e, node) => {
-    // Only drag entities, relationships, and ISA nodes (not attributes)
-    if (node.type === 'attribute') return
-    
-    e.stopPropagation()
-    const svgPos = screenToSVG(e.clientX, e.clientY)
-    
-    // Calculate offset from mouse to node center
-    const offsetX = node.x - svgPos.x
-    const offsetY = node.y - svgPos.y
-    
-    // Find all attributes belonging to this node
-    const attributeOffsets = []
-    if (node.type === 'entity' || node.type === 'relationship') {
-      layout.nodes.forEach(n => {
-        if (n.type === 'attribute') {
-          // Check if this attribute belongs to the dragged node
-          const edge = layout.edges.find(e => 
-            e.type === 'attribute-link' && 
-            e.from === node.id && 
-            e.to === n.id
-          )
-          if (edge) {
-            attributeOffsets.push({
-              id: n.id,
-              offsetX: n.x - node.x,
-              offsetY: n.y - node.y
-            })
-          }
-        }
+  // Attribute ids bonded to a node, so a drag carries them along
+  const attributesOf = useCallback((nodeId) => (
+    baseLayout.edges
+      .filter(e => e.type === 'attribute-link' && e.from === nodeId)
+      .map(e => e.to)
+  ), [baseLayout.edges])
+
+  // Pointer events fire far faster than frames. Coalescing into rAF keeps one
+  // React commit per frame instead of one per event, which is what made dragging
+  // stutter on touch devices.
+  const scheduleDeltaFlush = useCallback(() => {
+    if (rafRef.current !== null) return
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null
+      const drag = dragRef.current
+      if (!drag) return
+      setDragDelta({
+        nodeId: drag.nodeId,
+        attributeIds: drag.attributeIds,
+        dx: drag.dx,
+        dy: drag.dy,
       })
-    }
-    
-    setDragState({
+    })
+  }, [])
+
+  const beginDrag = useCallback((clientX, clientY, node) => {
+    if (node.type === 'attribute') return
+    const svgPos = screenToSVG(clientX, clientY)
+    const attributeIds = node.type === 'isa' ? [] : attributesOf(node.id)
+
+    dragRef.current = {
       nodeId: node.id,
+      attributeIds,
       startX: svgPos.x,
       startY: svgPos.y,
-      offsetX,
-      offsetY,
-      attributeOffsets,
-      hasMoved: false
-    })
-  }, [layout.nodes, layout.edges, screenToSVG])
+      dx: 0,
+      dy: 0,
+      hasMoved: false,
+    }
+    setDragDelta({ nodeId: node.id, attributeIds, dx: 0, dy: 0 })
+  }, [attributesOf, screenToSVG])
 
-  // Start dragging a node via touch (mirrors handleNodeMouseDown).
-  // Ignores a second finger landing on a different node mid-drag rather than hijacking the
-  // drag onto it, since handleTouchMove only tracks a single active drag via touches[0]
+  const moveDrag = useCallback((clientX, clientY) => {
+    const drag = dragRef.current
+    if (!drag) return
+    const svgPos = screenToSVG(clientX, clientY)
+    drag.dx = svgPos.x - drag.startX
+    drag.dy = svgPos.y - drag.startY
+    drag.hasMoved = drag.hasMoved || Math.abs(drag.dx) > 3 || Math.abs(drag.dy) > 3
+    scheduleDeltaFlush()
+  }, [screenToSVG, scheduleDeltaFlush])
+
+  // Commit the drag into positions the layout will respect from here on. This is
+  // the only place the expensive relayout is triggered by dragging.
+  const endDrag = useCallback(() => {
+    const drag = dragRef.current
+    dragRef.current = null
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    if (!drag) return
+
+    if (drag.hasMoved) {
+      const byId = new Map(baseLayout.nodes.map(n => [n.id, n]))
+      setCommittedPositions(prev => {
+        const next = { ...prev }
+        for (const id of [drag.nodeId, ...drag.attributeIds]) {
+          const n = byId.get(id)
+          if (n) next[id] = { x: n.x + drag.dx, y: n.y + drag.dy, manuallyPlaced: true }
+        }
+        return next
+      })
+    }
+    setDragDelta(null)
+  }, [baseLayout.nodes])
+
+  const handleNodeMouseDown = useCallback((e, node) => {
+    if (node.type === 'attribute') return
+    e.stopPropagation()
+    beginDrag(e.clientX, e.clientY, node)
+  }, [beginDrag])
+
+  // Ignores a second finger landing on a different node mid-drag rather than
+  // hijacking the drag onto it, since handleTouchMove tracks a single drag via touches[0]
   const handleNodeTouchStart = useCallback((e, node) => {
-    if (node.type === 'attribute' || dragStateRef.current) return
-
+    if (node.type === 'attribute' || dragRef.current) return
     e.stopPropagation()
     const touch = e.touches[0]
-    const svgPos = screenToSVG(touch.clientX, touch.clientY)
+    beginDrag(touch.clientX, touch.clientY, node)
+  }, [beginDrag])
 
-    const offsetX = node.x - svgPos.x
-    const offsetY = node.y - svgPos.y
-
-    const attributeOffsets = []
-    if (node.type === 'entity' || node.type === 'relationship') {
-      layout.nodes.forEach(n => {
-        if (n.type === 'attribute') {
-          const edge = layout.edges.find(e =>
-            e.type === 'attribute-link' &&
-            e.from === node.id &&
-            e.to === n.id
-          )
-          if (edge) {
-            attributeOffsets.push({
-              id: n.id,
-              offsetX: n.x - node.x,
-              offsetY: n.y - node.y
-            })
-          }
-        }
-      })
-    }
-
-    const dragPayload = {
-      nodeId: node.id,
-      startX: svgPos.x,
-      startY: svgPos.y,
-      offsetX,
-      offsetY,
-      attributeOffsets,
-      hasMoved: false
-    }
-    dragStateRef.current = dragPayload
-    setDragState(dragPayload)
-  }, [layout.nodes, layout.edges, screenToSVG])
-
-  // Handle mouse move during drag
   const handleMouseMove = useCallback((e) => {
-    if (dragState) {
-      const svgPos = screenToSVG(e.clientX, e.clientY)
-      
-      // Calculate new position with offset
-      const newX = svgPos.x + dragState.offsetX
-      const newY = svgPos.y + dragState.offsetY
-      
-      // Check if moved significantly (> 3px) to distinguish from click
-      const dx = svgPos.x - dragState.startX
-      const dy = svgPos.y - dragState.startY
-      const hasMoved = dragState.hasMoved || (Math.abs(dx) > 3 || Math.abs(dy) > 3)
-      
-      // Update positions for the dragged node and its attributes
-      setNodePositions(prev => {
-        const updated = { ...prev }
-        
-        // Update main node
-        updated[dragState.nodeId] = { x: newX, y: newY, manuallyPlaced: true }
-        
-        // Update attributes with same relative offset
-        dragState.attributeOffsets.forEach(attr => {
-          updated[attr.id] = {
-            x: newX + attr.offsetX,
-            y: newY + attr.offsetY,
-            manuallyPlaced: true
-          }
-        })
-        
-        return updated
-      })
-      
-      setDragState(prev => ({ ...prev, hasMoved }))
+    if (dragRef.current) {
+      moveDrag(e.clientX, e.clientY)
     } else if (isPanning) {
       const dx = e.clientX - panStart.x
       const dy = e.clientY - panStart.y
@@ -285,30 +298,25 @@ function ERDCanvas({ erdData }) {
       setViewBox(prev => ({ ...prev, x: prev.x - dx * scaleX, y: prev.y - dy * scaleY }))
       setPanStart({ x: e.clientX, y: e.clientY })
     }
-  }, [dragState, isPanning, panStart, viewBox.width, viewBox.height, screenToSVG])
+  }, [isPanning, panStart, viewBox.width, viewBox.height, moveDrag])
 
-  // Handle mouse up - end drag or pan
   const handleMouseUp = useCallback(() => {
-    if (dragState) {
-      setDragState(null)
-    }
+    endDrag()
     setIsPanning(false)
-  }, [dragState])
+  }, [endDrag])
 
   const handleMouseLeave = useCallback(() => {
-    if (dragState) {
-      setDragState(null)
-    }
+    endDrag()
     setIsPanning(false)
-  }, [dragState])
+  }, [endDrag])
 
   // Start panning (only if not dragging a node)
   const handleBackgroundMouseDown = useCallback((e) => {
-    if (e.button !== 0 || dragState) return
+    if (e.button !== 0 || dragRef.current) return
     setIsPanning(true)
     setPanStart({ x: e.clientX, y: e.clientY })
     e.preventDefault()
-  }, [dragState])
+  }, [])
 
   const handleWheel = useCallback((e) => {
     e.preventDefault()
@@ -333,10 +341,10 @@ function ERDCanvas({ erdData }) {
   }, [viewBox])
 
   // Start panning or pinch-zooming (only if not dragging a node).
-  // Note: gating reads dragStateRef, not dragState - a touchmove immediately following this
+  // Note: gating reads dragRef, not dragDelta - a touchmove immediately following this
   // touchstart can fire before React commits the corresponding setState.
   const handleBackgroundTouchStart = useCallback((e) => {
-    if (dragStateRef.current) return
+    if (dragRef.current) return
 
     if (e.touches.length === 1) {
       setIsPanning(true)
@@ -354,32 +362,9 @@ function ERDCanvas({ erdData }) {
   // no-op (and log a warning) - touch-action: none in CSS is what stops native scroll/zoom
   const handleTouchMove = useCallback((e) => {
     // Dragging a node with one finger
-    if (dragStateRef.current) {
-      const drag = dragStateRef.current
+    if (dragRef.current) {
       const touch = e.touches[0]
-      const svgPos = screenToSVG(touch.clientX, touch.clientY)
-
-      const newX = svgPos.x + drag.offsetX
-      const newY = svgPos.y + drag.offsetY
-      const dx = svgPos.x - drag.startX
-      const dy = svgPos.y - drag.startY
-      const hasMoved = drag.hasMoved || (Math.abs(dx) > 3 || Math.abs(dy) > 3)
-
-      setNodePositions(prev => {
-        const updated = { ...prev }
-        updated[drag.nodeId] = { x: newX, y: newY, manuallyPlaced: true }
-        drag.attributeOffsets.forEach(attr => {
-          updated[attr.id] = {
-            x: newX + attr.offsetX,
-            y: newY + attr.offsetY,
-            manuallyPlaced: true
-          }
-        })
-        return updated
-      })
-
-      dragStateRef.current = { ...drag, hasMoved }
-      setDragState(prev => (prev ? { ...prev, hasMoved } : prev))
+      moveDrag(touch.clientX, touch.clientY)
       return
     }
 
@@ -428,29 +413,57 @@ function ERDCanvas({ erdData }) {
       setViewBox(prev => ({ ...prev, x: prev.x - dx * scaleX, y: prev.y - dy * scaleY }))
       touchPanRef.current = { x: touch.clientX, y: touch.clientY }
     }
-  }, [viewBox, screenToSVG])
+  }, [viewBox, moveDrag])
 
   // End touch interaction — stop drag/pan/pinch, or fall back to pan if one finger remains
   const handleTouchEnd = useCallback((e) => {
     if (e.touches.length === 0) {
-      if (dragStateRef.current) {
-        dragStateRef.current = null
-        setDragState(null)
-      }
+      endDrag()
       setIsPanning(false)
       touchPanRef.current = null
       touchPinchRef.current = null
     } else if (e.touches.length === 1) {
       touchPinchRef.current = null
-      if (!dragStateRef.current) {
+      if (!dragRef.current) {
         setIsPanning(true)
         touchPanRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
       }
     }
+  }, [endDrag])
+
+  // A drag in flight when the canvas unmounts would otherwise leave a frame queued
+  useEffect(() => () => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
   }, [])
+
+  const resetLayout = useCallback(() => {
+    setCommittedPositions({})
+    setDragDelta(null)
+    dragRef.current = null
+  }, [])
+
+  const hasManualEdits = Object.keys(committedPositions).length > 0
 
   return (
     <div className={styles.container}>
+      <div className={styles.toolbar}>
+        <button
+          type="button"
+          className={styles.toolbarButton}
+          onClick={() => setIsaOrientation(o => (o === 'upright' ? 'inverted' : 'upright'))}
+          title="Both orientations are valid notation for the same hierarchy"
+        >
+          IS-A: {isaOrientation === 'upright' ? 'upright' : 'inverted'}
+        </button>
+        <button
+          type="button"
+          className={styles.toolbarButton}
+          onClick={resetLayout}
+          disabled={!hasManualEdits}
+        >
+          Reset layout
+        </button>
+      </div>
       <svg
         ref={svgRef}
         className={styles.svg}
@@ -464,7 +477,8 @@ function ERDCanvas({ erdData }) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
-        style={{ cursor: dragState ? 'grabbing' : isPanning ? 'grabbing' : 'grab' }}
+        style={{ cursor: dragDelta ? 'grabbing' : isPanning ? 'grabbing' : 'grab' }}
+        data-dragging={dragDelta ? 'true' : undefined}
       >
         {/* Edges first — behind nodes so lines don't overlap labels */}
         {layout.edges.map((edge, i) => (
@@ -488,7 +502,7 @@ function ERDCanvas({ erdData }) {
       </svg>
 
       <div className={styles.hint}>
-        {dragState ? 'Dragging node...' : 'Drag nodes to reposition • Drag background to pan • Scroll to zoom'}
+        {dragDelta ? 'Dragging node...' : 'Drag nodes to reposition • Drag background to pan • Scroll to zoom'}
       </div>
     </div>
   )

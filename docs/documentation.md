@@ -960,7 +960,7 @@ Validates and sanitizes Gemini JSON responses:
 |---|---|---|
 | `VITE_SUPABASE_URL` | `usePresence.js`, `useApiCalls.js` | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | `usePresence.js`, `useApiCalls.js` | Supabase anon key |
-| `VITE_GEMINI_API_KEY` | `geminiService.js` | Gemini API key |
+| `GEMINI_API_KEY` | `api/gemini.js` | Gemini API key. Server-side only, never `VITE_`-prefixed |
 
 ---
 

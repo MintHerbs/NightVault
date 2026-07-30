@@ -316,9 +316,19 @@ revealed yet still reports `data-state="idle"`.
 
 ## Gemini API
 
-- Model: `gemini-2.0-flash-lite`
-- Key: `VITE_GEMINI_API_KEY` in `.env`
-- Called from frontend via `@google/generative-ai`
+- Model: `gemini-3.5-flash-lite`, pinned. Aliases such as `gemini-flash-lite-latest`
+  float to new versions without warning, which would change behaviour under a
+  prompt tuned against this one.
+- Key: `GEMINI_API_KEY`, server-side only. Never `VITE_`-prefixed, since Vite
+  inlines those into the client bundle.
+- Called from `api/gemini.js` (Vercel function), not from the browser. The client
+  sends only the user's scenario text; the endpoint builds the prompt itself so it
+  cannot be used as a general-purpose LLM proxy on the project's quota.
+- `src/lib/geminiService.js` is the client for that endpoint, and falls back to the
+  manual copy/paste flow whenever generation is unavailable.
+
+The `gemini-2.0-*` models are no longer usable: the free tier grants them a quota
+of 0 on new keys.
 
 ---
 

@@ -1,5 +1,31 @@
 // Validates and parses ERD JSON into internal structure
 
+// Canonical attribute types, keyed by every spelling an LLM realistically emits.
+// Models drift between camelCase, snake_case and lowercase for the two
+// multi-word types, so normalise rather than reject: a casing slip should not
+// cost the student their whole diagram.
+const ATTRIBUTE_TYPE_ALIASES = {
+  simple: 'simple',
+  key: 'key',
+  primarykey: 'key',
+  primary_key: 'key',
+  derived: 'derived',
+  computed: 'derived',
+  multivalued: 'multiValued',
+  multi_valued: 'multiValued',
+  'multi-valued': 'multiValued',
+  multivalue: 'multiValued',
+  partialkey: 'partialKey',
+  partial_key: 'partialKey',
+  'partial-key': 'partialKey',
+  discriminator: 'partialKey',
+}
+
+function canonicalAttributeType(raw) {
+  if (typeof raw !== 'string') return null
+  return ATTRIBUTE_TYPE_ALIASES[raw.trim().toLowerCase()] ?? null
+}
+
 /**
  * Parses and validates ERD JSON
  * @param {string} jsonString - The JSON string to parse
@@ -63,11 +89,12 @@ export function parseERD(jsonString) {
           return { valid: false, error: `Entity "${entity.id}" attribute "${attr.id}" missing "name"` }
         }
         
-        // Validate type
-        const validTypes = ['simple', 'multiValued', 'derived', 'key', 'partialKey']
-        if (!attr.type || !validTypes.includes(attr.type)) {
+        // Validate type, accepting casing/underscore variants and rewriting to canonical
+        const canonicalType = canonicalAttributeType(attr.type)
+        if (!canonicalType) {
           return { valid: false, error: `Entity "${entity.id}" attribute "${attr.id}" has invalid type` }
         }
+        attr.type = canonicalType
         
         // Ensure composedOf is an array if present
         if (attr.composedOf && !Array.isArray(attr.composedOf)) {
@@ -136,9 +163,19 @@ export function parseERD(jsonString) {
         }
       }
       
-      // Validate relationship attributes
+      // Validate relationship attributes. These reach the canvas the same way
+      // entity attributes do, so they need the same type normalisation — an
+      // unrecognised type here would render as a plain ellipse.
       if (!Array.isArray(rel.attributes)) {
         rel.attributes = []
+      } else {
+        for (const attr of rel.attributes) {
+          const canonicalType = canonicalAttributeType(attr.type)
+          if (!canonicalType) {
+            return { valid: false, error: `Relationship "${rel.id}" attribute "${attr.id || '?'}" has invalid type` }
+          }
+          attr.type = canonicalType
+        }
       }
     }
 

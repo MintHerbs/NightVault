@@ -29,3 +29,25 @@
   align-items: center;
   justify-content: center;
 }
+
+.manualLink {
+  margin-top: 14px;
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--md-on-surface-variant);
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(var(--color-accent-rgb), 0.35);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.manualLink:hover:not(:disabled) {
+  color: var(--color-text);
+}
+
+.manualLink:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
