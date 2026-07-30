@@ -18,12 +18,25 @@ const GRADE_TOOLKIT = TOOLS.find((t) => t.id === 'grades');
 export default function HomePage() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  // Distinguished from an empty list on purpose. This used to be a bare
+  // `.catch(() => setCourses([]))`, which rendered a course-less home page that
+  // looked deliberate — the grid still showed Grade Toolkit and Socials, so a
+  // total failure to read `courses` was indistinguishable from "no courses
+  // exist", with nothing in the console either. That silence is what made the
+  // anon-can't-read-courses bug (migration 0049 unapplied, so RLS returned zero
+  // rows to logged-out visitors while admins saw all of them) so hard to spot.
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     listCourses()
       .then((rows) => { if (!cancelled) setCourses(rows.filter((c) => !c.hidden)); })
-      .catch(() => { if (!cancelled) setCourses([]); })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error('[home] could not load courses:', error);
+        setCourses([]);
+        setFailed(true);
+      })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
@@ -48,7 +61,9 @@ export default function HomePage() {
 
       <section className={styles.section}>
         <p className={styles.sectionSubtitle}>
-          Pick a course to get started. Everything runs in your browser.
+          {failed
+            ? "Courses couldn't be loaded just now. The tools below still work."
+            : 'Pick a course to get started. Everything runs in your browser.'}
         </p>
         {loading ? (
           <Loading />

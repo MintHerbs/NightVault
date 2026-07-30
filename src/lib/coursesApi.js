@@ -11,10 +11,16 @@
 // real data; this module conforms to it rather than the other way around.
 
 import { supabase } from './supabaseClient'
+import { sortCourses } from '../constants/courses'
 
-/** Every course, alphabetically — used by the primary owner's course switcher,
+/** Every course, in COURSE_ORDER — used by the primary owner's course switcher,
  * the Team page's course cards, and the public home page (T-077, filtered to
- * `!hidden` there). */
+ * `!hidden` there).
+ *
+ * The curated order is applied here rather than at each call site so the home
+ * grid and the admin course switcher can't disagree about it. `display_name`
+ * ordering stays on the query as the tiebreak for courses COURSE_ORDER doesn't
+ * rank — see src/constants/courses.js. */
 //
 // `*` rather than an explicit column list, deliberately. Naming
 // `hidden`/`cover_*` here would make every read of this table a hard failure
@@ -36,7 +42,7 @@ export async function listCourses() {
     .select(COURSE_COLUMNS)
     .order('display_name', { ascending: true })
   if (error) throw new Error(error.message)
-  return (data ?? []).map(toCourse)
+  return sortCourses((data ?? []).map(toCourse))
 }
 
 /** Row → the shape the app uses. `cover*` feed resolveCoverField()
