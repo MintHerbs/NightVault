@@ -33,9 +33,13 @@
   margin: 0 0 24px 0;
 }
 
+/* Keep these tracks identical to .grid in CourseLandingPage.module.css — the
+   two grids are the same card at the same size, and a reader moving between
+   them notices any drift immediately. auto-fill rather than auto-fit so cards
+   never stretch to fill a row they don't fill; see that file for the detail. */
 .toolGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 16px;
 }
 

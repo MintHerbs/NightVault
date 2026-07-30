@@ -13,9 +13,17 @@
   margin: 0;
 }
 
+/* auto-fill, not auto-fit — and it must stay in step with .toolGrid in
+   home.module.css, which is the size every AsciiCard is measured against.
+   auto-fit COLLAPSES the tracks no card occupies, so the survivors stretch to
+   fill the row: a course with two cards (Data Science, Mathematics with CS —
+   Notes + Grade Toolkit) rendered them at roughly half the viewport each,
+   while Computer Science's six sat at the normal width. auto-fill keeps the
+   empty tracks, so a card is the same size no matter how many share the row.
+   Everywhere else in the app already uses auto-fill for exactly this. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 16px;
   margin-bottom: 56px;
 }
