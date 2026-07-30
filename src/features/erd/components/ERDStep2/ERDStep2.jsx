@@ -4,7 +4,7 @@ import { motion } from 'motion/react'
 import PaginationDots from '../../../../components/ui/PaginationDots/PaginationDots'
 import styles from './ERDStep2.module.css'
 
-function ERDStep2({ prompt, onNext, currentStep, totalSteps }) {
+function ERDStep2({ prompt, onNext, currentStep, totalSteps, fallbackReason, onRetry }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
@@ -18,12 +18,24 @@ function ERDStep2({ prompt, onNext, currentStep, totalSteps }) {
   }
 
   return (
-    <motion.div 
+    <motion.div
       className={styles.container}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
+      {fallbackReason && (
+        <div className={styles.fallbackNotice} role="status">
+          <span className={styles.fallbackReason}>{fallbackReason}</span>
+          <span>You can still build the diagram by hand, it just takes two extra steps.</span>
+          {onRetry && (
+            <button type="button" className={styles.retryButton} onClick={onRetry}>
+              Try generating again
+            </button>
+          )}
+        </div>
+      )}
+
       <p className={styles.instruction}>
         Copy the prompt below and paste it into ChatGPT, Claude, Gemini, or any LLM.
         Then copy the JSON it returns and paste it in the next step.

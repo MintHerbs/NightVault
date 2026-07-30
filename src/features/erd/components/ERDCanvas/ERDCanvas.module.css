@@ -33,6 +33,37 @@
   white-space: nowrap;
 }
 
+.toolbar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+}
+
+.toolbarButton {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--md-on-surface-variant);
+  background: rgba(var(--color-surface-rgb), 0.75);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.25);
+  border-radius: 6px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.toolbarButton:hover:not(:disabled) {
+  color: var(--md-on-surface);
+  border-color: rgba(var(--color-accent-rgb), 0.5);
+}
+
+.toolbarButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 @keyframes float {
   from {
     transform: translateY(-4px);
@@ -42,6 +73,41 @@
   }
 }
 
+/* Promotes each attribute to its own layer so the float compositing never
+   triggers layout or paint on the rest of the diagram. */
 .floatingAttribute {
   animation: float 3s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Dragging already repaints every frame; leaving the idle float running on top
+   of it competes for the same frames and is the worst case on low-end phones. */
+.svg[data-dragging='true'] .floatingAttribute {
+  animation-play-state: paused;
+}
+
+/* Coarse pointers are overwhelmingly phones, where an always-on animation across
+   every attribute costs battery and frames for very little. */
+@media (pointer: coarse) {
+  .floatingAttribute {
+    animation: none;
+    will-change: auto;
+  }
+
+  .toolbar {
+    top: 8px;
+    right: 8px;
+  }
+
+  .toolbarButton {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floatingAttribute {
+    animation: none;
+    will-change: auto;
+  }
 }
