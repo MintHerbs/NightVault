@@ -48,3 +48,32 @@ export const TOOLS = [
     route: '/tools/grade-toolkit',
   },
 ]
+
+export const TOOL_BY_ID = new Map(TOOLS.map((t) => [t.id, t]))
+
+// Grade Toolkit is the only genuinely course-agnostic tool — CPA arithmetic is
+// the same whatever you're studying, which is also why it gets its own
+// standalone card on the home page. Every other tool here is a computer-science
+// artefact (B+ trees, ER diagrams, Big-O, recurrence relations), so showing
+// them under Mathematics with CS or Data Science advertised things those
+// courses don't cover.
+const DEFAULT_COURSE_TOOL_IDS = ['grades']
+
+// Per-course tool sets, keyed by `courses.id`. A course not listed here gets
+// DEFAULT_COURSE_TOOL_IDS — the conservative direction: a new course shows the
+// one tool that's always applicable rather than inheriting the CS toolset by
+// accident.
+const COURSE_TOOL_IDS = {
+  'computer-science': ['btree', 'erd', 'complexity', 'recurrence', 'grades'],
+}
+
+/**
+ * The tool cards a course's landing page should show, in registry order.
+ *
+ * Unknown ids in the mapping are dropped rather than rendered as blanks, so a
+ * typo here can't crash a course page — it just omits that card.
+ */
+export function toolsForCourse(courseId) {
+  const ids = COURSE_TOOL_IDS[courseId] ?? DEFAULT_COURSE_TOOL_IDS
+  return ids.map((id) => TOOL_BY_ID.get(id)).filter(Boolean)
+}

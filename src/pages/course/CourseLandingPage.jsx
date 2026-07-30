@@ -6,16 +6,18 @@ import Footer from '../../components/layout/Footer';
 import AsciiCard from '../../components/ui/AsciiCard';
 import Loading from '../../components/ui/Loading';
 import { listCourses } from '../../lib/coursesApi';
-import { TOOLS } from '../../constants/tools';
+import { toolsForCourse } from '../../constants/tools';
 import { NOTES_COVER } from '../../constants/coverPresets';
 import styles from './CourseLandingPage.module.css';
 
 /**
  * A single course's landing page (T-077): Notes (scoped to this course) plus
- * every tool card, all in the ASCII-cover design. Every course shows the
- * same tool set today — B+ Tree, ERD, Code Complexity, Recurrence Relation,
- * and Grade Toolkit aren't scoped per course (see T-077's "Suggested fix"
- * for why per-course tool scoping is deliberately out of scope for now).
+ * that course's tool cards, all in the ASCII-cover design.
+ *
+ * The tool set is per course (see toolsForCourse in src/constants/tools.js).
+ * B+ Tree, ERD, Code Complexity and Recurrence Relation are computer-science
+ * artefacts, so only Computer Science shows them; every other course gets
+ * Notes plus Grade Toolkit, the one tool that applies regardless of subject.
  */
 export default function CourseLandingPage() {
   const { courseId } = useParams();
@@ -69,7 +71,7 @@ export default function CourseLandingPage() {
             to={`/notes-browser/${course.id}`}
             cta="Open"
           />
-          {TOOLS.map((tool) => (
+          {toolsForCourse(course.id).map((tool) => (
             <AsciiCard
               key={tool.id}
               title={tool.title}

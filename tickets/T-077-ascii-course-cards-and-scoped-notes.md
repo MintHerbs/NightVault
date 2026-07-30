@@ -231,17 +231,20 @@ New route `/courses/:courseId` → new `src/pages/course/CourseLandingPage.jsx`.
 Renders:
 
 - A **Notes** `AsciiCard` → `/notes-browser/:courseId` (see fix #5).
-- Every entry from the new `src/constants/tools.js` registry, unfiltered —
+- ~~Every entry from the new `src/constants/tools.js` registry, unfiltered —
   i.e. the same B+ Tree / ERD / Code Complexity / Recurrence Relation /
-  Grade Toolkit cards appear on **every** course's page. This is a
-  deliberate simplification: mapping which Subjects (and therefore which
-  tools) "belong" to which course would require joining
-  `sidebar_modules.course_id` through `MODULE_TOOLS`, and that mapping
-  isn't reliably populated for courses beyond Computer Science today. The
-  owner's own framing ("all the tools ever created … such as B+ tree +
-  grade toolkit **again**") confirms duplication across course pages is
-  intended, not a bug to avoid. Per-course tool scoping can be a follow-up
-  ticket once each course's Subject membership is actually curated.
+  Grade Toolkit cards appear on **every** course's page.~~ **Superseded.**
+  This read the owner's "grade toolkit **again**" as sanctioning the whole
+  toolset on every page; what it actually sanctioned was Grade Toolkit
+  appearing again. Corrected on review of the live site: B+ Tree, ERD, Code
+  Complexity and Recurrence Relation are computer-science artefacts, so only
+  Computer Science shows them and every other course gets Notes + Grade
+  Toolkit. Implemented as `toolsForCourse()` in `src/constants/tools.js` — a
+  per-course id → tool-id map, defaulting to `['grades']` for an unlisted
+  course, so a new course shows the always-applicable tool rather than
+  inheriting the CS toolset by accident. No join through
+  `sidebar_modules.course_id`/`MODULE_TOOLS` was needed after all, which is
+  what the original deferral was really avoiding.
 - 404/empty state if `courseId` doesn't match any course (mirror
   `NotesBrowserPage.jsx:196`'s `notFound` pattern).
 
@@ -292,10 +295,21 @@ of a global root.
 
 - [ ] Home page renders one `AsciiCard` per non-hidden course, plus a
       standalone Grade Toolkit card and a standalone Socials card, all using
-      the new cover-animation card design.
+      the new cover-animation card design. *(Rendered, but **only for logged-in
+      visitors** until migration `0049` is applied to prod: `courses`' sole
+      SELECT policy is 0024's `"courses authenticated read" ... to
+      authenticated`, so an anonymous read returns `200 []` — verified with a
+      direct anon PostgREST call against prod. Logged-out visitors saw a home
+      page with only the two standalone cards and nothing in the console. `0049`
+      adds the `"courses public read"` policy that fixes it.)*
+- [ ] Course cards appear in `COURSE_ORDER` (`src/constants/courses.js`), not
+      alphabetically — alphabetical put Chemistry first and Computer Science
+      second. Unlisted courses sort after the ranked ones, keeping the
+      `display_name` order the query already asks for.
 - [ ] Opening a course card navigates to `/courses/:courseId`, showing a
-      Notes card and every tool card (B+ Tree, ERD, Code Complexity,
-      Recurrence Relation, Grade Toolkit) in the same design. *(The
+      Notes card plus **that course's** tool cards — all five for Computer
+      Science, Grade Toolkit only for every other course (see the superseded
+      note under fix #4). *(The
       `/courses/:courseId` route was missing from `src/routes/index.jsx`
       entirely in PR #72 — `CourseLandingPage` was lazily imported but never
       rendered, and with no catch-all route every course card led to a blank
