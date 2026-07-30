@@ -1,0 +1,90 @@
+.page {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.hero {
+  margin-bottom: 20px;
+}
+
+.heroTitle {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  color: var(--color-accent);
+  margin: 0;
+}
+
+.heroSubtitle {
+  margin: 8px 0 0;
+  max-width: 60ch;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: rgba(var(--color-fg-rgb), 0.6);
+}
+
+/* Reads as an aside rather than an error: the accent rail marks it as
+   editorial, and the surface token keeps it flat against the page. */
+.notice {
+  max-width: 72ch;
+  margin: 0 0 32px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 8px;
+  background: var(--color-surface);
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: rgba(var(--color-fg-rgb), 0.72);
+}
+
+/* auto-fill and minmax(240px, 1fr) to match .grid on the course landing page
+   and .toolGrid on the home page. auto-fit would collapse the empty tracks and
+   stretch these three cards across the row at a size no AsciiCard elsewhere
+   is measured at. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 56px;
+}
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0 2px;
+}
+
+.route {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-accent);
+  word-break: break-all;
+}
+
+/* Alpha over the foreground rather than --color-muted: that token is #555,
+   which lands near 2:1 against black at this size and misses the 4.5:1 the
+   palette is otherwise held to. This also inverts with the light theme, since
+   --color-fg-rgb flips where a fixed grey would not. */
+.why {
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: rgba(var(--color-fg-rgb), 0.62);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page {
+    animation: none;
+  }
+}

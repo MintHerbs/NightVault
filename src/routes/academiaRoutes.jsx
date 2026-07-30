@@ -20,6 +20,10 @@ const LogicalEquivalencePage = lazy(() => import('../pages/logic/proof/LogicalEq
 const TableauxPage = lazy(() => import('../pages/logic/tableaux/TableauxPage'))
 const GradeToolkitPage = lazy(() => import('../pages/tools/grade-toolkit/GradeToolkitPage'))
 const HomePage = lazy(() => import('../pages/home/HomePage'))
+// Unlisted directory of the tools kept off the sidebar and the home page.
+// Left out of preloadAcademiaRoutes below on purpose: nothing links here, so
+// prefetching it would only cost every visitor a chunk they never open.
+const ExperimentalPage = lazy(() => import('../pages/experimental/ExperimentalPage'))
 export const CourseLandingPage = lazy(() => import('../pages/course/CourseLandingPage'))
 
 // The CPA calculator and "Min effort, max result" tools were fused into the
@@ -51,6 +55,7 @@ export const routeComponents = {
   '/tools/lazy-grades': LazyGradesRedirect,
   '/tools/cpa-calculator': CpaCalculatorRedirect,
   '/home': HomePage,
+  '/experimental': ExperimentalPage,
 }
 
 export function preloadAcademiaRoutes() {
