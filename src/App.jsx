@@ -45,6 +45,9 @@ function AppContent() {
   // Sidebar now persists here too (reverses T-035's full-bleed suppression;
   // owner decision 2026-07-23 — sidebar is persistent, incl. on notes).
   const isNoteRoute = location.pathname.startsWith('/notes/')
+  // ERD renders its own comet-free Starfield; a second global one would run
+  // behind .erdPage's opaque background, costing frames while never being seen
+  const isERDRoute = location.pathname.startsWith('/erd')
 
   useEffect(() => {
     const t = setTimeout(preloadRoutes, 3000)
@@ -124,7 +127,7 @@ function AppContent() {
 
   return (
     <>
-      {!isAdminRoute && !isNoteRoute && <Starfield />}
+      {!isAdminRoute && !isNoteRoute && !isERDRoute && <Starfield />}
       {isChatOpen && !isToolsRoute && <ChatDimOverlay />}
       <DynamicIsland
         onlineCount={onlineCount}

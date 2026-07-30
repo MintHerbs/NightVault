@@ -3,10 +3,11 @@
   width: 100%;
   height: 100%;
   cursor: grab;
-  border: 1px solid rgba(var(--color-accent-rgb), 0.2);
-  border-radius: 8px;
   overflow: hidden;
   background: transparent;
+  /* Isolates the canvas from the animated Starfield behind it, so dragging
+     repaints this subtree instead of the whole stacking context. */
+  contain: layout paint;
 }
 
 .container:active {
@@ -31,37 +32,6 @@
   pointer-events: none;
   user-select: none;
   white-space: nowrap;
-}
-
-.toolbar {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 2;
-  display: flex;
-  gap: 8px;
-}
-
-.toolbarButton {
-  padding: 6px 12px;
-  font-size: 12px;
-  font-family: inherit;
-  color: var(--md-on-surface-variant);
-  background: rgba(var(--color-surface-rgb), 0.75);
-  border: 1px solid rgba(var(--color-accent-rgb), 0.25);
-  border-radius: 6px;
-  cursor: pointer;
-  backdrop-filter: blur(6px);
-}
-
-.toolbarButton:hover:not(:disabled) {
-  color: var(--md-on-surface);
-  border-color: rgba(var(--color-accent-rgb), 0.5);
-}
-
-.toolbarButton:disabled {
-  opacity: 0.4;
-  cursor: default;
 }
 
 @keyframes float {
@@ -92,16 +62,6 @@
   .floatingAttribute {
     animation: none;
     will-change: auto;
-  }
-
-  .toolbar {
-    top: 8px;
-    right: 8px;
-  }
-
-  .toolbarButton {
-    padding: 8px 12px;
-    font-size: 13px;
   }
 }
 
