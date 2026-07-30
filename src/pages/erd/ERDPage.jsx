@@ -153,11 +153,15 @@ function ERDPage({ onAIStateChange }) {
 
   return (
     <div className={styles.erdPage}>
-      <Starfield />
+      {/* Local instance, with comets off so the permanent rAF loop doesn't
+          compete with canvas dragging. It has to be rendered here rather than
+          relying on App.jsx's global one, because .erdPage paints an opaque
+          background over that. App.jsx skips the global one for this route. */}
+      <Starfield comets={false} />
       <BackButton onClick={() => navigate('/home')} />
 
       {parsedERD ? (
-        <Navbar showNewFormula={true} onNewFormula={handleReset} />
+        <Navbar showNewFormula={true} newFormulaText="New Question" onNewFormula={handleReset} />
       ) : (
         <Navbar />
       )}

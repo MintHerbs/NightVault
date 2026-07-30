@@ -243,6 +243,10 @@ function StarsBackground({
   children,
   speed = 90,
   starColor,
+  // The comet layer holds a permanent requestAnimationFrame loop that clears and
+  // repaints the full viewport every frame. Pages with their own interactive
+  // canvas (the ERD builder) turn it off so dragging gets the frame budget.
+  comets = true,
 }) {
   // Light mode inverts the whole field: white sky, ink-dark stars and
   // comets (T-062). starColor stays overridable per-call site.
@@ -273,7 +277,7 @@ function StarsBackground({
         <StarLayer count={200}  size={3} transition={{ repeat: Infinity, duration: speed * 3, ease: 'linear' }} starColor={resolvedStarColor} />
       </div>
 
-      <CometCanvas isLight={isLight} />
+      {comets && <CometCanvas isLight={isLight} />}
 
       {children}
     </>

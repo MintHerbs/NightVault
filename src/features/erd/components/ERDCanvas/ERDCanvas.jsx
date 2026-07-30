@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect, memo } from 'react'
 import { calculateERDLayout } from '../../../../lib/erdLayout'
 import {
   EntityRectangle,
@@ -118,12 +118,31 @@ function edgeContent(edge) {
   return null
 }
 
+// Memoised so a drag only re-renders the shapes that actually moved. The inline
+// handler closures live inside the component rather than at the call site, so
+// they don't defeat the memo comparison.
+const ERDEdge = memo(function ERDEdge({ edge }) {
+  return <g>{edgeContent(edge)}</g>
+})
+
+const ERDNode = memo(function ERDNode({ node, onMouseDown, onTouchStart }) {
+  const isDraggable = node.type === 'entity' || node.type === 'relationship' || node.type === 'isa'
+  return (
+    <g
+      onMouseDown={isDraggable ? (e) => onMouseDown(e, node) : undefined}
+      onTouchStart={isDraggable ? (e) => onTouchStart(e, node) : undefined}
+      style={{ cursor: isDraggable ? 'move' : 'default', touchAction: 'none' }}
+    >
+      {nodeShape(node)}
+    </g>
+  )
+})
+
 function ERDCanvas({ erdData }) {
   const svgRef = useRef(null)
   const [viewBox, setViewBox] = useState({ x: -700, y: -200, width: 1400, height: 900 })
   const [isPanning, setIsPanning] = useState(false)
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
-  const [isaOrientation, setIsaOrientation] = useState('upright')
 
   // Positions the user has committed by finishing a drag. Deliberately NOT updated
   // during the drag itself — writing here re-runs the whole layout.
@@ -148,39 +167,27 @@ function ERDCanvas({ erdData }) {
   )
 
   // Applies the live drag as a plain O(n) translation of the dragged node and the
-  // attributes bonded to it, and re-points the affected edges. No relayout.
+  // attributes bonded to it. No relayout.
+  //
+  // Everything not moving keeps its object identity, which is what lets the
+  // memoised node/edge components bail out. Rebuilding all of them each frame
+  // meant a 40-element reconcile and a full edge-geometry recompute per pointer
+  // move, even though only a handful of shapes had actually changed.
   const layout = useMemo(() => {
-    const oriented = {
-      nodes: baseLayout.nodes.map(n =>
-        n.type === 'isa' ? { ...n, orientation: n.orientation ?? isaOrientation } : n
-      ),
-      edges: baseLayout.edges,
-    }
-
-    if (!dragDelta) {
-      const byId = new Map(oriented.nodes.map(n => [n.id, n]))
-      return {
-        nodes: oriented.nodes,
-        edges: oriented.edges.map(e => ({
-          ...e,
-          fromNode: byId.get(e.from) ?? e.fromNode,
-          toNode: byId.get(e.to) ?? e.toNode,
-        })),
-      }
-    }
+    if (!dragDelta) return baseLayout
 
     const moving = new Set([dragDelta.nodeId, ...dragDelta.attributeIds])
-    const nodes = oriented.nodes.map(n =>
+    const nodes = baseLayout.nodes.map(n =>
       moving.has(n.id) ? { ...n, x: n.x + dragDelta.dx, y: n.y + dragDelta.dy } : n
     )
     const byId = new Map(nodes.map(n => [n.id, n]))
-    const edges = oriented.edges.map(e => ({
-      ...e,
-      fromNode: byId.get(e.from) ?? e.fromNode,
-      toNode: byId.get(e.to) ?? e.toNode,
-    }))
+    const edges = baseLayout.edges.map(e => (
+      moving.has(e.from) || moving.has(e.to)
+        ? { ...e, fromNode: byId.get(e.from) ?? e.fromNode, toNode: byId.get(e.to) ?? e.toNode }
+        : e
+    ))
     return { nodes, edges }
-  }, [baseLayout, dragDelta, isaOrientation])
+  }, [baseLayout, dragDelta])
 
   // Convert mouse position to SVG coordinates
   const screenToSVG = useCallback((clientX, clientY) => {
@@ -436,34 +443,8 @@ function ERDCanvas({ erdData }) {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
   }, [])
 
-  const resetLayout = useCallback(() => {
-    setCommittedPositions({})
-    setDragDelta(null)
-    dragRef.current = null
-  }, [])
-
-  const hasManualEdits = Object.keys(committedPositions).length > 0
-
   return (
     <div className={styles.container}>
-      <div className={styles.toolbar}>
-        <button
-          type="button"
-          className={styles.toolbarButton}
-          onClick={() => setIsaOrientation(o => (o === 'upright' ? 'inverted' : 'upright'))}
-          title="Both orientations are valid notation for the same hierarchy"
-        >
-          IS-A: {isaOrientation === 'upright' ? 'upright' : 'inverted'}
-        </button>
-        <button
-          type="button"
-          className={styles.toolbarButton}
-          onClick={resetLayout}
-          disabled={!hasManualEdits}
-        >
-          Reset layout
-        </button>
-      </div>
       <svg
         ref={svgRef}
         className={styles.svg}
@@ -482,23 +463,18 @@ function ERDCanvas({ erdData }) {
       >
         {/* Edges first — behind nodes so lines don't overlap labels */}
         {layout.edges.map((edge, i) => (
-          <g key={`edge-${i}`}>{edgeContent(edge)}</g>
+          <ERDEdge key={`${edge.type}-${edge.from}-${edge.to}-${i}`} edge={edge} />
         ))}
 
         {/* Nodes on top */}
-        {layout.nodes.map(node => {
-          const isDraggable = node.type === 'entity' || node.type === 'relationship' || node.type === 'isa'
-          return (
-            <g
-              key={node.id}
-              onMouseDown={isDraggable ? (e) => handleNodeMouseDown(e, node) : undefined}
-              onTouchStart={isDraggable ? (e) => handleNodeTouchStart(e, node) : undefined}
-              style={{ cursor: isDraggable ? 'move' : 'default', touchAction: 'none' }}
-            >
-              {nodeShape(node)}
-            </g>
-          )
-        })}
+        {layout.nodes.map(node => (
+          <ERDNode
+            key={node.id}
+            node={node}
+            onMouseDown={handleNodeMouseDown}
+            onTouchStart={handleNodeTouchStart}
+          />
+        ))}
       </svg>
 
       <div className={styles.hint}>
