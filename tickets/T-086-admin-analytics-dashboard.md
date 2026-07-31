@@ -114,7 +114,13 @@ use", since a pageview alone cannot distinguish a bounce from thirty inserts.
       `notes` that cascades read counts away on delete.)
 - [x] `POST /api/analytics` accepts a batch, validates every route and event key
       against a server-side allowlist, drops unknown keys, and is rate limited
-      per hashed IP. No raw IP is stored.
+      per hashed IP. No raw IP is stored. The limiter is analytics-owned
+      (`analytics_rate_limits` + `analytics_check_and_increment()`) rather than a
+      reuse of 0051's, so analytics does not depend on the ERD feature's schema
+      being applied and neither feature's abuse control moves the other. It fails
+      **open**, unlike the ERD limiter: refusing an analytics write protects
+      nothing and loses data, whereas refusing a generation protects a metered
+      third-party quota.
 - [x] Alias routes collapse to one canonical key; redirect hops are recorded as
       entry aliases and excluded from the page ranking.
 - [x] Note reads are keyed per note and joinable to `notes.updated_at`.
