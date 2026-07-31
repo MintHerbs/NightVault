@@ -420,3 +420,12 @@ migrations:
     created: 2026-07-30
     applied_envs: []
     related_issues: ["T-077"]
+
+  - id: "0051"
+    file: sql/0051_erd_generation_quota.sql
+    description: "Spam/quota protection for api/gemini.js. erd_rate_limits counts generations per caller in a sliding window; erd_cache stores generated ERD JSON keyed by normalised scenario text so repeats (a cohort working the same past paper, or someone retrying) cost no API call at all. Keyed on a salted SHA-256 of the caller IP rather than a session id, because session ids are client-supplied and can be regenerated per request, so they cannot bound anything. The check and the increment must be one statement or two concurrent requests both read the old count and both pass, hence the SECURITY DEFINER erd_check_and_increment() — same pattern as check_and_increment_rate_limit() in 0037. EXECUTE is revoked from PUBLIC, anon AND authenticated before being granted to service_role: revoking from PUBLIC alone does not block anon on new functions in this project. Both tables have RLS enabled and no policies, so only the service key reaches them. Requires SUPABASE_SECRET_KEY in the Vercel environment; without it api/_lib/erdQuota.js skips limiting and caching entirely rather than failing closed, so the tool still works before this lands. Not yet applied to any environment."
+    author: agent
+    created: 2026-07-30
+    applied_envs: []
+    related_issues: ["T-012"]
+

@@ -13,7 +13,7 @@
     "test:recurrence:oracle": "node src/lib/algo/recurrence.oracle.test.js",
     "test:tree": "node src/test/tree/test-library-integration.js && node src/lib/treeLayout.test.js && node src/test/tree/test-fuzz.js && node src/test/tree/test-trace-agreement.mjs && node src/test/tree/test-deep-review.mjs",
     "test:logic": "node src/lib/logic/formulaParser.test.js && node src/lib/logic/tableauxEngine.oracle.test.js && node src/lib/logic/tableauxLayout.test.js",
-    "test:erd": "node src/test/erd/test-erd-integration.js && node src/test/erd/test-gemini-handler.mjs",
+    "test:erd": "node src/test/erd/test-erd-integration.js && node src/test/erd/test-scenario-guard.mjs && node src/test/erd/test-gemini-handler.mjs",
     "test:gemini": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/test-gemini.mjs",
     "db:migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/db-migrate.mjs",
     "notes:sync-to-disk": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/sync-notes-to-disk.mjs",

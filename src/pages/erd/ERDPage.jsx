@@ -34,6 +34,8 @@ function ERDPage({ onAIStateChange }) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [fallbackReason, setFallbackReason] = useState(null)
   const [canRetry, setCanRetry] = useState(false)
+  // Scenario rejected by the quality gate: stay on step 1 so it can be edited
+  const [inputError, setInputError] = useState(null)
 
   // Guards against resolving a generation after the user has navigated away
   const activeRequestRef = useRef(0)
@@ -61,6 +63,7 @@ function ERDPage({ onAIStateChange }) {
     setPrompt(buildERDPrompt(value))
     setIsGenerating(true)
     setFallbackReason(null)
+    setInputError(null)
     setError(false)
     setAIState('generating')
 
@@ -72,6 +75,13 @@ function ERDPage({ onAIStateChange }) {
     if (result.success) {
       setParsedERD(result.data)
       setAIState('idle')
+      return
+    }
+
+    // The scenario is the problem, not the service — keep them on step 1
+    if (result.inputError) {
+      setInputError(result.error)
+      setAIState('observing')
       return
     }
 
@@ -94,11 +104,19 @@ function ERDPage({ onAIStateChange }) {
 
   // Escape hatch from step 1: skip generation and go straight to the manual steps
   const handleUseManualFlow = (value) => {
+    const scenario = (value ?? '').trim()
+    // Nothing typed yet: say so instead of silently doing nothing, which is
+    // what a disabled link looked like from the outside.
+    if (!scenario) {
+      setInputError('Describe your scenario first, then pick how to generate it.')
+      return
+    }
     activeRequestRef.current += 1
-    setQuestion(value)
-    setPrompt(buildERDPrompt(value))
+    setQuestion(scenario)
+    setPrompt(buildERDPrompt(scenario))
     setIsGenerating(false)
     setFallbackReason(null)
+    setInputError(null)
     setCanRetry(false)
     setStep(2)
     setAIState('waiting')
@@ -128,6 +146,7 @@ function ERDPage({ onAIStateChange }) {
       setStep(1)
       setError(false)
       setFallbackReason(null)
+      setInputError(null)
       setAIState('observing')
     } else if (step === 3) {
       setStep(2)
@@ -145,6 +164,7 @@ function ERDPage({ onAIStateChange }) {
     setError(false)
     setIsGenerating(false)
     setFallbackReason(null)
+    setInputError(null)
     setCanRetry(false)
     setAIState('observing')
   }
@@ -179,6 +199,7 @@ function ERDPage({ onAIStateChange }) {
             onSubmit={handleStep1Submit}
             onUseManualFlow={handleUseManualFlow}
             isGenerating={isGenerating}
+            inputError={inputError}
             onAIStateChange={onAIStateChange}
             currentStep={1}
             totalSteps={3}
