@@ -961,6 +961,9 @@ Validates and sanitizes Gemini JSON responses:
 | `VITE_SUPABASE_URL` | `usePresence.js`, `useApiCalls.js` | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | `usePresence.js`, `useApiCalls.js` | Supabase anon key |
 | `GEMINI_API_KEY` | `api/gemini.js` | Gemini API key. Server-side only, never `VITE_`-prefixed |
+| `SUPABASE_SECRET_KEY` | `api/_lib/erdQuota.js` | Service key for ERD rate limiting and caching. Without it both are skipped and the endpoint runs on the input gate alone |
+| `ERD_HOURLY_LIMIT` | `api/_lib/erdQuota.js` | Optional. Generations per caller per hour, default 15 |
+| `ERD_HASH_SALT` | `api/_lib/erdQuota.js` | Optional. Salt for the stored IP hash; falls back to `SUPABASE_SECRET_KEY` |
 
 ---
 

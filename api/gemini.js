@@ -7,6 +7,9 @@
 
 import { buildERDPrompt } from '../src/lib/erdPromptBuilder.js'
 import { ERD_RESPONSE_SCHEMA } from '../src/lib/erdResponseSchema.js'
+import { validateScenario } from '../src/lib/erdScenarioGuard.js'
+import { parseERD } from '../src/lib/erdParser.js'
+import { checkRateLimit, readCache, writeCache } from './_lib/erdQuota.js'
 
 const API_ROOT = 'https://generativelanguage.googleapis.com/v1beta'
 
@@ -15,7 +18,6 @@ const API_ROOT = 'https://generativelanguage.googleapis.com/v1beta'
 // that has been tuned against this one.
 const MODEL = 'gemini-3.5-flash-lite'
 
-const MAX_QUESTION_LENGTH = 4000
 const TIMEOUT_MS = 25000
 
 export default async function handler(req, res) {
@@ -31,11 +33,31 @@ export default async function handler(req, res) {
   }
 
   const question = typeof req.body?.question === 'string' ? req.body.question.trim() : ''
-  if (!question) {
-    return res.status(400).json({ error: 'A scenario description is required', code: 'bad_request' })
+
+  // Authoritative copy of the check the client also runs. Keyboard mash and
+  // repeated-word padding are rejected before they cost a metered call.
+  const gate = validateScenario(question)
+  if (!gate.ok) {
+    return res.status(400).json({ error: gate.error, code: gate.code })
   }
-  if (question.length > MAX_QUESTION_LENGTH) {
-    return res.status(400).json({ error: 'Scenario is too long', code: 'too_long' })
+
+  // Cache before quota: serving a stored answer spends nothing, so it should not
+  // consume the caller's allowance either.
+  const cached = await readCache(question)
+  if (cached) {
+    return res.status(200).json({ text: cached.text, model: cached.model, cached: true })
+  }
+
+  const quota = await checkRateLimit(req)
+  if (!quota.allowed) {
+    res.setHeader('Retry-After', '3600')
+    return res.status(429).json({
+      error: quota.errored
+        ? 'Generation is temporarily unavailable'
+        : 'You have made too many diagrams in a row. Try again later, or use your own LLM below.',
+      code: quota.errored ? 'upstream' : 'rate_limited',
+      resetsAt: quota.resetsAt ?? undefined,
+    })
   }
 
   const controller = new AbortController()
@@ -99,6 +121,16 @@ export default async function handler(req, res) {
       const reason = body.candidates?.[0]?.finishReason ?? 'unknown'
       console.error(`[gemini] empty response, finishReason=${reason}`)
       return res.status(502).json({ error: 'The model returned an empty response', code: 'empty' })
+    }
+
+    // Only cache what actually parses. Storing an unvalidated response would
+    // turn one bad generation into a permanent failure for that scenario, since
+    // every later request would be served the same broken JSON. The client is
+    // still free to retry an unparseable answer — it just never becomes sticky.
+    if (parseERD(text).valid) {
+      await writeCache(question, text, MODEL)
+    } else {
+      console.error('[gemini] response did not parse; not caching')
     }
 
     return res.status(200).json({ text, model: MODEL })
