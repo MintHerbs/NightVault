@@ -1,31 +1,46 @@
 /* TreeNode component styles - B+ tree node with pointer and key slots */
 
 .node {
-  transition: all 0.3s ease;
+  /* Nodes are positioned with the CSS transform property (see TreeNode.jsx), so
+     this transition is what makes the tree visibly reorganise: after a split or
+     merge, every node slides from its old slot in the level to its new one. */
+  transition: transform 320ms cubic-bezier(0.2, 0, 0, 1);
 }
 
-.nodeRect {
+/* The glow is static. It used to breathe on a 4s loop, which meant the browser
+   re-rasterised a drop-shadow filter for every node on every frame, forever, and
+   filter cost scales with on-screen size: zooming in turned a decorative pulse
+   into the thing that froze the tab. A fixed shadow is rasterised once and
+   cached, and the node looks the same at rest. */
+.nodeBack {
   fill: var(--color-bg);
+  filter: drop-shadow(0 0 9px rgba(var(--color-accent-rgb), 0.55));
+}
+
+/* Border drawn over the clipped slots so the rounded outline stays unbroken;
+   without it the slot rects' own strokes would form the visible edge and square
+   the corners back off. */
+.nodeBorder {
+  fill: none;
   stroke: var(--color-accent);
   stroke-width: 2;
-  filter: drop-shadow(0 0 8px rgba(var(--color-accent-rgb), 0.6));
-  animation: orangeGlow 4s ease-in-out infinite;
-  transition: all 0.3s ease;
+  pointer-events: none;
+  transition: stroke 200ms ease, stroke-width 200ms ease;
 }
 
-@keyframes orangeGlow {
-  0%, 100% {
-    filter: drop-shadow(0 0 8px rgba(var(--color-accent-rgb), 0.5));
-  }
-  50% {
-    filter: drop-shadow(0 0 14px rgba(var(--color-accent-rgb), 0.8));
-  }
-}
-
-.nodeRect.highlighted {
-  stroke: var(--color-accent);
+/* The node the current step is acting on. Two intents only: the theme accent for
+   anything constructive, and the fixed canvas red for removal. More colours than
+   that stopped reading as meaning and started reading as decoration. */
+.node[data-intent] .nodeBorder {
   stroke-width: 3;
-  filter: drop-shadow(0 0 20px rgba(var(--color-accent-rgb), 1));
+}
+
+.node[data-intent='delete'] .nodeBorder {
+  stroke: var(--accent-red);
+}
+
+.node[data-intent='delete'] .nodeBack {
+  filter: drop-shadow(0 0 14px rgba(var(--accent-red-rgb), 0.75));
 }
 
 .keySlot {
@@ -40,8 +55,52 @@
   stroke-width: 1;
 }
 
+.keyGroup {
+  cursor: pointer;
+}
+
+/* Marked key: a ring and a tint rather than a solid fill, so the key text keeps
+   its normal colour against the node surface and needs no on-fill contrast pair. */
+.keyChip {
+  fill: rgba(var(--color-accent-rgb), 0.2);
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.node[data-intent='delete'] .keyChip {
+  fill: rgba(var(--accent-red-rgb), 0.22);
+  stroke: var(--accent-red);
+}
+
+/* Only the pre-removal step pulses. Once the key is actually gone there is
+   nothing left to pulse, and pulsing every delete step would just be noise. */
+.node[data-pulse] .keyChip {
+  animation: markPulse 700ms ease-in-out infinite;
+}
+
+@keyframes markPulse {
+  0%,
+  100% {
+    fill: rgba(var(--accent-red-rgb), 0.15);
+    stroke-opacity: 0.65;
+  }
+
+  50% {
+    fill: rgba(var(--accent-red-rgb), 0.45);
+    stroke-opacity: 1;
+  }
+}
+
+.keyChipHover {
+  fill: rgba(var(--color-accent-rgb), 0.1);
+  stroke: rgba(var(--color-accent-rgb), 0.45);
+  stroke-width: 1;
+  pointer-events: none;
+}
+
 .keyText {
-  fill: #ffffff;
+  fill: var(--color-text);
   font-family: var(--font-mono);
   font-size: 14px;
   font-weight: 500;
@@ -49,12 +108,6 @@
   dominant-baseline: middle;
   pointer-events: none;
   user-select: none;
-}
-
-.keyText.highlightedKey {
-  fill: var(--accent-orange);
-  font-weight: 700;
-  font-size: 15px;
 }
 
 .leafLabel {
@@ -65,4 +118,16 @@
   opacity: 0.6;
   pointer-events: none;
   user-select: none;
+}
+
+/* Motion here is decorative: the same information is in the step description and
+   the highlight ring, both of which survive without it. */
+@media (prefers-reduced-motion: reduce) {
+  .node {
+    transition: none;
+  }
+
+  .node[data-pulse] .keyChip {
+    animation: none;
+  }
 }

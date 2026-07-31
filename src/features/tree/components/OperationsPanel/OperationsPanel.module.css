@@ -47,10 +47,18 @@
   color: var(--md-on-surface-variant);
 }
 
+/* Insert is the panel's primary action, so it carries the theme accent at full
+   strength. Hover used to be a hardcoded #6d3fd4, a leftover from when Ghost
+   Purple was the default accent: on the other eight themes it jumped from the
+   theme colour to an unrelated purple on hover. --color-accent-hover is the
+   per-theme companion and stays in family everywhere. */
 .button {
   padding: 10px 16px;
   background-color: var(--color-accent);
-  color: var(--color-text);
+  /* Not --color-text: that is the light text for dark surfaces, and the accents
+     are bright enough that it fails contrast on the fill. --md-on-primary is the
+     per-theme pair chosen to sit on exactly this colour. */
+  color: var(--md-on-primary);
   font-size: 14px;
   font-weight: 600;
   border: none;
@@ -60,7 +68,12 @@
 }
 
 .button:hover:not(:disabled) {
-  background-color: #6d3fd4;
+  background-color: var(--color-accent-hover);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .button:active:not(:disabled) {
@@ -72,21 +85,31 @@
   cursor: not-allowed;
 }
 
-/* Delete button - ghost style */
+/* Delete button - ghost style.
+   Outlined in the canvas red rather than the theme accent: it is the destructive
+   half of the pair, and it now matches the colour a key is marked with on the
+   canvas while it is being removed. That also leaves Insert as the only
+   accent-filled control in the panel, so it reads as the primary action. */
 .deleteButton {
   padding: 10px 16px;
   background-color: transparent;
-  color: var(--color-accent);
+  color: var(--accent-red);
   font-size: 14px;
   font-weight: 600;
-  border: 1px solid var(--color-accent);
+  border: 1px solid rgba(var(--accent-red-rgb), 0.55);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .deleteButton:hover:not(:disabled) {
-  background-color: rgba(var(--color-accent-rgb), 0.15);
+  background-color: rgba(var(--accent-red-rgb), 0.15);
+  border-color: var(--accent-red);
+}
+
+.deleteButton:focus-visible {
+  outline: 2px solid var(--accent-red);
+  outline-offset: 2px;
 }
 
 .deleteButton:active:not(:disabled) {
@@ -134,4 +157,47 @@
     height: auto;
     max-height: none;
   }
+}
+
+/* Reset moved here from the navbar (it used to float top-right, competing with the
+   page title for the same corner). `margin-top: auto` pins it to the bottom of the
+   panel so it never sits next to Insert/Delete, which are the destructive-adjacent
+   controls a mis-click would hurt most. */
+.footer {
+  margin-top: auto;
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.resetButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resetButton:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background-color: rgba(var(--color-accent-rgb), 0.06);
+}
+
+.resetButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.resetButton:active {
+  transform: scale(0.98);
 }

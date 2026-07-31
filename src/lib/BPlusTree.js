@@ -35,6 +35,22 @@ export class BPlusTree {
     this._keySet = new Set()
   }
 
+  /**
+   * Optional narration sink, set by src/lib/treeTrace.js and null everywhere else.
+   * Every _emit below is a no-op without it, so the operations themselves are
+   * untouched: the animation is narrated by the SAME code path that builds the tree,
+   * rather than by a second implementation that can drift from it (see T-085).
+   *
+   * `detail` tells the canvas what to point at: `{ nodes, keys, intent }`, where
+   * `nodes` are node ids and `keys` are only highlighted inside those nodes. That
+   * restriction matters — a value can appear both as a leaf record and as a copy
+   * of itself used as a separator higher up, and lighting up both would say the
+   * tree holds it twice.
+   */
+  _emit(kind, description, detail = null) {
+    if (this._observer) this._observer(kind, description, detail)
+  }
+
   _normalize(k) {
     return normalizeKey(k)
   }
@@ -64,15 +80,32 @@ export class BPlusTree {
 
   insert(key) {
     const k = this._normalize(key)
-    if (this._keySet.has(k)) return
+    if (this._keySet.has(k)) {
+      this._emit('noop', `${k} is already in the tree, so nothing changes.`, { keys: [k] })
+      return
+    }
     this._keySet.add(k)
 
+    this._emit('descend', `Searching for where ${k} belongs.`, { intent: 'insert' })
     const leaf = this._findLeaf(k)
+    // Emitted before the splice, so this step frames the destination while the key
+    // is still absent: the leaf is ringed and nothing inside it is marked yet.
+    this._emit('target', `${k} belongs in this leaf.`, { nodes: [leaf.id], intent: 'insert' })
+
     let i = 0
     while (i < leaf.keys.length && this._cmp(k, leaf.keys[i]) > 0) i++
     leaf.keys.splice(i, 0, k)
+    this._emit('insert', `Placed ${k} into the leaf, keeping it sorted.`, { nodes: [leaf.id], keys: [k], intent: 'insert' })
 
-    if (leaf.keys.length > this.maxKeys) this._splitLeaf(leaf)
+    if (leaf.keys.length > this.maxKeys) {
+      this._emit('overflow', `That leaf now holds ${leaf.keys.length} keys, over the limit of ${this.maxKeys}. It has to split.`, { nodes: [leaf.id], keys: [k], intent: 'overflow' })
+      this._splitLeaf(leaf)
+    }
+
+    // Re-locate rather than reuse `leaf`: a split may have moved k into the new
+    // right-hand node, and the closing frame should mark where it actually ended up.
+    const settled = this._findLeaf(k)
+    this._emit('done', `${k} inserted.`, { nodes: [settled.id], keys: [k], intent: 'insert' })
   }
 
   _splitLeaf(leaf) {
@@ -84,6 +117,7 @@ export class BPlusTree {
     leaf.next = right
 
     const pushUp = right.keys[0]
+    this._emit('split', `Leaf split into [${leaf.keys.join(', ')}] and [${right.keys.join(', ')}]. Its new first key ${pushUp} is copied up as a separator.`, { nodes: [leaf.id, right.id], keys: [pushUp], intent: 'split' })
 
     if (!leaf.parent) {
       const root = mkNode(false)
@@ -92,6 +126,7 @@ export class BPlusTree {
       leaf.parent = root
       right.parent = root
       this._root = root
+      this._emit('grow', `No parent to take ${pushUp}, so a new root is created and the tree grows one level taller.`, { nodes: [root.id], keys: [pushUp], intent: 'grow' })
     } else {
       right.parent = leaf.parent
       this._insertKey(leaf.parent, pushUp, right)
@@ -105,7 +140,10 @@ export class BPlusTree {
     node.children.splice(i + 1, 0, rightChild)
     rightChild.parent = node
 
-    if (node.keys.length > this.maxKeys) this._splitInternal(node)
+    if (node.keys.length > this.maxKeys) {
+      this._emit('overflow', `The parent now holds ${node.keys.length} keys, over the limit of ${this.maxKeys}. It has to split too.`, { nodes: [node.id], keys: [key], intent: 'overflow' })
+      this._splitInternal(node)
+    }
   }
 
   _splitInternal(node) {
@@ -119,6 +157,7 @@ export class BPlusTree {
     node.keys.splice(mid, 1)  // remove the pushed-up key
 
     right.children.forEach(c => { c.parent = right })
+    this._emit('split', `Internal node split. ${pushUp} moves up to the parent rather than being copied, because internal keys are separators only.`, { nodes: [node.id, right.id], intent: 'split' })
 
     if (!node.parent) {
       const root = mkNode(false)
@@ -127,6 +166,7 @@ export class BPlusTree {
       node.parent = root
       right.parent = root
       this._root = root
+      this._emit('grow', `No parent to take ${pushUp}, so a new root is created and the tree grows one level taller.`, { nodes: [root.id], keys: [pushUp], intent: 'grow' })
     } else {
       right.parent = node.parent
       this._insertKey(node.parent, pushUp, right)
@@ -135,16 +175,28 @@ export class BPlusTree {
 
   delete(key) {
     const k = this._normalize(key)
-    if (!this._keySet.has(k)) return
+    if (!this._keySet.has(k)) {
+      this._emit('noop', `${k} is not in the tree, so nothing changes.`, { keys: [k] })
+      return
+    }
     this._keySet.delete(k)
 
+    this._emit('descend', `Searching for the leaf holding ${k}.`, { intent: 'delete' })
     const leaf = this._findLeaf(k)
     const idx = leaf.keys.findIndex(x => this._cmp(x, k) === 0)
     if (idx === -1) return  // _keySet was out of sync; nothing structural to do
+
+    // Emitted while the key is still spliced in. Without this step no frame ever
+    // contains the doomed key, so it could only vanish between frames rather than
+    // be marked and then go.
+    this._emit('mark', `Found ${k}. Marking it for removal.`, { nodes: [leaf.id], keys: [k], intent: 'delete' })
+
     leaf.keys.splice(idx, 1)
+    this._emit('remove', `Removed ${k} from its leaf.`, { nodes: [leaf.id], intent: 'delete' })
 
     // Root leaf may legitimately hold 0 keys — no rebalance needed there.
     if (leaf !== this._root && leaf.keys.length < this.minKeys) {
+      this._emit('underflow', `That leaf is down to ${leaf.keys.length} key(s), under the minimum of ${this.minKeys}. It has to borrow or merge.`, { nodes: [leaf.id], intent: 'underflow' })
       this._rebalance(leaf)
     }
 
@@ -155,6 +207,7 @@ export class BPlusTree {
     // a no-underflow delete of a leaf's minimum leaves the copy untouched too.
     // One walk down k's search path repairs whichever single copy remains.
     this._refreshSeparatorForDeletedKey(k)
+    this._emit('done', `${k} deleted.`, { intent: 'delete' })
   }
 
   // Repair the (at most one) internal separator still equal to a just-deleted
@@ -165,7 +218,12 @@ export class BPlusTree {
     while (!node.isLeaf) {
       const si = node.keys.findIndex(key => this._cmp(key, k) === 0)
       if (si !== -1) {
-        node.keys[si] = this._minKey(node.children[si + 1])
+        const replacement = this._minKey(node.children[si + 1])
+        node.keys[si] = replacement
+        // The one moment that shows what a separator really is: the record is
+        // already gone, yet a copy of its value was still upstairs doing routing
+        // work, and it is replaced rather than removed.
+        this._emit('separator', `A copy of ${k} was still upstairs as a separator. It is replaced by ${replacement}, the smallest key in the subtree to its right.`, { nodes: [node.id], keys: [replacement], intent: 'separator' })
         return
       }
       let i = 0
@@ -189,6 +247,7 @@ export class BPlusTree {
       if (!node.isLeaf && node.keys.length === 0) {
         this._root = node.children[0]
         this._root.parent = null
+        this._emit('shrink', 'The root was left with a single child, so it is removed and the tree gets one level shorter.', { nodes: [this._root.id], intent: 'shrink' })
       }
       return
     }
@@ -202,19 +261,27 @@ export class BPlusTree {
 
     if (left && left.keys.length > this.minKeys) {
       this._borrowFromLeft(node, left, parent, idx)
+      this._emit('borrow', `The left sibling had ${left.keys.length + 1} keys and could spare one. It moves across and the separator above rotates to match.`, { nodes: [node.id, left.id, parent.id], keys: [node.keys[0]], intent: 'borrow' })
       return
     }
     if (right && right.keys.length > this.minKeys) {
       this._borrowFromRight(node, right, parent, idx)
+      this._emit('borrow', `The right sibling had ${right.keys.length + 1} keys and could spare one. It moves across and the separator above rotates to match.`, { nodes: [node.id, right.id, parent.id], keys: [node.keys[node.keys.length - 1]], intent: 'borrow' })
       return
     }
 
     // No sibling can spare a key — merge with one, then re-check the parent.
+    // The emit follows the merge so its snapshot shows the folded node; `survivor`
+    // is whichever node absorbed the other and is therefore still in the tree.
+    let survivor
     if (left) {
       this._merge(left, node, parent, idx - 1)
+      survivor = left
     } else {
       this._merge(node, right, parent, idx)
+      survivor = node
     }
+    this._emit('merge', 'Neither sibling could spare a key, so the two are folded into one node and the parent loses a separator.', { nodes: [survivor.id, parent.id], intent: 'merge' })
     this._rebalance(parent)
   }
 

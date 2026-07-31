@@ -50,6 +50,18 @@ export function useBPlusTree(order = 3) {
     })
   }, [])
 
+  // Change one key's value. Keys are held in sorted order, so a new value usually
+  // belongs in a different leaf: the only correct edit is remove-then-reinsert,
+  // which also means it reuses the two operations the fuzz suite already covers.
+  const replaceValue = useCallback((oldValue, newValue) => {
+    setTree(currentTree => {
+      const next = currentTree.clone()
+      next.delete(oldValue)
+      next.insert(newValue)
+      return next
+    })
+  }, [])
+
   // Reset tree with new values
   const resetTree = useCallback((values, treeOrder) => {
     initializeTree(values, treeOrder)
@@ -66,6 +78,7 @@ export function useBPlusTree(order = 3) {
     initializeTree,
     insert,
     deleteValues,
+    replaceValue,
     resetTree
   }
 }

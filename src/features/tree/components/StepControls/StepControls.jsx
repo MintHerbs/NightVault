@@ -1,5 +1,12 @@
-// Bottom control bar - play/pause/next/prev buttons, speed slider, step counter
+// Bottom transport bar for the B+ tree animation.
+//
+// Playback starts on its own, so the middle button is a pause (and a replay once the
+// run has finished) rather than a gate the visitor has to open first. Same interaction
+// model as the tableaux controls, in the tree's own green identity.
+import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw, SkipForward } from 'lucide-react'
 import styles from './StepControls.module.css'
+
+const SPEEDS = [0.5, 1, 2, 4]
 
 function StepControls({ player }) {
   const {
@@ -14,70 +21,96 @@ function StepControls({ player }) {
     togglePlayPause,
     next,
     prev,
+    goToStep,
+    skipToEnd,
     updateSpeed
   } = player
 
-  const stepDescription = currentStep?.description || 'Ready to visualize'
+  const description = currentStep?.description || 'Ready'
+  const stepNumber = hasSteps ? currentStepIndex + 1 : 0
+  const finished = isAtEnd && !isPlaying
 
-  const handleSpeedChange = (e) => {
-    updateSpeed(parseFloat(e.target.value))
-  }
+  const PlayIcon = finished ? RotateCcw : isPlaying ? Pause : Play
+  const playLabel = finished ? 'Replay' : isPlaying ? 'Pause' : 'Play'
 
   return (
     <div className={styles.controls}>
-      <div className={styles.left}>
-        <button 
-          className={styles.button} 
-          onClick={prev} 
+      <div className={styles.transport}>
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={prev}
           disabled={isAtStart || !hasSteps}
+          aria-label="Previous step"
           title="Previous step"
         >
-          <span className={styles.buttonIcon}>|◀</span>
-          <span className={styles.buttonText}>Prev</span>
+          <ChevronLeft size={20} aria-hidden="true" />
         </button>
-        <button 
-          className={`${styles.button} ${styles.playButton}`}
+
+        <button
+          type="button"
+          className={`${styles.iconButton} ${styles.primaryButton}`}
           onClick={togglePlayPause}
           disabled={!hasSteps}
-          title={isPlaying ? 'Pause' : 'Play'}
+          aria-label={playLabel}
+          title={playLabel}
         >
-          <span className={styles.buttonIcon}>{isPlaying ? '⏸' : '▶'}</span>
-          <span className={styles.buttonText}>{isPlaying ? 'Pause' : 'Play'}</span>
+          <PlayIcon size={20} aria-hidden="true" />
         </button>
-        <button 
-          className={styles.button} 
-          onClick={next} 
+
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={next}
           disabled={isAtEnd || !hasSteps}
+          aria-label="Next step"
           title="Next step"
         >
-          <span className={styles.buttonText}>Next</span>
-          <span className={styles.buttonIcon}>▶|</span>
+          <ChevronRight size={20} aria-hidden="true" />
+        </button>
+
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={skipToEnd}
+          disabled={isAtEnd || !hasSteps}
+          aria-label="Skip to the finished tree"
+          title="Skip to the finished tree"
+        >
+          <SkipForward size={18} aria-hidden="true" />
         </button>
       </div>
 
-      <div className={styles.center}>
-        <div className={styles.stepCounter}>
-          Step {hasSteps ? currentStepIndex + 1 : 0} / {totalSteps}
-        </div>
-        <div className={styles.description}>
-          {stepDescription}
+      <div className={styles.progress}>
+        <p className={styles.description} aria-live="polite">{description}</p>
+        <div className={styles.trackRow}>
+          <input
+            type="range"
+            className={styles.scrubber}
+            min={0}
+            max={Math.max(0, totalSteps - 1)}
+            value={currentStepIndex}
+            onChange={(e) => goToStep(Number(e.target.value))}
+            disabled={!hasSteps}
+            aria-label={`Step ${stepNumber} of ${totalSteps}`}
+          />
+          <span className={styles.stepCounter}>{stepNumber} / {totalSteps}</span>
         </div>
       </div>
 
-      <div className={styles.right}>
-        <span className={styles.speedLabel}>Speed:</span>
-        <input
-          type="range"
-          min="0.5"
-          max="2"
-          step="0.1"
-          value={speed}
-          onChange={handleSpeedChange}
-          className={styles.slider}
-          disabled={!hasSteps}
-          title={`Playback speed: ${speed.toFixed(1)}x`}
-        />
-        <span className={styles.speedValue}>{speed.toFixed(1)}x</span>
+      <div className={styles.speed} role="group" aria-label="Playback speed">
+        {SPEEDS.map((option) => (
+          <button
+            key={option}
+            type="button"
+            className={`${styles.speedOption} ${speed === option ? styles.speedActive : ''}`}
+            onClick={() => updateSpeed(option)}
+            disabled={!hasSteps}
+            aria-pressed={speed === option}
+          >
+            {option}&times;
+          </button>
+        ))}
       </div>
     </div>
   )

@@ -1,9 +1,10 @@
-// Right sidebar - insert/delete inputs and tree info display
+// Right sidebar - insert/delete inputs, tree info, and starting over
 import { useState } from 'react'
+import { RotateCcw } from 'lucide-react'
 import styles from './OperationsPanel.module.css'
 import { normalizeKey } from '../../../../lib/BPlusTree'
 
-function OperationsPanel({ order, stats, onInsert, onDelete }) {
+function OperationsPanel({ order, stats, onInsert, onDelete, onReset }) {
   const [insertInput, setInsertInput] = useState('')
   const [deleteInput, setDeleteInput] = useState('')
 
@@ -140,6 +141,18 @@ function OperationsPanel({ order, stats, onInsert, onDelete }) {
           </div>
         </div>
       </div>
+
+      {/* Starting over lives at the bottom of the panel that owns the other tree
+          operations, rather than floating in the navbar. It is destructive, so it is
+          styled as a quiet text button and kept away from Insert and Delete. */}
+      {onReset && (
+        <div className={styles.footer}>
+          <button className={styles.resetButton} onClick={onReset}>
+            <RotateCcw size={15} aria-hidden="true" />
+            Start a new tree
+          </button>
+        </div>
+      )}
     </div>
   )
 }

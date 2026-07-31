@@ -97,7 +97,7 @@
 }
 
 .mobileToggle:hover {
-  background-color: #3d7de0;
+  background-color: var(--accent-blue-hover);
   transform: scale(1.05);
 }
 
