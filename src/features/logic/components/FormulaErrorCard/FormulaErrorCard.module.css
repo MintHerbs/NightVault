@@ -1,0 +1,149 @@
+.card {
+  /* Centres inside its flex parent without clipping when the viewport is short. */
+  margin: auto;
+  width: min(560px, calc(100vw - 48px));
+  padding: 28px;
+  border-radius: var(--md-shape-lg);
+  background: var(--md-surface-container-low);
+  border: 1px solid var(--md-outline-variant);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  text-align: left;
+}
+
+.icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  background: rgba(var(--color-danger-rgb), 0.14);
+  color: var(--color-danger);
+}
+
+.headline {
+  margin: 0 0 16px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--md-on-surface);
+}
+
+/* Echoed input ------------------------------------------------------------- */
+
+.snippet {
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-radius: var(--md-shape-md);
+  background: var(--md-surface-container);
+  overflow-x: auto;
+}
+
+.formulaLine,
+.caretLine {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.4;
+  white-space: pre;
+  color: var(--md-on-surface);
+}
+
+.mark {
+  padding: 1px 0;
+  border-radius: 2px;
+  background: rgba(var(--color-danger-rgb), 0.28);
+  color: var(--md-on-surface);
+}
+
+.caretLine {
+  color: var(--color-danger);
+}
+
+.caret {
+  font-size: 11px;
+}
+
+/* Supporting text ---------------------------------------------------------- */
+
+.hint {
+  margin: 0 0 24px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--md-on-surface-variant);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.primaryAction {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 999px;
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.primaryAction:hover {
+  background: var(--color-accent-bright);
+}
+
+.primaryAction:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Examples ----------------------------------------------------------------- */
+
+.examples {
+  padding-top: 20px;
+  border-top: 1px solid var(--md-outline-variant);
+}
+
+.examplesLabel {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--md-on-surface-variant);
+}
+
+.exampleList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.exampleChip {
+  padding: 7px 14px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--md-on-surface);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background var(--md-duration-short) var(--md-easing-emphasized),
+    border-color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.exampleChip:hover {
+  background: var(--md-surface-container);
+  border-color: var(--color-accent);
+}
+
+.exampleChip:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

@@ -129,46 +129,79 @@ Output: a tree of `TableauNode` objects ready for rendering
   id: string,
   formula: string,        // display string e.g. "¬(P∧Q)"
   formulaNode: ASTNode,   // parsed AST
-  isClosed: boolean,      // true if branch has contradiction
-  isOpen: boolean,        // true if branch is complete with no contradiction
-  closedBy: [id1, id2],   // which two node IDs caused the closure
-  children: TableauNode[] // [] = leaf, [one] = alpha rule, [two] = beta rule
+  isClosed: boolean,      // leaf ends a branch that contradicts itself
+  isOpen: boolean,        // leaf ends a branch with nothing left to expand
+  closedBy: [id1, id2],   // the two node IDs that contradict
+  model: object|null,     // on an open leaf: the assignment that branch witnesses
+  children: TableauNode[],// [] = leaf, [one] = α rule, [two] = β rule
+  revealAt: number,       // step index at which this node appears
+  markAt: number|null     // step index at which its ✗ / ○ appears
 }
 ```
 
-### Rules (from Image 2 in notes)
+Every leaf of a finished tableau has exactly one of `isClosed` / `isOpen` set, and every
+id in `closedBy` is present in the tree. The oracle test asserts both.
 
-**Alpha rules (single branch — stack formulas):**
+### Rules
+
+**α-rules (one branch, formulas stack):**
 | Formula | Produces |
 |---------|----------|
 | `¬¬P` | `P` |
 | `P∧Q` | `P`, `Q` (stacked) |
 | `¬(P∨Q)` | `¬P`, `¬Q` (stacked) |
 | `¬(P→Q)` | `P`, `¬Q` (stacked) |
-| `P↔Q` → left branch | `P`, `Q` |
-| `P↔Q` → right branch | `¬P`, `¬Q` |
 
-**Beta rules (two branches):**
+**β-rules (two branches):**
 | Formula | Left branch | Right branch |
 |---------|------------|--------------|
 | `P∨Q` | `P` | `Q` |
 | `¬(P∧Q)` | `¬P` | `¬Q` |
 | `P→Q` | `¬P` | `Q` |
+| `P↔Q` | `P`, `Q` | `¬P`, `¬Q` |
 | `¬(P↔Q)` | `¬P`, `Q` | `P`, `¬Q` |
 
+`P↔Q` is a **β-rule**. Earlier revisions of this spec listed it under the α table with
+"left branch"/"right branch" columns, which is a contradiction in terms: the two cases
+(both sides true, both sides false) cannot be stacked on one branch. The engine has
+always treated it as β; the table was wrong (T-084).
+
 ### Algorithm
-1. Start: negate the formula (to prove by contradiction / test unsatisfiability)
-   OR take formula as-is (to test satisfiability — caller decides)
-2. Maintain a queue of unexpanded formulas per branch
-3. Apply rules in order: α rules first, then β rules
-4. After each expansion, check all branch paths for contradictions
-   (atom A and ¬A both present → close with ✗)
-5. Terminate when all branches are either closed (✗) or contain only atoms (○)
-6. Return the root node of the completed tree
+1. Start from the formula as written (satisfiability) or from its negation (validity:
+   a formula is valid exactly when its negation has no model).
+2. Track each branch as a root-to-leaf path with its own literal set and its own queue
+   of unexpanded formulas.
+3. Expand α before β: it keeps the tree narrow, and often closes a branch before a split
+   is needed.
+4. **Every expansion appends to the branch's current leaf**, never to the node the
+   expanded formula sits on. Attaching to the formula's own node severs whatever is
+   already below it (T-084).
+5. Check for a contradiction as each literal is written. Close the branch at the literal
+   that introduced it and stop expanding: everything below is irrelevant.
+6. A branch with an empty queue and no contradiction is open, and the literals along it
+   are a model of the formula.
+7. All branches closed = unsatisfiable (or, in validity mode, valid).
 
 ### Step array for animation
-The engine also produces a `steps[]` array (same pattern as B+ tree AnimationEngine):
-each step = { description, treeSnapshot, highlightNodeId }
+The engine produces a `steps[]` array of
+`{ id, description, kind, highlightNodeId }`, where `kind` is one of
+`start` / `expand` / `split` / `close` / `open` / `result`. Close steps also carry
+`closedBy`, open steps carry `model`, and the final `result` step carries both the
+verdict and the witnessing model.
+
+Steps deliberately do **not** carry a tree snapshot. The canvas lays the finished tree
+out once and reveals nodes whose `revealAt` has been reached, so nothing moves under the
+viewer as the animation runs.
+
+### Tests
+`npm run test:logic` runs three suites:
+- `formulaParser.test.js`: grammar, associativity, and the position/hint attached to
+  every parse error
+- `tableauxEngine.oracle.test.js`: every verdict cross-checked against an exhaustive
+  truth table over curated tautologies plus seeded fuzz, with the structural invariants
+  above
+- `tableauxLayout.test.js`: no overlapping boxes on any row, chains vertical, splits
+  centred over their branches
 
 ---
 

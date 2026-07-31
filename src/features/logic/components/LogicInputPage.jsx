@@ -10,6 +10,9 @@
  * @param {string} props.placeholder - Input placeholder text
  * @param {Function} props.onSubmit - Callback when user submits input
  * @param {Function} props.onAIStateChange - Callback for AI state changes
+ * @param {string} [props.defaultValue] - Pre-fills the input, e.g. when returning from
+ *   an error so the visitor does not have to retype what they wrote
+ * @param {React.ReactNode} [props.children] - Extra controls rendered under the symbol bar
  */
 import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -27,7 +30,9 @@ export default function LogicInputPage({
   subtitle,
   placeholder,
   onSubmit,
-  onAIStateChange
+  onAIStateChange,
+  defaultValue = '',
+  children
 }) {
   const navigate = useNavigate()
   const inputRef = useRef(null)
@@ -65,10 +70,13 @@ export default function LogicInputPage({
             onSubmit={onSubmit}
             onAIStateChange={onAIStateChange}
             placeholder={placeholder}
+            defaultValue={defaultValue}
             inputRef={inputRef}
           />
-          
+
           <SymbolBar inputRef={inputRef} />
+
+          {children}
         </motion.div>
       </main>
     </div>
