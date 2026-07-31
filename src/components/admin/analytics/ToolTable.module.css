@@ -1,0 +1,111 @@
+/* Tool leaderboard table. Recessive rules and headers; the numbers carry it. */
+
+.empty {
+  margin: 0;
+  padding: 20px 0;
+  font-size: 13px;
+  color: var(--md-on-surface-variant);
+  text-align: center;
+}
+
+/* Six columns of numbers do not fit a phone. Scroll the table rather than
+   letting it push the page into a horizontal scroll of its own. */
+.scroll {
+  overflow-x: auto;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 520px;
+}
+
+.table th,
+.table td {
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--md-outline-variant);
+  white-space: nowrap;
+}
+
+.table thead th {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--md-on-surface-variant);
+  border-bottom-color: var(--md-outline-variant);
+}
+
+.table tbody tr:last-child th,
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: rgba(var(--color-fg-rgb), 0.04);
+}
+
+.toolName {
+  font-weight: 500;
+  color: var(--md-on-surface);
+}
+
+.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--md-on-surface);
+}
+
+.rateCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+}
+
+.track {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--md-surface-container-high);
+  overflow: hidden;
+  min-width: 60px;
+}
+
+/* Share of a whole, so one hue at two steps: filled against its own track. */
+.fill {
+  height: 100%;
+  background: var(--md-primary);
+  border-radius: 0 4px 4px 0;
+  transition: width var(--md-duration-medium) var(--md-easing-emphasized);
+}
+
+.rateValue {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--md-on-surface);
+  min-width: 34px;
+  text-align: right;
+}
+
+.caption {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--md-on-surface-variant);
+}
+
+.caption strong {
+  font-weight: 500;
+  color: var(--md-on-surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill {
+    transition: none;
+  }
+}

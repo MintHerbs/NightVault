@@ -1,0 +1,86 @@
+/* Ranked horizontal bars. Single hue, one step, same reasoning as
+   TrendChart.module.css. Every row is directly labelled with its value, which is
+   what earns the chart the right to have no value axis at all. */
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty {
+  margin: 0;
+  padding: 20px 0;
+  font-size: 13px;
+  color: var(--md-on-surface-variant);
+  text-align: center;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.label {
+  font-size: 13px;
+  color: var(--md-on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Text wears text tokens, never the mark colour — the bar beside it already
+   carries the identity. */
+.value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--md-on-surface);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.suffix {
+  font-weight: 400;
+  color: var(--md-on-surface-variant);
+}
+
+.track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--md-surface-container-high);
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  background: var(--md-primary);
+  /* Rounded at the data end only; the origin end stays flat against the axis. */
+  border-radius: 0 4px 4px 0;
+  transition: width var(--md-duration-medium) var(--md-easing-emphasized);
+}
+
+.meta {
+  font-size: 11px;
+  color: var(--md-on-surface-variant);
+  line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    transition: none;
+  }
+}

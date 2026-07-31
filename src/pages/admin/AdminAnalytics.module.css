@@ -1,0 +1,261 @@
+/* Material You analytics dashboard (T-086). Chrome mirrors
+   AdminSettingsPage.module.css so every admin surface reads as one system; the
+   body is a two-column panel grid instead of that page's single column, because
+   these panels are comparisons rather than a settings form. */
+
+.app {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.fullLoading,
+.panelLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fullLoading {
+  width: 100vw;
+  height: 100vh;
+  background: var(--color-bg);
+}
+
+.panelLoading {
+  padding: 80px 0;
+}
+
+/* ── Top bar ────────────────────────────────────────────────────────────── */
+.topbar {
+  height: 64px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.backButton:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 4px;
+}
+
+.brandIcon {
+  color: var(--color-accent);
+}
+
+.brandName {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-text);
+  letter-spacing: -0.2px;
+}
+
+.topRight {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Range control ──────────────────────────────────────────────────────── */
+/* M3 segmented button: one connected track, the selected segment filled with
+   the primary container rather than outlined. Filters sit in one row above the
+   charts, never inside a panel. */
+.segmented {
+  display: flex;
+  background: var(--md-surface-container);
+  border-radius: var(--md-shape-xl);
+  padding: 3px;
+  gap: 2px;
+}
+
+.segment {
+  border: none;
+  background: none;
+  padding: 6px 14px;
+  border-radius: var(--md-shape-xl);
+  font: inherit;
+  font-size: 13px;
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+  transition:
+    background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.segment:hover {
+  background: rgba(var(--color-fg-rgb), 0.06);
+  color: var(--md-on-surface);
+}
+
+.segmentActive,
+.segmentActive:hover {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  font-weight: 500;
+}
+
+.segment:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+.excludeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.excludeButton:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+/* On, meaning this browser's own visits are being left out of the numbers. */
+.excludeActive,
+.excludeActive:hover {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+.excludeButton:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+/* ── Body ───────────────────────────────────────────────────────────────── */
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px 16px 64px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-content: start;
+  box-sizing: border-box;
+}
+
+/* Tiles and the loading state always span the grid. */
+.tiles,
+.panelLoading {
+  grid-column: 1 / -1;
+}
+
+/* auto-fit rather than a fixed count: six tiles reflow to 3x2 on a tablet and
+   2x3 on a phone without a breakpoint for each step. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.notice {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--md-on-surface-variant);
+}
+
+.noticeHint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--md-on-surface-variant);
+  opacity: 0.85;
+}
+
+/* ── Recently updated notes ─────────────────────────────────────────────── */
+/* A plain list, not RankBars: these rows have no magnitude to encode, and a bar
+   scaled to something arbitrary would invent a comparison. */
+.noteList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.noteRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--md-outline-variant);
+  min-width: 0;
+}
+
+.noteRow:last-child {
+  border-bottom: none;
+}
+
+.noteTitle {
+  font-size: 13px;
+  color: var(--md-on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.noteMeta {
+  font-size: 12px;
+  color: var(--md-on-surface-variant);
+  flex-shrink: 0;
+}
+
+@media (max-width: 860px) {
+  .main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .topbar {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+  }
+
+  .topRight {
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+  }
+}

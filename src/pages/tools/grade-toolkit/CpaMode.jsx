@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { gradeForMark, toneForMark } from './gradeScale'
+import { trackToolEventDebounced } from '../../../lib/analytics/tracker'
 import styles from './CpaMode.module.css'
 
 const YEARS = [
@@ -54,7 +55,19 @@ export default function CpaMode() {
   const [modules, setModules] = useState(initialYears)
   const [projects, setProjects] = useState([''])
 
-  const changeModules = (year, change) => setModules(previous => ({ ...previous, [year]: change(previous[year]) }))
+  // Every edit in this mode funnels through changeModules or changeProjects, so
+  // one debounced event in each covers marks, modules and project rows alike.
+  // Debounced because the CPA recomputes per keystroke: counting keystrokes
+  // would rank this tool an order of magnitude above the ones with a submit
+  // button purely because of how it is built.
+  const changeModules = (year, change) => {
+    setModules(previous => ({ ...previous, [year]: change(previous[year]) }))
+    trackToolEventDebounced('grade-toolkit', 'edit')
+  }
+  const changeProjects = change => {
+    setProjects(change)
+    trackToolEventDebounced('grade-toolkit', 'edit')
+  }
   const updateModule = (year, index, changes) => changeModules(year, rows => replaceAt(rows, index, { ...rows[index], ...changes }))
 
   const totals = YEARS.map(year => {
@@ -97,12 +110,12 @@ export default function CpaMode() {
                   </span>
                   <MarkControl
                     mark={mark}
-                    onChange={value => setProjects(rows => replaceAt(rows, index, value))}
+                    onChange={value => changeProjects(rows => replaceAt(rows, index, value))}
                     label={`Final Year Project ${index + 1} mark`}
                   />
                   {projects.length > 1 && (
                     <RemoveButton
-                      onClick={() => setProjects(rows => removeAt(rows, index))}
+                      onClick={() => changeProjects(rows => removeAt(rows, index))}
                       label={`Remove Final Year Project ${index + 1}`}
                       title="Remove final project"
                     />
@@ -111,7 +124,7 @@ export default function CpaMode() {
               ))}
               <button
                 type="button"
-                onClick={() => setProjects(rows => [...rows, ''])}
+                onClick={() => changeProjects(rows => [...rows, ''])}
                 className={styles.addProjectButton}
               >
                 + Add another final project

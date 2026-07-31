@@ -5,6 +5,7 @@ import { colors } from '../../../constants/colors'
 import BackButton from '../../../components/common/BackButton/BackButton'
 import CpaMode from './CpaMode'
 import MinMaxMode from './MinMaxMode'
+import { trackToolEvent } from '../../../lib/analytics/tracker'
 import styles from './GradeToolkitPage.module.css'
 
 // The two tools this page fuses. `key` is what lives in the ?mode= query param
@@ -44,6 +45,10 @@ export default function GradeToolkitPage() {
     setMode(next)
     // Keep the URL shareable/deep-linkable without stacking history entries.
     setSearchParams(next === 'cpa' ? {} : { mode: next }, { replace: true })
+    // Which half of the fused toolkit people actually want. The CPA calculator
+    // and "min effort, max result" used to be separate tools, and this is the
+    // only signal that says whether merging them matched demand.
+    trackToolEvent('grade-toolkit', next === 'cpa' ? 'mode-cpa' : 'mode-minmax')
   }
 
   const active = MODES.find(m => m.key === mode) ?? MODES[0]

@@ -705,6 +705,7 @@ function AdminEditorContent() {
         username={profile?.username}
         onSignOut={handleSignOut}
         onOpenSettings={() => navigate('/admin/settings')}
+        onOpenAnalytics={() => navigate('/admin/analytics')}
         editorRef={editorRef}
         onFormatAction={onFormat}
         onInsertImage={() => fileInputRef.current?.click()}

@@ -135,7 +135,10 @@
   border-radius: 50%;
 }
 
-.manageUsersButton {
+/* Round 40px icon buttons in the top bar. Shared rather than duplicated so the
+   analytics entry (T-086) cannot drift from the users one beside it. */
+.manageUsersButton,
+.analyticsButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -149,7 +152,8 @@
   transition: background 150ms ease, color 150ms ease;
 }
 
-.manageUsersButton:hover {
+.manageUsersButton:hover,
+.analyticsButton:hover {
   background: var(--color-hover);
   color: var(--color-text);
 }

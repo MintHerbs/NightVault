@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import * as Popover from '@radix-ui/react-popover'
 import {
-  ArrowUp, ArrowDown, CaretDown, CaretRight, DotsThreeVertical, EyeSlash,
-  Folder, FileText, Gear, ListBullets, MagnifyingGlass, Monitor, Plus, SignOut,
-  SquaresFour, Users, Warning,
+  ArrowUp, ArrowDown, CaretDown, CaretRight, ChartLineUp, DotsThreeVertical,
+  EyeSlash, Folder, FileText, Gear, ListBullets, MagnifyingGlass, Monitor, Plus,
+  SignOut, SquaresFour, Users, Warning,
 } from '@phosphor-icons/react'
 import { colors } from '../../constants/colors'
 import { supabase } from '../../lib/supabaseClient'
@@ -548,6 +548,13 @@ function AdminBrowserContent() {
           />
         </div>
         <div className={styles.topRight}>
+          {/* Same gate as Manage users below. Hiding it is presentation only —
+              analytics_can_view() (0052) is what actually refuses a contributor. */}
+          {(isOwner || isAdmin) && (
+            <button className={styles.analyticsButton} onClick={() => navigate('/admin/analytics')} title="Analytics">
+              <ChartLineUp size={20} weight="regular" />
+            </button>
+          )}
           {(isOwner || isAdmin) && (
             <button className={styles.manageUsersButton} onClick={() => navigate('/admin/users')} title="Manage users">
               <Users size={20} weight="regular" />
@@ -568,6 +575,11 @@ function AdminBrowserContent() {
                   </span>
                 </div>
                 <div className={styles.menuDivider} />
+                {(isOwner || isAdmin) && (
+                  <button className={styles.menuItem} onClick={() => navigate('/admin/analytics')}>
+                    <ChartLineUp size={16} /> Analytics
+                  </button>
+                )}
                 <button className={styles.menuItem} onClick={() => navigate('/admin/settings')}>
                   <Gear size={16} /> Settings
                 </button>

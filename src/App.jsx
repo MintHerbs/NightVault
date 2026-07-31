@@ -10,6 +10,7 @@ import Sidebar from './components/layout/Sidebar'
 import Starfield from './components/effects/Starfield/Starfield'
 import { ChatPanel, ChatDimOverlay } from './features/chat/components'
 import { AppRoutes, preloadRoutes } from './routes'
+import { trackPageView } from './lib/analytics/tracker'
 import { songs } from './config/songs'
 
 function AppContent() {
@@ -54,6 +55,16 @@ function AppContent() {
     import('./pages/HomeFeedPage')
     return () => clearTimeout(t)
   }, [])
+
+  // T-086: the single place every navigation passes through, so route analytics
+  // needs one hook rather than one per page. Keyed on pathname only — a ?mode=
+  // change inside the Grade Toolkit is not a new pageview, and the toolkit
+  // rewrites that param on every mode switch (it reports its own tool event
+  // instead). trackPageView swallows its own failures; it must never be able to
+  // break navigation.
+  useEffect(() => {
+    trackPageView(location.pathname)
+  }, [location.pathname])
 
   useEffect(() => {
     // Player autoplays muted (browsers block unmuted autoplay). Unmute

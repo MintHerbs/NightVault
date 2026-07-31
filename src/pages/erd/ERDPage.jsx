@@ -16,6 +16,7 @@ import ERDCanvas from '../../features/erd/components/ERDCanvas/ERDCanvas'
 import { buildERDPrompt } from '../../lib/erdPromptBuilder'
 import { parseERD } from '../../lib/erdParser'
 import { generateERD } from '../../lib/geminiService'
+import { trackToolEvent } from '../../lib/analytics/tracker'
 import styles from './ERDPage.module.css'
 
 // Long enough to read the success state on the island before it collapses
@@ -63,6 +64,9 @@ function ERDPage({ onAIStateChange }) {
     setFallbackReason(null)
     setError(false)
     setAIState('generating')
+    // Counted at the attempt, not on success: the fallback rate is the number
+    // worth watching here, and it is only readable if refusals are counted too.
+    trackToolEvent('erd', 'generate')
 
     const result = await generateERD(value)
     if (activeRequestRef.current !== requestId) return // superseded or unmounted
@@ -102,10 +106,14 @@ function ERDPage({ onAIStateChange }) {
     setCanRetry(false)
     setStep(2)
     setAIState('waiting')
+    // Deliberately chosen over generation, which is different from being pushed
+    // into the manual flow by a failure. Only this path is a preference.
+    trackToolEvent('erd', 'manual')
   }
 
   const handleStep2Next = () => {
     setStep(3)
+    trackToolEvent('erd', 'step')
   }
 
   // Step 3: user pastes JSON they generated elsewhere

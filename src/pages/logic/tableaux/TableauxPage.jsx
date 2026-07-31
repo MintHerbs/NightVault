@@ -15,6 +15,7 @@ import Starfield from '../../../components/effects/Starfield/Starfield'
 import Navbar from '../../../components/layout/Navbar/Navbar'
 import BackButton from '../../../components/common/BackButton/BackButton'
 import { runTableaux } from '../../../lib/logic/tableauxEngine'
+import { trackToolEvent } from '../../../lib/analytics/tracker'
 import styles from './TableauxPage.module.css'
 
 // Stable identity, so the player does not treat "no run yet" as a new run every render.
@@ -77,6 +78,9 @@ export default function TableauxPage({ onAIStateChange }) {
     setRun(null)
     setError(null)
     setAIState('thinking')
+    // Past the empty-input guard, so it counts real attempts. A formula the
+    // parser rejects still counts: the tool was used, it just said no.
+    trackToolEvent('tableaux', 'solve')
 
     try {
       setRun(runTableaux(trimmed, mode))
@@ -105,6 +109,9 @@ export default function TableauxPage({ onAIStateChange }) {
     setRun(null)
     setFormula(example)
     setAIState('idle')
+    // Worth separating from 'solve': heavy example use with few own formulas
+    // means people are exploring rather than bringing their own coursework.
+    trackToolEvent('tableaux', 'example')
   }, [setAIState])
 
   const handleNewFormula = useCallback(() => {

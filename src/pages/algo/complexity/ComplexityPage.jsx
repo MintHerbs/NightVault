@@ -9,6 +9,7 @@ import ComplexityCodeView from '../../../features/complexity/components/Complexi
 import ComplexityTerminal from '../../../features/complexity/components/ComplexityTerminal/ComplexityTerminal';
 import { analyzeComplexity } from '../../../lib/algo/complexityEngine';
 import { displayComplexity } from '../../../lib/algo/complexityTypes';
+import { trackToolEvent } from '../../../lib/analytics/tracker';
 import styles from './ComplexityPage.module.css';
 
 export default function ComplexityPage({ onAIStateChange }) {
@@ -26,6 +27,7 @@ export default function ComplexityPage({ onAIStateChange }) {
     setResult(analysis);
     setView('result');
     setIsAnimating(true);
+    trackToolEvent('complexity', 'analyze');
     
     // Set to 'thinking' state immediately
     if (onAIStateChange) {

@@ -961,6 +961,9 @@ Validates and sanitizes Gemini JSON responses:
 | `VITE_SUPABASE_URL` | `usePresence.js`, `useApiCalls.js` | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | `usePresence.js`, `useApiCalls.js` | Supabase anon key |
 | `GEMINI_API_KEY` | `api/gemini.js` | Gemini API key. Server-side only, never `VITE_`-prefixed |
+| `ANALYTICS_HOURLY_LIMIT` | `api/_lib/analyticsStore.js` | Optional. Analytics flushes per caller per hour, default 240 |
+| `ANALYTICS_RATE_WINDOW` | `api/_lib/analyticsStore.js` | Optional. Window for the above, default `1 hour` |
+| `ANALYTICS_HASH_SALT` | `api/_lib/analyticsStore.js` | Optional. Salt for the stored IP hash; falls back to `SUPABASE_SECRET_KEY` |
 
 ---
 
@@ -985,6 +988,84 @@ create table api_calls (
 );
 ```
 Used by `useApiCalls.js`. Resets `call_count` to 0 after 24 hours.
+
+> `useApiCalls.js` and `src/lib/geminiService.js`'s direct-call path are dead
+> code; `api_calls`' write policies were closed in `0048`. Quota now lives in
+> `erd_rate_limits` (`0051`).
+
+### Analytics tables (`0052`, T-086)
+
+`page_hits`, `note_reads`, `route_transitions`, `tool_events` — all per-day
+aggregate counters, all RLS-enabled with **no policies and no anon grants**, so
+only the service role reaches them. See the migration header for the full
+rationale; the shape is summarised under [Usage Analytics](#usage-analytics)
+below.
+
+---
+
+## Usage Analytics
+
+Added by T-086. Answers which pages get visited, which notes get read, and which
+tools people actually use rather than merely open.
+
+### Why aggregate counters and not an event log
+
+Rows are keyed `(day, thing, session)` and incremented, so table size is bounded
+by routes × sessions × days instead of growing with every navigation. It also
+means no table here can be walked back into one person's path through the site,
+which keeps this consistent with the no-raw-IP stance `0051` took.
+
+### Pieces
+
+| File | Role |
+|---|---|
+| `src/lib/analytics/eventSchema.js` | **The allowlist.** Canonical route keys, alias maps, tool-event vocabulary, labels. Imported by both the browser and the serverless function so they cannot drift |
+| `src/lib/analytics/tracker.js` | Browser queue. Batches counts, flushes on a 5s idle timer and on `pagehide`/`visibilitychange` via `sendBeacon`. Swallows every error |
+| `api/analytics.js` | Validates each key against the allowlist and drops what it does not recognise |
+| `api/_lib/analyticsStore.js` | Service-role client, salted IP hashing, and the per-caller flush limiter. Self-contained rather than sharing the ERD quota module, so neither feature's abuse controls move the other |
+| `src/lib/analytics/adminApi.js` | Dashboard read side. One `analytics_dashboard(days)` call |
+| `src/pages/admin/AdminAnalytics.jsx` | The `/admin/analytics` page, owner/admin only |
+| `src/components/admin/analytics/` | Panel, StatTile, TrendChart, RankBars, ToolTable |
+
+### Four ranking rules the route table forces
+
+1. **Alias routes collapse.** `/logic/tableaux`, `/logic/truth-tree` and
+   `/logic/semantic-tableaux` are one page; so are the two complexity paths and
+   the two recurrence paths. Keyed literally, tableaux under-ranks threefold.
+2. **Redirect hops are not pages.** `/`, `/notes-browser`,
+   `/tools/cpa-calculator` and `/tools/lazy-grades` render `<Navigate>`, so the
+   destination records its own hit. These are stored under an `alias:` prefix and
+   excluded from page rankings, but kept because which entry point someone used
+   is worth knowing.
+3. **Notes key on note id**, in `note_reads`, not on the `/notes/:section/*`
+   pattern which would collapse the whole corpus into one row.
+4. **Rank on distinct sessions, not hits.** One person reloading a tool is not
+   twenty readers.
+
+### Opened vs used
+
+`tool_events` reserves `event_key = 'open'`, emitted on arrival at a tool route.
+Anything else means the tool was driven. That single convention is what lets the
+dashboard show activation (`used / opened`) and depth (`uses / used`) without
+restating the tool-to-route mapping in SQL.
+
+The Grade Toolkit's two modes recompute on every keystroke, so their `edit` event
+is debounced through `trackToolEventDebounced()` — counting keystrokes would rank
+that tool an order of magnitude above the submit-button tools purely because of
+how it is built.
+
+### What is deliberately not collected
+
+No IP addresses, no user agents, no referrers, no note or message content, and no
+per-session navigation trail. `/admin/*` is never recorded, `navigator.doNotTrack`
+is honoured, and the dashboard's eye-slash toggle sets a local opt-out so
+contributors' own browsing stays out of a cohort-sized dataset.
+
+### Tests
+
+`npm run test:analytics` covers the allowlist and route canonicalisation
+(`src/test/analytics/test-event-schema.mjs`) and the API's validation boundary
+(`src/test/analytics/test-analytics-handler.mjs`).
 
 ---
 

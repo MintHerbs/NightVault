@@ -13,6 +13,7 @@ import { useBPlusTree } from '../../hooks/useBPlusTree'
 import { normalizeKey } from '../../lib/BPlusTree'
 import { useAnimationPlayer } from '../../hooks/useAnimationPlayer'
 import { traceBuild, traceInsertMany, traceDeleteMany, traceDelete, traceReplace } from '../../lib/treeTrace'
+import { trackToolEvent } from '../../lib/analytics/tracker'
 import styles from './TreePage.module.css'
 
 // Stable identity, so the player does not treat "no run yet" as a new run every render.
@@ -78,6 +79,7 @@ function TreePage({ onAIStateChange, onChatOpen }) {
   // Handle order change from HeroText
   const handleOrderChange = (newOrder) => {
     setOrder(newOrder)
+    trackToolEvent('tree', 'order')
   }
 
   // Handle input submission from PillInput
@@ -97,6 +99,7 @@ function TreePage({ onAIStateChange, onChatOpen }) {
       setSteps(traceBuild(parsedValues, order).steps)
       initializeTree(parsedValues, order)
       setHasTree(true)
+      trackToolEvent('tree', 'build')
     }
   }
 
@@ -105,18 +108,24 @@ function TreePage({ onAIStateChange, onChatOpen }) {
     // Trace and commit both start from the same tree, so they cannot disagree.
     setSteps(traceInsertMany(tree, valuesToInsert).steps)
     insert(valuesToInsert)
+    // Counted per key, not per submission: pasting 20 keys is 20 keys' worth of
+    // use, and the depth figure on the dashboard is only meaningful if it tracks
+    // work done rather than buttons pressed.
+    trackToolEvent('tree', 'insert', valuesToInsert.length)
   }
 
   // Handle delete operation from OperationsPanel
   const handleDelete = (valuesToDelete) => {
     setSteps(traceDeleteMany(tree, valuesToDelete).steps)
     deleteValues(valuesToDelete)
+    trackToolEvent('tree', 'delete', valuesToDelete.length)
   }
 
   // Delete one key straight from the canvas.
   const handleDeleteKey = (value) => {
     setSteps(traceDelete(tree, value).steps)
     deleteValues([value])
+    trackToolEvent('tree', 'delete')
   }
 
   // Change one key's value from the canvas. Returns an error string to show in
@@ -135,6 +144,10 @@ function TreePage({ onAIStateChange, onChatOpen }) {
     }
     setSteps(traceReplace(tree, oldValue, newValue).steps)
     replaceValue(oldValue, newValue)
+    // Tracked only past both guards above: a no-op retype and a rejected
+    // collision are not edits, and counting them would report the feature as
+    // more used the more often it refused.
+    trackToolEvent('tree', 'edit-key')
     return null
   }
 
@@ -143,6 +156,7 @@ function TreePage({ onAIStateChange, onChatOpen }) {
     setHasTree(false)
     setIsPanelOpen(false)
     setSteps(NO_STEPS)
+    trackToolEvent('tree', 'reset')
     if (typeof onAIStateChange === 'function') {
       onAIStateChange('idle')
     }

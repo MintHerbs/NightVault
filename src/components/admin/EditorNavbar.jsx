@@ -4,6 +4,7 @@ import * as Popover from '@radix-ui/react-popover'
 import { colors } from '../../constants/colors'
 import {
   CaretRight,
+  ChartLineUp,
   Eye,
   CloudArrowUp,
   GithubLogo,
@@ -50,6 +51,7 @@ export default function EditorNavbar({
   username,
   onSignOut,
   onOpenSettings,
+  onOpenAnalytics,
   editorRef,
   onFormatAction,
   onInsertImage,
@@ -203,6 +205,14 @@ export default function EditorNavbar({
                   <span className={styles.role}>{roleLabel}</span>
                 </div>
                 <div className={styles.divider} />
+                {/* Gated on canManageUsers, the same owner-or-admin condition
+                    analytics_can_view() (0052) enforces server-side. */}
+                {canManageUsers && (
+                  <button className={styles.menuItem} onClick={onOpenAnalytics}>
+                    <ChartLineUp size={16} />
+                    <span>Analytics</span>
+                  </button>
+                )}
                 <button className={styles.menuItem} onClick={onOpenSettings}>
                   <Gear size={16} />
                   <span>Settings</span>

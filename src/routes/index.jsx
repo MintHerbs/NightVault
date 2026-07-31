@@ -9,6 +9,7 @@ const AdminBrowser = lazy(() => import('../pages/admin/AdminBrowser'))
 const AdminEditor = lazy(() => import('../pages/admin/AdminEditor'))
 const AdminUsers = lazy(() => import('../pages/admin/AdminUsers'))
 const AdminSettingsPage = lazy(() => import('../pages/admin/AdminSettingsPage'))
+const AdminAnalytics = lazy(() => import('../pages/admin/AdminAnalytics'))
 
 export function AppRoutes({ onAIStateChange, onChatOpen }) {
   return (
@@ -51,6 +52,9 @@ export function AppRoutes({ onAIStateChange, onChatOpen }) {
       <Route path="/admin/editor/:moduleId/:subfolder/:slug" element={<AdminEditor />} />
       <Route path="/admin/users" element={<AdminUsers />} />
       <Route path="/admin/settings" element={<AdminSettingsPage />} />
+      {/* Usage analytics (T-086) — owner/admin only, enforced by
+          analytics_can_view() in 0052, not just by hiding the nav entry */}
+      <Route path="/admin/analytics" element={<AdminAnalytics />} />
     </Routes>
   )
 }

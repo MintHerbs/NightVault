@@ -18,6 +18,7 @@ import {
 import AvatarGroup from '../../components/common/AvatarGroup/AvatarGroup'
 import { noteRoute } from '../../components/layout/Sidebar/modules'
 import { prefetchNote } from '../../lib/noteCache'
+import { trackToolEvent } from '../../lib/analytics/tracker'
 import styles from './NotesBrowserPage.module.css'
 
 /**
@@ -166,7 +167,13 @@ export default function NotesBrowserPage() {
     // but titled "Web & Mobile Development…" has to sort first, not under W.
     kind: 'file', key: f.path, name: f.name, sortKey: baseName(f.path),
     date: f.updatedAt, created: f.createdAt,
-    onOpen: () => navigate(noteRoute(moduleId, f.path)),
+    onOpen: () => {
+      // The browser's own use, distinct from the note read that NotesPage
+      // records on arrival: this says people navigate by browsing rather than
+      // through the sidebar.
+      trackToolEvent('notes-browser', 'open-file')
+      navigate(noteRoute(moduleId, f.path))
+    },
     onWarm: warmNote(f.path),
     onWarmCancel: cancelWarm,
     authors: f.authors,

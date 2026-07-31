@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'motion/react'
 import { TARGET_GRADES, examMarkNeeded } from './gradeScale'
+import { trackToolEventDebounced } from '../../../lib/analytics/tracker'
 import styles from './MinMaxMode.module.css'
 
 const newRow = () => ({ moduleName: '', weightage: '', marks: '' })
@@ -44,9 +45,15 @@ export default function MinMaxMode({ reduceMotion }) {
       updated[index] = { ...updated[index], [field]: value }
       return updated
     })
+    // Debounced: this fires per keystroke, and one event per editing burst is
+    // what makes this tool comparable to the ones with a submit button.
+    trackToolEventDebounced('grade-toolkit', 'edit')
   }
 
-  const addRow = () => setRows(prev => [...prev, newRow()])
+  const addRow = () => {
+    setRows(prev => [...prev, newRow()])
+    trackToolEventDebounced('grade-toolkit', 'edit')
+  }
 
   return (
     <div className={styles.mode}>

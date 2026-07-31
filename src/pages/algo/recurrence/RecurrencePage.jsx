@@ -10,6 +10,7 @@ import RecurrenceSubstitutionView from '../../../features/recurrence/components/
 import ComplexityTerminal from '../../../features/complexity/components/ComplexityTerminal/ComplexityTerminal';
 import { parseRecurrence } from '../../../lib/algo/recurrenceParser';
 import { solveByTree, solveBySubstitution } from '../../../lib/algo/recurrenceSolver';
+import { trackToolEvent } from '../../../lib/analytics/tracker';
 import styles from './RecurrencePage.module.css';
 
 export default function RecurrencePage({ onAIStateChange }) {
@@ -21,6 +22,12 @@ export default function RecurrencePage({ onAIStateChange }) {
   const [isAnimating, setIsAnimating] = useState(false);
 
   const handleSubmit = (submittedFormula, submittedMethod) => {
+    // Counted here rather than on the success path below, so it counts attempts.
+    // Both a parse failure and an unsupported recurrence are someone using the
+    // tool, and attempts far exceeding results is itself the signal that the
+    // solver's coverage is the thing to work on.
+    trackToolEvent('recurrence', 'solve');
+
     // Parse the recurrence formula
     const parsed = parseRecurrence(submittedFormula);
     

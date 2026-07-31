@@ -4,6 +4,7 @@ import NoteReader from '../../components/markdown/NoteReader'
 import Loading from '../../components/ui/Loading'
 import { deriveSubfolder, getNoteAuthors } from '../../lib/notesApi'
 import { loadNote } from '../../lib/noteCache'
+import { trackNoteRead } from '../../lib/analytics/tracker'
 import { listModulesCached } from '../../lib/modulesApi'
 
 /** "getting-started" / "notes/img-push" → "Getting Started" (last segment, humanised). */
@@ -97,6 +98,11 @@ function NotesPage() {
         }
         setContent(note.contentMd)
         setStatus('loaded')
+        // Counted here rather than from the URL in App.jsx: the note id cannot
+        // be derived from the path, and this is the point where we know the note
+        // actually resolved and was shown. A hidden or missing note returns
+        // above, so it is never counted as read.
+        trackNoteRead(note.id)
         // Fired off rather than awaited: the reader shouldn't wait on a second
         // round trip just to show the byline. getNoteAuthors() never rejects.
         getNoteAuthors(note.id).then((a) => { if (!cancelled) setAuthors(a) })

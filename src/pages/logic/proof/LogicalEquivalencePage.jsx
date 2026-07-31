@@ -13,6 +13,7 @@ import LogicRulesPanel from '../../../features/logic/components/LogicRulesPanel'
 import InferenceRulesDrawer from '../../../features/logic/components/InferenceRulesDrawer'
 import { runProof } from '../../../lib/logic/proofEngine'
 import { parseFormula } from '../../../lib/logic/formulaParser'
+import { trackToolEvent } from '../../../lib/analytics/tracker'
 import styles from './LogicalEquivalencePage.module.css'
 
 export default function LogicalEquivalencePage({ onAIStateChange }) {
@@ -39,6 +40,8 @@ export default function LogicalEquivalencePage({ onAIStateChange }) {
     setResult(null)
     setError(null)
     handleAIStateChange('thinking')
+    // Past the empty-input guard, so it counts real attempts.
+    trackToolEvent('logic-proof', 'prove')
 
     try {
       // Split by comma and trim each
