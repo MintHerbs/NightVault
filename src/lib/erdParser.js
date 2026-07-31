@@ -26,6 +26,20 @@ function canonicalAttributeType(raw) {
   return ATTRIBUTE_TYPE_ALIASES[raw.trim().toLowerCase()] ?? null
 }
 
+// Chen notation labels each "many" side of a relationship with its own letter, so
+// a ternary reads M:N:P. Rejecting P forced the model to either mislabel a side or
+// invent a junction entity to get down to two participants, and the student then
+// saw a diagram that was silently wrong rather than an honest ternary. Cardinality
+// is normalised for case for the same reason attribute types are: a lowercase "n"
+// should not cost the whole diagram.
+const CARDINALITIES = ['1', 'N', 'M', 'P']
+
+function canonicalCardinality(raw) {
+  if (typeof raw !== 'string') return null
+  const up = raw.trim().toUpperCase()
+  return CARDINALITIES.includes(up) ? up : null
+}
+
 /**
  * Parses and validates ERD JSON
  * @param {string} jsonString - The JSON string to parse
@@ -150,11 +164,12 @@ export function parseERD(jsonString) {
           return { valid: false, error: `Relationship "${rel.id}" references non-existent entity "${participant.entityId}"` }
         }
         
-        // Validate cardinality
-        const validCardinalities = ['1', 'N', 'M']
-        if (!participant.cardinality || !validCardinalities.includes(participant.cardinality)) {
+        // Validate cardinality, rewriting to canonical case
+        const canonicalCard = canonicalCardinality(participant.cardinality)
+        if (!canonicalCard) {
           return { valid: false, error: `Relationship "${rel.id}" participant "${participant.entityId}" has invalid cardinality` }
         }
+        participant.cardinality = canonicalCard
         
         // Validate participation
         const validParticipations = ['total', 'partial']

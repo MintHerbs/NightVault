@@ -257,4 +257,68 @@ if (result7.valid) {
 }
 console.log()
 
+// Test 8: Ternary relationship using the M:N:P convention
+// Regression: "P" used to be rejected, which pushed the model into either
+// mislabelling a side or inventing a junction entity to get down to two
+// participants. Both produce a diagram that is silently wrong.
+console.log('Test 8: Ternary relationship (M:N:P)')
+const ternaryERD = {
+  "entities": [
+    { "id": "supplier", "name": "Supplier", "isWeak": false, "attributes": [{ "id": "sup_id", "name": "Supplier ID", "type": "key" }] },
+    { "id": "part", "name": "Part", "isWeak": false, "attributes": [{ "id": "part_no", "name": "Part Number", "type": "key" }] },
+    { "id": "project", "name": "Project", "isWeak": false, "attributes": [{ "id": "proj_id", "name": "Project ID", "type": "key" }] }
+  ],
+  "relationships": [
+    {
+      "id": "supplies",
+      "name": "Supplies",
+      "isIdentifying": false,
+      "participants": [
+        { "entityId": "supplier", "cardinality": "M", "participation": "partial" },
+        { "entityId": "part", "cardinality": "N", "participation": "partial" },
+        { "entityId": "project", "cardinality": "P", "participation": "partial" }
+      ],
+      "attributes": []
+    }
+  ],
+  "isA": []
+}
+
+const result8 = parseERD(JSON.stringify(ternaryERD))
+console.log('✓ Parse result:', result8.valid ? 'VALID' : 'INVALID')
+if (!result8.valid) {
+  console.log('  Error:', result8.error)
+  process.exitCode = 1
+} else {
+  const cards = result8.data.relationships[0].participants.map(p => p.cardinality).join(':')
+  console.log('  Cardinalities preserved:', cards, cards === 'M:N:P' ? '(OK)' : '(WRONG)')
+  if (cards !== 'M:N:P') process.exitCode = 1
+  const layout = calculateERDLayout(result8.data, {})
+  console.log('✓ Layout generated:', layout.nodes.length, 'nodes,', layout.edges.length, 'edges')
+}
+console.log()
+
+// Test 9: cardinality casing is normalised rather than rejected
+console.log('Test 9: Lowercase cardinality is normalised, junk is still rejected')
+const lowerCard = JSON.parse(JSON.stringify(ternaryERD))
+lowerCard.relationships[0].participants[0].cardinality = 'm'
+lowerCard.relationships[0].participants[1].cardinality = ' n '
+const result9 = parseERD(JSON.stringify(lowerCard))
+console.log('✓ Parse result:', result9.valid ? 'VALID' : 'INVALID')
+if (!result9.valid) {
+  console.log('  Error:', result9.error)
+  process.exitCode = 1
+} else {
+  const cards = result9.data.relationships[0].participants.map(p => p.cardinality).join(':')
+  console.log('  Normalised to:', cards, cards === 'M:N:P' ? '(OK)' : '(WRONG)')
+  if (cards !== 'M:N:P') process.exitCode = 1
+}
+
+const junkCard = JSON.parse(JSON.stringify(ternaryERD))
+junkCard.relationships[0].participants[0].cardinality = 'many'
+const result9b = parseERD(JSON.stringify(junkCard))
+console.log('✓ Rejected "many":', !result9b.valid ? 'YES' : 'NO')
+if (result9b.valid) process.exitCode = 1
+console.log()
+
 console.log('=== All ERD Tests Complete ===')
