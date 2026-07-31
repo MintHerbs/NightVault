@@ -87,7 +87,7 @@ Relationships:
 - isIdentifying: true if this relationship identifies a weak entity
 - participants: the entities taking part
   * entityId: references an entity's id
-  * cardinality: "1", "N", "M" or "P" — see CARDINALITY below, this is the rule
+  * cardinality: "1", "N", "M" or "P". See CARDINALITY below; this is the rule
     most often got wrong, read it carefully
   * participation: "total" (every instance must participate) or "partial"
 - attributes: attributes belonging to the relationship itself
@@ -100,7 +100,7 @@ IS-A Hierarchies:
   "overlapping" (it may be in several)
 - participation: "total" (every parent instance is in some subclass) or "partial"
 
-CARDINALITY (read-across convention — apply this exactly):
+CARDINALITY (read-across convention, apply this exactly):
 
 For a binary relationship between A and B, the cardinality you write on
 participant A is the number of A instances that can be linked to ONE instance
@@ -155,7 +155,7 @@ MODELLING RULES:
    everything total.
 
 7. Use a relationship with three participants only when the fact is genuinely
-   irreducible — all three are needed together to identify one occurrence. If it
+   irreducible: all three are needed together to identify one occurrence. If it
    can be expressed as two binary relationships, use two binary relationships.
 
 8. Do not emit composite attributes or a "composedOf" field. Break a composite

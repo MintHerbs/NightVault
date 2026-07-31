@@ -26,14 +26,23 @@ function canonicalAttributeType(raw) {
   return ATTRIBUTE_TYPE_ALIASES[raw.trim().toLowerCase()] ?? null
 }
 
+// The accepted vocabularies, exported so src/lib/erdResponseSchema.js can build
+// Gemini's structured-output schema from the same lists this parser validates
+// against. A drift test asserts the two agree: a schema permitting a value the
+// parser rejects would turn a model that obeyed us perfectly into an "invalid
+// ERD" error for the student.
+//
 // Chen notation labels each "many" side of a relationship with its own letter, so
 // a ternary reads M:N:P. Rejecting P forced the model to either mislabel a side or
 // invent a junction entity to get down to two participants, and the student then
-// saw a diagram that was silently wrong rather than an honest ternary. Cardinality
-// is normalised for case for the same reason attribute types are: a lowercase "n"
-// should not cost the whole diagram.
-const CARDINALITIES = ['1', 'N', 'M', 'P']
+// saw a diagram that was silently wrong rather than an honest ternary.
+export const CARDINALITIES = ['1', 'N', 'M', 'P']
+export const PARTICIPATIONS = ['total', 'partial']
+export const ISA_CONSTRAINTS = ['disjoint', 'overlapping']
+export const ATTRIBUTE_TYPES = [...new Set(Object.values(ATTRIBUTE_TYPE_ALIASES))]
 
+// Cardinality is normalised for case for the same reason attribute types are: a
+// lowercase "n" should not cost the student the whole diagram.
 function canonicalCardinality(raw) {
   if (typeof raw !== 'string') return null
   const up = raw.trim().toUpperCase()
@@ -172,8 +181,7 @@ export function parseERD(jsonString) {
         participant.cardinality = canonicalCard
         
         // Validate participation
-        const validParticipations = ['total', 'partial']
-        if (!participant.participation || !validParticipations.includes(participant.participation)) {
+        if (!participant.participation || !PARTICIPATIONS.includes(participant.participation)) {
           return { valid: false, error: `Relationship "${rel.id}" participant "${participant.entityId}" has invalid participation` }
         }
       }
@@ -236,14 +244,12 @@ export function parseERD(jsonString) {
       }
       
       // Validate constraint
-      const validConstraints = ['disjoint', 'overlapping']
-      if (!hierarchy.constraint || !validConstraints.includes(hierarchy.constraint)) {
+      if (!hierarchy.constraint || !ISA_CONSTRAINTS.includes(hierarchy.constraint)) {
         return { valid: false, error: `IS-A hierarchy "${hierarchy.id}" has invalid constraint` }
       }
       
       // Validate participation
-      const validParticipations = ['total', 'partial']
-      if (!hierarchy.participation || !validParticipations.includes(hierarchy.participation)) {
+      if (!hierarchy.participation || !PARTICIPATIONS.includes(hierarchy.participation)) {
         return { valid: false, error: `IS-A hierarchy "${hierarchy.id}" has invalid participation` }
       }
     }

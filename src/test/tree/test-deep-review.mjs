@@ -253,7 +253,7 @@ console.log('=== Campaign F: every step points at nodes that exist in its own fr
 {
   // Regression guard. The split emits used to fire before the new right-hand node
   // was linked into the tree; snapshots are taken by walking down from the root,
-  // so that frame omitted the node entirely — the keys it had just taken looked
+  // so that frame omitted the node entirely: the keys it had just taken looked
   // like they had vanished, and the highlight named an id the canvas could not
   // find. Checking the last frame (Campaign E) does not catch a bad middle frame.
   const indexById = (snap) => {

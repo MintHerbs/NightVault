@@ -6,6 +6,7 @@
 // the project's quota.
 
 import { buildERDPrompt } from '../src/lib/erdPromptBuilder.js'
+import { ERD_RESPONSE_SCHEMA } from '../src/lib/erdResponseSchema.js'
 
 const API_ROOT = 'https://generativelanguage.googleapis.com/v1beta'
 
@@ -40,25 +41,39 @@ export default async function handler(req, res) {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
-  try {
-    const upstream = await fetch(`${API_ROOT}/models/${MODEL}:generateContent`, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'x-goog-api-key': apiKey,
-        'content-type': 'application/json',
+  // Structured output constrains the enums at decode time, so "multi_valued" or a
+  // cardinality of "many" cannot come back at all. Sent as a separate first
+  // attempt rather than unconditionally: a responseSchema the API dislikes fails
+  // the whole call with a 400, and that would take ERD generation down for a
+  // field we could not verify against the live API when it was written. On a 400
+  // we retry once without it, which is exactly the behaviour we had before.
+  const call = (useSchema) => fetch(`${API_ROOT}/models/${MODEL}:generateContent`, {
+    method: 'POST',
+    signal: controller.signal,
+    headers: {
+      'x-goog-api-key': apiKey,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: buildERDPrompt(question) }] }],
+      generationConfig: {
+        temperature: 0,
+        maxOutputTokens: 8192,
+        responseMimeType: 'application/json',
+        ...(useSchema ? { responseSchema: ERD_RESPONSE_SCHEMA } : {}),
       },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: buildERDPrompt(question) }] }],
-        generationConfig: {
-          temperature: 0,
-          maxOutputTokens: 8192,
-          responseMimeType: 'application/json',
-        },
-      }),
-    })
+    }),
+  })
 
-    const body = await upstream.json().catch(() => ({}))
+  try {
+    let upstream = await call(true)
+    let body = await upstream.json().catch(() => ({}))
+
+    if (upstream.status === 400) {
+      console.error(`[gemini] responseSchema rejected: ${body?.error?.message ?? 'no message'}; retrying without it`)
+      upstream = await call(false)
+      body = await upstream.json().catch(() => ({}))
+    }
 
     if (!upstream.ok) {
       // Google echoes the API key back inside some error messages, so never

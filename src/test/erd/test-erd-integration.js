@@ -1,6 +1,7 @@
 // Test ERD JSON parsing and layout generation
-import { parseERD } from '../../lib/erdParser.js'
+import { parseERD, ATTRIBUTE_TYPES, CARDINALITIES, PARTICIPATIONS, ISA_CONSTRAINTS } from '../../lib/erdParser.js'
 import { calculateERDLayout } from '../../lib/erdLayout.js'
+import { ERD_RESPONSE_SCHEMA } from '../../lib/erdResponseSchema.js'
 
 console.log('=== Testing ERD JSON Parsing & Layout ===\n')
 
@@ -319,6 +320,69 @@ junkCard.relationships[0].participants[0].cardinality = 'many'
 const result9b = parseERD(JSON.stringify(junkCard))
 console.log('✓ Rejected "many":', !result9b.valid ? 'YES' : 'NO')
 if (result9b.valid) process.exitCode = 1
+console.log()
+
+// Test 10: the Gemini response schema must agree with the parser
+// A schema permitting a value the parser rejects turns a model that obeyed us
+// perfectly into an "invalid ERD" error, which is the worst of both worlds.
+console.log('Test 10: response schema agrees with the parser')
+{
+  const rel = ERD_RESPONSE_SCHEMA.properties.relationships.items
+  const participant = rel.properties.participants.items
+  const pairs = [
+    ['attribute type (entity)', ERD_RESPONSE_SCHEMA.properties.entities.items.properties.attributes.items.properties.type.enum, ATTRIBUTE_TYPES],
+    ['attribute type (relationship)', rel.properties.attributes.items.properties.type.enum, ATTRIBUTE_TYPES],
+    ['cardinality', participant.properties.cardinality.enum, CARDINALITIES],
+    ['participation', participant.properties.participation.enum, PARTICIPATIONS],
+    ['isA constraint', ERD_RESPONSE_SCHEMA.properties.isA.items.properties.constraint.enum, ISA_CONSTRAINTS],
+    ['isA participation', ERD_RESPONSE_SCHEMA.properties.isA.items.properties.participation.enum, PARTICIPATIONS],
+  ]
+  for (const [label, schemaEnum, parserEnum] of pairs) {
+    const same = Array.isArray(schemaEnum) &&
+      schemaEnum.length === parserEnum.length &&
+      schemaEnum.every(v => parserEnum.includes(v))
+    console.log(`  ${same ? 'PASS' : 'FAIL'}  ${label}: [${schemaEnum}] vs parser [${parserEnum}]`)
+    if (!same) process.exitCode = 1
+  }
+
+  // Anything the schema can emit must survive parseERD. Build the maximal document.
+  const probe = {
+    entities: [
+      { id: 'owner', name: 'Owner', isWeak: false, attributes: ATTRIBUTE_TYPES.filter(t => t !== 'partialKey').map((t, i) => ({ id: `a${i}`, name: `A${i}`, type: t })) },
+      { id: 'weak', name: 'Weak', isWeak: true, attributes: [{ id: 'pk', name: 'PK', type: 'partialKey' }] },
+      { id: 'child', name: 'Child', isWeak: false, attributes: [{ id: 'ck', name: 'CK', type: 'key' }] }
+    ],
+    relationships: [{
+      id: 'r1', name: 'Owns', isIdentifying: true,
+      participants: CARDINALITIES.slice(0, 3).map((c, i) => ({
+        entityId: ['owner', 'weak', 'child'][i], cardinality: c, participation: PARTICIPATIONS[i % 2]
+      })),
+      attributes: [{ id: 'ra', name: 'RA', type: 'simple' }]
+    }],
+    isA: [{ id: 'h1', parent: 'owner', children: ['child'], constraint: ISA_CONSTRAINTS[0], participation: PARTICIPATIONS[0] }]
+  }
+  const probeResult = parseERD(JSON.stringify(probe))
+  console.log(`  ${probeResult.valid ? 'PASS' : 'FAIL'}  maximal schema-shaped document parses` +
+    (probeResult.valid ? '' : `: ${probeResult.error}`))
+  if (!probeResult.valid) process.exitCode = 1
+
+  // Every "required" name in the schema must be a property the schema declares.
+  const checkRequired = (node, path) => {
+    if (!node || typeof node !== 'object') return
+    if (node.required) {
+      for (const key of node.required) {
+        if (!node.properties?.[key]) {
+          console.log(`  FAIL  ${path} requires "${key}" but never declares it`)
+          process.exitCode = 1
+        }
+      }
+    }
+    if (node.properties) for (const [k, v] of Object.entries(node.properties)) checkRequired(v, `${path}.${k}`)
+    if (node.items) checkRequired(node.items, `${path}[]`)
+  }
+  checkRequired(ERD_RESPONSE_SCHEMA, 'root')
+  console.log('  PASS  every required field is declared')
+}
 console.log()
 
 console.log('=== All ERD Tests Complete ===')
