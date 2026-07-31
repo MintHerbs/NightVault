@@ -66,8 +66,20 @@
   /* Fixed data-viz colours — deliberately NOT themed: these encode meaning
      on the tree/ERD canvases, not brand. See docs/design/colors.md. */
   --accent-blue: #4f8ef7;
+  --accent-blue-hover: #3d7de0;
   --accent-orange: #ff9f43;
   --accent-green: #26de81;
+  --accent-green-hover: #4df09a;
+  /* Text that sits ON the green fill. Near-black clears 9.7:1 there, where the
+     page's normal light text would be ~2:1 and unreadable. */
+  --on-accent-green: #05140b;
+  /* Removal on the tree canvas. Fixed like its neighbours: "this key is about to
+     go" must not change hue with the theme, or the same red would mean deletion
+     under one accent and decoration under another. Used as a ring plus a low
+     -alpha tint, never as a text fill, so it carries no contrast requirement of
+     its own — key text stays --color-text on the node surface. */
+  --accent-red: #ff4d4f;
+  --accent-red-rgb: 255, 77, 79;
   --edge-color: #5f584e;
 
   /* Spacing */

@@ -11,7 +11,7 @@
     "test:math": "node src/lib/noteMath.test.js",
     "test:recurrence": "node src/lib/algo/recurrence.test.js && node src/lib/algo/recurrence.oracle.test.js",
     "test:recurrence:oracle": "node src/lib/algo/recurrence.oracle.test.js",
-    "test:tree": "node src/test/tree/test-library-integration.js && node src/lib/treeLayout.test.js && node src/test/tree/test-fuzz.js",
+    "test:tree": "node src/test/tree/test-library-integration.js && node src/lib/treeLayout.test.js && node src/test/tree/test-fuzz.js && node src/test/tree/test-trace-agreement.mjs && node src/test/tree/test-deep-review.mjs",
     "test:logic": "node src/lib/logic/formulaParser.test.js && node src/lib/logic/tableauxEngine.oracle.test.js && node src/lib/logic/tableauxLayout.test.js",
     "test:gemini": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/test-gemini.mjs",
     "db:migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/db-migrate.mjs",

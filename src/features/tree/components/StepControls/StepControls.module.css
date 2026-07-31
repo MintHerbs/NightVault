@@ -1,217 +1,217 @@
-/* StepControls component styles - bottom control bar */
+/* Transport bar for the tree animation. Green identity (--accent-green is the tree
+   canvas's own colour, deliberately not themed) rather than the page accent, so the
+   controls read as part of the visualiser. */
 
 .controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-md) var(--spacing-lg);
-  background-color: var(--color-bg);
+  gap: 24px;
+  height: 84px;
+  padding: 0 24px;
+  background: rgba(var(--color-bg-rgb), 0.92);
+  backdrop-filter: blur(16px);
   border-top: 1px solid var(--color-border);
-  z-index: 100;
-  gap: var(--spacing-lg);
-  min-height: 72px;
 }
 
-.left,
-.right {
+.transport {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  min-width: 200px;
+  gap: 4px;
 }
 
-.right {
-  justify-content: flex-end;
-}
-
-.center {
+.iconButton {
+  width: 40px;
+  height: 40px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-xs);
-  flex: 1;
-  min-width: 200px;
-}
-
-.button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background-color: transparent;
-  color: var(--color-text);
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  border: 1px solid var(--color-border);
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-muted);
   cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
-.button:hover:not(:disabled) {
-  border-color: var(--color-accent);
+.iconButton:hover:not(:disabled) {
+  background: rgba(38, 222, 129, 0.12);
+  color: var(--accent-green);
 }
 
-.button:active:not(:disabled) {
-  transform: scale(0.98);
+.iconButton:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 2px;
 }
 
-.button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
+.iconButton:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
-.playButton {
-  background-color: var(--color-accent);
-  border-color: var(--color-accent);
+.primaryButton {
+  width: 48px;
+  height: 48px;
+  background: var(--accent-green);
+  color: var(--on-accent-green);
 }
 
-.playButton:hover:not(:disabled) {
-  background-color: var(--color-accent-hover);
-  border-color: var(--color-accent-hover);
+.primaryButton:hover:not(:disabled) {
+  background: var(--accent-green-hover);
+  color: var(--on-accent-green);
 }
 
-.buttonIcon {
-  font-size: 14px;
-  line-height: 1;
+.primaryButton:disabled {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
 }
 
-.buttonText {
-  font-size: 13px;
-}
-
-.stepCounter {
-  font-size: 15px;
-  font-weight: 600;
-  color: rgba(var(--color-fg-rgb), 0.6);
-  font-family: var(--font-mono);
-  letter-spacing: 0.5px;
+.progress {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .description {
-  font-size: 13px;
-  color: rgba(var(--color-fg-rgb), 0.85);
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--color-text);
   text-align: center;
-  max-width: 400px;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.speedLabel {
-  font-size: 13px;
-  color: rgba(var(--color-fg-rgb), 0.5);
-  font-weight: 500;
+.trackRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.slider {
-  width: 100px;
+.scrubber {
+  flex: 1;
+  min-width: 0;
+  height: 16px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.scrubber:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.scrubber::-webkit-slider-runnable-track {
   height: 4px;
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
-  background: var(--md-surface-container-low);
   border-radius: 2px;
-  outline: none;
+  background: var(--color-surface);
 }
 
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
+.scrubber::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-surface);
+}
+
+.scrubber::-webkit-slider-thumb {
   appearance: none;
-  width: 16px;
-  height: 16px;
-  background: var(--color-accent);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.slider::-webkit-slider-thumb:hover {
-  background: var(--color-accent-hover);
-  transform: scale(1.1);
-}
-
-.slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  background: var(--color-accent);
-  border-radius: 50%;
-  cursor: pointer;
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
   border: none;
-  transition: all 0.2s;
+  border-radius: 50%;
+  background: var(--accent-green);
 }
 
-.slider::-moz-range-thumb:hover {
-  background: var(--color-accent-hover);
-  transform: scale(1.1);
+.scrubber::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent-green);
 }
 
-.slider::-moz-range-track {
-  background: var(--md-surface-container-low);
-  border-radius: 2px;
+.scrubber:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
-.slider:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.slider:disabled::-webkit-slider-thumb {
-  cursor: not-allowed;
-}
-
-.slider:disabled::-moz-range-thumb {
-  cursor: not-allowed;
-}
-
-.speedValue {
-  font-size: 13px;
-  color: rgba(var(--color-fg-rgb), 0.5);
-  font-weight: 600;
+.stepCounter {
+  flex: 0 0 auto;
   font-family: var(--font-mono);
-  min-width: 40px;
-  text-align: right;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
 }
 
-@media (max-width: 1024px) {
-  .controls {
-    gap: var(--spacing-md);
-  }
-  
-  .left,
-  .right {
-    min-width: 150px;
-  }
-  
-  .buttonText {
-    display: none;
-  }
-  
-  .button {
-    padding: 8px 12px;
-  }
+.speed {
+  flex: 0 0 auto;
+  display: flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--color-surface);
 }
 
-@media (max-width: 768px) {
+.speedOption {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.speedOption:hover:not(:disabled):not(.speedActive) {
+  background: rgba(38, 222, 129, 0.1);
+  color: var(--color-text);
+}
+
+.speedOption:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 2px;
+}
+
+.speedActive {
+  background: rgba(38, 222, 129, 0.18);
+  color: var(--accent-green);
+}
+
+.speedOption:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* Breakpoint token --breakpoint-xl (968px); custom properties cannot be read inside a
+   media condition, so the raw value is repeated here. */
+@media (max-width: 968px) {
   .controls {
+    height: auto;
     flex-wrap: wrap;
-    padding: var(--spacing-md);
+    gap: 12px;
+    padding: 12px 16px;
   }
-  
-  .center {
+
+  .progress {
     order: -1;
-    width: 100%;
-    margin-bottom: var(--spacing-sm);
-  }
-  
-  .left,
-  .right {
-    flex: 1;
-    min-width: auto;
-  }
-  
-  .right {
-    justify-content: flex-end;
+    flex-basis: 100%;
   }
 }
