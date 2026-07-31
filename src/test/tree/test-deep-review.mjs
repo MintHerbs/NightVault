@@ -8,7 +8,7 @@
 // suite shared a wrong assumption, this is what would catch it.
 
 import { BPlusTree, normalizeKey } from '../../lib/BPlusTree.js'
-import { traceInsert, traceDelete, traceReplace } from '../../lib/treeTrace.js'
+import { traceInsert, traceDelete, traceReplace, traceBuild } from '../../lib/treeTrace.js'
 
 let checks = 0
 const failures = []
@@ -246,6 +246,57 @@ function frameIsSane(n) {
   if (n.isLeaf) return true
   if (n.children.length !== n.keys.length + 1) return false
   return n.children.every(frameIsSane)
+}
+console.log(failures.length ? `  FAILED: ${failures[0]}` : '  passed')
+
+console.log('=== Campaign F: every step points at nodes that exist in its own frame ===')
+{
+  // Regression guard. The split emits used to fire before the new right-hand node
+  // was linked into the tree; snapshots are taken by walking down from the root,
+  // so that frame omitted the node entirely — the keys it had just taken looked
+  // like they had vanished, and the highlight named an id the canvas could not
+  // find. Checking the last frame (Campaign E) does not catch a bad middle frame.
+  const indexById = (snap) => {
+    const m = new Map()
+    ;(function w(n) { if (!n) return; m.set(n.id, n); if (!n.isLeaf) n.children.forEach(w) })(snap)
+    return m
+  }
+  const auditSteps = (steps, label) => {
+    for (const s of steps) {
+      const byId = indexById(s.treeSnapshot)
+      for (const id of s.nodes) {
+        checks++
+        if (!byId.has(id)) fail(`F: [${label}] step ${s.id} (${s.kind}) points at ${id}, absent from its own frame`)
+      }
+      if (s.keys.length && s.nodes.length) {
+        const pool = new Set()
+        for (const id of s.nodes) (byId.get(id)?.keys ?? []).forEach(k => pool.add(String(k)))
+        for (const k of s.keys) {
+          checks++
+          if (!pool.has(String(k))) {
+            fail(`F: [${label}] step ${s.id} (${s.kind}) highlights ${JSON.stringify(k)}, not in nodes ${s.nodes.join(',')}`)
+          }
+        }
+      }
+    }
+  }
+
+  // Ascending builds split on almost every insert, so they exercise leaf splits,
+  // cascading internal splits and root growth in one pass.
+  for (let order = 3; order <= 8 && !failures.length; order++) {
+    auditSteps(traceBuild(Array.from({ length: 120 }, (_, i) => i + 1), order).steps, `ascending build order=${order}`)
+
+    const tree = new BPlusTree(order)
+    const oracle = new Set()
+    for (let i = 0; i < 70; i++) { const k = ri(120); tree.insert(k); oracle.add(normalizeKey(k)) }
+    for (let trial = 0; trial < 60 && !failures.length; trial++) {
+      const k = ri(120)
+      auditSteps(traceInsert(tree, k).steps, `insert order=${order}`)
+      const victim = [...oracle][ri(oracle.size)]
+      auditSteps(traceDelete(tree, victim).steps, `delete order=${order}`)
+      auditSteps(traceReplace(tree, victim, ri(200) + 500).steps, `replace order=${order}`)
+    }
+  }
 }
 console.log(failures.length ? `  FAILED: ${failures[0]}` : '  passed')
 

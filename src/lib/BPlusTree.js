@@ -117,8 +117,13 @@ export class BPlusTree {
     leaf.next = right
 
     const pushUp = right.keys[0]
-    this._emit('split', `Leaf split into [${leaf.keys.join(', ')}] and [${right.keys.join(', ')}]. Its new first key ${pushUp} is copied up as a separator.`, { nodes: [leaf.id, right.id], keys: [pushUp], intent: 'split' })
+    const note = `Leaf split into [${leaf.keys.join(', ')}] and [${right.keys.join(', ')}]. Its new first key ${pushUp} is copied up as a separator.`
 
+    // The emit waits until `right` hangs off the tree. Snapshots are taken by
+    // walking down from the root, so narrating the split while the new node is
+    // still detached produced a frame that omitted it entirely: the keys it had
+    // just taken read as having vanished, and the highlight pointed at a node id
+    // the canvas could not find.
     if (!leaf.parent) {
       const root = mkNode(false)
       root.keys = [pushUp]
@@ -126,20 +131,29 @@ export class BPlusTree {
       leaf.parent = root
       right.parent = root
       this._root = root
+      this._emit('split', note, { nodes: [leaf.id, right.id], keys: [pushUp], intent: 'split' })
       this._emit('grow', `No parent to take ${pushUp}, so a new root is created and the tree grows one level taller.`, { nodes: [root.id], keys: [pushUp], intent: 'grow' })
     } else {
-      right.parent = leaf.parent
-      this._insertKey(leaf.parent, pushUp, right)
+      const parent = leaf.parent
+      right.parent = parent
+      this._linkKey(parent, pushUp, right)
+      this._emit('split', note, { nodes: [leaf.id, right.id], keys: [pushUp], intent: 'split' })
+      this._checkOverflow(parent, pushUp)
     }
   }
 
-  _insertKey(node, key, rightChild) {
+  // Attach a separator and its new right child. Kept apart from the overflow
+  // check so a caller can narrate its own split after the new node is reachable
+  // but before the parent's overflow cascades into the next split.
+  _linkKey(node, key, rightChild) {
     let i = 0
     while (i < node.keys.length && this._cmp(key, node.keys[i]) > 0) i++
     node.keys.splice(i, 0, key)
     node.children.splice(i + 1, 0, rightChild)
     rightChild.parent = node
+  }
 
+  _checkOverflow(node, key) {
     if (node.keys.length > this.maxKeys) {
       this._emit('overflow', `The parent now holds ${node.keys.length} keys, over the limit of ${this.maxKeys}. It has to split too.`, { nodes: [node.id], keys: [key], intent: 'overflow' })
       this._splitInternal(node)
@@ -157,8 +171,10 @@ export class BPlusTree {
     node.keys.splice(mid, 1)  // remove the pushed-up key
 
     right.children.forEach(c => { c.parent = right })
-    this._emit('split', `Internal node split. ${pushUp} moves up to the parent rather than being copied, because internal keys are separators only.`, { nodes: [node.id, right.id], intent: 'split' })
+    const note = `Internal node split. ${pushUp} moves up to the parent rather than being copied, because internal keys are separators only.`
 
+    // Same ordering rule as _splitLeaf: link first, then narrate, so the frame
+    // for this step actually contains the node the step is about.
     if (!node.parent) {
       const root = mkNode(false)
       root.keys = [pushUp]
@@ -166,10 +182,14 @@ export class BPlusTree {
       node.parent = root
       right.parent = root
       this._root = root
+      this._emit('split', note, { nodes: [node.id, right.id], intent: 'split' })
       this._emit('grow', `No parent to take ${pushUp}, so a new root is created and the tree grows one level taller.`, { nodes: [root.id], keys: [pushUp], intent: 'grow' })
     } else {
-      right.parent = node.parent
-      this._insertKey(node.parent, pushUp, right)
+      const parent = node.parent
+      right.parent = parent
+      this._linkKey(parent, pushUp, right)
+      this._emit('split', note, { nodes: [node.id, right.id], intent: 'split' })
+      this._checkOverflow(parent, pushUp)
     }
   }
 
