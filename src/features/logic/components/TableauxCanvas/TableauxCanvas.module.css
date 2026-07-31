@@ -2,98 +2,145 @@
   position: relative;
   width: 100%;
   height: 100%;
-  background: transparent;
-  overflow: visible;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  background: transparent;
 }
 
 .svg {
   width: 100%;
   height: 100%;
-  cursor: grab;
   background: transparent;
+  cursor: grab;
   touch-action: none;
 }
 
-.svg:active {
+.grabbing {
   cursor: grabbing;
 }
 
 .emptyState {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
   color: var(--color-text-muted);
   font-size: 16px;
 }
 
-/* Edges */
+/* Edges ------------------------------------------------------------------- */
+
 .edges {
-  stroke: var(--color-border);
-  stroke-width: 2;
   fill: none;
 }
 
 .edge {
-  stroke: var(--color-border);
-  stroke-width: 2;
+  stroke: var(--edge-color);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  animation: edge-in var(--md-duration-short) var(--md-easing-emphasized) both;
 }
 
-/* Nodes */
-.node {
-  fill: var(--md-surface-container-low);
-  stroke: var(--color-border);
-  stroke-width: 2;
-  transition: all 0.2s ease;
+/* Nodes ------------------------------------------------------------------- */
+
+.nodeGroup {
+  animation: node-in var(--md-duration-short) var(--md-easing-emphasized) both;
 }
 
-.node:hover {
-  fill: var(--md-surface-container-low);
-  stroke: var(--color-accent);
-}
-
-.closedNode {
-  fill: var(--md-surface-container-low);
-  stroke: #ef4444;
-}
-
-.openNode {
+.nodeBox {
   fill: var(--md-surface-container);
-  stroke: #22c55e;
+  stroke: var(--md-outline-variant);
+  stroke-width: 1.5;
+  transition:
+    fill var(--md-duration-short) var(--md-easing-emphasized),
+    stroke var(--md-duration-short) var(--md-easing-emphasized);
 }
 
-.highlighted {
-  fill: #332100 !important;
-  stroke: var(--color-accent) !important;
-  stroke-width: 3 !important;
-  filter: drop-shadow(0 0 8px rgba(var(--color-accent-rgb), 0.5));
-}
-
-/* Text */
 .formulaText {
-  fill: #e0e0e0;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 16px;
+  fill: var(--md-on-surface);
+  font-family: var(--font-mono);
+  font-size: 15px;
   font-weight: 600;
   pointer-events: none;
   user-select: none;
 }
 
-.closedMarker {
-  fill: #ef4444;
-  font-size: 24px;
+.marker {
+  font-size: 22px;
   font-weight: 700;
   pointer-events: none;
   user-select: none;
+  animation: node-in var(--md-duration-short) var(--md-easing-emphasized) both;
 }
 
-.openMarker {
-  fill: #22c55e;
-  font-size: 24px;
-  font-weight: 700;
-  pointer-events: none;
-  user-select: none;
+/* Closed / open leaves. Red and green here encode a result, not the brand, so
+   they use the theme-invariant danger + data-viz greens rather than the accent
+   (same rationale as the tree and ERD canvases, docs/design/colors.md). */
+
+.closed .nodeBox {
+  stroke: var(--color-danger);
+  fill: rgba(var(--color-danger-rgb), 0.09);
+}
+
+.closed .marker {
+  fill: var(--color-danger);
+}
+
+.open .nodeBox {
+  stroke: var(--accent-green);
+  fill: rgba(38, 222, 129, 0.1);
+}
+
+.open .marker {
+  fill: var(--accent-green);
+}
+
+/* The node the current step is about. */
+.highlighted .nodeBox {
+  stroke: var(--color-accent);
+  stroke-width: 2.5;
+  fill: var(--md-primary-container);
+  filter: drop-shadow(0 0 10px rgba(var(--color-accent-rgb), 0.45));
+}
+
+.highlighted .formulaText {
+  fill: var(--md-on-primary-container);
+}
+
+/* The two literals that closed a branch, called out together with its ✗. */
+.contradicting .nodeBox {
+  stroke: var(--color-danger);
+  stroke-width: 2.5;
+  fill: rgba(var(--color-danger-rgb), 0.16);
+}
+
+@keyframes node-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes edge-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nodeGroup,
+  .marker,
+  .edge {
+    animation: none;
+  }
+
+  .nodeBox {
+    transition: none;
+  }
 }

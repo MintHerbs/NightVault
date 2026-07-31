@@ -24,25 +24,16 @@
 // Deliberately not imported by tools.js, modules.js, HomePage or
 // CourseLandingPage. Importing it into any of them would publish these tools.
 
-import { latticeGrid, dataScatter, globePulse } from '../lib/asciiArt/fields'
+import { dataScatter, globePulse } from '../lib/asciiArt/fields'
 
 export const EXPERIMENTAL_TOOLS = [
-  {
-    id: 'semantic-tableaux',
-    title: 'Semantic Tableaux',
-    description:
-      'Break a propositional formula into a branching tree and close the contradictory branches.',
-    field: latticeGrid,
-    route: '/logic/semantic-tableaux',
-    why: 'Hidden along with the whole Artificial Intelligence Subject. The admin hide toggle works per Subject, so this cannot be published without publishing Truth Tree too.',
-  },
   {
     id: 'truth-tree',
     title: 'Truth Tree',
     description: 'The same tableau solver, reached under its truth-tree name.',
     field: dataScatter,
     route: '/logic/truth-tree',
-    why: 'A second route onto the Semantic Tableaux page, hidden with the same Subject. /logic/tableaux is a third alias for it.',
+    why: 'A second route onto the Semantic Tableaux page, which is now published in TOOLS under its own name. /logic/tableaux is a third alias for it. Only the aliases stay unlisted.',
   },
   {
     id: 'logic-proof',

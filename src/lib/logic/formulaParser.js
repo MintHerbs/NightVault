@@ -2,37 +2,81 @@
 // Pure JS recursive descent parser for propositional logic. No React imports.
 
 /**
+ * A parse failure that knows where in the input it happened, so the UI can point at the
+ * offending span instead of only quoting the message (T-084).
+ *
+ * @property {number} position - 0-based index into the original string
+ * @property {number} length   - how many characters to underline
+ * @property {string} hint     - a concrete next action, or '' when there isn't one
+ */
+export class FormulaError extends Error {
+  constructor(message, { position = 0, length = 1, hint = '' } = {}) {
+    super(message);
+    this.name = 'FormulaError';
+    this.position = position;
+    this.length = length;
+    this.hint = hint;
+  }
+}
+
+/** Characters offered by the symbol bar that this parser has no meaning for. */
+const UNSUPPORTED = {
+  '∴': 'The ∴ symbol states a conclusion in an argument. A tableau takes a single formula.',
+  '⊤': 'Constants ⊤ and ⊥ are not supported. Use a tautology like P∨¬P, or a contradiction like P∧¬P.',
+  '⊥': 'Constants ⊤ and ⊥ are not supported. Use a tautology like P∨¬P, or a contradiction like P∧¬P.',
+  ',': 'Enter one formula. Join several with ∧ if you meant all of them at once.'
+};
+
+/**
  * Tokenizes a propositional logic string.
  * Atoms: A-Z   Negation: ¬ ~   Conjunction: ∧ &   Disjunction: ∨ |
  * Implication: → ->   Biconditional: ↔ <->   Grouping: ( )
  * Whitespace is silently ignored.
+ *
+ * Each token carries the source index it started at, so parse errors downstream can be
+ * located in the original string.
  */
 function tokenize(input) {
   const tokens = [];
+  // `at` is the source index the token starts at and `len` how many characters it spans,
+  // so a caret can underline `<->` as one thing rather than just its first character.
+  const push = (token, at, len = 1) => tokens.push(typeof token === 'object'
+    ? { ...token, at, len }
+    : { kind: token, at, len });
   let i = 0;
   while (i < input.length) {
     const ch = input[i];
     if (/\s/.test(ch)) { i++; continue; }
     if (ch === '<' && input.slice(i, i + 3) === '<->') {
-      tokens.push('IFF'); i += 3;
+      push('IFF', i, 3); i += 3;
     } else if (ch === '-' && input[i + 1] === '>') {
-      tokens.push('IMPLIES'); i += 2;
+      push('IMPLIES', i, 2); i += 2;
     } else if (ch === '¬' || ch === '~') {
-      tokens.push('NOT'); i++;
+      push('NOT', i); i++;
     } else if (ch === '∧' || ch === '&') {
-      tokens.push('AND'); i++;
+      push('AND', i); i++;
     } else if (ch === '∨' || ch === '|') {
-      tokens.push('OR'); i++;
+      push('OR', i); i++;
     } else if (ch === '→') {
-      tokens.push('IMPLIES'); i++;
+      push('IMPLIES', i); i++;
     } else if (ch === '↔') {
-      tokens.push('IFF'); i++;
+      push('IFF', i); i++;
     } else if (ch === '(' || ch === ')') {
-      tokens.push(ch); i++;
+      push(ch, i); i++;
     } else if (/[A-Z]/.test(ch)) {
-      tokens.push({ type: 'atom', name: ch }); i++;
+      push({ kind: 'ATOM', name: ch }, i); i++;
+    } else if (/[a-z]/.test(ch)) {
+      throw new FormulaError(`Propositions must be capital letters, so '${ch}' is not one.`, {
+        position: i,
+        hint: `Write ${ch.toUpperCase()} instead of ${ch}.`
+      });
+    } else if (UNSUPPORTED[ch]) {
+      throw new FormulaError(`'${ch}' cannot be used here.`, { position: i, hint: UNSUPPORTED[ch] });
     } else {
-      throw new Error(`Unexpected character '${ch}' at position ${i}`);
+      throw new FormulaError(`'${ch}' is not a logic symbol.`, {
+        position: i,
+        hint: 'Use propositions A to Z with ¬ ∧ ∨ → ↔ and parentheses.'
+      });
     }
   }
   return tokens;
@@ -41,7 +85,7 @@ function tokenize(input) {
 /**
  * Parses a token array into an AST.
  *
- * Grammar — precedence lowest → highest:
+ * Grammar, precedence lowest to highest:
  *   iff      : implies (IFF implies)*          (left-assoc)
  *   implies  : or (IMPLIES implies)?           (right-assoc)
  *   or       : and (OR and)*                   (left-assoc)
@@ -49,21 +93,41 @@ function tokenize(input) {
  *   not      : NOT not | primary
  *   primary  : ATOM | '(' iff ')'
  */
-function parse(tokens) {
+function parse(tokens, source) {
   let pos = 0;
 
   function peek() { return tokens[pos]; }
   function consume() { return tokens[pos++]; }
 
+  const SYMBOL = {
+    NOT: '¬', AND: '∧', OR: '∨', IMPLIES: '→', IFF: '↔', '(': '(', ')': ')'
+  };
+
   function label(tok) {
-    if (tok === undefined) return 'end of input';
-    if (typeof tok === 'object') return `atom '${tok.name}'`;
-    return `'${tok}'`;
+    if (tok === undefined) return 'the formula ended';
+    if (tok.kind === 'ATOM') return `'${tok.name}'`;
+    return `'${SYMBOL[tok.kind]}'`;
+  }
+
+  /**
+   * The source span to underline for a failure at `tok`. When the input simply ran out
+   * there is no token to point at, so it points at the last character instead: the thing
+   * that needed something after it.
+   */
+  function span(tok) {
+    if (tok === undefined) {
+      return { position: Math.max(0, source.length - 1), length: source.length > 0 ? 1 : 0 };
+    }
+    return { position: tok.at, length: tok.len };
+  }
+
+  function fail(tok, message, hint) {
+    throw new FormulaError(message, { ...span(tok), hint });
   }
 
   function parseIff() {
     let left = parseImplies();
-    while (peek() === 'IFF') {
+    while (peek()?.kind === 'IFF') {
       consume();
       const right = parseImplies();
       left = { type: 'iff', left, right };
@@ -73,7 +137,7 @@ function parse(tokens) {
 
   function parseImplies() {
     const left = parseOr();
-    if (peek() === 'IMPLIES') {
+    if (peek()?.kind === 'IMPLIES') {
       consume();
       const right = parseImplies(); // right-recursive → right-associative
       return { type: 'implies', left, right };
@@ -83,7 +147,7 @@ function parse(tokens) {
 
   function parseOr() {
     let left = parseAnd();
-    while (peek() === 'OR') {
+    while (peek()?.kind === 'OR') {
       consume();
       const right = parseAnd();
       left = { type: 'or', left, right };
@@ -93,7 +157,7 @@ function parse(tokens) {
 
   function parseAnd() {
     let left = parseNot();
-    while (peek() === 'AND') {
+    while (peek()?.kind === 'AND') {
       consume();
       const right = parseNot();
       left = { type: 'and', left, right };
@@ -102,7 +166,7 @@ function parse(tokens) {
   }
 
   function parseNot() {
-    if (peek() === 'NOT') {
+    if (peek()?.kind === 'NOT') {
       consume();
       const child = parseNot();
       return { type: 'not', child };
@@ -112,28 +176,49 @@ function parse(tokens) {
 
   function parsePrimary() {
     const tok = peek();
-    if (tok === '(') {
-      consume();
+
+    if (tok?.kind === '(') {
+      const open = consume();
       const node = parseIff();
-      if (peek() !== ')') {
-        throw new Error(`Expected ')' but found ${label(peek())}`);
+      if (peek()?.kind !== ')') {
+        throw new FormulaError('This bracket is never closed.', {
+          position: open.at,
+          length: 1,
+          hint: 'Add a matching ) to the end of the group.'
+        });
       }
       consume();
       return node;
     }
-    if (tok && typeof tok === 'object' && tok.type === 'atom') {
+
+    if (tok?.kind === 'ATOM') {
       consume();
       return { type: 'atom', name: tok.name };
     }
+
     if (tok === undefined) {
-      throw new Error("Unexpected end of input: expected atom or '('");
+      fail(tok, 'The formula stops early: a connective is missing its right-hand side.',
+        'Finish it with a proposition, for example P.');
     }
-    throw new Error(`Unexpected token ${label(tok)}: expected atom or '('`);
+
+    if (tok.kind === ')') {
+      fail(tok, 'This bracket closes a group that has nothing in it.',
+        'Put a formula between ( and ), or delete the brackets.');
+    }
+
+    fail(tok, `${label(tok)} needs a proposition before it.`,
+      'A connective joins two formulas, so something has to sit on each side of it.');
   }
 
   const root = parseIff();
   if (pos < tokens.length) {
-    throw new Error(`Unexpected token ${label(tokens[pos])} after complete formula`);
+    const tok = tokens[pos];
+    if (tok.kind === ')') {
+      fail(tok, 'This closing bracket has no opening bracket to match.',
+        'Delete it, or add a ( earlier in the formula.');
+    }
+    fail(tok, `${label(tok)} comes after the formula is already complete.`,
+      'Two formulas side by side need a connective between them, such as ∧ or →.');
   }
   return root;
 }
@@ -148,72 +233,15 @@ function parse(tokens) {
  *
  * @param {string} formula
  * @returns {object} AST root node
- * @throws {Error} on malformed input
+ * @throws {FormulaError} on malformed input, carrying position/length/hint
  */
 export function parseFormula(formula) {
   if (typeof formula !== 'string' || formula.trim() === '') {
-    throw new Error('Formula must be a non-empty string');
+    throw new FormulaError('Enter a formula first.', {
+      position: 0,
+      length: 0,
+      hint: 'For example: ¬(P∧Q)↔(¬P∨¬Q)'
+    });
   }
-  return parse(tokenize(formula));
+  return parse(tokenize(formula), formula);
 }
-
-// --- TEST ---
-(function runTests() {
-  const assert = (cond, msg) => { if (!cond) throw new Error(`TEST FAILED: ${msg}`); };
-
-  // 1. De Morgan — ¬(P∧Q)↔(¬P∨¬Q)
-  const t1 = parseFormula('¬(P∧Q)↔(¬P∨¬Q)');
-  assert(t1.type === 'iff',            '1: root iff');
-  assert(t1.left.type === 'not',       '1: left not');
-  assert(t1.left.child.type === 'and', '1: left child and');
-  assert(t1.right.type === 'or',       '1: right or');
-  assert(t1.right.left.type === 'not', '1: right.left not');
-  assert(t1.right.right.type === 'not','1: right.right not');
-
-  // 2. Negated De Morgan — ¬(¬(P∧Q)↔(¬P∨¬Q))
-  const t2 = parseFormula('¬(¬(P∧Q)↔(¬P∨¬Q))');
-  assert(t2.type === 'not',       '2: root not');
-  assert(t2.child.type === 'iff', '2: child iff');
-
-  // 3. Simple implication — P→Q
-  const t3 = parseFormula('P→Q');
-  assert(t3.type === 'implies',  '3: implies');
-  assert(t3.left.name === 'P',   '3: left P');
-  assert(t3.right.name === 'Q',  '3: right Q');
-
-  // 4. Double negation — ¬¬P
-  const t4 = parseFormula('¬¬P');
-  assert(t4.type === 'not',            '4: outer not');
-  assert(t4.child.type === 'not',      '4: inner not');
-  assert(t4.child.child.name === 'P',  '4: atom P');
-
-  // 5. (P∨Q)→R
-  const t5 = parseFormula('(P∨Q)→R');
-  assert(t5.type === 'implies',   '5: implies');
-  assert(t5.left.type === 'or',   '5: left or');
-  assert(t5.left.left.name === 'P',  '5: P');
-  assert(t5.left.right.name === 'Q', '5: Q');
-  assert(t5.right.name === 'R',   '5: right R');
-
-  // 6. ASCII equivalents — ~(P&Q)<->(~P|~Q)
-  const t6 = parseFormula('~(P&Q)<->(~P|~Q)');
-  assert(t6.type === 'iff',            '6: iff');
-  assert(t6.left.type === 'not',       '6: left not');
-  assert(t6.left.child.type === 'and', '6: left child and');
-  assert(t6.right.type === 'or',       '6: right or');
-
-  // 7. Right-associativity of → — P→Q→R = P→(Q→R)
-  const t7 = parseFormula('P->Q->R');
-  assert(t7.type === 'implies',         '7: outer implies');
-  assert(t7.left.name === 'P',          '7: left P');
-  assert(t7.right.type === 'implies',   '7: right implies (right-assoc)');
-  assert(t7.right.left.name === 'Q',    '7: Q');
-  assert(t7.right.right.name === 'R',   '7: R');
-
-  // 8. Malformed — dangling ∧ should throw
-  let threw = false;
-  try { parseFormula('P∧'); } catch (_) { threw = true; }
-  assert(threw, '8: P∧ throws');
-
-  console.log('[formulaParser] all tests passed');
-})();

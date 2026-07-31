@@ -8,7 +8,7 @@
 // (src/lib/asciiArt/fields) each tool's card renders on the home page and
 // on every course landing page.
 
-import { graphPulse, codeRain, spiralZoom, barMeter } from '../lib/asciiArt/fields'
+import { graphPulse, codeRain, spiralZoom, barMeter, truthTree } from '../lib/asciiArt/fields'
 import { BTREE_COVER } from './coverPresets'
 
 export const TOOLS = [
@@ -39,6 +39,13 @@ export const TOOLS = [
     description: 'Solve recurrences and follow the substitution steps.',
     field: spiralZoom,
     route: '/algo/recurrence-relation',
+  },
+  {
+    id: 'semantic-tableaux',
+    title: 'Semantic Tableaux',
+    description: 'Break a formula into a truth tree and close the contradictory branches.',
+    field: truthTree,
+    route: '/logic/semantic-tableaux',
   },
   {
     id: 'grades',

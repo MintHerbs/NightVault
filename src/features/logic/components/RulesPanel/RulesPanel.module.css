@@ -1,169 +1,350 @@
-.toggleButton {
+/* Trigger ----------------------------------------------------------------- */
+
+/* Clears the 60px navbar, which holds the verdict badge on the result screen. */
+.trigger {
   position: fixed;
-  top: 70px;
-  right: 16px;
+  top: 72px;
+  right: 20px;
   z-index: 100;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--md-surface-container-low);
-  border: 1px solid var(--color-border);
-  color: var(--color-accent);
-  font-size: 20px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--md-surface-container-high);
+  color: var(--color-accent);
+  font-family: var(--font-body);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background var(--md-duration-short) var(--md-easing-emphasized),
+    box-shadow var(--md-duration-short) var(--md-easing-emphasized);
 }
 
-.toggleButton:hover {
-  background: var(--md-surface-container-low);
-  border-color: var(--color-accent);
-  box-shadow: 0 0 20px rgba(var(--color-accent-rgb), 0.3);
-  transform: scale(1.05);
+.trigger:hover {
+  background: var(--md-primary-container);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.backdrop {
+.trigger:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Drawer ------------------------------------------------------------------ */
+
+.scrim {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(var(--color-bg-rgb), 0.7);
+  inset: 0;
   z-index: 998;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
 }
 
-.panel {
+.drawer {
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
-  width: 500px;
-  max-width: 90vw;
-  background: var(--color-bg);
-  border-left: 1px solid var(--color-border);
-  border-radius: 12px 0 0 12px;
   z-index: 999;
-  overflow-y: auto;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  width: 420px;
+  max-width: 100vw;
+  background: var(--md-surface-container-low);
+  border-radius: var(--md-shape-lg) 0 0 var(--md-shape-lg);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
 }
 
 .header {
-  position: sticky;
-  top: 0;
-  background: var(--color-bg);
-  border-bottom: 1px solid var(--color-border);
-  padding: 24px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  z-index: 10;
+  gap: 16px;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid var(--md-outline-variant);
 }
 
 .title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-accent);
   margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--md-on-surface);
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--md-on-surface-variant);
 }
 
 .closeButton {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+  transition:
+    background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
 }
 
 .closeButton:hover {
-  background: var(--md-surface-container-low);
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .content {
-  padding: 24px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 24px 32px;
+  overscroll-behavior: contain;
 }
 
+/* Sections ---------------------------------------------------------------- */
+
 .section {
-  margin-bottom: 32px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--md-outline-variant);
 }
 
 .section:last-child {
-  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.lede {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--md-on-surface-variant);
 }
 
 .sectionTitle {
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--md-on-surface);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  font-family: var(--font-mono);
+  font-size: 14px;
   font-weight: 700;
-  color: var(--color-accent);
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .sectionDescription {
+  margin: 0 0 16px;
   font-size: 14px;
   line-height: 1.6;
-  color: var(--color-text-muted);
-  margin-bottom: 16px;
+  color: var(--md-on-surface-variant);
 }
 
-.rulesTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
+.sectionDescription:last-child {
+  margin-bottom: 0;
 }
 
-.rulesTable thead {
-  border-bottom: 1px solid var(--color-border);
+/* Rule cards -------------------------------------------------------------- */
+
+.ruleGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.rulesTable th {
-  text-align: left;
-  padding: 12px;
+.ruleCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 12px 12px;
+  border-radius: var(--md-shape-md);
+  background: var(--md-surface-container);
+}
+
+.shape {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  padding: 5px 10px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-sm);
+  background: var(--md-surface-container-high);
+  color: var(--md-on-surface);
+  font-family: var(--font-mono);
+  font-size: 13px;
   font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.connector {
+  overflow: visible;
+  stroke: var(--edge-color);
+  stroke-width: 1.5;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.fork {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 16px;
+}
+
+.ruleName {
   font-size: 12px;
+  color: var(--md-on-surface-variant);
+  text-align: center;
 }
 
-.rulesTable tbody tr {
-  border-bottom: 1px solid var(--color-border);
+/* Outcomes ---------------------------------------------------------------- */
+
+.outcomes {
+  margin: 0 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.rulesTable tbody tr:last-child {
-  border-bottom: none;
+.outcome {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
 }
 
-.rulesTable tbody tr:hover {
-  background: var(--color-bg);
-}
-
-.rulesTable td {
-  padding: 12px;
-}
-
-.formulaCell {
-  font-family: 'Courier New', Courier, monospace;
+.outcomeMark {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
   font-size: 16px;
-  font-weight: 600;
-  color: var(--color-accent);
+  font-weight: 700;
+  line-height: 1;
 }
 
-.resultCell {
-  font-family: 'Courier New', Courier, monospace;
+.closedMark {
+  background: rgba(var(--color-danger-rgb), 0.14);
+  color: var(--color-danger);
+}
+
+.openMark {
+  background: rgba(38, 222, 129, 0.14);
+  color: var(--accent-green);
+}
+
+.outcomeText {
+  margin: 0;
   font-size: 14px;
-  color: var(--color-text);
+  line-height: 1.6;
+  color: var(--md-on-surface-variant);
+}
+
+.outcomeText strong {
+  color: var(--md-on-surface);
+  font-weight: 600;
+}
+
+/* Notation ---------------------------------------------------------------- */
+
+.notation {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notationRow {
+  display: grid;
+  grid-template-columns: 32px 64px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 8px;
+  border-radius: var(--md-shape-sm);
+}
+
+.notationRow:nth-child(odd) {
+  background: var(--md-surface-container);
+}
+
+.notationSymbol {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-accent);
+  text-align: center;
+}
+
+.notationTyped {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--md-on-surface);
+}
+
+.notationName {
+  font-size: 13px;
+  color: var(--md-on-surface-variant);
+}
+
+/* Breakpoint token --breakpoint-md (640px); custom properties cannot be read
+   inside a media condition, so the raw value is repeated here. */
+@media (max-width: 640px) {
+  .drawer {
+    width: 100vw;
+    border-radius: 0;
+  }
+
+  .ruleGrid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
 }

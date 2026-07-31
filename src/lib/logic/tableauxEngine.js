@@ -1,466 +1,391 @@
 // src/lib/logic/tableauxEngine.js
-// Semantic tableaux algorithm for propositional logic. Pure JS, no React imports.
+// Semantic tableaux (truth tree) for propositional logic. Pure JS, no React imports.
+//
+// The tree is built branch-by-branch, depth first. A "branch" here is a root-to-leaf
+// path, and every expansion appends to that path's *current leaf*, never to the node
+// the expanded formula happens to sit on. That distinction is the whole ballgame: the
+// previous implementation attached results to the formula's own node, which silently
+// severed everything already hanging below it and produced wrong verdicts on any
+// formula with two nested α-expansions (T-084).
+//
+// Animation data is carried on the nodes themselves (`revealAt` / `markAt`) rather than
+// as a per-step deep clone of the tree. The canvas can therefore lay the finished tree
+// out once and reveal it progressively, so nodes never shift under the viewer.
 
 import { parseFormula } from './formulaParser.js';
 
+const CONNECTIVES = { and: '∧', or: '∨', implies: '→', iff: '↔' };
+
+const BINARY_TYPES = new Set(['and', 'or', 'implies', 'iff']);
+
+/** Safety valves. Propositional tableaux always terminate; these only catch a bug. */
+const MAX_NODES = 4000;
+const MAX_STEPS = 4000;
+
+function isBinary(node) {
+  return BINARY_TYPES.has(node.type);
+}
+
 /**
- * Converts an AST node back to a display string using Unicode symbols.
+ * Renders an AST as a display string.
+ *
+ * Parenthesises every binary sub-formula that is an operand of another connective, and
+ * nothing else. That is more parentheses than precedence strictly requires but it is
+ * how the formula is written in a textbook, and it round-trips what the user typed:
+ * `¬(¬(P∧Q)↔(¬P∨¬Q))` prints back exactly as entered. Printing ¬ without wrapping a
+ * binary operand (the old behaviour) turned `¬(P∧Q)` into `¬P∧Q`, a different formula.
+ *
  * @param {object} node - AST node
- * @returns {string} - formatted formula string
+ * @returns {string}
  */
-function astToString(node) {
+export function astToString(node) {
+  const operand = (child) => (isBinary(child) ? `(${astToString(child)})` : astToString(child));
+
   if (node.type === 'atom') return node.name;
-  if (node.type === 'not') return `¬${astToString(node.child)}`;
-  
-  const left = astToString(node.left);
-  const right = astToString(node.right);
-  
-  // Add parentheses for clarity
-  const needsParens = (n) => n.type !== 'atom';
-  const leftStr = needsParens(node.left) ? `(${left})` : left;
-  const rightStr = needsParens(node.right) ? `(${right})` : right;
-  
-  if (node.type === 'and') return `${leftStr}∧${rightStr}`;
-  if (node.type === 'or') return `${leftStr}∨${rightStr}`;
-  if (node.type === 'implies') return `${leftStr}→${rightStr}`;
-  if (node.type === 'iff') return `${leftStr}↔${rightStr}`;
-  
-  throw new Error(`Unknown node type: ${node.type}`);
+  if (node.type === 'not') return `¬${operand(node.child)}`;
+
+  const symbol = CONNECTIVES[node.type];
+  if (!symbol) throw new Error(`Unknown node type: ${node.type}`);
+  return `${operand(node.left)}${symbol}${operand(node.right)}`;
 }
 
-/**
- * Checks if a formula is a literal (atom or negated atom).
- * @param {object} node - AST node
- * @returns {boolean}
- */
+/** An atom or a negated atom: nothing left to expand. */
 function isLiteral(node) {
-  if (node.type === 'atom') return true;
-  if (node.type === 'not' && node.child.type === 'atom') return true;
-  return false;
+  return node.type === 'atom' || (node.type === 'not' && node.child.type === 'atom');
 }
 
-/**
- * Gets the literal key for contradiction checking.
- * Returns the atom name, with a prefix for negated atoms.
- * @param {object} node - AST node (must be a literal)
- * @returns {string} - e.g., 'P' or '¬P'
- */
-function getLiteralKey(node) {
+/** Canonical key for a literal, e.g. 'P' or '¬P'. */
+function literalKey(node) {
   if (node.type === 'atom') return node.name;
   if (node.type === 'not' && node.child.type === 'atom') return `¬${node.child.name}`;
-  throw new Error('getLiteralKey called on non-literal');
+  throw new Error('literalKey called on a non-literal');
 }
 
-/**
- * Checks if two literals are contradictory (P and ¬P).
- * @param {string} key1
- * @param {string} key2
- * @returns {boolean}
- */
-function areContradictory(key1, key2) {
-  if (key1.startsWith('¬') && key2 === key1.slice(1)) return true;
-  if (key2.startsWith('¬') && key1 === key2.slice(1)) return true;
-  return false;
+/** The key that would contradict this one: 'P' <-> '¬P'. */
+function complementKey(key) {
+  return key.startsWith('¬') ? key.slice(1) : `¬${key}`;
 }
 
+const not = (child) => ({ type: 'not', child });
+
 /**
- * Applies tableau expansion rules to a formula.
- * Returns { type: 'alpha' | 'beta' | 'literal', formulas: [...] }
- * For alpha: formulas is a single array of formulas to add sequentially
- * For beta: formulas is [leftBranch, rightBranch] where each branch is an array
- * For literal: formulas is empty
+ * Classifies a formula and returns what it expands to.
+ *
+ * α: one branch, formulas stack vertically.       { type: 'alpha', formulas: [...] }
+ * β: two branches.                                { type: 'beta', branches: [[...], [...]] }
+ * Literals expand to nothing.                     { type: 'literal' }
+ *
+ * `label` names the rule for the step narration.
  */
-function applyRule(node) {
-  // Literals cannot be expanded
-  if (isLiteral(node)) {
-    return { type: 'literal', formulas: [] };
-  }
-  
-  // ¬¬A → A (alpha)
+function classify(node) {
+  if (isLiteral(node)) return { type: 'literal', label: 'literal' };
+
   if (node.type === 'not' && node.child.type === 'not') {
-    return { type: 'alpha', formulas: [node.child.child] };
+    return { type: 'alpha', label: 'double negation', formulas: [node.child.child] };
   }
-  
-  // A∧B → A, B (alpha)
   if (node.type === 'and') {
-    return { type: 'alpha', formulas: [node.left, node.right] };
+    return { type: 'alpha', label: 'conjunction', formulas: [node.left, node.right] };
   }
-  
-  // ¬(A∨B) → ¬A, ¬B (alpha)
   if (node.type === 'not' && node.child.type === 'or') {
     return {
       type: 'alpha',
-      formulas: [
-        { type: 'not', child: node.child.left },
-        { type: 'not', child: node.child.right }
-      ]
+      label: 'negated disjunction',
+      formulas: [not(node.child.left), not(node.child.right)]
     };
   }
-  
-  // ¬(A→B) → A, ¬B (alpha)
   if (node.type === 'not' && node.child.type === 'implies') {
     return {
       type: 'alpha',
-      formulas: [
-        node.child.left,
-        { type: 'not', child: node.child.right }
-      ]
+      label: 'negated implication',
+      formulas: [node.child.left, not(node.child.right)]
     };
   }
-  
-  // A∨B → left:[A] right:[B] (beta)
+
   if (node.type === 'or') {
-    return {
-      type: 'beta',
-      formulas: [[node.left], [node.right]]
-    };
+    return { type: 'beta', label: 'disjunction', branches: [[node.left], [node.right]] };
   }
-  
-  // ¬(A∧B) → left:[¬A] right:[¬B] (beta)
   if (node.type === 'not' && node.child.type === 'and') {
     return {
       type: 'beta',
-      formulas: [
-        [{ type: 'not', child: node.child.left }],
-        [{ type: 'not', child: node.child.right }]
-      ]
+      label: 'negated conjunction',
+      branches: [[not(node.child.left)], [not(node.child.right)]]
     };
   }
-  
-  // A→B → left:[¬A] right:[B] (beta)
   if (node.type === 'implies') {
-    return {
-      type: 'beta',
-      formulas: [
-        [{ type: 'not', child: node.left }],
-        [node.right]
-      ]
-    };
+    return { type: 'beta', label: 'implication', branches: [[not(node.left)], [node.right]] };
   }
-  
-  // A↔B → left:[A,B] right:[¬A,¬B] (beta, despite spec table label)
+  // A↔B splits: both sides true, or both sides false. It is a β rule, not the α rule
+  // that docs/specs/logic-tools.md used to list it as.
   if (node.type === 'iff') {
     return {
       type: 'beta',
-      formulas: [
+      label: 'biconditional',
+      branches: [
         [node.left, node.right],
-        [{ type: 'not', child: node.left }, { type: 'not', child: node.right }]
+        [not(node.left), not(node.right)]
       ]
     };
   }
-  
-  // ¬(A↔B) → left:[¬A,B] right:[A,¬B] (beta)
   if (node.type === 'not' && node.child.type === 'iff') {
     return {
       type: 'beta',
-      formulas: [
-        [{ type: 'not', child: node.child.left }, node.child.right],
-        [node.child.left, { type: 'not', child: node.child.right }]
+      label: 'negated biconditional',
+      branches: [
+        [not(node.child.left), node.child.right],
+        [node.child.left, not(node.child.right)]
       ]
     };
   }
-  
+
   throw new Error(`Unknown formula type: ${node.type}`);
 }
 
 /**
- * Runs the semantic tableaux algorithm.
- * @param {string} formulaString - propositional logic formula
- * @param {string} mode - 'satisfiability' | 'validity'
- * @returns {object} - { tree, steps, result }
+ * Turns a branch's literal set into a readable assignment, e.g. "P = true, Q = false".
+ * An open branch is a model of the formula, so this is the countermodel/witness.
  */
-export function runTableaux(formulaString, mode) {
-  // Parse the formula
-  let rootFormula;
-  try {
-    rootFormula = parseFormula(formulaString);
-  } catch (err) {
-    throw new Error(`Parse error: ${err.message}`);
+export function formatModel(model) {
+  const names = Object.keys(model).sort();
+  if (names.length === 0) return 'any assignment';
+  return names.map((name) => `${name} = ${model[name] ? 'true' : 'false'}`).join(', ');
+}
+
+function modelFromLiterals(literals) {
+  const model = {};
+  for (const key of literals.keys()) {
+    if (key.startsWith('¬')) model[key.slice(1)] = false;
+    else model[key] = true;
   }
-  
-  // For validity mode, negate the formula
-  if (mode === 'validity') {
-    rootFormula = { type: 'not', child: rootFormula };
-  }
-  
-  let nodeIdCounter = 0;
-  const steps = [];
-  
-  /**
-   * Creates a new tableau node.
-   */
-  function createNode(formulaNode) {
-    return {
-      id: `n${nodeIdCounter++}`,
-      formula: astToString(formulaNode),
-      formulaNode,
-      isClosed: false,
-      isOpen: false,
-      closedBy: null,
-      children: []
-    };
-  }
-  
-  /**
-   * Deep clones the tree for step snapshots.
-   */
-  function cloneTree(node) {
-    return JSON.parse(JSON.stringify(node));
-  }
-  
-  /**
-   * Records a step in the animation.
-   */
-  function recordStep(description, tree, highlightNodeId) {
-    steps.push({
-      id: steps.length,
-      description,
-      treeSnapshot: cloneTree(tree),
-      highlightNodeId
-    });
-  }
-  
-  // Create root node
-  const tree = createNode(rootFormula);
-  recordStep(`Start with ${tree.formula}`, tree, tree.id);
-  
-  /**
-   * Represents a branch being processed.
-   * Contains: leafNode (the current leaf), literals (map), unexpanded (queue)
-   */
-  class Branch {
-    constructor(leafNode, literals = new Map(), unexpanded = []) {
-      this.leafNode = leafNode;
-      this.literals = new Map(literals);
-      this.unexpanded = [...unexpanded];
-    }
-    
-    clone() {
-      return new Branch(this.leafNode, this.literals, this.unexpanded);
-    }
-  }
-  
-  // Initialize work queue with root branch
-  const initialBranch = new Branch(tree, new Map(), []);
-  
-  // If root is a literal, add it to literals map, otherwise add to unexpanded
-  if (isLiteral(rootFormula)) {
-    initialBranch.literals.set(getLiteralKey(rootFormula), tree.id);
-  } else {
-    initialBranch.unexpanded.push({ node: tree, formulaNode: rootFormula });
-  }
-  
-  const workQueue = [initialBranch];
-  
-  let iterations = 0;
-  const MAX_ITERATIONS = 500;
-  
-  // Process branches depth-first
-  while (workQueue.length > 0 && iterations < MAX_ITERATIONS) {
-    iterations++;
-    const branch = workQueue.pop();
-    
-    // Helper function to check for contradictions in current branch
-    function checkContradiction() {
-      for (const [key1, id1] of branch.literals) {
-        for (const [key2, id2] of branch.literals) {
-          if (id1 !== id2 && areContradictory(key1, key2)) {
-            return [id1, id2];
-          }
-        }
-      }
-      return null;
-    }
-    
-    // Check for contradiction
-    const contradiction = checkContradiction();
-    
-    if (contradiction) {
-      // Close this branch
-      branch.leafNode.isClosed = true;
-      branch.leafNode.closedBy = contradiction;
-      recordStep(`Branch closed: contradiction between ${contradiction[0]} and ${contradiction[1]}`, tree, branch.leafNode.id);
-      continue;
-    }
-    
-    // If no unexpanded formulas, mark as open (no contradiction found)
-    if (branch.unexpanded.length === 0) {
-      branch.leafNode.isOpen = true;
-      recordStep(`Branch complete: no contradiction found`, tree, branch.leafNode.id);
-      continue;
-    }
-    
-    // Sort unexpanded queue: alpha rules first, then beta rules
-    branch.unexpanded.sort((a, b) => {
-      const ruleA = applyRule(a.formulaNode);
-      const ruleB = applyRule(b.formulaNode);
-      if (ruleA.type === 'alpha' && ruleB.type !== 'alpha') return -1;
-      if (ruleA.type !== 'alpha' && ruleB.type === 'alpha') return 1;
-      return 0;
-    });
-    
-    // Take the first unexpanded formula
-    const { node: expandNode, formulaNode } = branch.unexpanded.shift();
-    
-    // If expandNode is null, it means this formula needs to be added as a child of the current leaf
-    if (expandNode === null) {
-      const newNode = createNode(formulaNode);
-      branch.leafNode.children = [newNode];
-      branch.leafNode = newNode;
-      
-      if (isLiteral(formulaNode)) {
-        branch.literals.set(getLiteralKey(formulaNode), newNode.id);
-        // Re-queue the branch to check for contradictions
-        workQueue.push(branch);
-      } else {
-        // Add the new node to unexpanded and re-queue
-        branch.unexpanded.unshift({ node: newNode, formulaNode });
-        workQueue.push(branch);
-      }
-      
-      recordStep(`Add ${astToString(formulaNode)} to branch`, tree, newNode.id);
-      continue;
-    }
-    
-    const rule = applyRule(formulaNode);
-    
-    if (rule.type === 'literal') {
-      // Should not happen since literals are not added to unexpanded queue
-      continue;
-    }
-    
-    if (rule.type === 'alpha') {
-      // Alpha rule: add formulas sequentially as a chain
-      // Replace any existing children (from beta branch formula list)
-      let currentParent = expandNode;
-      
-      for (let i = 0; i < rule.formulas.length; i++) {
-        const newNode = createNode(rule.formulas[i]);
-        
-        // Replace children
-        currentParent.children = [newNode];
-        
-        if (isLiteral(rule.formulas[i])) {
-          branch.literals.set(getLiteralKey(rule.formulas[i]), newNode.id);
-        } else {
-          branch.unexpanded.push({ node: newNode, formulaNode: rule.formulas[i] });
-        }
-        
-        recordStep(`Apply α-rule to ${astToString(formulaNode)}: add ${astToString(rule.formulas[i])}`, tree, newNode.id);
-        currentParent = newNode;
-      }
-      
-      // Update leaf node to the last node in the chain
-      branch.leafNode = currentParent;
-      
-      // Continue processing this branch
-      workQueue.push(branch);
-      
-    } else if (rule.type === 'beta') {
-      // Beta rule: create two branches
-      // Replace any existing children (from beta branch formula list)
-      expandNode.children = [];
-      
-      recordStep(`Apply β-rule to ${astToString(formulaNode)}`, tree, expandNode.id);
-      
-      // Create two child branches
-      for (let i = 0; i < 2; i++) {
-        const branchFormulas = rule.formulas[i];
-        const newBranch = branch.clone();
-        
-        // For beta branches, we only create the FIRST node as a child of expandNode
-        // The remaining formulas are added to the unexpanded queue and will be
-        // processed later, creating children of the current leaf
-        const firstFormula = branchFormulas[0];
-        const firstNode = createNode(firstFormula);
-        expandNode.children.push(firstNode);
-        
-        // Add first node to literals or unexpanded
-        if (isLiteral(firstFormula)) {
-          newBranch.literals.set(getLiteralKey(firstFormula), firstNode.id);
-        } else {
-          newBranch.unexpanded.push({ node: firstNode, formulaNode: firstFormula });
-        }
-        
-        newBranch.leafNode = firstNode;
-        recordStep(`Add ${astToString(firstFormula)} to branch ${i + 1}`, tree, firstNode.id);
-        
-        // Add remaining formulas to unexpanded (they'll be added as children of the leaf later)
-        for (let j = 1; j < branchFormulas.length; j++) {
-          // Store the formula to be processed later - it will be added as a child of the current leaf
-          newBranch.unexpanded.push({ node: null, formulaNode: branchFormulas[j] });
-        }
-        
-        // Add this branch to work queue (depth-first: push to end, pop from end)
-        workQueue.push(newBranch);
-      }
-    }
-  }
-  
-  if (iterations >= MAX_ITERATIONS) {
-    throw new Error('Tableau algorithm exceeded maximum iterations');
-  }
-  
-  // Determine result
-  const allLeaves = collectLeaves(tree);
-  const allClosed = allLeaves.every(leaf => leaf.isClosed);
-  const anyOpen = allLeaves.some(leaf => leaf.isOpen);
-  
-  let result;
-  if (mode === 'validity') {
-    result = allClosed ? 'valid' : 'invalid';
-  } else {
-    result = anyOpen ? 'satisfiable' : 'unsatisfiable';
-  }
-  
-  return { tree, steps, result };
+  return model;
+}
+
+/** Every leaf of the finished tree. */
+export function collectLeaves(tree) {
+  if (tree.children.length === 0) return [tree];
+  return tree.children.flatMap(collectLeaves);
 }
 
 /**
- * Collects all leaf nodes in the tree.
+ * Runs the semantic tableaux algorithm.
+ *
+ * @param {string} formulaString - propositional logic formula
+ * @param {'satisfiability'|'validity'} mode
+ * @returns {{tree: object, steps: Array, result: string, model: object|null,
+ *            rootFormula: string, mode: string, totalNodes: number}}
  */
-function collectLeaves(tree) {
-  if (tree.children.length === 0) return [tree];
-  const leaves = [];
-  for (const child of tree.children) {
-    leaves.push(...collectLeaves(child));
+export function runTableaux(formulaString, mode = 'satisfiability') {
+  const parsed = parseFormula(formulaString);
+
+  // Validity is decided by refutation: a formula is valid exactly when its negation has
+  // no model, i.e. when every branch of the tableau for ¬formula closes.
+  const rootFormula = mode === 'validity' ? not(parsed) : parsed;
+
+  let nextId = 0;
+  const steps = [];
+  const nodes = [];
+
+  function createNode(ast) {
+    if (nodes.length >= MAX_NODES) {
+      throw new Error('This formula produces a tableau too large to draw. Try a shorter one.');
+    }
+    const node = {
+      id: `n${nextId++}`,
+      formula: astToString(ast),
+      formulaNode: ast,
+      children: [],
+      isClosed: false,
+      isOpen: false,
+      closedBy: null,
+      model: null,
+      // Step index at which this node appears, and at which its ✗ / ○ marker appears.
+      revealAt: steps.length,
+      markAt: null
+    };
+    nodes.push(node);
+    return node;
   }
-  return leaves;
+
+  function record(description, kind, highlightNodeId, extra = {}) {
+    if (steps.length >= MAX_STEPS) {
+      throw new Error('This formula takes too many steps to visualise. Try a shorter one.');
+    }
+    steps.push({ id: steps.length, description, kind, highlightNodeId, ...extra });
+    return steps.length - 1;
+  }
+
+  const root = createNode(rootFormula);
+  record(
+    mode === 'validity'
+      ? `Assume ${astToString(parsed)} is false. Start from its negation, ${root.formula}.`
+      : `Start from ${root.formula} and look for a satisfying assignment.`,
+    'start',
+    root.id
+  );
+
+  /**
+   * A branch is one root-to-leaf path under construction.
+   *  leaf       - the node new formulas attach beneath
+   *  literals   - literal key -> id of the node that first introduced it, for this path only
+   *  unexpanded - AST formulas still to expand on this path
+   *  seen       - display strings already written on this path, so a formula is not
+   *               expanded twice
+   */
+  function forkBranch(branch, leaf) {
+    return {
+      leaf,
+      literals: new Map(branch.literals),
+      unexpanded: [...branch.unexpanded],
+      seen: new Set(branch.seen)
+    };
+  }
+
+  /**
+   * Writes `formulas` down the branch as a vertical chain and updates its bookkeeping.
+   * Returns true if the branch closed partway, in which case the caller must not queue
+   * it: everything below a contradiction is irrelevant.
+   */
+  function extendBranch(branch, formulas, describe) {
+    for (const ast of formulas) {
+      const node = createNode(ast);
+      branch.leaf.children.push(node);
+      branch.leaf = node;
+
+      const description = describe(ast, node);
+      record(description, 'expand', node.id);
+
+      if (isLiteral(ast)) {
+        const key = literalKey(ast);
+        const clash = branch.literals.get(complementKey(key));
+        // Keep the earliest node for a repeated literal so closedBy points at the
+        // formula that actually introduced it.
+        if (!branch.literals.has(key)) branch.literals.set(key, node.id);
+
+        if (clash !== undefined) {
+          node.isClosed = true;
+          node.closedBy = [clash, node.id];
+          node.markAt = record(
+            `Branch closes: ${complementKey(key)} and ${key} cannot both hold.`,
+            'close',
+            node.id,
+            { closedBy: [clash, node.id] }
+          );
+          return true;
+        }
+      } else if (!branch.seen.has(node.formula)) {
+        branch.unexpanded.push(ast);
+      }
+
+      branch.seen.add(node.formula);
+    }
+    return false;
+  }
+
+  // Seed the root branch.
+  const rootBranch = { leaf: root, literals: new Map(), unexpanded: [], seen: new Set([root.formula]) };
+  if (isLiteral(rootFormula)) {
+    rootBranch.literals.set(literalKey(rootFormula), root.id);
+  } else {
+    rootBranch.unexpanded.push(rootFormula);
+  }
+
+  // Depth first, so the animation finishes one branch before starting the next.
+  const stack = [rootBranch];
+
+  while (stack.length > 0) {
+    const branch = stack.pop();
+
+    if (branch.unexpanded.length === 0) {
+      const model = modelFromLiterals(branch.literals);
+      branch.leaf.isOpen = true;
+      branch.leaf.model = model;
+      branch.leaf.markAt = record(
+        `Branch stays open: ${formatModel(model)} satisfies every formula on it.`,
+        'open',
+        branch.leaf.id,
+        { model }
+      );
+      continue;
+    }
+
+    // α before β: expanding without splitting keeps the tree narrow, and often closes a
+    // branch before a split is ever needed.
+    let index = branch.unexpanded.findIndex((ast) => classify(ast).type === 'alpha');
+    if (index === -1) index = 0;
+    const [formula] = branch.unexpanded.splice(index, 1);
+    const rule = classify(formula);
+    const source = astToString(formula);
+
+    // Unreachable: only non-literals are ever queued. Re-queue rather than drop the
+    // branch, so a leaf can never end up unmarked.
+    if (rule.type === 'literal') {
+      stack.push(branch);
+      continue;
+    }
+
+    if (rule.type === 'alpha') {
+      const closed = extendBranch(
+        branch,
+        rule.formulas,
+        (ast) => `α ${rule.label}: ${source} puts ${astToString(ast)} on this branch.`
+      );
+      if (!closed) stack.push(branch);
+      continue;
+    }
+
+    // β: the current leaf becomes a fork, and each side continues as its own branch.
+    const forkPoint = branch.leaf;
+    record(`β ${rule.label}: ${source} splits the branch in two.`, 'split', forkPoint.id);
+
+    const sides = ['Left', 'Right'];
+    const pending = [];
+    for (let i = 0; i < rule.branches.length; i++) {
+      const side = forkBranch(branch, forkPoint);
+      const closed = extendBranch(
+        side,
+        rule.branches[i],
+        (ast) => `${sides[i]} branch: add ${astToString(ast)}.`
+      );
+      if (!closed) pending.push(side);
+    }
+    // Reversed, so popping the stack walks the left branch first.
+    for (let i = pending.length - 1; i >= 0; i--) stack.push(pending[i]);
+  }
+
+  const leaves = collectLeaves(root);
+  const openLeaves = leaves.filter((leaf) => leaf.isOpen);
+  const model = openLeaves.length > 0 ? openLeaves[0].model : null;
+
+  const result =
+    mode === 'validity'
+      ? openLeaves.length === 0
+        ? 'valid'
+        : 'invalid'
+      : openLeaves.length > 0
+        ? 'satisfiable'
+        : 'unsatisfiable';
+
+  record(summarise(result, model, astToString(parsed)), 'result', null, { result, model });
+
+  return {
+    tree: root,
+    steps,
+    result,
+    model,
+    rootFormula: root.formula,
+    mode,
+    totalNodes: nodes.length
+  };
 }
 
-// --- TEST ---
-(function runTests() {
-  const assert = (cond, msg) => { if (!cond) throw new Error(`TEST FAILED: ${msg}`); };
-  
-  // Test 1: ¬(¬(P∧Q)↔(¬P∨¬Q)) in satisfiability mode
-  // This is the negation of De Morgan's law — should be unsatisfiable (all branches close)
-  const t1 = runTableaux('¬(¬(P∧Q)↔(¬P∨¬Q))', 'satisfiability');
-  assert(t1.result === 'unsatisfiable', '1: result unsatisfiable');
-  const leaves1 = collectLeaves(t1.tree);
-  assert(leaves1.every(leaf => leaf.isClosed), '1: all leaves closed');
-  assert(leaves1.length > 0, '1: has leaves');
-  
-  // Test 2: P→P in validity mode
-  // Tautology — should be valid (all branches close when negated)
-  const t2 = runTableaux('P->P', 'validity');
-  assert(t2.result === 'valid', '2: result valid');
-  
-  // Test 3: P∨Q in satisfiability mode
-  // Should be satisfiable (at least one branch stays open)
-  const t3 = runTableaux('P|Q', 'satisfiability');
-  assert(t3.result === 'satisfiable', '3: result satisfiable');
-  const leaves3 = collectLeaves(t3.tree);
-  assert(leaves3.some(leaf => leaf.isOpen), '3: at least one leaf open');
-  
-  // Test 4: P∧¬P in satisfiability mode
-  // Contradiction — should be unsatisfiable
-  const t4 = runTableaux('P&~P', 'satisfiability');
-  assert(t4.result === 'unsatisfiable', '4: result unsatisfiable');
-  
-  // Test 5: P→Q in validity mode
-  // Not a tautology — should be invalid
-  const t5 = runTableaux('P->Q', 'validity');
-  assert(t5.result === 'invalid', '5: result invalid');
-  
-  console.log('[tableauxEngine] all tests passed');
-})();
+function summarise(result, model, formula) {
+  switch (result) {
+    case 'valid':
+      return `Every branch closed, so ${formula} is valid: it holds under every assignment.`;
+    case 'invalid':
+      return `A branch stayed open, so ${formula} is not valid. Counter-example: ${formatModel(model)}.`;
+    case 'satisfiable':
+      return `A branch stayed open, so ${formula} is satisfiable. Witness: ${formatModel(model)}.`;
+    default:
+      return `Every branch closed, so ${formula} is unsatisfiable: no assignment makes it true.`;
+  }
+}

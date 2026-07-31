@@ -3,161 +3,282 @@
   bottom: 0;
   left: 80px;
   right: 0;
-  height: 80px;
-  background: rgba(var(--color-bg-rgb), 0.95);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid var(--color-border);
+  z-index: 50;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 32px;
-  z-index: 50;
+  gap: 24px;
+  height: 88px;
+  padding: 0 28px;
+  background: rgba(var(--color-bg-rgb), 0.92);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--md-outline-variant);
 }
 
-.left {
-  display: flex;
-  gap: 8px;
+/* Transport ---------------------------------------------------------------- */
+
+.transport {
   flex: 0 0 auto;
-}
-
-.center {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 4px;
+}
+
+.iconButton {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+  transition:
+    background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.iconButton:hover:not(:disabled) {
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
+}
+
+.iconButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.iconButton:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.primaryButton {
+  width: 48px;
+  height: 48px;
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--color-accent-bright);
+  color: var(--md-on-primary);
+}
+
+.primaryButton:disabled {
+  background: var(--md-surface-container-high);
+  color: var(--md-on-surface-variant);
+}
+
+/* Progress ----------------------------------------------------------------- */
+
+.progress {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.descriptionRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   min-width: 0;
 }
 
-.right {
+/* The verdict lives here rather than in the navbar: it belongs next to the sentence
+   that explains it, not floating in the corner. Neutral tonal surface, no red/green. */
+.verdict {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 5px 12px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-sm);
+  background: var(--md-surface-container-high);
+  color: var(--md-on-surface);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+  animation: verdict-in var(--md-duration-medium) var(--md-easing-emphasized) both;
+}
+
+.verdictLabel {
+  color: var(--md-on-surface-variant);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@keyframes verdict-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Two lines, because the closing sentence names the formula and a long one would
+   otherwise be ellipsised exactly where the verdict is. */
+.description {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--md-on-surface);
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.trackRow {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 0 0 auto;
 }
 
-.button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  background: var(--md-surface-container-low);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text);
-  font-size: 14px;
-  font-weight: 600;
+.scrubber {
+  flex: 1;
+  min-width: 0;
+  height: 16px;
+  margin: 0;
+  background: transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
-.button:hover:not(:disabled) {
-  background: var(--md-surface-container-low);
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-  box-shadow: 0 0 12px rgba(var(--color-accent-rgb), 0.2);
+.scrubber:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: 4px;
 }
 
-.button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
+.scrubber::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--md-surface-container-high);
 }
 
-.playButton {
+.scrubber::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--md-surface-container-high);
+}
+
+.scrubber::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border: none;
+  border-radius: 50%;
   background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-text);
 }
 
-.playButton:hover:not(:disabled) {
-  background: #7c4ee4;
-  border-color: #7c4ee4;
-  box-shadow: 0 0 20px rgba(var(--color-accent-rgb), 0.4);
+.scrubber::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-accent);
 }
 
-.buttonIcon {
-  font-size: 14px;
-  line-height: 1;
-}
-
-.buttonText {
-  font-size: 14px;
+.scrubber:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .stepCounter {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-accent);
-  letter-spacing: 0.05em;
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--md-on-surface-variant);
 }
 
-.description {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 500px;
-}
+/* Speed -------------------------------------------------------------------- */
 
-.speedLabel {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  font-weight: 600;
-}
-
-.slider {
-  width: 120px;
-  height: 4px;
-  border-radius: 2px;
+.speed {
+  flex: 0 0 auto;
+  display: flex;
+  padding: 3px;
+  border-radius: 999px;
   background: var(--md-surface-container);
-  outline: none;
-  -webkit-appearance: none;
-  appearance: none;
 }
 
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.slider::-webkit-slider-thumb:hover {
-  background: #7c4ee4;
-  box-shadow: 0 0 12px rgba(var(--color-accent-rgb), 0.5);
-}
-
-.slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  cursor: pointer;
+.speedOption {
+  padding: 6px 12px;
   border: none;
-  transition: all 0.2s ease;
-}
-
-.slider::-moz-range-thumb:hover {
-  background: #7c4ee4;
-  box-shadow: 0 0 12px rgba(var(--color-accent-rgb), 0.5);
-}
-
-.slider:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.speedValue {
-  font-size: 13px;
-  color: var(--color-text);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  font-family: var(--font-body);
+  font-size: 12.5px;
   font-weight: 600;
-  min-width: 40px;
-  text-align: right;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.speedOption:hover:not(:disabled):not(.speedActive) {
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
+}
+
+.speedOption:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.speedActive {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+.speedOption:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* Breakpoint token --breakpoint-xl (968px); custom properties cannot be read
+   inside a media condition, so the raw value is repeated here. */
+@media (max-width: 968px) {
+  .controls {
+    left: 0;
+    height: auto;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .progress {
+    order: -1;
+    flex-basis: 100%;
+  }
+
+  .descriptionRow {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .verdict {
+    animation: none;
+  }
 }
