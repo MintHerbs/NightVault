@@ -1,145 +1,177 @@
-/* ERDStep3 component styles - Manual flow: prompt + paste */
+/* ERDStep3 — manual flow paste step, Material You outlined text field */
 
 .container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 28px;
-  text-align: center;
-  position: relative;
-  width: min(720px, 90vw);
+  align-items: stretch;
+  gap: 16px;
+  width: min(760px, 88vw);
+  text-align: left;
 }
 
-.instruction {
-  font-size: 0.9rem;
-  color: rgba(var(--color-fg-rgb), 0.5);
-  text-align: center;
-  line-height: 1.6;
-  margin: 0;
-  max-width: 600px;
-}
-
-.codeBlock {
-  width: 100%;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.codeHeader {
+.header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 16px;
-  background: rgba(var(--color-fg-rgb), 0.02);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.codeLabel {
-  font-family: monospace;
-  font-size: 0.7rem;
-  color: var(--md-on-surface-variant);
-  letter-spacing: 0.05em;
-}
-
-.codeContent {
-  font-family: monospace;
-  font-size: 0.78rem;
-  color: rgba(var(--color-fg-rgb), 0.85);
-  white-space: pre-wrap;
-  padding: 16px;
-  max-height: 320px;
-  overflow-y: auto;
-  margin: 0;
-  line-height: 1.5;
-}
-
-.buttons {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.copyButton {
-  padding: 6px 14px;
-  background-color: transparent;
-  color: var(--color-accent);
-  font-size: 12px;
-  font-weight: 500;
-  border: 1px solid var(--color-accent);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.copyButton:hover {
-  background-color: rgba(var(--color-accent-rgb), 0.15);
-}
-
-.nextButton {
-  padding: 10px 20px;
-  background-color: var(--color-accent);
-  color: var(--color-text);
-  font-size: 14px;
-  font-weight: 500;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.nextButton:hover {
-  background-color: var(--color-accent-hover);
-}
-
-.nextButton:active,
-.copyButton:active {
-  transform: scale(0.98);
-}
-
-.backButton {
-  padding: 8px 16px;
-  background-color: transparent;
-  color: var(--color-accent);
-  font-size: 14px;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.backButton:hover {
-  color: var(--color-accent-hover);
-  text-decoration: underline;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .title {
-  font-size: clamp(2.2rem, 5vw, 3.8rem);
-  font-weight: 700;
-  color: var(--color-accent);
   margin: 0;
-  min-height: 1.2em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 600;
+  color: var(--md-on-surface);
 }
 
 .subtitle {
-  font-size: clamp(0.9rem, 2vw, 1.15rem);
-  font-weight: 400;
-  color: rgba(var(--color-fg-rgb), 0.55);
   margin: 0;
-  min-height: 1.5em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 0.95rem;
+  color: var(--md-on-surface-variant);
 }
 
-.error {
-  font-size: 0.9rem;
-  color: #ef4444;
+/* M3 outlined text field, built as a container so the label and the
+   paste affordance sit inside the same outline as the input. */
+.field {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--md-surface-container-low);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-lg);
+  transition: border-color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.field:focus-within {
+  border-color: var(--md-primary);
+}
+
+.fieldError {
+  border-color: var(--color-danger);
+}
+
+.fieldHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 10px 16px;
+  background-color: var(--md-surface-container);
+  border-bottom: 1px solid var(--md-outline-variant);
+}
+
+.fieldLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--md-on-surface-variant);
+}
+
+.textarea {
+  width: 100%;
+  min-height: 220px;
+  max-height: 42vh;
+  padding: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--md-on-surface);
+  background: transparent;
+  border: none;
+  resize: vertical;
+}
+
+.textarea::placeholder {
+  color: var(--md-on-surface-variant);
+  opacity: 0.5;
+}
+
+.textarea:focus {
+  outline: none;
+}
+
+.supporting,
+.supportingError {
   margin: 0;
-  margin-top: -12px;
+  padding-left: 4px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.supporting {
+  color: var(--md-on-surface-variant);
+}
+
+.supportingError {
+  color: var(--color-danger);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.filledButton {
+  padding: 11px 24px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--md-on-primary);
+  background-color: var(--md-primary);
+  border: none;
+  border-radius: var(--md-shape-xl);
+  cursor: pointer;
+  transition: filter var(--md-duration-short) var(--md-easing-emphasized),
+              transform var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.filledButton:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.filledButton:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.filledButton:disabled {
+  color: var(--md-on-surface-variant);
+  background-color: var(--md-surface-container-high);
+  cursor: default;
+}
+
+.textButton {
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--md-on-primary-container);
+  background-color: var(--md-primary-container);
+  border: none;
+  border-radius: var(--md-shape-xl);
+  cursor: pointer;
+}
+
+.textButton:hover {
+  filter: brightness(1.08);
+}
+
+.filledButton:focus-visible,
+.textButton:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+/* --breakpoint-sm */
+@media (max-width: 480px) {
+  .textarea {
+    min-height: 160px;
+    font-size: 0.72rem;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .filledButton {
+    width: 100%;
+  }
 }

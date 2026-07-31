@@ -11,6 +11,7 @@ function ERDStep1({
   onSubmit,
   onUseManualFlow,
   isGenerating,
+  inputError,
   onAIStateChange,
   currentStep,
   totalSteps,
@@ -51,14 +52,20 @@ function ERDStep1({
         onValueChange={setDraft}
       />
 
+      {inputError && (
+        <p className={styles.inputError} role="alert">{inputError}</p>
+      )}
+
       {/* Escape hatch for anyone who would rather drive their own LLM, and the
-          way through if generation is slow rather than outright failing. */}
+          way through if generation is slow rather than outright failing.
+          Deliberately never disabled: an empty box is answered with a message
+          from the handler, because a greyed-out link that swallows the click
+          reads as the page being broken. */}
       {onUseManualFlow && !isGenerating && (
         <button
           type="button"
           className={styles.manualLink}
           onClick={() => onUseManualFlow(draft)}
-          disabled={!draft.trim()}
         >
           Use my own LLM instead
         </button>

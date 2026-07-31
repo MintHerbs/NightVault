@@ -1,154 +1,225 @@
-/* ERDStep2 component styles */
+/* ERDStep2 — manual flow, Material You surfaces and buttons */
 
 .container {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 20px;
-  width: min(720px, 90vw);
+  width: min(760px, 88vw);
+  max-height: 78vh;
+  overflow-y: auto;
+  text-align: left;
 }
 
-.instruction {
-  font-size: 0.9rem;
-  color: rgba(var(--color-fg-rgb), 0.5);
-  text-align: center;
-  line-height: 1.6;
-  margin: 0;
-  max-width: 600px;
-}
-
-.codeBlock {
-  width: 100%;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.codeHeader {
+.header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 16px;
-  background: rgba(var(--color-fg-rgb), 0.02);
-  border-bottom: 1px solid var(--color-border);
+  flex-direction: column;
+  gap: 6px;
 }
 
-.codeLabel {
-  font-family: monospace;
-  font-size: 0.7rem;
+.title {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 600;
+  color: var(--md-on-surface);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.95rem;
   color: var(--md-on-surface-variant);
-  letter-spacing: 0.05em;
 }
 
-.codeContent {
-  font-family: monospace;
-  font-size: 0.78rem;
-  color: rgba(var(--color-fg-rgb), 0.85);
-  white-space: pre-wrap;
-  padding: 16px;
-  max-height: 320px;
-  overflow-y: auto;
-  margin: 0;
-  line-height: 1.5;
-}
-
-.promptBox {
-  width: 100%;
-  max-height: 340px;
-  overflow-y: auto;
-  padding: 16px;
-  background-color: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  color: rgba(var(--color-fg-rgb), 0.8);
-  font-family: monospace;
-  font-size: 0.8rem;
-  line-height: 1.5;
-  resize: none;
-  outline: none;
-}
-
-.buttons {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.copyButton {
-  padding: 6px 14px;
-  background-color: transparent;
-  color: var(--color-accent);
-  font-size: 12px;
-  font-weight: 500;
-  border: 1px solid var(--color-accent);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.copyButton:hover {
-  background-color: rgba(var(--color-accent-rgb), 0.15);
-}
-
-.nextButton {
-  padding: 10px 20px;
-  background-color: var(--color-accent);
-  color: var(--color-text);
-  font-size: 14px;
-  font-weight: 500;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.nextButton:hover {
-  background-color: var(--color-accent-hover);
-}
-
-.nextButton:active,
-.copyButton:active {
-  transform: scale(0.98);
-}
-
-/* Shown when automatic generation could not run, so the manual steps below
-   read as a fallback rather than as the expected flow. */
-.fallbackNotice {
+/* Shown only when automatic generation could not run, so the manual steps
+   below read as a fallback rather than as the expected flow. */
+.notice {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
-  width: 100%;
-  padding: 12px 14px;
-  margin-bottom: 16px;
-  font-size: 13px;
+  padding: 14px 16px;
+  background-color: var(--md-primary-container);
+  border-radius: var(--md-shape-lg);
+}
+
+.noticeTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--md-on-primary-container);
+}
+
+.noticeBody {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--md-on-primary-container);
+  opacity: 0.86;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 0.9rem;
   line-height: 1.5;
   color: var(--md-on-surface-variant);
-  background-color: rgba(var(--color-accent-rgb), 0.07);
-  border: 1px solid rgba(var(--color-accent-rgb), 0.22);
-  border-radius: 8px;
 }
 
-.fallbackReason {
+.stepMarker {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-text);
+  color: var(--md-on-primary);
+  background-color: var(--md-primary);
+  border-radius: 50%;
 }
 
-.retryButton {
-  padding: 6px 12px;
-  margin-top: 2px;
+.card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--md-surface-container-low);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-lg);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 10px 16px;
+  background-color: var(--md-surface-container);
+  border-bottom: 1px solid var(--md-outline-variant);
+}
+
+.cardLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--md-on-surface-variant);
+}
+
+.code {
+  max-height: 240px;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--md-on-surface-variant);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* M3 filled button */
+.filledButton {
+  padding: 11px 24px;
   font-family: inherit;
-  font-size: 13px;
-  color: var(--color-text);
-  background-color: transparent;
-  border: 1px solid rgba(var(--color-accent-rgb), 0.45);
-  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--md-on-primary);
+  background-color: var(--md-primary);
+  border: none;
+  border-radius: var(--md-shape-xl);
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: filter var(--md-duration-short) var(--md-easing-emphasized),
+              transform var(--md-duration-short) var(--md-easing-emphasized);
 }
 
-.retryButton:hover {
-  background-color: rgba(var(--color-accent-rgb), 0.15);
+.filledButton:hover {
+  filter: brightness(1.08);
+}
+
+.filledButton:active {
+  transform: scale(0.98);
+}
+
+/* M3 tonal button */
+.tonalButton {
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--md-on-primary-container);
+  background-color: var(--md-primary-container);
+  border: none;
+  border-radius: var(--md-shape-xl);
+  cursor: pointer;
+  transition: filter var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.tonalButton:hover {
+  filter: brightness(1.08);
+}
+
+.tonalButtonDone {
+  color: var(--md-on-primary);
+  background-color: var(--md-primary);
+}
+
+.textButton {
+  margin-top: 4px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--md-on-primary-container);
+  background-color: transparent;
+  border: 1px solid currentcolor;
+  border-radius: var(--md-shape-xl);
+  cursor: pointer;
+}
+
+.supportingError {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-danger);
+}
+
+.filledButton:focus-visible,
+.tonalButton:focus-visible,
+.textButton:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+/* --breakpoint-sm */
+@media (max-width: 480px) {
+  .container {
+    gap: 16px;
+    max-height: 72vh;
+  }
+
+  .code {
+    max-height: 180px;
+    font-size: 0.7rem;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .filledButton {
+    width: 100%;
+  }
 }

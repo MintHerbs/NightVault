@@ -4,12 +4,17 @@
 // This module only ever sends the user's scenario text.
 
 import { parseERD } from './erdParser.js'
+import { validateScenario } from './erdScenarioGuard.js'
 
 const ENDPOINT = '/api/gemini'
 
 // Errors where retrying the same request would fail the same way, so the UI
 // should offer the manual copy/paste flow instead of a retry button.
-const TERMINAL_CODES = new Set(['no_key', 'quota', 'forbidden'])
+const TERMINAL_CODES = new Set(['no_key', 'quota', 'forbidden', 'rate_limited'])
+
+// The scenario itself is the problem. These must NOT drop the user into the
+// manual flow — they need to stay put and edit what they typed.
+const INPUT_CODES = new Set(['bad_request', 'too_long', 'too_short', 'too_few_words', 'low_variety'])
 
 /**
  * Generates an ERD from a scenario description.
@@ -17,6 +22,13 @@ const TERMINAL_CODES = new Set(['no_key', 'quota', 'forbidden'])
  * @returns {Promise<{success: true, data: Object} | {success: false, error: string, code: string, terminal: boolean}>}
  */
 export async function generateERD(question) {
+  // Same gate the server enforces, run first so obviously unusable input costs
+  // no round trip. The server remains the authority.
+  const gate = validateScenario(question)
+  if (!gate.ok) {
+    return { success: false, error: gate.error, code: gate.code, terminal: false, inputError: true }
+  }
+
   let response
   try {
     response = await fetch(ENDPOINT, {
@@ -65,6 +77,7 @@ export async function generateERD(question) {
       error: payload.error ?? 'Generation failed',
       code,
       terminal: TERMINAL_CODES.has(code),
+      inputError: INPUT_CODES.has(code),
     }
   }
 

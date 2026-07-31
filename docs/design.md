@@ -330,6 +330,26 @@ revealed yet still reports `data-state="idle"`.
 The `gemini-2.0-*` models are no longer usable: the free tier grants them a quota
 of 0 on new keys.
 
+### Abuse protection
+
+Three layers, weakest first:
+
+1. **Input gate** (`src/lib/erdScenarioGuard.js`) — rejects text that cannot be a
+   scenario. Shared by client and server; the client copy is only for fast
+   feedback. Thresholds are deliberately loose, because refusing a real
+   four-word scenario costs a student their diagram while a false accept costs
+   one call. Varied gibberish passes this layer by design.
+2. **Rate limit** (`db/sql/0051`, `api/_lib/erdQuota.js`) — per caller per hour,
+   keyed on a salted hash of the IP. Session ids cannot be used: the client
+   supplies them and can rotate them per request.
+3. **Cache** — identical scenarios reuse a stored answer and cost no call. Only
+   responses that pass `parseERD` are stored, so a bad generation never becomes
+   permanent for that scenario.
+
+If Supabase is not configured the endpoint keeps working on layer 1 alone. If it
+is configured but erroring, the limiter fails closed, which is safe because the
+client falls back to the manual copy/paste flow.
+
 ---
 
 ## Modularity Rules

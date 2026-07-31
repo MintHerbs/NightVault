@@ -47,7 +47,18 @@
   color: var(--color-text);
 }
 
-.manualLink:disabled {
-  opacity: 0.35;
-  cursor: default;
+.manualLink:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 3px;
+}
+
+.inputError {
+  max-width: 46ch;
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--md-on-primary-container);
+  background-color: var(--md-primary-container);
+  border-radius: var(--md-shape-md);
 }
