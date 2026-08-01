@@ -258,9 +258,12 @@ src/components/layout/
 `DynamicIsland.jsx`, which resolves them by precedence rather than storing a
 state name. Nothing else may write to `data-state`.
 
-1. `greeting` — entrance only: drops in expanded with dot + online count,
-   holds ~2s, then collapses to `idle`. Skipped entirely under
-   `prefers-reduced-motion`
+1. `greeting` — entrance only, then collapses to `idle`. Skipped entirely
+   under `prefers-reduced-motion`. First visit ever (tracked in
+   `localStorage`, `src/hooks/useSentinelGreeting.js`): a blinking
+   GridLoader face and "Hi, I'm Sentinel", held ~2.8s, no online count.
+   Every visit after that: a static face, a randomly-picked welcome-back
+   line, then the online count segmented in beside it, held ~2s
 2. `idle` — small pill, green dot only
 3. `hover` — segmented: green dot + online count, divider, then a music icon
    and a timer icon. The pill body still opens music
@@ -280,7 +283,7 @@ state name. Nothing else may write to `data-state`.
 13. `waiting` — white stagger GridLoader + "Waiting"
 14. `thinking` — amber stagger GridLoader + "Thinking"
 15. `generating` — white stagger GridLoader + "Generating"
-16. `error` — red dot + message, auto-collapses after 3s
+16. `error` — red GridLoader face + message, auto-collapses after 3s
 
 **Precedence** (highest first): an open panel (`music`, `timer`, `timer-set`)
 beats a live AI state, beats `break`, beats `timer-done`, beats `chat`, beats

@@ -663,15 +663,6 @@
 }
 
 /* Error state */
-.errorDot {
-  width: 8px;
-  height: 8px;
-  background: #ef4444;
-  border-radius: 50%;
-  flex-shrink: 0;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
-}
-
 .errorText {
   color: #ef4444;
   font-size: 13px;

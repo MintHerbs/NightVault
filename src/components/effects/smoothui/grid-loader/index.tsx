@@ -101,7 +101,11 @@ export type PresetPattern =
   | "chaos"
   // Edge
   | "edge-cw"
-  | "border";
+  | "border"
+  // Faces (Sentinel greeting/error only, see docs/rules.md §15.5)
+  | "face-grin"
+  | "face-wink"
+  | "face-soft";
 
 export interface GridLoaderProps {
   /** Blur amount in pixels — creates a soft glow effect */
@@ -497,6 +501,26 @@ const PATTERNS: Record<PresetPattern, GridMatrix> = {
     [1, 1, 1],
     [1, 0, 1],
     [1, 1, 1],
+  ],
+
+  // Faces — eyes + mouth read as an expression at 3x3. Reserved for moments
+  // the island is speaking as itself (the Sentinel greeting, an error)
+  // rather than reporting on work; every other state keeps an abstract
+  // pattern (docs/rules.md §15.5).
+  "face-grin": [
+    [1, 0, 1],
+    [0, 0, 0],
+    [1, 1, 1],
+  ],
+  "face-wink": [
+    [1, 0, 0],
+    [0, 0, 0],
+    [1, 1, 1],
+  ],
+  "face-soft": [
+    [1, 0, 1],
+    [0, 0, 0],
+    [0, 1, 0],
   ],
 };
 

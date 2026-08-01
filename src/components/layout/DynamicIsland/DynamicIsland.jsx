@@ -6,10 +6,12 @@ import ChatNotificationContent from './ChatNotificationContent'
 import BreakReminderContent from './BreakReminderContent'
 import TimerPanel from './TimerPanel'
 import TimerSetPanel from './TimerSetPanel'
+import SentinelFace from './SentinelFace'
 import useChatNotification from '../../../hooks/useChatNotification'
 import useIslandNotifications from '../../../hooks/useIslandNotifications'
 import useStudyTimer from '../../../hooks/useStudyTimer'
 import useBreakReminder, { BREAK_INTERVAL_MS } from '../../../hooks/useBreakReminder'
+import useSentinelGreeting from '../../../hooks/useSentinelGreeting'
 import styles from './DynamicIsland.module.css'
 
 // Entrance timing. The pill drops in already expanded, holds its greeting for
@@ -20,6 +22,10 @@ import styles from './DynamicIsland.module.css'
 const REVEAL_DELAY_MS = 3000
 const REVEAL_CAP_MS = 5000
 const GREETING_HOLD_MS = 2000
+// The one-time name introduction gets a beat longer than the ordinary
+// online-count greeting: there's a face blinking and a line to read, not
+// just a number.
+const SENTINEL_INTRO_HOLD_MS = 2800
 
 // How long after opening chat from the island the "Back" shortcut stays on
 // offer. Past this the island reverts to its normal behaviour and closing
@@ -115,6 +121,7 @@ export default function DynamicIsland({
   const reducedMotion = useReducedMotion()
   const timer = useStudyTimer()
   const breakReminder = useBreakReminder(breakIntervalMs)
+  const sentinelGreeting = useSentinelGreeting()
 
   const isPanelOpen = intent === 'music' || intent === 'timer' || intent === 'timer-set'
   const returnAvailable = isChatOpen && chatOpenedFromIsland && returnWindowOpen
@@ -204,9 +211,10 @@ export default function DynamicIsland({
 
   useEffect(() => {
     if (phase !== 'greeting') return undefined
-    const timeout = setTimeout(() => setPhase('collapsed'), GREETING_HOLD_MS)
+    const holdMs = sentinelGreeting.isFirstVisit ? SENTINEL_INTRO_HOLD_MS : GREETING_HOLD_MS
+    const timeout = setTimeout(() => setPhase('collapsed'), holdMs)
     return () => clearTimeout(timeout)
-  }, [phase])
+  }, [phase, sentinelGreeting.isFirstVisit])
 
   // The return shortcut's lifetime. Closing chat by any route, or opening it
   // from anywhere other than the island, ends the offer immediately.
@@ -400,7 +408,7 @@ export default function DynamicIsland({
       }
 
   return (
-    <div className={styles.wrapper} data-navbar data-dock={dock}>
+    <div className={styles.wrapper} data-dock={dock}>
       <span className={styles.srOnly} role="status" aria-live="polite">
         {announcement}
       </span>
@@ -414,6 +422,11 @@ export default function DynamicIsland({
         <motion.div
           ref={pillRef}
           className={styles.pill}
+          // Pages measure this to size top padding that clears the docked
+          // pill (see HomeFeedPage's nav-offset effect). Lives on the pill
+          // itself, not `.wrapper`, because `.wrapper` is deliberately
+          // sized to the full viewport so the pill can dock anywhere.
+          data-navbar
           data-state={displayState}
           // The entrance lifecycle, exposed separately because data-state
           // can't express it: a pill that hasn't been revealed yet still
@@ -429,6 +442,15 @@ export default function DynamicIsland({
           animate={phase === 'hidden'
             ? (reducedMotion ? { opacity: 0 } : { opacity: 0, y: -24 })
             : { opacity: 1, y: 0 }}
+          // A squash rather than a plain scale: it reads as the pill
+          // reacting to a press, not just shrinking. Skipped on an open
+          // panel — squishing a container of buttons because one was
+          // clicked reads as the whole panel misbehaving, and reduced
+          // motion drops it entirely.
+          whileHover={!reducedMotion && !isPanelOpen ? { scale: 1.02 } : undefined}
+          whileTap={!reducedMotion && !isPanelOpen
+            ? { scaleX: 0.94, scaleY: 1.06, transition: { type: 'spring', bounce: 0.6, duration: 0.15 } }
+            : undefined}
           // A collapsed pill is a button; an open panel is a container of
           // buttons, and nesting interactive roles would be invalid.
           role={isPanelOpen ? 'group' : 'button'}
@@ -484,9 +506,22 @@ export default function DynamicIsland({
                 </>
               )}
 
-              {displayState === 'greeting' && (
+              {/* First visit ever: the island introduces itself and the
+                  online count waits for the hover state. Every visit after
+                  that: a varied welcome-back line alongside the count, same
+                  segmented layout the hover state uses. */}
+              {displayState === 'greeting' && sentinelGreeting.isFirstVisit && (
                 <>
-                  <div className={styles.greenDot} />
+                  <SentinelFace blink />
+                  <span className={styles.onlineText}>{sentinelGreeting.line}</span>
+                </>
+              )}
+
+              {displayState === 'greeting' && !sentinelGreeting.isFirstVisit && (
+                <>
+                  <SentinelFace variant="soft" />
+                  <span className={styles.onlineText}>{sentinelGreeting.line}</span>
+                  <span className={styles.segmentDivider} />
                   <span className={styles.onlineText}>{greetingCount} online</span>
                 </>
               )}
