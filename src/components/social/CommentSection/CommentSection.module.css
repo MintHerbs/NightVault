@@ -1,64 +1,90 @@
 .section {
   width: 100%;
-  margin: 12px 0 0 0;
 }
 
-.panel {
+.wrapper {
   overflow: hidden;
 }
 
 .content {
-  padding: 16px 0 8px;
-  border-top: 1px solid rgba(var(--color-fg-rgb), 0.08);
   display: flex;
   flex-direction: column;
   gap: 16px;
+  margin-top: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--md-outline-variant);
 }
 
-.threadHeader {
+.head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.heading {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
-  color: rgba(var(--color-fg-rgb), 0.5);
-  font-size: 0.8rem;
+  margin: 0;
+  color: var(--md-on-surface-variant);
+  font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.threadCount {
+.count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  border-radius: 10px;
-  background: rgba(var(--color-accent-rgb), 0.16);
-  color: var(--color-accent-bright);
+  border-radius: var(--md-shape-xl);
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
 }
 
-.newComment {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
+/* Segmented control rather than a select: two options, both worth showing. */
+.sort {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-xl);
 }
 
-.newCommentAvatar {
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-  margin-top: 2px;
+.sortBtn {
+  height: 26px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--md-shape-xl);
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
 }
 
-.newCommentBody {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.sortBtn:hover {
+  color: var(--md-on-surface);
+}
+
+.sortBtn:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+}
+
+.sortBtnActive {
+  background: rgba(var(--color-fg-rgb), 0.1);
+  color: var(--md-on-surface);
+  font-weight: 600;
 }
 
 .thread {
@@ -67,153 +93,59 @@
   gap: 14px;
 }
 
-.threadEmpty {
-  padding: 4px 0 8px;
+.empty {
+  margin: 0;
+  padding: 2px 0 6px;
   color: var(--md-on-surface-variant);
   font-size: 0.82rem;
 }
 
-.textarea {
-  width: 100%;
-  background: rgba(var(--color-fg-rgb), 0.03);
-  border: 1px solid rgba(var(--color-fg-rgb), 0.1);
-  color: rgba(var(--color-fg-rgb), 0.9);
-  border-radius: 12px;
-  padding: 12px 14px;
-  font-size: 0.875rem;
-  font-family: inherit;
-  line-height: 1.5;
-  resize: none;
-  outline: none;
-  overflow-y: hidden;
-  transition: border-color 0.2s ease, background 0.2s ease;
-}
-
-.textarea:focus {
-  border-color: rgba(var(--color-accent-rgb), 0.45);
-  background: rgba(var(--color-fg-rgb), 0.05);
-}
-
-.textarea::placeholder {
-  color: var(--md-on-surface-variant);
-}
-
-.textareaExpanded {
-  border-radius: 12px;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  align-items: center;
-}
-
-.charCount {
-  margin-right: auto;
-  font-size: 0.72rem;
-  color: var(--md-on-surface-variant);
-  font-variant-numeric: tabular-nums;
-}
-
-/* M3 text button / filled button pair. */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 16px;
-  border-radius: 18px;
-  border: 1px solid transparent;
+.more {
+  align-self: flex-start;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-xl);
   background: transparent;
-  color: rgba(var(--color-fg-rgb), 0.75);
-  font-size: 0.8rem;
-  font-weight: 500;
+  color: var(--md-on-surface-variant);
   font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
 }
 
-.btn:hover:not(:disabled) {
-  background: rgba(var(--color-fg-rgb), 0.08);
-  color: rgba(var(--color-fg-rgb), 0.95);
+.more:hover {
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
 }
 
-.btn:focus-visible {
+.more:focus-visible {
   outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
   outline-offset: 2px;
 }
 
-.btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* Was a hardcoded #f97316 on hover, which ignored the theme entirely. */
-.btnPrimary {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-bg);
-  font-weight: 600;
-}
-
-/* M3 state layer, not a swap to --color-accent-bright. That token is a
-   lighter tint of the accent, which raises contrast against a dark surface
-   but collapses it against a light one: hub/light went 4.5:1 at rest to
-   2.5:1 on hover, supabase/light to 1.9:1. The state layer is the content
-   colour at 8% over the unchanged base, so it is bounded to ±8% and cannot
-   invert the pass/fail state in either mode. */
-.btnPrimary:hover:not(:disabled) {
-  background:
-    linear-gradient(rgba(var(--color-bg-rgb), 0.08), rgba(var(--color-bg-rgb), 0.08)),
-    var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-bg);
-  box-shadow: 0 2px 10px rgba(var(--color-accent-rgb), 0.35);
-}
-
-.btnPrimary:disabled {
-  background: rgba(var(--color-fg-rgb), 0.12);
-  border-color: transparent;
-  color: var(--md-on-surface-variant);
-  opacity: 1;
-}
-
-.spinner {
-  animation: commentSpin 0.9s linear infinite;
-}
-
-@keyframes commentSpin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.error {
-  color: #f87171;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-/* --breakpoint-sm */
+/* --breakpoint-md */
 @media (max-width: 640px) {
   .content {
     gap: 14px;
   }
 
-  .newComment {
-    gap: 8px;
+  .sortBtn {
+    height: 34px;
+    padding: 0 14px;
   }
 
-  .btn {
-    height: 40px;
-    padding: 0 14px;
+  .more {
+    width: 100%;
+    min-height: 44px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spinner {
-    animation-duration: 2s;
+  .sortBtn,
+  .more {
+    transition: none;
   }
 }

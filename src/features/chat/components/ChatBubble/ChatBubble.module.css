@@ -1,70 +1,149 @@
 .container {
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
   align-items: flex-end;
+  gap: 8px;
+  /* Tight inside a run, loose between runs. The old fixed 16px gave a wall of
+     evenly-spaced bubbles with no visible conversational structure. */
+  margin-bottom: 2px;
 }
 
-.container.own {
+.groupEnd {
+  margin-bottom: 14px;
+}
+
+.own {
   flex-direction: row-reverse;
   margin-left: auto;
   justify-content: flex-start;
 }
 
+/* Reserved even when empty, so every bubble in a run lines up with the one
+   that does carry the avatar. */
+.avatarSlot {
+  width: 28px;
+  flex-shrink: 0;
+}
+
 .bubbleWrapper {
+  position: relative;
   display: flex;
   flex-direction: column;
-  max-width: 70%;
+  max-width: min(70%, 520px);
 }
 
 .bubble {
-  padding: 10px 14px;
-  color: var(--color-text);
-  font-size: 14px;
-  line-height: 1.4;
-  word-wrap: break-word;
+  padding: 9px 13px;
+  font-size: 0.875rem;
+  line-height: 1.45;
   border: 1px solid transparent;
-  transition: box-shadow 0.2s ease;
+  /* Uniform mid-run radius; the group ends re-round their outer corners
+     below, which is what makes a run read as one block. */
+  border-radius: var(--md-shape-md);
+  overflow-wrap: anywhere;
 }
 
-/* Own messages get the neon-accent treatment (same accent-glow idiom as
-   PostComposer's focus state); other people's stay a plain glass surface
-   so the accent reads as "you", not as decoration on every bubble. */
+.text {
+  white-space: pre-wrap;
+}
+
+/* Accent marks identity, not decoration: your own messages carry it, other
+   people's stay a neutral tonal surface. One tint per side is the whole
+   colour budget for the thread. */
 .ownBubble {
-  background: linear-gradient(135deg, rgba(var(--color-accent-rgb), 0.24), rgba(var(--color-accent-rgb), 0.08));
-  border-color: rgba(var(--color-accent-rgb), 0.35);
-  box-shadow: 0 0 14px rgba(var(--color-accent-rgb), 0.14);
-  border-radius: 18px 18px 4px 18px;
+  background: var(--md-primary-container);
+  border-color: transparent;
+  color: var(--md-on-primary-container);
 }
 
 .otherBubble {
-  background: var(--md-surface-container-low);
-  border-color: rgba(var(--color-fg-rgb), 0.08);
-  border-radius: 18px 18px 18px 4px;
+  background: var(--md-surface-container);
+  border-color: var(--md-outline-variant);
+  color: var(--md-on-surface);
+}
+
+.own.groupStart .bubble {
+  border-top-right-radius: var(--md-shape-lg);
+}
+
+.own.groupEnd .bubble {
+  border-bottom-right-radius: 4px;
+}
+
+.other.groupStart .bubble {
+  border-top-left-radius: var(--md-shape-lg);
+}
+
+.other.groupEnd .bubble {
+  border-bottom-left-radius: 4px;
 }
 
 .mediaBubble {
-  padding: 4px;
+  padding: 3px;
   background: transparent;
   border-color: transparent;
-  box-shadow: none;
 }
 
 .attachmentImg {
   display: block;
   max-width: 220px;
   max-height: 220px;
-  border-radius: 14px;
+  border-radius: var(--md-shape-sm);
   object-fit: contain;
 }
 
+/* Absolutely positioned so revealing it cannot reflow the thread. */
 .timestamp {
-  font-size: 10px;
+  position: absolute;
+  bottom: 2px;
+  white-space: nowrap;
   color: var(--md-on-surface-variant);
-  margin-top: 4px;
-  padding: 0 4px;
+  font-size: 0.62rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.other .timestamp {
+  left: calc(100% + 8px);
 }
 
 .own .timestamp {
-  text-align: right;
+  right: calc(100% + 8px);
+}
+
+.container:hover .timestamp,
+.container:focus-within .timestamp {
+  opacity: 1;
+}
+
+/* --breakpoint-md */
+@media (max-width: 640px) {
+  .bubbleWrapper {
+    max-width: 78%;
+  }
+
+  /* No hover on touch, so the reveal would never fire. The stamp goes back
+     into flow under the last bubble of each run instead of vanishing. */
+  .timestamp {
+    position: static;
+    display: none;
+    opacity: 1;
+    margin-top: 3px;
+    padding: 0 3px;
+  }
+
+  .groupEnd .timestamp {
+    display: block;
+  }
+
+  .own .timestamp {
+    text-align: right;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timestamp {
+    transition: none;
+  }
 }

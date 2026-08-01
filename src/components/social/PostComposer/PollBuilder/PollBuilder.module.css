@@ -1,14 +1,46 @@
-/* Single M3 surface card — no second border nested inside the composer's
-   own panel shell. Option rows are one bordered field each (badge + input +
-   remove all inside the same box), not a badge box next to an input box. */
-.card {
+/* No surface of its own any more: AttachmentTray supplies the container, the
+   label and the remove control, so this file only styles the option rows. It
+   used to draw a second bordered card inside the composer's panel. */
+.builder {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  background: var(--md-surface-container);
+  gap: 10px;
+}
+
+.binaryRow {
+  display: flex;
+  gap: 10px;
+}
+
+.binaryTile {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
   border: 1px solid var(--md-outline-variant);
-  border-radius: var(--md-shape-lg);
-  padding: 14px;
+  border-radius: var(--md-shape-md);
+  background: var(--md-surface-container-high);
+  color: var(--md-on-surface-variant);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* The two tiles are a preview of what readers will see, not a control, so
+   they stay neutral. Direction is carried by the icon, not by colour — a
+   green/red pair here would collide with the vote semantics on the card. */
+.binaryYes,
+.binaryNo {
+  color: var(--md-on-surface);
+}
+
+.hint {
+  margin: 0;
+  color: var(--md-on-surface-variant);
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 
 .options {
@@ -17,34 +49,35 @@
   gap: 8px;
 }
 
+/* One bordered field per option: badge, input and remove all inside the same
+   box rather than three boxes sitting next to each other. */
 .optionRow {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 44px;
-  padding: 0 8px 0 6px;
-  background: var(--md-surface-container-high);
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 6px 0 10px;
   border: 1px solid var(--md-outline-variant);
   border-radius: var(--md-shape-md);
-  transition: border-color 0.15s ease, background 0.15s ease;
+  background: var(--md-surface-container-high);
+  transition: border-color var(--md-duration-short) var(--md-easing-emphasized);
 }
 
 .optionRow:focus-within {
-  border-color: rgba(var(--color-accent-rgb), 0.55);
-  background: rgba(var(--color-accent-rgb), var(--md-state-focus));
+  border-color: rgba(var(--color-accent-rgb), 0.5);
 }
 
 .optionBadge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: var(--md-primary-container);
-  color: var(--md-on-primary-container);
-  font-size: 0.7rem;
+  background: rgba(var(--color-fg-rgb), 0.08);
+  color: var(--md-on-surface-variant);
+  font-size: 0.68rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -52,12 +85,13 @@
 .optionInput {
   flex: 1;
   min-width: 0;
-  background: transparent;
+  height: 100%;
   border: 0;
-  outline: none;
+  background: transparent;
   color: var(--md-on-surface);
-  font-size: 0.86rem;
   font-family: inherit;
+  font-size: 0.875rem;
+  outline: none;
 }
 
 .optionInput::placeholder {
@@ -68,39 +102,52 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
   border: 0;
   border-radius: 50%;
   background: transparent;
   color: var(--md-on-surface-variant);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
 }
 
 .removeBtn:hover {
-  background: rgba(var(--color-danger-rgb), 0.14);
+  background: rgba(var(--color-danger-rgb), 0.12);
   color: var(--color-danger);
 }
 
-.removeBtn:focus-visible {
+.removeBtn:focus-visible,
+.addBtn:focus-visible {
   outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
+/* Was a ~22px text link; now a real 40px outlined button. */
 .addBtn {
-  align-self: flex-start;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  align-self: flex-start;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-xl);
   background: transparent;
-  border: 0;
-  color: var(--color-accent-bright);
+  color: var(--md-on-surface-variant);
+  font-family: inherit;
   font-size: 0.8rem;
-  font-weight: 600;
-  padding: 6px 4px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.addBtn:hover:not(:disabled) {
+  background: rgba(var(--color-accent-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
 }
 
 .addBtn:disabled {
@@ -110,57 +157,28 @@
 
 .optionCount {
   color: var(--md-on-surface-variant);
-  font-weight: 500;
+  font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
-  margin-left: 2px;
-}
-
-.binaryRow {
-  display: flex;
-  gap: 10px;
-}
-
-.binaryTile {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 48px;
-  border-radius: var(--md-shape-md);
-  font-size: 0.88rem;
-  font-weight: 600;
-  border: 1px solid rgba(var(--color-accent-rgb), 0.3);
-}
-
-.binaryYes {
-  color: var(--color-accent-bright);
-  background: rgba(var(--color-accent-rgb), 0.08);
-}
-
-.binaryNo {
-  color: var(--color-danger);
-  border-color: rgba(var(--color-danger-rgb), 0.3);
-  background: rgba(var(--color-danger-rgb), 0.08);
-}
-
-.hint {
-  margin: 0;
-  font-size: 0.74rem;
-  color: var(--md-on-surface-variant);
 }
 
 /* --breakpoint-sm */
-@media (max-width: 640px) {
-  .card {
-    padding: 12px;
+@media (max-width: 480px) {
+  .removeBtn {
+    width: 40px;
+    height: 40px;
   }
 
-  .optionRow {
-    height: 46px;
+  .addBtn {
+    width: 100%;
+    justify-content: center;
+    height: 44px;
   }
+}
 
-  .binaryTile {
-    height: 52px;
+@media (prefers-reduced-motion: reduce) {
+  .optionRow,
+  .removeBtn,
+  .addBtn {
+    transition: none;
   }
 }

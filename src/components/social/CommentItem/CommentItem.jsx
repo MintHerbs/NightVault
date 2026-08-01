@@ -1,23 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowDown, ArrowUp, Trash } from '@phosphor-icons/react'
+import { useState } from 'react'
+import { CornerDownRight, Trash2 } from 'lucide-react'
 import AgentAvatar from '../../effects/smoothui/agent-avatar'
+import VoteControl from '../../ui/VoteControl/VoteControl'
+import ReplyBox from './ReplyBox/ReplyBox'
+import { formatAbsoluteTime, formatRelativeTime } from '../../../lib/social/relativeTime'
 import styles from './CommentItem.module.css'
-
-const MAX_REPLY_CHARS = 500
-
-function formatRelativeTime(iso) {
-  const ts = new Date(iso).getTime()
-  if (!Number.isFinite(ts)) return ''
-  const diff = Date.now() - ts
-  const sec = Math.floor(diff / 1000)
-  if (sec < 60) return `${sec}s ago`
-  const min = Math.floor(sec / 60)
-  if (min < 60) return `${min}m ago`
-  const hr = Math.floor(min / 60)
-  if (hr < 24) return `${hr}h ago`
-  const day = Math.floor(hr / 24)
-  return `${day}d ago`
-}
 
 export default function CommentItem({
   comment,
@@ -32,19 +19,11 @@ export default function CommentItem({
   isLast = true,
 }) {
   const [showReply, setShowReply] = useState(false)
-  const [replyContent, setReplyContent] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [isReplying, setIsReplying] = useState(false)
-
-  const replyRef = useRef(null)
-
-  const timeLabel = useMemo(() => formatRelativeTime(comment?.created_at), [comment?.created_at])
 
   const userVote = getUserVote?.(comment?.id) ?? null
   const isRemoved = !!comment?.is_deleted
   const replies = Array.isArray(comment?.replies) ? comment.replies : []
-  const canReply = replyContent.trim().length > 0 && !isReplying
-
   const isReply = depth === 1
   // The connector spine runs from this avatar down to the last reply's avatar,
   // crossing however many siblings sit between. No single element knows where
@@ -52,52 +31,19 @@ export default function CommentItem({
   // and they butt together across .body's flex gap.
   const hasReplies = !isReply && replies.length > 0
 
-  // Matches the auto-grow behaviour of the other two composers; this one was
-  // a fixed rows={3} box that neither shrank nor grew.
-  useEffect(() => {
-    const el = replyRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    const lineHeight = Number.parseFloat(window.getComputedStyle(el).lineHeight || '20') || 20
-    const maxHeight = Math.round(lineHeight * 6 + 20)
-    el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`
-    el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden'
-  }, [replyContent, showReply])
-
-  const handlePostReply = async () => {
-    const trimmed = String(replyContent || '').trim()
-    if (!trimmed || isReplying) return
-    setIsReplying(true)
-    const res = await onReply?.(trimmed, comment.id)
-    setIsReplying(false)
-    if (res?.error) return
-    setReplyContent('')
+  const handlePostReply = async (content) => {
+    const res = await onReply?.(content, comment.id)
+    if (res?.error) return res
     setShowReply(false)
-  }
-
-  const handleReplyKeyDown = (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-      e.preventDefault()
-      handlePostReply()
-    }
-  }
-
-  const handleDeleteClick = () => {
-    setShowDeleteConfirm(true)
+    return res
   }
 
   const handleConfirmDelete = async () => {
     const res = await onDelete?.(comment.id)
     if (res?.error) {
       console.error('Failed to delete comment:', res.error)
-      alert('Failed to delete comment. Please try again.')
-      setShowDeleteConfirm(false)
       return
     }
-    setShowDeleteConfirm(false)
-  }
-
-  const handleCancelDelete = () => {
     setShowDeleteConfirm(false)
   }
 
@@ -116,62 +62,82 @@ export default function CommentItem({
         <div className={`${styles.row} ${hasReplies ? styles.spineSegment : ''}`}>
           <div className={styles.avatar}>
             {/* Seeded on the comment's own id, not session_id (T-078) — see
-                PostCard.jsx's identical trade-off note. */}
+                PostHeader's identical trade-off note. */}
             <AgentAvatar seed={comment?.id || 'anon'} size={24} animated={true} />
           </div>
 
           <div className={styles.bubble}>
+            <div className={styles.meta}>
+              <span className={styles.name}>Anon</span>
+              <time
+                className={styles.time}
+                dateTime={comment?.created_at}
+                title={formatAbsoluteTime(comment?.created_at)}
+              >
+                {formatRelativeTime(comment?.created_at)}
+              </time>
+            </div>
+
             <div className={`${styles.text} ${isRemoved ? styles.removed : ''}`}>
               {isRemoved ? '[Comment removed]' : comment?.content}
             </div>
 
-            <div className={styles.meta}>
-              <span>{timeLabel}</span>
+            <div className={styles.actions}>
+              {/* Same control as the post's, at the small size. Comments used
+                  to show two loose buttons with separate up and down counts,
+                  which read as a different mechanic from the post above. */}
+              <VoteControl
+                size="sm"
+                score={(comment?.upvotes ?? 0) - (comment?.downvotes ?? 0)}
+                userVote={userVote}
+                onVote={(type) => onVote?.(comment.id, type)}
+                disabled={isRemoved}
+                labelUp="Upvote comment"
+                labelDown="Downvote comment"
+              />
 
-              <div className={styles.actions}>
+              {depth === 0 && !isRemoved && (
                 <button
                   type="button"
-                  className={`${styles.actionBtn} ${userVote === 'up' ? styles.activeUp : ''}`}
-                  onClick={() => onVote?.(comment.id, 'up')}
+                  className={styles.actionBtn}
+                  onClick={() => setShowReply((v) => !v)}
+                  aria-expanded={showReply}
                 >
-                  <ArrowUp size={14} weight={userVote === 'up' ? 'fill' : 'regular'} />
-                  {comment?.upvotes ?? 0}
+                  <CornerDownRight size={14} aria-hidden="true" />
+                  Reply
                 </button>
+              )}
 
+              {isOwn && !isRemoved && (
                 <button
                   type="button"
-                  className={`${styles.actionBtn} ${userVote === 'down' ? styles.activeDown : ''}`}
-                  onClick={() => onVote?.(comment.id, 'down')}
+                  className={`${styles.actionBtn} ${styles.actionDanger}`}
+                  onClick={() => setShowDeleteConfirm(true)}
                 >
-                  <ArrowDown size={14} weight={userVote === 'down' ? 'fill' : 'regular'} />
-                  {comment?.downvotes ?? 0}
+                  <Trash2 size={14} aria-hidden="true" />
+                  Delete
                 </button>
-
-                {depth === 0 && !isRemoved && (
-                  <button type="button" className={styles.actionBtn} onClick={() => setShowReply((v) => !v)}>
-                    Reply
-                  </button>
-                )}
-
-                {isOwn && !isRemoved && (
-                  <button type="button" className={styles.actionBtn} onClick={handleDeleteClick}>
-                    <Trash size={14} />
-                    Delete
-                  </button>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>
 
         {showDeleteConfirm && (
-          <div className={styles.deleteConfirm}>
-            <span className={styles.deleteConfirmText}>Delete this comment?</span>
-            <div className={styles.deleteConfirmActions}>
-              <button type="button" className={styles.btn} onClick={handleCancelDelete}>
+          <div className={styles.confirm} role="alertdialog" aria-label="Confirm comment deletion">
+            <span className={styles.confirmText}>Delete this comment?</span>
+            <div className={styles.confirmActions}>
+              <button
+                type="button"
+                className={styles.btn}
+                onClick={() => setShowDeleteConfirm(false)}
+              >
                 Cancel
               </button>
-              <button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={handleConfirmDelete}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnDanger}`}
+                onClick={handleConfirmDelete}
+              >
                 Delete
               </button>
             </div>
@@ -179,49 +145,15 @@ export default function CommentItem({
         )}
 
         {depth === 0 && showReply && (
-          <div className={`${styles.replyBox} ${hasReplies ? styles.spineSegment : ''}`}>
-            <textarea
-              ref={replyRef}
-              className={styles.replyTextarea}
-              placeholder="Write a reply"
-              value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value.slice(0, MAX_REPLY_CHARS))}
-              onKeyDown={handleReplyKeyDown}
-              maxLength={MAX_REPLY_CHARS}
-              rows={1}
-              aria-label="Write a reply"
-            />
-            <div className={styles.replyActions}>
-              {replyContent.length >= 400 && (
-                <span className={styles.charCount}>
-                  {replyContent.length}/{MAX_REPLY_CHARS}
-                </span>
-              )}
-              <button
-                type="button"
-                className={styles.btn}
-                onClick={() => {
-                  setShowReply(false)
-                  setReplyContent('')
-                }}
-                disabled={isReplying}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                onClick={handlePostReply}
-                disabled={!canReply}
-              >
-                {isReplying ? 'Posting' : 'Reply'}
-              </button>
-            </div>
-          </div>
+          <ReplyBox
+            className={hasReplies ? styles.spineFromTop : ''}
+            hasSpine={hasReplies}
+            onSubmit={handlePostReply}
+            onCancel={() => setShowReply(false)}
+          />
         )}
 
         {depth === 0 &&
-          replies.length > 0 &&
           replies.map((r, i) => (
             <CommentItem
               key={r.id}

@@ -1,0 +1,105 @@
+/* Sits above the scrolling message list and takes over the job the old
+   fixed gradient mask was doing on its own: covering the messages as they
+   pass under the top edge. */
+.header {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  background: rgba(var(--color-bg-rgb), 0.82);
+  border-bottom: 1px solid var(--md-outline-variant);
+  backdrop-filter: blur(12px);
+}
+
+/* Layer 3 signature, same rule as the post card and the composer. */
+.header::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: 2px;
+  background: var(--signature-gradient);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--md-on-surface);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--md-on-surface-variant);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hue-fixed green, same as the Dynamic Island's online dot — "online" has to
+   mean the same thing in every theme. */
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+}
+
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.close:hover {
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
+}
+
+.close:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+}
+
+/* --breakpoint-md */
+@media (max-width: 640px) {
+  .header {
+    padding: 12px 14px;
+  }
+
+  .close {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .close {
+    transition: none;
+  }
+}

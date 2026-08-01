@@ -70,6 +70,23 @@ filed.
       mobile controls in `CommentItem`/`PollBuilder`, and six breakpoint
       comments naming the wrong token (low). The residue of T-065; filed
       rather than reopening it, since T-065's core claims hold
+- [x] T-087 — Rebuild the feed and chat UI/UX on one design language
+      (medium). Filed and implemented 2026-08-01 on owner request.
+      Deliberately reverses this epic's "Not a visual redesign" non-goal
+      below: T-065 and T-073 moved half the surface to M3 and left the other
+      half on the older accent-glow treatment, so the split was the defect.
+      Absorbs T-070; `CodeBlock` stays untouched because notes render through
+      it too. Verified live against local Supabase across four theme/mode
+      combos; spawned T-090 and T-091, both pre-existing
+- [ ] T-090 — Four social RPCs carry stale duplicate overloads, so PostgREST
+      answers `PGRST203` and post delete, comment delete, the feed rate limit
+      and the bot blacklist never reach Postgres (high). Found while
+      verifying T-087; dropped by hand on the local database so that
+      verification could proceed, still needs a migration and a prod check
+- [ ] T-091 — Chat read receipt never advances past the first message of a
+      run, so "Seen by" disappears as soon as anyone sends twice (medium).
+      Found while verifying T-087 and A/B'd against the pre-rebuild build,
+      which fails identically, so it is not a T-087 regression
 - [x] T-073 — Chat redesign: typing indicator sits too close to the input,
       bubble/input visuals want the cyberpunk neon-glow treatment
       PostComposer already has, plus three new features: seen receipts,

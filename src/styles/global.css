@@ -136,6 +136,21 @@
   --md-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
   --md-duration-short:    200ms;  /* Fast band: 150–250ms */
   --md-duration-medium:   350ms;  /* Medium band: 300–500ms */
+
+  /* Signature hairline (T-087) — the one recurring cyberpunk element in the
+     social + chat surface: a 2px neon rule along the top edge of a card,
+     brightened on focus-within. Not a new colour: it is composed entirely of
+     the accent tokens above, so it re-derives per theme and per mode without
+     a second definition. Declared once here rather than duplicated into the
+     four modules that paint it. */
+  --signature-gradient: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-accent) 20%,
+    var(--color-accent-bright) 50%,
+    var(--color-accent) 80%,
+    transparent
+  );
 }
 
 /* ------------------------------------------------------------------------

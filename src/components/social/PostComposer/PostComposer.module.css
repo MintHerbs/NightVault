@@ -1,77 +1,58 @@
+/* Same surface contract as PostCard: tonal fill, hairline outline, one
+   signature neon rule on the top edge. The composer sits at the head of the
+   same column, so it has to be built out of the same parts. */
 .composer {
-  width: calc(100% - 32px);
   position: relative;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 16px 20px 14px;
   background: var(--md-surface-container-low);
   border: 1px solid var(--md-outline-variant);
-  border-radius: var(--md-shape-xl);
-  padding: 20px 22px 16px;
-  margin: 16px 16px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+  border-radius: var(--md-shape-lg);
   isolation: isolate;
   overflow: hidden;
-  transition: border-color 0.25s var(--md-easing-emphasized), box-shadow 0.25s var(--md-easing-emphasized);
+  transition: border-color var(--md-duration-short) var(--md-easing-emphasized);
 }
 
-/* Cyberpunk signature kept to a single neon hairline that brightens on focus,
-   rather than a glowing border on every edge — the Material surface underneath
-   stays the thing doing the work. */
 .composer::before {
   content: '';
   position: absolute;
   inset: 0 0 auto 0;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-accent) 20%,
-    var(--color-accent-bright) 50%,
-    var(--color-accent) 80%,
-    transparent
-  );
-  opacity: 0.4;
-  transition: opacity 0.25s ease;
+  background: var(--signature-gradient);
+  opacity: 0.35;
+  transition: opacity var(--md-duration-medium) var(--md-easing-emphasized);
+  pointer-events: none;
 }
 
 .composer:focus-within {
-  border-color: rgba(var(--color-accent-rgb), 0.5);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35),
-    0 0 24px rgba(var(--color-accent-rgb), 0.18);
+  border-color: rgba(var(--color-accent-rgb), 0.42);
 }
 
 .composer:focus-within::before {
-  opacity: 0.9;
+  opacity: 1;
 }
 
 .shake {
   animation: composerShake 0.45s ease-in-out;
 }
 
-.shake textarea {
-  color: var(--color-danger);
-  text-shadow: 0 0 8px rgba(var(--color-danger-rgb), 0.5);
-}
-
 @keyframes composerShake {
-  0% {
+  0%,
+  100% {
     transform: translateX(0);
   }
   18% {
-    transform: translateX(-8px);
+    transform: translateX(-7px);
   }
   36% {
-    transform: translateX(7px);
+    transform: translateX(6px);
   }
   54% {
-    transform: translateX(-6px);
+    transform: translateX(-5px);
   }
   72% {
-    transform: translateX(5px);
-  }
-  100% {
-    transform: translateX(0);
+    transform: translateX(4px);
   }
 }
 
@@ -82,14 +63,12 @@
 }
 
 .avatar {
-  /* A bare canvas is inline by default, which leaves baseline whitespace
-     below it — that extra sliver made the ring sit loose around the avatar
-     instead of hugging it. Flex sizes the wrapper to the canvas exactly. */
   display: flex;
   border-radius: 50%;
   overflow: hidden;
+  line-height: 0;
   flex-shrink: 0;
-  box-shadow: 0 0 0 2px rgba(var(--color-accent-rgb), 0.25);
+  box-shadow: 0 0 0 2px rgba(var(--color-accent-rgb), 0.28);
 }
 
 .inputs {
@@ -97,19 +76,50 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+}
+
+/* Height/opacity shell for the reveal, so the input keeps its own padding
+   while the wrapper animates. */
+.titleWrap {
+  overflow: hidden;
+}
+
+/* Optional, inline, and typographically the post's heading rather than a
+   generic field — the same weight it will have once published. */
+.title {
+  width: 100%;
+  padding: 2px 0 8px;
+  border: 0;
+  border-bottom: 1px solid var(--md-outline-variant);
+  background: transparent;
+  color: var(--md-on-surface);
+  font-family: inherit;
+  font-size: 1.0625rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  outline: none;
+}
+
+.title::placeholder {
+  color: var(--md-on-surface-variant);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.title:focus {
+  border-bottom-color: rgba(var(--color-accent-rgb), 0.5);
 }
 
 .textarea {
   width: 100%;
-  background: transparent;
-  border: 0;
-  color: rgba(var(--color-fg-rgb), 0.88);
-  border-radius: 0;
   min-height: 40px;
-  padding: 2px 0 10px;
+  padding: 10px 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--md-on-surface);
+  font-family: inherit;
   font-size: 1rem;
-  line-height: 1.5;
+  line-height: 1.55;
   resize: none;
   outline: none;
   overflow-y: hidden;
@@ -120,267 +130,43 @@
   color: var(--md-on-surface-variant);
 }
 
-.textareaExpanded {
-  border-radius: 0;
-}
-
-.bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--md-outline-variant);
-}
-
-.features {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.barRight {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-/* M3 toggle chip: outlined at rest, tonal-container filled when selected —
-   the same container/on-container pair Material uses for a chosen chip,
-   rather than a translucent accent wash standing in for it. */
-.featureBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 14px;
-  border-radius: var(--md-shape-xl);
-  border: 1px solid var(--md-outline-variant);
-  background: transparent;
-  color: var(--md-on-surface-variant);
-  font-size: 0.8rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.featureBtn:hover {
-  background: rgba(var(--color-accent-rgb), var(--md-state-hover));
-  border-color: rgba(var(--color-accent-rgb), 0.35);
-  color: var(--color-accent-bright);
-}
-
-.featureBtn:focus-visible {
-  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
-  outline-offset: 2px;
-}
-
-.featureBtnActive {
-  background: var(--md-primary-container);
-  border-color: transparent;
-  color: var(--md-on-primary-container);
-  font-weight: 600;
-  box-shadow: 0 0 14px rgba(var(--color-accent-rgb), 0.22);
-}
-
-.featureBtnActive:hover {
-  background: var(--md-primary-container);
-  box-shadow: 0 0 18px rgba(var(--color-accent-rgb), 0.32);
-}
-
-.featureLabel {
-  white-space: nowrap;
-}
-
-.charCount {
-  font-size: 0.75rem;
-  color: var(--md-on-surface-variant);
-  letter-spacing: 0.01em;
-  font-variant-numeric: tabular-nums;
-}
-
-.charCountWarn {
-  color: var(--color-danger);
-  text-shadow: 0 0 6px rgba(var(--color-danger-rgb), 0.4);
-}
-
-/* Purely a height/opacity transition shell now — each feature panel
-   (PollBuilder / CodeAttachment / MediaPicker) owns its own single card
-   surface, so nothing here draws a second border around it. */
-.panel {
-  overflow: hidden;
-}
-
-.gifPreview {
-  position: relative;
-  align-self: flex-start;
-  max-width: 200px;
-  border-radius: var(--md-shape-lg);
-  overflow: hidden;
-  border: 1px solid var(--md-outline-variant);
-}
-
-.gifPreviewImg {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: 160px;
-  object-fit: cover;
-}
-
-.gifRemove {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.65);
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.gifRemove:hover {
-  background: rgba(0, 0, 0, 0.85);
-}
-
-.gifRemove:focus-visible {
-  outline: 2px solid rgba(var(--color-accent-rgb), 0.9);
-  outline-offset: 2px;
-}
-
-/* M3 filled button: 40px tall, full-height touch target, icon + label. */
-.postBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 20px;
-  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-bright) 100%);
-  color: var(--color-bg);
-  border: 1px solid transparent;
-  border-radius: var(--md-shape-xl);
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  transition: background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-  box-shadow: 0 2px 8px rgba(var(--color-accent-rgb), 0.4), 0 0 15px rgba(var(--color-accent-rgb), 0.2);
-  position: relative;
-  overflow: hidden;
-}
-
-/* Nothing to post yet: drop to low emphasis rather than to `disabled`, so the
-   click still lands and the composer can shake to say why. */
-.postBtnIdle {
-  background: rgba(var(--color-accent-rgb), 0.14);
-  border-color: rgba(var(--color-accent-rgb), 0.3);
-  color: var(--color-accent-bright);
-  box-shadow: none;
-}
-
-.postBtnIdle:hover {
-  background: rgba(var(--color-accent-rgb), 0.22);
-}
-
-.postBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.postBtn:not(:disabled):not(.postBtnIdle):hover {
-  background: linear-gradient(135deg, var(--color-accent-bright) 0%, var(--color-accent) 100%);
-  box-shadow: 0 4px 16px rgba(var(--color-accent-rgb), 0.6), 0 0 25px rgba(var(--color-accent-rgb), 0.3);
-}
-
-.postBtn:focus-visible {
-  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
-  outline-offset: 2px;
-}
-
-.spinner {
-  animation: composerSpin 0.9s linear infinite;
-}
-
-@keyframes composerSpin {
-  to {
-    transform: rotate(360deg);
-  }
+.textareaTall {
+  padding-bottom: 8px;
 }
 
 .error {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
+  margin-top: 10px;
+  padding: 9px 13px;
   background: rgba(var(--color-danger-rgb), 0.1);
   border: 1px solid rgba(var(--color-danger-rgb), 0.3);
   border-radius: var(--md-shape-md);
   color: var(--color-danger);
   font-size: 0.8rem;
   font-weight: 500;
-  box-shadow: 0 2px 8px rgba(var(--color-danger-rgb), 0.2), 0 0 15px rgba(var(--color-danger-rgb), 0.1);
-  text-shadow: 0 0 6px rgba(var(--color-danger-rgb), 0.3);
 }
 
-/* --breakpoint-sm */
+/* --breakpoint-md */
 @media (max-width: 640px) {
   .composer {
-    width: calc(100% - 16px);
-    margin: 12px 8px 16px;
-    padding: 16px 14px 12px;
+    padding: 14px 14px 12px;
+    border-radius: var(--md-shape-md);
   }
 
   .row {
     gap: 10px;
   }
-
-  /* Chips and the primary action stop competing for one row; the action gets
-     its own full-width line so it clears the 48px touch target. */
-  .bar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .features {
-    gap: 8px;
-  }
-
-  .featureBtn {
-    height: 40px;
-    flex: 1 1 0;
-    min-width: 0;
-    justify-content: center;
-    padding: 0 10px;
-  }
-
-  .barRight {
-    justify-content: flex-end;
-    gap: 10px;
-  }
-
-  .postBtn {
-    flex: 1;
-    height: 44px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .shake {
-    animation: none;
+  .composer,
+  .composer::before {
+    transition: none;
   }
 
-  .spinner {
-    animation-duration: 2s;
+  .shake {
+    animation: none;
   }
 }

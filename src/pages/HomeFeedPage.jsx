@@ -8,54 +8,56 @@ import { usePosts } from '../hooks/usePosts'
 import { useRateLimit } from '../hooks/useRateLimit'
 import styles from './HomeFeedPage.module.css'
 
+const SKELETON_ROWS = [
+  ['96%', '88%', '72%'],
+  ['92%', '64%'],
+  ['98%', '90%', '84%', '58%'],
+]
+
 function FeedSkeleton() {
   return (
-    <div className={styles.skeletonList}>
-      {[0, 1, 2].map((i) => (
-        <motion.div 
-          key={i} 
+    <div className={styles.skeletonList} aria-hidden="true">
+      {SKELETON_ROWS.map((rows, i) => (
+        <motion.div
+          key={i}
           className={styles.skeletonCard}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: i * 0.1 }}
+          transition={{ duration: 0.26, delay: i * 0.07, ease: [0.2, 0, 0, 1] }}
         >
-          {/* Header with avatar and meta */}
           <div className={styles.skeletonHeader}>
             <div className={styles.skeletonAvatar}>
               <div className={styles.shimmer} />
             </div>
             <div className={styles.skeletonMeta}>
-              <div className={styles.pulseLine} style={{ width: '80px', height: '12px', marginBottom: '6px' }}>
+              <div className={styles.pulseLine} style={{ width: '104px', height: '11px' }}>
                 <div className={styles.shimmer} />
               </div>
-              <div className={styles.pulseLine} style={{ width: '50px', height: '10px' }}>
+              <div className={styles.pulseLine} style={{ width: '58px', height: '9px' }}>
                 <div className={styles.shimmer} />
               </div>
             </div>
           </div>
 
-          {/* Content lines */}
           <div className={styles.skeletonContent}>
-            <div className={styles.pulseLine} style={{ width: '100%', height: '12px' }}>
-              <div className={styles.shimmer} />
-            </div>
-            <div className={styles.pulseLine} style={{ width: '95%', height: '12px' }}>
-              <div className={styles.shimmer} />
-            </div>
-            <div className={styles.pulseLine} style={{ width: '88%', height: '12px' }}>
-              <div className={styles.shimmer} />
-            </div>
+            {rows.map((width, r) => (
+              <div key={r} className={styles.pulseLine} style={{ width, height: '11px' }}>
+                <div className={styles.shimmer} />
+              </div>
+            ))}
           </div>
 
-          {/* Actions area */}
           <div className={styles.skeletonActions}>
-            <div className={styles.pulseLine} style={{ width: '60px', height: '32px', borderRadius: '8px' }}>
+            <div
+              className={styles.pulseLine}
+              style={{ width: '104px', height: '36px', borderRadius: '18px' }}
+            >
               <div className={styles.shimmer} />
             </div>
-            <div className={styles.pulseLine} style={{ width: '60px', height: '32px', borderRadius: '8px' }}>
-              <div className={styles.shimmer} />
-            </div>
-            <div className={styles.pulseLine} style={{ width: '60px', height: '32px', borderRadius: '8px' }}>
+            <div
+              className={styles.pulseLine}
+              style={{ width: '72px', height: '36px', borderRadius: '18px' }}
+            >
               <div className={styles.shimmer} />
             </div>
           </div>
@@ -120,14 +122,16 @@ export default function HomeFeedPage({ onAIStateChange }) {
 
           <AnimatePresence mode="wait">
             {!isLoading && feedPosts.length === 0 && (
-              <motion.div 
+              <motion.div
                 className={styles.empty}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.26, ease: [0.2, 0, 0, 1] }}
               >
-                No posts yet. Be the first to share something.
+                <p className={styles.emptyTitle}>Nothing here yet</p>
+                Be the first to post something. Questions, snippets, half-formed
+                thoughts all welcome.
               </motion.div>
             )}
           </AnimatePresence>
@@ -157,9 +161,7 @@ export default function HomeFeedPage({ onAIStateChange }) {
         </main>
       </div>
 
-      {showCarousel && (
-        <OnboardingCarousel onComplete={() => setShowCarousel(false)} />
-      )}
+      {showCarousel && <OnboardingCarousel onComplete={() => setShowCarousel(false)} />}
     </div>
   )
 }

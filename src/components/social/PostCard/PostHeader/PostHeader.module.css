@@ -1,0 +1,173 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.avatar {
+  display: flex;
+  border-radius: 50%;
+  overflow: hidden;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+/* One baseline for name, separator and time. They used to stack, which cost a
+   whole row of card height to show two short strings. */
+.meta {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--md-on-surface);
+  letter-spacing: 0.01em;
+}
+
+.dot {
+  color: var(--md-on-surface-variant);
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.time {
+  font-size: 0.75rem;
+  color: var(--md-on-surface-variant);
+}
+
+/* Was a standalone italic line below the poll, four elements away from the
+   timestamp it qualifies. */
+.edited {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--md-on-surface-variant);
+  padding: 1px 7px;
+  border-radius: var(--md-shape-xl);
+  background: rgba(var(--color-fg-rgb), 0.06);
+}
+
+.menuWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.menuBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.menuBtn:hover {
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
+}
+
+.menuBtn:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+}
+
+/* Anchored to the button rather than to the card, so it no longer needs a
+   hand-tuned `top: 40px; right: 10px` that drifted when the header changed. */
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 10;
+  min-width: 168px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--md-surface-container-high);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  transform-origin: top right;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--md-shape-sm);
+  background: transparent;
+  color: var(--md-on-surface);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.menuItem:hover {
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+}
+
+.menuItem:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: -2px;
+}
+
+.menuItemActive {
+  color: var(--color-accent-bright);
+}
+
+.menuDivider {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--md-outline-variant);
+}
+
+.menuDanger {
+  color: var(--color-danger);
+}
+
+.menuDanger:hover {
+  background: rgba(var(--color-danger-rgb), 0.12);
+}
+
+/* --breakpoint-md */
+@media (max-width: 640px) {
+  .header {
+    gap: 10px;
+  }
+
+  .menuBtn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .menuItem {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menuBtn,
+  .menuItem {
+    transition: none;
+  }
+}

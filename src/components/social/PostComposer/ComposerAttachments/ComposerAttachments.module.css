@@ -1,0 +1,7 @@
+.preview {
+  display: block;
+  max-width: 220px;
+  max-height: 180px;
+  border-radius: var(--md-shape-sm);
+  object-fit: contain;
+}

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { Check, ChevronDown, Copy, Trash2 } from 'lucide-react'
+import { Check, ChevronDown, Copy } from 'lucide-react'
 import { detectCodeLanguage, getLanguageLabel, normalizeLanguage } from '../../../../lib/social/codeHighlighter'
 import styles from './CodeAttachment.module.css'
 
@@ -26,7 +26,9 @@ function clampToMaxLines(value) {
   return { text: lines.slice(0, MAX_LINES).join('\n'), clamped: true }
 }
 
-export default function CodeAttachment({ code, language, onChange, onRemove }) {
+// Removal is the tray's job now (AttachmentTray), so this component no longer
+// carries its own delete button next to the copy one.
+export default function CodeAttachment({ code, language, onChange }) {
   const [copied, setCopied] = useState(false)
   const [wasClamped, setWasClamped] = useState(false)
   const textareaRef = useRef(null)
@@ -123,18 +125,6 @@ export default function CodeAttachment({ code, language, onChange, onRemove }) {
           >
             {copied ? <Check size={15} /> : <Copy size={15} />}
           </button>
-
-          {onRemove ? (
-            <button
-              type="button"
-              className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
-              onClick={onRemove}
-              title="Remove code attachment"
-              aria-label="Remove code attachment"
-            >
-              <Trash2 size={15} />
-            </button>
-          ) : null}
         </div>
       </div>
 
