@@ -126,37 +126,6 @@
   outline-offset: 2px;
 }
 
-.excludeButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: none;
-  border: none;
-  border-radius: 50%;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: background 150ms ease, color 150ms ease;
-}
-
-.excludeButton:hover {
-  background: var(--color-hover);
-  color: var(--color-text);
-}
-
-/* On, meaning this browser's own visits are being left out of the numbers. */
-.excludeActive,
-.excludeActive:hover {
-  background: var(--md-primary-container);
-  color: var(--md-on-primary-container);
-}
-
-.excludeButton:focus-visible {
-  outline: 2px solid var(--md-primary);
-  outline-offset: 2px;
-}
-
 /* ── Body ───────────────────────────────────────────────────────────────── */
 .main {
   flex: 1;

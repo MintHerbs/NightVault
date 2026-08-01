@@ -8,14 +8,13 @@
 // migration has not been applied yet.
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, ChartLineUp, EyeSlash } from '@phosphor-icons/react'
+import { ArrowLeft, ChartLineUp } from '@phosphor-icons/react'
 import { useAdmin } from './useAdmin'
 import Loading from '../../components/ui/Loading'
 import { Panel, RankBars, StatTile, ToolTable, TrendChart } from '../../components/admin/analytics'
 import { formatAgo, formatCount } from '../../components/admin/analytics/format'
 import { DEFAULT_RANGE, EMPTY_DASHBOARD, RANGES, fetchDashboard } from '../../lib/analytics/adminApi'
 import { routeLabel } from '../../lib/analytics/eventSchema'
-import { isOptedOut, setOptedOut } from '../../lib/analytics/tracker'
 import '../../styles/adminTokens.css'
 import styles from './AdminAnalytics.module.css'
 
@@ -45,7 +44,6 @@ function AdminAnalyticsContent() {
   const [data, setData] = useState(EMPTY_DASHBOARD)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [excluded, setExcluded] = useState(() => isOptedOut())
 
   // Mirrors analytics_can_view() in 0052 and the isOwner || isAdmin gate on the
   // Manage users button. A client-side check is a UX short-circuit only — the
@@ -71,12 +69,6 @@ function AdminAnalyticsContent() {
     const range = RANGES.find(r => r.key === rangeKey) ?? RANGES[1]
     load(range.days)
   }, [authLoading, canView, rangeKey, load])
-
-  const toggleExcluded = () => {
-    const next = !excluded
-    setOptedOut(next)
-    setExcluded(next)
-  }
 
   if (authLoading) {
     return <div className={styles.fullLoading}><Loading color="var(--accent)" /></div>
@@ -133,16 +125,6 @@ function AdminAnalyticsContent() {
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            className={`${styles.excludeButton} ${excluded ? styles.excludeActive : ''}`}
-            onClick={toggleExcluded}
-            title={excluded
-              ? 'Your visits are excluded from these numbers'
-              : 'Exclude your own visits from these numbers'}
-          >
-            <EyeSlash size={18} weight={excluded ? 'fill' : 'regular'} />
-          </button>
         </div>
       </header>
 
