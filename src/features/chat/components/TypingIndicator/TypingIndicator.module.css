@@ -1,17 +1,15 @@
 /* Floats above the input rather than sitting in flow above it — it used to
-   sit with only 6px of padding between it and the input, which read as
-   glued to it. Absolute + a real offset gives it deliberate breathing room
-   and stops it nudging the input's position as peers start/stop typing. */
+   sit with only 6px of padding between the two, which read as glued to the
+   input. Absolute plus a real offset gives it deliberate breathing room and
+   stops it nudging the input's position as peers start and stop typing. */
 .wrapper {
   position: absolute;
   left: 20px;
   right: 20px;
   bottom: 100%;
   z-index: 2;
-  margin-bottom: 14px;
   width: min(800px, 90vw);
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto 14px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -25,33 +23,15 @@
   }
 }
 
-.avatars {
-  display: flex;
-  align-items: center;
-}
-
-/* Overlap the stack, and ring each avatar in the panel background so the
-   edges stay separable where they sit on top of one another. */
-.avatar {
-  position: relative;
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px var(--color-bg);
-}
-
-.avatar:not(:first-child) {
-  margin-left: -9px;
-}
-
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   height: 24px;
   padding: 0 10px;
-  border-radius: 12px;
-  background: rgba(var(--color-accent-rgb), 0.1);
-  border: 1px solid rgba(var(--color-accent-rgb), 0.22);
-  box-shadow: 0 0 10px rgba(var(--color-accent-rgb), 0.12);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-xl);
+  background: var(--md-surface-container);
 }
 
 .dot {
@@ -96,9 +76,12 @@
 }
 
 /* --breakpoint-md */
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .wrapper {
-    width: 95vw;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    margin-bottom: 10px;
   }
 }
 

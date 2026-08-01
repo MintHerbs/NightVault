@@ -252,7 +252,9 @@ function AppContent() {
         </Suspense>
       </div>
 
-      {/* Chat panel outside the fading wrapper */}
+      {/* Chat panel outside the fading wrapper. Online count is deliberately
+          not passed in: the Dynamic Island already owns that display, and
+          the panel doesn't repeat it. */}
       <ChatPanel
         isOpen={isChatOpen}
         onClose={closeChat}

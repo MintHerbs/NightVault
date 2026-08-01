@@ -141,6 +141,21 @@
   --md-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
   --md-duration-short:    200ms;  /* Fast band: 150–250ms */
   --md-duration-medium:   350ms;  /* Medium band: 300–500ms */
+
+  /* Signature hairline (T-087) — the one recurring cyberpunk element in the
+     social + chat surface: a 2px neon rule along the top edge of a card,
+     brightened on focus-within. Not a new colour: it is composed entirely of
+     the accent tokens above, so it re-derives per theme and per mode without
+     a second definition. Declared once here rather than duplicated into the
+     four modules that paint it. */
+  --signature-gradient: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-accent) 20%,
+    var(--color-accent-bright) 50%,
+    var(--color-accent) 80%,
+    transparent
+  );
 }
 
 /* ------------------------------------------------------------------------
@@ -925,6 +940,43 @@
   --kmap-group-7-rgb: 138, 97, 0;
   --kmap-group-8: #4d6b3a;
   --kmap-group-8-rgb: 77, 107, 58;
+}
+
+/* Chemistry structure atom colours (T-091, docs/adr/0002). Theme-invariant
+   for the same reason as --color-danger above: a chemistry student expects
+   oxygen to read "red-family" regardless of which of the 8 brand accents is
+   selected, so these key off [data-mode] only, never [data-color-theme].
+   Softened from OpenChemLib's default CPK palette (raw rgb(255,13,13) red /
+   rgb(48,80,248) blue, etc. — too saturated for this app's muted dark
+   surface) to a validated pastel set: each slot passes the dataviz skill's
+   lightness/chroma/CVD/contrast checks against this app's own --color-surface
+   for hub/dark (#181716) and hub/light (#f1f0ef) — see
+   `node scripts/validate_palette.js` in the dataviz skill. F and Cl share
+   --chem-atom-halogen deliberately: every atom already carries its own
+   element-letter text label, so color here is a secondary, traditional cue
+   (matching CPK convention) rather than the sole identity signal a bare
+   chart series would need — the two greens don't need to clear the same
+   orthogonality bar a legend-only palette would. renderStructureSvg.js maps
+   each of OpenChemLib's literal atom-label colours to these. */
+[data-mode="dark"] {
+  --chem-atom-o: #d0685a;
+  --chem-atom-n: #7292d9;
+  --chem-atom-br: #b8654a;
+  --chem-atom-halogen: #42ab80;
+  --chem-atom-p: #c77835;
+  --chem-atom-i: #a06cc2;
+  --chem-atom-s: #b58f30;
+  --chem-atom-other: #9878c0;
+}
+[data-mode="light"] {
+  --chem-atom-o: #b8402e;
+  --chem-atom-n: #3f5fb0;
+  --chem-atom-br: #8f4530;
+  --chem-atom-halogen: #0d8a70;
+  --chem-atom-p: #a05a1a;
+  --chem-atom-i: #7a3f9e;
+  --chem-atom-s: #8a6a10;
+  --chem-atom-other: #6a4f96;
 }
 
 * {

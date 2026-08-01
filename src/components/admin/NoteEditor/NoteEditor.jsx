@@ -5,7 +5,18 @@ import { Plugin, PluginKey, TextSelection } from '@milkdown/kit/prose/state'
 import remarkDirective from 'remark-directive'
 import CodeBlock from '../../social/CodeBlock/CodeBlock'
 import NotePlayground from '../../markdown/NotePlayground'
+import MoleculeStructure from '../../markdown/MoleculeStructure/MoleculeStructure'
+import ReactionScheme from '../../markdown/ReactionScheme/ReactionScheme'
 import { PLAYGROUND_ID_RE } from '../../../constants/notePlaygrounds'
+import { loadOCL } from '../../../lib/chem/loadChem'
+import {
+  isValidSmiles,
+  isValidLabel,
+  parseReactionBlock,
+  detectMolBlock,
+  splitReactionSmiles,
+  convertChemPaste,
+} from '../../../lib/chem/noteChem'
 import { resolveDraftSrc } from '../../../lib/draftImagePreviews'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../../lib/noteImageSrc'
 import { parseImageTitle, formatImageTitle, MIN_IMAGE_WIDTH } from '../../../lib/noteImageWidth'
@@ -33,7 +44,6 @@ import {
   getMarkdown,
   markdownToSlice,
   $prose,
-  $view,
   $remark,
   $command,
   $markSchema,
@@ -249,32 +259,139 @@ const playgroundSchema = $nodeSchema('playground', () => ({
   },
 }))
 
-// Playground node view: the real reader component, so the author sees and can
-// drive the same live document a visitor gets. Mirrors codeBlockView's
-// react-dom-root approach; deferred a microtask for the same reason.
-const playgroundNodeView = $view(playgroundSchema, () => (node) => {
-  const dom = document.createElement('div')
-  const root = createRoot(dom)
-  const render = (n) => queueMicrotask(() => {
-    try {
-      root.render(<NotePlayground playgroundId={n.attrs.playgroundId} />)
-    } catch { /* editor may have torn down */ }
-  })
-  render(node)
-  return {
-    dom,
-    update: (updated) => {
-      if (updated.type !== node.type) return false
-      render(updated)
-      return true
+// Molecule structure — a block atom round-tripping to
+// `::molecule{smiles="..." label="..."}` (T-093). Same shape as
+// youtubeSchema/playgroundSchema above, for the same reason: without a
+// schema declaring this node, Milkdown has no rule matching the directive, so
+// the parser drops it and the author's next save writes the note back with
+// the structure gone (the T-075 lesson).
+//
+// `smiles` is re-validated here on the write path with the same charset/
+// length gate the reader (MarkdownRenderer's remarkNoteDirectives) applies
+// on read — stored Markdown can also arrive via a GitHub backup restore,
+// bypassing this editor entirely.
+const moleculeSchema = $nodeSchema('molecule', () => ({
+  inline: false,
+  group: 'block',
+  atom: true,
+  selectable: true,
+  isolating: true,
+  attrs: {
+    smiles: { default: '', validate: 'string' },
+    label: { default: '', validate: 'string' },
+  },
+  parseDOM: [{
+    tag: 'div[data-type="molecule"]',
+    getAttrs: (dom) => {
+      if (!(dom instanceof HTMLElement)) return false
+      const smiles = dom.getAttribute('data-smiles') || ''
+      if (!isValidSmiles(smiles)) return false
+      const label = dom.getAttribute('data-label') || ''
+      return { smiles, label: isValidLabel(label) ? label : '' }
     },
-    ignoreMutation: () => true,
-    // The playground owns its own buttons, tabs and editor panes — ProseMirror
-    // must not treat clicks inside them as document selection changes.
-    stopEvent: () => true,
-    destroy: () => queueMicrotask(() => root.unmount()),
-  }
-})
+  }],
+  toDOM: (node) => ['div', {
+    'data-type': 'molecule',
+    'data-smiles': node.attrs.smiles,
+    'data-label': node.attrs.label,
+  }],
+  parseMarkdown: {
+    match: (node) => node.type === 'leafDirective' && node.name === 'molecule',
+    runner: (state, node, type) => {
+      const smiles = node.attributes?.smiles || ''
+      if (!isValidSmiles(smiles)) return
+      const label = node.attributes?.label || ''
+      state.addNode(type, { smiles, label: isValidLabel(label) ? label : '' })
+    },
+  },
+  toMarkdown: {
+    match: (node) => node.type.name === 'molecule',
+    runner: (state, node) => {
+      state.addNode('leafDirective', undefined, undefined, {
+        name: 'molecule',
+        attributes: { smiles: node.attrs.smiles, label: node.attrs.label || '' },
+      })
+    },
+  },
+}))
+
+// Molecule node view: renders the real reader component (MoleculeStructure),
+// so the author sees exactly what a visitor gets.
+//
+// Registered as a raw ProseMirror `nodeViews` prop (matching
+// `youtubeNodeViewPlugin` below), not via Milkdown's `$view()` utility.
+// `$view()` registers into `nodeViewCtx` behind `await ctx.wait(SchemaReady)`
+// — an async step that can lose the race against the EditorView's own
+// creation, so the node view silently never attaches and the node falls back
+// to its bare `toDOM`. Confirmed live: pasting `::molecule{...}` (or a
+// `` ```reaction `` fence via the identically-`$view`-based `codeBlockView`)
+// produced the correct node/attrs but rendered as the schema's raw `toDOM`,
+// with no SVG — on this worktree AND on unmodified `main`, so this is a
+// pre-existing gap in every `$view`-based node view here (molecule,
+// playground, code block), not something new. `youtubeNodeViewPlugin`'s raw
+// `Plugin({props: {nodeViews}})` registration is synchronous and reliably
+// attaches, so every node view in this file now uses that shape instead.
+const moleculeNodeView = $prose(() => new Plugin({
+  key: new PluginKey('NOTE_EDITOR_MOLECULE_VIEW'),
+  props: {
+    nodeViews: {
+      molecule: (node) => {
+        const dom = document.createElement('div')
+        const root = createRoot(dom)
+        const render = (n) => queueMicrotask(() => {
+          try {
+            root.render(<MoleculeStructure smiles={n.attrs.smiles} label={n.attrs.label} />)
+          } catch { /* editor may have torn down */ }
+        })
+        render(node)
+        return {
+          dom,
+          update: (updated) => {
+            if (updated.type !== node.type) return false
+            render(updated)
+            return true
+          },
+          ignoreMutation: () => true,
+          destroy: () => queueMicrotask(() => root.unmount()),
+        }
+      },
+    },
+  },
+}))
+
+// Playground node view: the real reader component, so the author sees and can
+// drive the same live document a visitor gets. See moleculeNodeView above for
+// why this is a raw `nodeViews` prop registration rather than `$view()`.
+const playgroundNodeView = $prose(() => new Plugin({
+  key: new PluginKey('NOTE_EDITOR_PLAYGROUND_VIEW'),
+  props: {
+    nodeViews: {
+      playground: (node) => {
+        const dom = document.createElement('div')
+        const root = createRoot(dom)
+        const render = (n) => queueMicrotask(() => {
+          try {
+            root.render(<NotePlayground playgroundId={n.attrs.playgroundId} />)
+          } catch { /* editor may have torn down */ }
+        })
+        render(node)
+        return {
+          dom,
+          update: (updated) => {
+            if (updated.type !== node.type) return false
+            render(updated)
+            return true
+          },
+          ignoreMutation: () => true,
+          // The playground owns its own buttons, tabs and editor panes —
+          // ProseMirror must not treat clicks inside them as selection changes.
+          stopEvent: () => true,
+          destroy: () => queueMicrotask(() => root.unmount()),
+        }
+      },
+    },
+  },
+}))
 
 // YouTube node view: rounded thumbnail + play button (mirrors imageWrap's
 // rounded-corner treatment), swapped for a lazy-mounted iframe on click so
@@ -452,34 +569,66 @@ function configureCodeBlockMeta(ctx) {
 // T-037). The node's text stays in the doc model, so Markdown round-trip is
 // unaffected. React root mount/unmount is deferred a microtask to stay clear of
 // ProseMirror's synchronous view-update cycle.
-const codeBlockView = $view(codeBlockSchema, () => (node) => {
-  const dom = document.createElement('div')
-  const root = createRoot(dom)
-  const render = (n) => queueMicrotask(() => {
-    try {
-      root.render(
-        <CodeBlock
-          code={n.textContent}
-          language={n.attrs.language || 'auto'}
-          title={n.attrs.meta || undefined}
-        />
-      )
-    } catch { /* editor may have torn down */ }
-  })
-  render(node)
-  return {
-    dom,
-    update: (updated) => {
-      if (updated.type !== node.type) return false
-      render(updated)
-      return true
+//
+// Registered as a raw `nodeViews` prop, not `$view()` — see moleculeNodeView's
+// comment above for why: `$view()`'s registration into `nodeViewCtx` is gated
+// on an async `ctx.wait(SchemaReady)`, which can lose the race against the
+// EditorView's own creation. Confirmed live (before this fix): every code
+// block — pasted, typed, or already saved in an existing note — rendered as
+// the commonmark preset's bare `<pre><code>`, never through this component,
+// on this worktree and on unmodified `main` alike. This is what made
+// `` ```reaction `` fall back to looking like plain formula text instead of
+// rendering, exactly as reported.
+const codeBlockView = $prose(() => new Plugin({
+  key: new PluginKey('NOTE_EDITOR_CODE_BLOCK_VIEW'),
+  props: {
+    nodeViews: {
+      code_block: (node) => {
+        const dom = document.createElement('div')
+        const root = createRoot(dom)
+        const render = (n) => queueMicrotask(() => {
+          try {
+            // ```reaction fences are a JSON payload (T-092), not a code sample —
+            // codeBlockView is the one place ALL fenced code renders, in both the
+            // reader and here, so this is the only spot that needs to know about
+            // it. `::reaction` gets no new $nodeSchema: fenced code already
+            // round-trips losslessly through codeBlockSchema (ADR 0001), so only
+            // the render branches, same as the reader's `code()` handler. A
+            // malformed block (bad JSON, oversized payload, over a cap) falls
+            // through to the ordinary CodeBlock rendering — never a thrown render.
+            if (n.attrs.language === 'reaction') {
+              const parsed = parseReactionBlock(n.textContent)
+              if (parsed.ok) {
+                root.render(<ReactionScheme data={{ steps: parsed.steps }} />)
+                return
+              }
+            }
+            root.render(
+              <CodeBlock
+                code={n.textContent}
+                language={n.attrs.language || 'auto'}
+                title={n.attrs.meta || undefined}
+              />
+            )
+          } catch { /* editor may have torn down */ }
+        })
+        render(node)
+        return {
+          dom,
+          update: (updated) => {
+            if (updated.type !== node.type) return false
+            render(updated)
+            return true
+          },
+          // React owns this subtree — keep ProseMirror's mutation observer out of it.
+          ignoreMutation: () => true,
+          stopEvent: () => false,
+          destroy: () => queueMicrotask(() => root.unmount()),
+        }
+      },
     },
-    // React owns this subtree — keep ProseMirror's mutation observer out of it.
-    ignoreMutation: () => true,
-    stopEvent: () => false,
-    destroy: () => queueMicrotask(() => root.unmount()),
-  }
-})
+  },
+}))
 
 // Image node view: renders the image with Material You hover controls —
 //   • a translucent circular "×" at the top-right that removes the image after a
@@ -741,6 +890,38 @@ const imageDeleteView = $prose(() => new Plugin({
 //              undelimited formula would otherwise paste in as plain text.
 //   • copy   → serialise the selection back to Markdown (so copying a formula
 //              yields its `$…$` source).
+// Parses `markdown` and replaces the current selection with it, reading
+// `view.state` fresh at call time — shared by the synchronous paste branch
+// below and the deferred MOL-block conversion, where "fresh at call time"
+// is the whole point (the view may have moved on by the time OCL resolves).
+function dispatchMarkdownInsert(view, ctx, markdown) {
+  let slice
+  try {
+    slice = markdownToSlice(markdown)(ctx)
+  } catch {
+    return false
+  }
+  if (!slice || typeof slice === 'string') return false
+  view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView())
+  return true
+}
+
+// Plain-paste fallback: parses `text` as Markdown (bare LaTeX normalised
+// first) and replaces the current selection — the ordinary end of
+// `handlePaste` below, and also the async fallback a reaction-SMILES-shaped
+// paste takes once OCL confirms it wasn't real chemistry after all.
+function insertPlainTextPaste(view, ctx, text) {
+  let slice
+  try {
+    slice = markdownToSlice(normalizeNoteMath(text))(ctx)
+  } catch {
+    return false
+  }
+  if (!slice || typeof slice === 'string') return false
+  view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView())
+  return true
+}
+
 const markdownClipboard = $prose((ctx) => new Plugin({
   key: new PluginKey('NOTE_EDITOR_MD_CLIPBOARD'),
   props: {
@@ -751,15 +932,81 @@ const markdownClipboard = $prose((ctx) => new Plugin({
       if (view.state.selection.$from.parent.type.spec.code) return false
       const text = clip.getData('text/plain')
       if (!text) return false
-      let slice
-      try {
-        slice = markdownToSlice(normalizeNoteMath(text))(ctx)
-      } catch {
-        return false
+
+      // Reaction SMILES (`reactants>agents>products`, T-092) has an
+      // unambiguous SHAPE (noteChem.js's splitReactionSmiles — no OCL
+      // needed), but shape alone isn't proof it's actual chemistry: plain
+      // prose like "TODO>WIP>DONE" or "draft>review>done" also matches it,
+      // since letters pass the deliberately loose SMILES charset. Confirmed
+      // via OCL: a bare multi-letter token with no brackets correctly throws
+      // ("unknown element label"), and a digits-only fragment like "1"
+      // parses but yields zero atoms — so real validation (does OCL actually
+      // parse every fragment as a non-empty molecule?) is required before
+      // committing to a reaction render, not just the charset shape check.
+      // That needs OpenChemLib, which is lazy-loaded, so this claims the
+      // paste synchronously (same reasoning as the MOL-block path below) and
+      // resolves to either the reaction render or, if any fragment isn't
+      // real chemistry, the ORIGINAL pasted text unchanged — a false-shape
+      // match must never silently eat the user's paste.
+      // `conditionsAbove` is always empty on this path: reaction SMILES
+      // carries no condition text, a documented gap (chemistry-notes.md),
+      // not a bug — the author fills conditions in via the toolbar after.
+      const reactionShape = splitReactionSmiles(text)
+      if (reactionShape) {
+        loadOCL().then((OCL) => {
+          const fragments = [
+            ...reactionShape.reactants, ...reactionShape.agents, ...reactionShape.products,
+          ]
+          const isRealChemistry = fragments.every((smiles) => {
+            try {
+              return OCL.Molecule.fromSmiles(smiles).getAllAtoms() > 0
+            } catch {
+              return false
+            }
+          })
+          if (isRealChemistry) {
+            const converted = convertChemPaste(text)
+            if (converted && dispatchMarkdownInsert(view, ctx, converted)) return
+          }
+          insertPlainTextPaste(view, ctx, text)
+        }).catch(() => { insertPlainTextPaste(view, ctx, text) })
+        return true
       }
-      if (!slice || typeof slice === 'string') return false
-      view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView())
-      return true
+
+      // MOL block (T-093): unambiguous (a V2000/V3000 counts line), but
+      // converting it to SMILES needs OpenChemLib, which is lazy-loaded —
+      // detection is a cheap synchronous string check, but the conversion
+      // itself cannot run inside this synchronous handler. Claim the paste
+      // event now (returning true prevents the browser's own plain-text
+      // paste) and insert the `::molecule` node once loadOCL()'s conversion
+      // resolves, dispatching against the LATEST view state at that time —
+      // same as the synchronous dispatch above, just deferred, mirroring how
+      // codeBlockView/playgroundNodeView defer React work with
+      // queueMicrotask for "must run after this synchronous PM cycle".
+      // Every failure path (malformed MOL data, an oversized/invalid
+      // resulting SMILES, or loadOCL() itself rejecting) falls back to
+      // inserting the original pasted text — the paste event was already
+      // claimed, so silently doing nothing would just delete the user's
+      // clipboard content with no visible result.
+      if (detectMolBlock(text)) {
+        loadOCL().then((OCL) => {
+          let smiles
+          try {
+            smiles = OCL.Molecule.fromMolfile(text).toSmiles()
+          } catch {
+            insertPlainTextPaste(view, ctx, text)
+            return
+          }
+          if (!isValidSmiles(smiles)) {
+            insertPlainTextPaste(view, ctx, text)
+            return
+          }
+          dispatchMarkdownInsert(view, ctx, `::molecule{smiles="${smiles}"}`)
+        }).catch(() => { insertPlainTextPaste(view, ctx, text) })
+        return true
+      }
+
+      return insertPlainTextPaste(view, ctx, text)
     },
     clipboardTextSerializer: (slice) => {
       const serializer = ctx.get(serializerCtx)
@@ -828,6 +1075,8 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
       .use(createYoutubeAutoEmbed(applyingExternal))
       .use(playgroundSchema)
       .use(playgroundNodeView)
+      .use(moleculeSchema)
+      .use(moleculeNodeView)
       .use(markdownClipboard)
       .use(codeBlockView)
       .use(imageDeleteView)

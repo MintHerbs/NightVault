@@ -1,201 +1,231 @@
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 20px;
 }
 
+/* Scrims carry no text-contrast requirement, so black is correct here as a
+   literal rather than as a mode-flipping token. */
 .backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(var(--color-bg-rgb), 0.75);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
 }
 
+/* Same surface contract as every other container in this surface: tonal fill,
+   hairline outline, no accent-tinted border. One tone higher than the card
+   underneath it, because it is literally on top of it. */
 .dialog {
   position: relative;
-  width: 460px;
-  max-width: 100%;
-  background: linear-gradient(135deg, rgba(var(--color-bg-rgb), 0.98) 0%, rgba(var(--color-bg-rgb), 0.98) 100%);
-  border: 1px solid rgba(var(--color-fg-rgb), 0.12);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(var(--color-fg-rgb), 0.05);
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  padding: 26px 24px 22px;
+  background: var(--md-surface-container-high);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-lg);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
 }
 
 .closeBtn {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: rgba(var(--color-fg-rgb), 0.05);
-  border: 1px solid rgba(var(--color-fg-rgb), 0.1);
-  border-radius: 8px;
-  padding: 6px;
-  display: flex;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: rgba(var(--color-fg-rgb), 0.6);
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--md-on-surface-variant);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
 }
 
 .closeBtn:hover {
-  background: rgba(var(--color-fg-rgb), 0.08);
-  border-color: rgba(var(--color-fg-rgb), 0.15);
-  color: rgba(var(--color-fg-rgb), 0.9);
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
 }
 
+.closeBtn:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+}
+
+/* Danger container tone rather than a hardcoded red wash — flagging is the
+   destructive-adjacent action in this surface, so it uses the same
+   --color-danger family as the two delete confirms. */
 .iconWrapper {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #fca5a5;
-  margin-bottom: 20px;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  background: rgba(var(--color-danger-rgb), 0.12);
+  color: var(--color-danger);
 }
 
 .title {
-  font-size: 1.375rem;
-  font-weight: 700;
-  color: rgba(var(--color-fg-rgb), 0.95);
-  margin-bottom: 12px;
-  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  color: var(--md-on-surface);
+  font-size: 1.0625rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
 }
 
 .message {
-  font-size: 0.9rem;
+  margin-bottom: 16px;
+  color: var(--md-on-surface-variant);
+  font-size: 0.875rem;
   line-height: 1.6;
-  color: rgba(var(--color-fg-rgb), 0.7);
-  margin-bottom: 20px;
 }
 
 .message strong {
-  color: rgba(var(--color-fg-rgb), 0.95);
+  color: var(--md-on-surface);
   font-weight: 600;
 }
 
 .infoBox {
-  background: rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.25);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  background: var(--md-surface-container);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-md);
 }
 
 .infoTitle {
-  font-size: 0.8rem;
+  margin-bottom: 8px;
+  color: var(--md-on-surface-variant);
+  font-size: 0.7rem;
   font-weight: 600;
-  color: #93c5fd;
-  margin-bottom: 10px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .infoList {
-  list-style: none;
-  padding: 0;
   margin: 0;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .infoList li {
-  font-size: 0.85rem;
-  color: rgba(var(--color-fg-rgb), 0.75);
-  padding-left: 20px;
   position: relative;
+  padding-left: 16px;
+  color: var(--md-on-surface-variant);
+  font-size: 0.8rem;
+  line-height: 1.5;
 }
 
 .infoList li::before {
-  content: '•';
+  content: '';
   position: absolute;
-  left: 8px;
-  color: #60a5fa;
-  font-weight: 700;
+  left: 2px;
+  top: 0.6em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--md-on-surface-variant);
 }
 
 .actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.cancelBtn,
+.flagBtn,
+.unflagBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: var(--md-shape-xl);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
 }
 
 .cancelBtn {
-  width: 100%;
-  border-radius: 12px;
-  background: rgba(var(--color-fg-rgb), 0.05);
-  border: 1px solid rgba(var(--color-fg-rgb), 0.15);
-  color: rgba(var(--color-fg-rgb), 0.9);
-  padding: 12px 16px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
+  background: transparent;
+  border-color: var(--md-outline-variant);
+  color: var(--md-on-surface-variant);
 }
 
 .cancelBtn:hover {
-  background: rgba(var(--color-fg-rgb), 0.08);
-  border-color: rgba(var(--color-fg-rgb), 0.2);
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
 }
 
 .flagBtn {
-  width: 100%;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-  color: var(--color-text);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  padding: 12px 16px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
+  background: var(--color-danger);
+  color: var(--color-on-danger);
 }
 
 .flagBtn:hover {
-  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+  background:
+    linear-gradient(rgba(var(--color-on-danger-rgb), 0.1), rgba(var(--color-on-danger-rgb), 0.1)),
+    var(--color-danger);
 }
 
+/* Unflagging is a restore, not a destructive act, so it takes the primary
+   treatment rather than the green the old version invented — that green
+   belonged to no token and read as a third semantic colour in a surface
+   that already spends green on upvotes. */
 .unflagBtn {
-  width: 100%;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  color: var(--color-text);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  padding: 12px 16px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
+  background: var(--color-accent);
+  color: var(--md-on-primary);
 }
 
 .unflagBtn:hover {
-  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+  background:
+    linear-gradient(rgba(var(--color-bg-rgb), 0.1), rgba(var(--color-bg-rgb), 0.1)),
+    var(--color-accent);
 }
 
-/* Mobile responsive */
+.cancelBtn:focus-visible,
+.flagBtn:focus-visible,
+.unflagBtn:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+}
+
+/* --breakpoint-md */
 @media (max-width: 640px) {
   .dialog {
-    padding: 24px;
-  }
-
-  .title {
-    font-size: 1.25rem;
+    padding: 22px 18px 18px;
   }
 
   .actions {
-    grid-template-columns: 1fr;
+    flex-direction: column-reverse;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .closeBtn,
+  .cancelBtn,
+  .flagBtn,
+  .unflagBtn {
+    transition: none;
   }
 }

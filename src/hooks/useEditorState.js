@@ -7,6 +7,7 @@ export function useEditorState() {
   const [saving, setSaving] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [formulaModalOpen, setFormulaModalOpen] = useState(false)
+  const [chemistryModalOpen, setChemistryModalOpen] = useState(false)
   const [socialLinkModalOpen, setSocialLinkModalOpen] = useState(false)
   const [selectedPath, setSelectedPath] = useState(null) // { moduleId, subfolder }
   const [originalPath, setOriginalPath] = useState(null) // GitHub path the loaded note came from, or null for a new note
@@ -25,6 +26,7 @@ export function useEditorState() {
     saving, setSaving,
     previewOpen, setPreviewOpen,
     formulaModalOpen, setFormulaModalOpen,
+    chemistryModalOpen, setChemistryModalOpen,
     socialLinkModalOpen, setSocialLinkModalOpen,
     selectedPath, setSelectedPath,
     originalPath, setOriginalPath,

@@ -2,10 +2,9 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
+  gap: 6px;
   padding: 2px 4px 0;
-  margin-top: -8px;
-  margin-bottom: 4px;
+  margin: -6px 0 4px;
   animation: seenEnter 0.18s ease-out;
 }
 
@@ -16,24 +15,10 @@
   }
 }
 
-.avatars {
-  display: flex;
-  align-items: center;
-}
-
-.avatar {
-  position: relative;
-  border-radius: 50%;
-  box-shadow: 0 0 0 1.5px var(--color-bg);
-}
-
-.avatar:not(:first-child) {
-  margin-left: -6px;
-}
-
 .label {
-  font-size: 10px;
   color: var(--md-on-surface-variant);
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
 }
 
 .srOnly {

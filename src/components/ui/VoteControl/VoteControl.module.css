@@ -1,0 +1,117 @@
+/* Outlined segment rather than a filled pill: the surface underneath is
+   already a tonal container, and M3 forbids a tonal fill and an outline on
+   the same box. Hover is a state layer on the segment that was hovered, not
+   a transform. */
+.control {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 2px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-xl);
+  background: transparent;
+}
+
+.sm {
+  height: 30px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.sm .btn {
+  width: 26px;
+  height: 26px;
+}
+
+.btn:hover:not(:disabled) {
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
+}
+
+.btn:active:not(:disabled) {
+  background: rgba(var(--color-fg-rgb), var(--md-state-pressed));
+}
+
+.btn:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Hue-fixed by design — see the note in VoteControl.jsx. */
+.up,
+.up:hover:not(:disabled) {
+  color: #22c55e;
+}
+
+.up:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.down,
+.down:hover:not(:disabled) {
+  color: #ef4444;
+}
+
+.down:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.score {
+  min-width: 26px;
+  padding: 0 2px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--md-on-surface);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.sm .score {
+  min-width: 22px;
+  font-size: 0.75rem;
+}
+
+/* --breakpoint-sm */
+@media (max-width: 480px) {
+  /* The buttons are what gets tapped, so they are what has to clear 44px —
+     sizing the *track* to 44px and leaving 38px buttons inside it, which is
+     what a first pass did, satisfies nothing. Padding drops to 0 so the
+     44px children do not push the track past 46px. */
+  .control,
+  .sm {
+    height: 46px;
+    padding: 0;
+  }
+
+  .btn,
+  .sm .btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn {
+    transition: none;
+  }
+}

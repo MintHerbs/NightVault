@@ -24,9 +24,9 @@
 .card {
   width: min(480px, 100%);
   min-height: 540px;
-  background: linear-gradient(135deg, rgba(var(--color-bg-rgb), 0.98) 0%, rgba(var(--color-bg-rgb), 0.98) 100%);
-  border: 1px solid rgba(var(--color-fg-rgb), 0.12);
-  border-radius: 20px;
+  background: var(--md-surface-container-low);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-lg);
   padding: 32px;
   display: flex;
   flex-direction: column;
@@ -66,11 +66,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-accent-bright);
-  background: linear-gradient(135deg, rgba(255, 184, 77, 0.12) 0%, rgba(230, 138, 0, 0.12) 100%);
-  border: 1px solid rgba(255, 184, 77, 0.25);
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(255, 184, 77, 0.15);
+  color: var(--md-on-primary-container);
+  background: var(--md-primary-container);
+  border: 1px solid transparent;
+  border-radius: var(--md-shape-lg);
 }
 
 .secondaryIcon {
@@ -163,21 +162,13 @@
   width: 68%;
   height: 10px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--color-accent-hover) 0%, var(--color-accent) 100%);
-  box-shadow: 0 2px 8px rgba(230, 138, 0, 0.4);
+  background: var(--color-accent);
 }
 
 .pollOption {
   color: rgba(var(--color-fg-rgb), 0.75);
   font-size: 0.85rem;
   font-weight: 500;
-}
-
-.codeLine {
-  margin-top: 14px;
-  color: #ce9178;
-  font-family: 'Cascadia Code', Consolas, var(--font-mono);
-  font-size: 0.8rem;
 }
 
 .flagPreview {
@@ -192,9 +183,8 @@
 .hexagon {
   width: 28px;
   height: 28px;
-  background: #f87171;
+  background: var(--color-danger);
   clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
-  box-shadow: 0 2px 8px rgba(248, 113, 113, 0.4);
 }
 
 .footer {
@@ -225,8 +215,7 @@
 
 .dotActive {
   width: 28px;
-  background: linear-gradient(90deg, var(--color-accent-hover) 0%, var(--color-accent) 100%);
-  box-shadow: 0 2px 8px rgba(230, 138, 0, 0.4);
+  background: var(--color-accent);
 }
 
 .actions {
@@ -264,21 +253,22 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #6d28d9 0%, var(--color-accent-hover) 100%);
-  color: var(--color-text);
+  border-radius: var(--md-shape-xl);
+  background: var(--color-accent);
+  color: var(--md-on-primary);
   padding: 12px 20px;
   font-size: 0.9rem;
   font-weight: 600;
-  border: 1px solid rgba(230, 138, 0, 0.3);
-  box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3);
+  border: 1px solid transparent;
   position: relative;
   overflow: hidden;
   transition: all 0.2s ease;
 }
 
 .primaryBtn:hover {
-  box-shadow: 0 6px 20px rgba(109, 40, 217, 0.4);
+  background:
+    linear-gradient(rgba(var(--color-bg-rgb), 0.1), rgba(var(--color-bg-rgb), 0.1)),
+    var(--color-accent);
 }
 
 .guidelinesLink {
@@ -296,7 +286,7 @@
   color: rgba(var(--color-fg-rgb), 0.8);
 }
 
-/* Mobile responsive */
+/* --breakpoint-md */
 @media (max-width: 640px) {
   .card {
     padding: 24px;
@@ -308,7 +298,50 @@
   }
 
   .skipBtn {
-    padding: 5px 10px;
+    min-height: 44px;
+    padding: 5px 12px;
     font-size: 0.75rem;
+  }
+
+  .backBtn,
+  .primaryBtn {
+    min-height: 44px;
+  }
+
+  .dot {
+    /* The hit area grows without the visual dot changing size. */
+    height: 44px;
+    background: none;
+    position: relative;
+  }
+
+  .dot::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(var(--color-fg-rgb), 0.25);
+  }
+
+  .dotActive {
+    background: none;
+  }
+
+  .dotActive::after {
+    background: var(--color-accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skipBtn,
+  .dot,
+  .backBtn,
+  .primaryBtn,
+  .guidelinesLink {
+    transition: none;
   }
 }

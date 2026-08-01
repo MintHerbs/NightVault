@@ -1,457 +1,84 @@
+/* Tonal surface, hairline outline, no accent-tinted border and no inset
+   accent wash. M3 elevation is tone, so the card sits one step above the page
+   rather than being lifted off it with a shadow. Width and gutters come from
+   the feed column now, not from a per-card calc(100% - 32px). */
 .card {
-  width: calc(100% - 32px);
-  background: var(--color-bg);
-  border: 1px solid rgba(var(--color-accent-rgb), 0.25);
-  border-radius: 16px;
-  padding: 16px 18px;
-  margin: 0 16px 12px;
   position: relative;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.4),
-    inset 0 0 60px rgba(var(--color-accent-rgb), 0.02);
-  /* No `will-change: transform` here. The card only moves 2px on hover, and
-     promoting 50 of them to permanent compositor layers costs more GPU memory
-     on a phone than the hint ever saves. */
+  width: 100%;
+  padding: 18px 20px 14px;
+  background: var(--md-surface-container-low);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-lg);
+  isolation: isolate;
+  transition: border-color var(--md-duration-short) var(--md-easing-emphasized);
+  /* No `will-change` and no hover lift. The card no longer moves at all, so
+     promoting 50 of them to compositor layers would buy nothing. */
 }
 
 .card:hover {
-  border-color: rgba(var(--color-accent-rgb), 0.45);
-  box-shadow: 
-    0 4px 16px rgba(0, 0, 0, 0.6), 
-    0 0 0 1px rgba(var(--color-accent-rgb), 0.15),
-    inset 0 0 60px rgba(var(--color-accent-rgb), 0.04);
-  transform: translateY(-2px);
-}
-
-.header {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.avatar {
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
-.name {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-accent-bright);
-  letter-spacing: 0.01em;
-  text-shadow: 0 0 8px rgba(255, 208, 138, 0.4);
-}
-
-.time {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  letter-spacing: 0.01em;
-  margin-top: -2px;
-}
-
-.menuBtn {
-  background: transparent;
-  color: var(--color-accent-bright);
-  padding: 4px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.15s ease, text-shadow 0.15s ease;
-}
-
-.menuBtn:hover {
-  color: var(--color-accent);
-  text-shadow: 0 0 10px rgba(var(--color-accent-rgb), 0.6);
-}
-
-.menu {
-  position: absolute;
-  top: 40px;
-  right: 10px;
-  background: rgba(var(--color-bg-rgb), 0.98);
-  border: 1px solid rgba(var(--color-accent-rgb), 0.35);
-  border-radius: 12px;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  z-index: 10;
-  min-width: 140px;
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.6),
-    0 0 20px rgba(var(--color-accent-rgb), 0.2);
-}
-
-.menuItem {
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  color: var(--color-accent-bright);
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  transition: background 0.15s ease, text-shadow 0.15s ease;
-}
-
-.menuItem:hover {
-  background: rgba(var(--color-accent-rgb), 0.15);
-  text-shadow: 0 0 8px rgba(255, 208, 138, 0.5);
-}
-
-.menuDanger {
-  color: var(--color-danger);
-  text-shadow: 0 0 6px rgba(var(--color-danger-rgb), 0.3);
-}
-
-.menuDanger:hover {
-  background: rgba(var(--color-danger-rgb), 0.1);
-  text-shadow: 0 0 10px rgba(var(--color-danger-rgb), 0.6);
-}
-
-.title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-  color: rgba(var(--color-fg-rgb), 0.95);
-  line-height: 1.4;
-}
-
-.content {
-  font-size: 0.9rem;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  color: rgba(var(--color-fg-rgb), 0.8);
-  margin: 0 0 12px 0;
-}
-
-.readMore {
-  margin: 6px 0 12px 0;
-  font-size: 0.8rem;
-  color: var(--color-accent);
-  display: inline-flex;
-  cursor: pointer;
-  font-weight: 500;
-  transition: color 0.15s ease, text-shadow 0.15s ease;
-  text-shadow: 0 0 6px rgba(var(--color-accent-rgb), 0.3);
-}
-
-.readMore:hover {
-  color: var(--color-accent-bright);
-  text-shadow: 0 0 10px rgba(255, 208, 138, 0.6);
-}
-
-.edited {
-  margin: 0 0 8px 0;
-  font-size: 0.7rem;
-  color: var(--md-on-surface-variant);
-  letter-spacing: 0.02em;
-  font-style: italic;
+  border-color: rgba(var(--color-fg-rgb), 0.18);
 }
 
 .attachment {
-  margin: 0 0 12px 0;
+  margin-top: 12px;
 }
 
-.gif {
-  margin: 0 0 12px 0;
-  width: 100%;
-  max-height: 400px;
-  object-fit: cover;
-  border-radius: 12px;
-  border: 1px solid rgba(var(--color-accent-rgb), 0.25);
-  box-shadow: 0 0 20px rgba(var(--color-accent-rgb), 0.1);
-}
-
-.poll {
-  margin: 0 0 12px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.pollOptionBtn {
-  width: 100%;
-  text-align: left;
+.codeToggle {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
   background: transparent;
-  border: 1px solid rgba(var(--color-accent-rgb), 0.35);
   color: var(--color-accent);
-  padding: 12px 16px;
-  border-radius: 24px;
-  font-size: 0.9rem;
+  font-family: inherit;
+  font-size: 0.78rem;
   font-weight: 600;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
   cursor: pointer;
-  text-shadow: 0 0 6px rgba(var(--color-accent-rgb), 0.3);
+  transition: color var(--md-duration-short) var(--md-easing-emphasized);
 }
 
-.pollOptionBtn:hover {
-  background: rgba(var(--color-accent-rgb), 0.12);
-  border-color: rgba(var(--color-accent-rgb), 0.6);
-  box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.3);
-  text-shadow: 0 0 10px rgba(var(--color-accent-rgb), 0.6);
-}
-
-.pollOptionBtn:active {
-  transform: scale(0.98);
-}
-
-.pollOptionBtn:last-child {
-  margin-bottom: 0;
-}
-
-.barRow {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  position: relative;
-}
-
-.barTrack {
-  width: 100%;
-  height: 40px;
-  border-radius: 6px;
-  background: rgba(var(--color-bg-rgb), 0.6);
-  overflow: hidden;
-  border: 1px solid rgba(var(--color-accent-rgb), 0.25);
-  position: relative;
-}
-
-.barFill {
-  height: 100%;
-  background: linear-gradient(90deg, rgba(var(--color-accent-rgb), 0.3), rgba(255, 208, 138, 0.3));
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  position: absolute;
-  top: 0;
-  left: 0;
-  box-shadow: inset 0 0 20px rgba(var(--color-accent-rgb), 0.2);
-}
-
-.barFillSelected {
-  background: linear-gradient(90deg, rgba(var(--color-accent-rgb), 0.5), rgba(255, 208, 138, 0.5));
-  box-shadow: 
-    inset 0 0 20px rgba(var(--color-accent-rgb), 0.4),
-    0 0 15px rgba(var(--color-accent-rgb), 0.3);
-}
-
-.barContent {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  z-index: 1;
-}
-
-.barLabel {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #7FE7FF;
-  text-shadow: 0 0 8px rgba(127, 231, 255, 0.4);
-}
-
-.barPercent {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: rgba(var(--color-fg-rgb), 0.95);
-  text-shadow: 0 0 8px rgba(var(--color-fg-rgb), 0.3);
-}
-
-.pollFooter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.8rem;
-  color: rgba(var(--color-fg-rgb), 0.5);
-  margin-top: 4px;
-}
-
-.editArea {
-  margin: 8px 0 12px 0;
-}
-
-.editTextarea {
-  width: 100%;
-  background: rgba(var(--color-bg-rgb), 0.6);
-  border: 1px solid rgba(var(--color-accent-rgb), 0.25);
-  color: rgba(var(--color-fg-rgb), 0.9);
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 13px;
-  line-height: 20px;
-  resize: none;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.editTextarea:focus {
-  border-color: rgba(var(--color-accent-rgb), 0.45);
-  box-shadow: 0 0 15px rgba(var(--color-accent-rgb), 0.2);
-}
-
-.editActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.btn {
-  background: rgba(var(--color-bg-rgb), 0.6);
-  border: 1px solid rgba(var(--color-accent-rgb), 0.25);
+.codeToggle:hover {
   color: var(--color-accent-bright);
-  border-radius: 10px;
-  padding: 6px 12px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  transition: all 0.15s ease;
-  text-shadow: 0 0 6px rgba(255, 208, 138, 0.3);
 }
 
-.btn:hover {
-  background: rgba(var(--color-accent-rgb), 0.12);
-  border-color: rgba(var(--color-accent-rgb), 0.45);
-  text-shadow: 0 0 10px rgba(255, 208, 138, 0.6);
+.codeToggle:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+  border-radius: var(--md-shape-sm);
 }
 
-.btnPrimary {
-  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-bright));
-  border-color: var(--color-accent);
-  color: var(--color-bg);
-  text-shadow: none;
-  font-weight: 600;
-  box-shadow: 0 0 15px rgba(var(--color-accent-rgb), 0.3);
+.media {
+  margin-top: 12px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-md);
+  overflow: hidden;
+  line-height: 0;
 }
 
-.btnPrimary:hover {
-  background: linear-gradient(135deg, var(--color-accent-bright), var(--color-accent));
-  border-color: var(--color-accent-bright);
-  box-shadow: 0 0 20px rgba(var(--color-accent-rgb), 0.5);
+.mediaImg {
+  display: block;
+  width: 100%;
+  max-height: 380px;
+  object-fit: cover;
 }
 
-/* `color` was --color-text, which only worked because the fill was a bright
-   pink in both modes. With a mode-aware fill it has to be the matching
-   on-danger role: near-black --color-text on the light-mode #ad1457 would be
-   2.4:1. The base gradient was two identical stops, i.e. a flat fill. */
-.btn.btnDanger {
-  background: var(--color-danger);
-  border-color: var(--color-danger);
-  color: var(--color-on-danger);
-  text-shadow: 0 0 8px rgba(var(--color-danger-rgb), 0.5);
-  box-shadow: 0 0 15px rgba(var(--color-danger-rgb), 0.3);
-}
-
-/* Hover used to blend the danger pink into --color-accent-bright, so the
-   delete button's hue drifted toward whatever accent the viewer's theme
-   happened to use — a destructive action tinted by brand. M3 state layer
-   instead: the content colour at 8% over the unchanged danger fill, which
-   is bounded and cannot shift the hue or invert the contrast. */
-.btn.btnDanger:hover {
-  background:
-    linear-gradient(rgba(var(--color-on-danger-rgb), 0.08), rgba(var(--color-on-danger-rgb), 0.08)),
-    var(--color-danger);
-  border-color: var(--color-danger);
-  box-shadow: 0 0 20px rgba(var(--color-danger-rgb), 0.5);
-}
-
-.confirm {
-  margin: 8px 0 12px 0;
-  background: rgba(var(--color-danger-rgb), 0.1);
-  border: 1px solid rgba(var(--color-danger-rgb), 0.4);
-  border-radius: 12px;
-  padding: 12px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  box-shadow:
-    0 4px 12px rgba(var(--color-danger-rgb), 0.2),
-    0 0 20px rgba(var(--color-danger-rgb), 0.1);
-}
-
-.confirmText {
-  font-size: 0.875rem;
-  color: var(--color-danger);
-  font-weight: 600;
-  text-shadow: 0 0 8px rgba(var(--color-danger-rgb), 0.4);
-}
-
-/* --breakpoint-sm */
+/* --breakpoint-md */
 @media (max-width: 640px) {
   .card {
-    width: calc(100% - 16px);
-    margin: 0 8px 10px;
-    padding: 14px 14px;
-    border-radius: 14px;
+    padding: 16px 14px 12px;
+    border-radius: var(--md-shape-md);
   }
 
-  /* Hover lift is meaningless on touch and leaves cards stuck in the raised
-     state after a tap. */
-  .card:hover {
-    transform: none;
-  }
-
-  .title {
-    font-size: 1.05rem;
-  }
-
-  /* Long unbroken tokens (URLs, identifiers) were pushing the card wider than
-     the viewport and making the whole page scroll sideways. */
-  .content,
-  .title {
-    overflow-wrap: anywhere;
-  }
-
-  .menu {
-    right: 8px;
-  }
-
-  .readMore {
-    padding: 6px 0;
-    min-height: 32px;
-    align-items: center;
-  }
-
-  .confirm {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-
-  .editActions {
-    gap: 10px;
-  }
-
-  .btn {
+  .codeToggle {
     min-height: 40px;
-    padding: 8px 14px;
   }
+}
 
-  .pollOptionBtn {
-    padding: 12px 14px;
-    font-size: 0.85rem;
-  }
-
-  .barLabel,
-  .barPercent {
-    font-size: 0.82rem;
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .codeToggle {
+    transition: none;
   }
 }

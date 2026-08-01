@@ -1,0 +1,25 @@
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 14px;
+}
+
+/* Rules on both sides, drawn with pseudo-elements so the label can sit in the
+   middle without needing a background to punch a hole in the line. */
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--md-outline-variant);
+}
+
+.label {
+  color: var(--md-on-surface-variant);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}

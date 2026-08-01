@@ -1,155 +1,84 @@
-.actions {
+/* A real footer, separated from the content by a hairline, rather than three
+   translucent pills floating at the bottom of the padding box with nothing
+   anchoring them. */
+.bar {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--md-outline-variant);
 }
 
-.votePill {
+.action {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(var(--color-fg-rgb), 0.04);
-  border: 1px solid rgba(var(--color-fg-rgb), 0.08);
-  border-radius: 20px;
-  padding: 6px 10px;
-  transition: all 0.2s ease;
-}
-
-.votePill:hover {
-  background: rgba(var(--color-fg-rgb), 0.06);
-  border-color: rgba(var(--color-fg-rgb), 0.12);
-}
-
-.voteBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  color: rgba(var(--color-fg-rgb), 0.5);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.15s ease, transform 0.1s ease;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.voteBtn:hover {
-  color: rgba(var(--color-fg-rgb), 0.85);
-}
-
-.voteBtn:active {
-  transform: scale(0.95);
-}
-
-.upActive {
-  color: #22c55e;
-}
-
-.downActive {
-  color: #ef4444;
-}
-
-.voteDivider {
-  width: 1px;
-  height: 16px;
-  background: rgba(var(--color-fg-rgb), 0.1);
-}
-
-.voteCount {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: rgba(var(--color-fg-rgb), 0.7);
-  min-width: 20px;
-  text-align: center;
-}
-
-.commentPill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(var(--color-fg-rgb), 0.04);
-  border: 1px solid rgba(var(--color-fg-rgb), 0.08);
-  border-radius: 20px;
-  padding: 6px 12px;
-  color: rgba(var(--color-fg-rgb), 0.5);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.commentPill:hover {
-  background: rgba(var(--color-fg-rgb), 0.06);
-  border-color: rgba(var(--color-fg-rgb), 0.12);
-  color: rgba(var(--color-fg-rgb), 0.75);
-}
-
-.commentPill:active {
-  transform: scale(0.98);
-}
-
-.commentPillActive {
-  background: rgba(59, 130, 246, 0.12);
-  border-color: rgba(59, 130, 246, 0.3);
-  color: #60a5fa;
-}
-
-.commentPillActive:hover {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.4);
-  color: #93c5fd;
-}
-
-.flagPill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(var(--color-fg-rgb), 0.04);
-  border: 1px solid rgba(var(--color-fg-rgb), 0.08);
-  border-radius: 20px;
-  padding: 6px 10px;
+  gap: 7px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: var(--md-shape-xl);
+  background: transparent;
   color: var(--md-on-surface-variant);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
 }
 
-.flagPill:hover {
-  background: rgba(var(--color-fg-rgb), 0.06);
-  border-color: rgba(var(--color-fg-rgb), 0.12);
-  color: rgba(var(--color-fg-rgb), 0.7);
+.action:hover {
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
 }
 
-.flagPill:active {
-  transform: scale(0.98);
+.action:active {
+  background: rgba(var(--color-fg-rgb), var(--md-state-pressed));
 }
 
+.action:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+}
+
+/* An open thread is a state, so it earns the accent's tonal container. The
+   old version used a hardcoded blue that belonged to no theme. */
+.actionActive {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  font-weight: 600;
+}
+
+.actionActive:hover {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+/* Status, not a control: flagging now happens in the header menu, so this is
+   only ever a read-out of a decision already made. */
 .flagged {
-  background: rgba(248, 113, 113, 0.1);
-  border-color: rgba(248, 113, 113, 0.3);
-  color: #f87171;
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: var(--md-shape-xl);
+  background: rgba(var(--color-danger-rgb), 0.12);
+  color: var(--color-danger);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
-.flagged:hover {
-  background: rgba(248, 113, 113, 0.15);
-  border-color: rgba(248, 113, 113, 0.4);
-  color: #fb7185;
-}
-
-/* Mobile optimization */
 /* --breakpoint-sm */
 @media (max-width: 480px) {
-  .voteBtn {
-    padding: 12px;
+  .action {
+    height: 44px;
+    padding: 0 16px;
   }
+}
 
-  .commentPill {
-    min-height: 44px;
-  }
-
-  .flagPill {
-    min-height: 44px;
-    min-width: 44px;
+@media (prefers-reduced-motion: reduce) {
+  .action {
+    transition: none;
   }
 }
