@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { ArrowLeft, Music, Pause, Play, SkipBack, SkipForward, Timer } from 'lucide-react'
 import AIStateContent from './AIStateContent'
@@ -7,6 +7,7 @@ import BreakReminderContent from './BreakReminderContent'
 import TimerPanel from './TimerPanel'
 import TimerSetPanel from './TimerSetPanel'
 import useChatNotification from '../../../hooks/useChatNotification'
+import useIslandNotifications from '../../../hooks/useIslandNotifications'
 import useStudyTimer from '../../../hooks/useStudyTimer'
 import useBreakReminder, { BREAK_INTERVAL_MS } from '../../../hooks/useBreakReminder'
 import styles from './DynamicIsland.module.css'
@@ -88,8 +89,11 @@ export default function DynamicIsland({
   getProgress,
   lastIncoming = null,
   isChatOpen = false,
+  isViewingFeed = false,
+  interruptible = true,
   chatOpenedFromIsland = false,
   onOpenChat,
+  onOpenFeed,
   onCloseChat,
   breakIntervalMs = BREAK_INTERVAL_MS
 }) {
@@ -112,22 +116,50 @@ export default function DynamicIsland({
   const isPanelOpen = intent === 'music' || intent === 'timer' || intent === 'timer-set'
   const returnAvailable = isChatOpen && chatOpenedFromIsland && returnWindowOpen
 
+  const notificationsEnabled = useIslandNotifications()
+
   // Chat is the island's lowest-priority occupant: it must never preempt an
   // open panel, live AI feedback, the entrance, a break reminder or a
   // finished timer.
+  //
+  // The last three are the focus guards (T-087 follow-up). All three drop the
+  // event rather than queueing it, matching this file's existing stance that a
+  // late notification is pure noise — the sidebar badge is the lossless record
+  // and none of this can lose a message:
+  //   * the visitor switched the pill off in Appearance,
+  //   * they're inside a tool or a note rather than browsing,
+  //   * a study timer is running, which is the plainest statement of intent to
+  //     concentrate the app has.
   const notificationsBlocked =
     isPanelOpen ||
     aiState !== 'idle' ||
     phase !== 'collapsed' ||
     breakReminder.isDue ||
-    timer.hasFinished
+    timer.hasFinished ||
+    !notificationsEnabled ||
+    !interruptible ||
+    timer.isRunning
+
+  // Memoised: the hook holds this in a ref and one of its effects keys on it,
+  // so a fresh object per render would re-run that effect every render.
+  const suppressedKinds = useMemo(
+    () => ({ chat: isChatOpen, post: isViewingFeed }),
+    [isChatOpen, isViewingFeed]
+  )
 
   const { notification, acknowledge } = useChatNotification({
     lastIncoming,
-    suppressed: isChatOpen,
+    suppressedKinds,
     blocked: notificationsBlocked,
     paused: isHovered
   })
+
+  // Single source for "where does clicking this pill go", so the aria-label
+  // can't promise chat while the handler opens the feed. A mixed burst follows
+  // its newest arrival, which is what the pill is showing.
+  const notificationOpensFeed =
+    notification?.kind === 'post' ||
+    (notification?.kind === 'mixed' && notification.message?.kind === 'post')
 
   const displayState = displayStateFor({
     intent,
@@ -269,7 +301,10 @@ export default function DynamicIsland({
     }
     if (displayState === 'chat') {
       acknowledge()
-      onOpenChat?.()
+      // A post alert sends you to the feed it's about; a chat alert opens the
+      // panel.
+      if (notificationOpensFeed) onOpenFeed?.()
+      else onOpenChat?.()
       return
     }
     if (displayState === 'break') {
@@ -314,7 +349,12 @@ export default function DynamicIsland({
 
   let pillLabel = `${onlineCount} online, open music player`
   if (displayState === 'return') pillLabel = 'Back to the page'
-  else if (displayState === 'chat') pillLabel = 'New chat message, open chat'
+  else if (displayState === 'chat') {
+    const what = notification.kind === 'mixed'
+      ? 'New updates'
+      : (notification.kind === 'post' ? 'New post' : 'New chat message')
+    pillLabel = `${what}, ${notificationOpensFeed ? 'open the feed' : 'open chat'}`
+  }
   else if (displayState === 'break') pillLabel = BREAK_MESSAGE
   else if (displayState === 'timer-done') pillLabel = 'Timer finished'
 
@@ -324,9 +364,14 @@ export default function DynamicIsland({
   // needs told about are surfaced — hover is a mouse-only affordance.
   let announcement = ''
   if (displayState === 'chat') {
-    announcement = notification.count === 1
-      ? 'New chat message'
-      : `${notification.count} new chat messages`
+    const { count, kind } = notification
+    if (kind === 'post') {
+      announcement = count === 1 ? 'New post' : `${count} new posts`
+    } else if (kind === 'mixed') {
+      announcement = `${count} new updates`
+    } else {
+      announcement = count === 1 ? 'New chat message' : `${count} new chat messages`
+    }
   } else if (displayState === 'break') {
     announcement = BREAK_MESSAGE
   } else if (displayState === 'timer-done') {
@@ -410,6 +455,7 @@ export default function DynamicIsland({
                 <ChatNotificationContent
                   count={notification.count}
                   message={notification.message}
+                  kind={notification.kind}
                 />
               )}
 

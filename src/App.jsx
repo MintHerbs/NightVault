@@ -1,8 +1,9 @@
 // Router shell — global UI + state. Route table lives in src/routes/index.jsx.
-import { BrowserRouter, useLocation } from 'react-router-dom'
+import { BrowserRouter, useLocation, useNavigate } from 'react-router-dom'
 import { useCallback, useRef, useState, Suspense, useEffect } from 'react'
 import { usePresence } from './hooks/usePresence'
 import useChat from './hooks/useChat'
+import usePostAlerts from './hooks/usePostAlerts'
 import { ThemeProvider } from './hooks/useTheme'
 import MusicPlayer from './components/layout/MusicPlayer/MusicPlayer'
 import DynamicIsland from './components/layout/DynamicIsland'
@@ -11,10 +12,12 @@ import Starfield from './components/effects/Starfield/Starfield'
 import { ChatPanel, ChatDimOverlay } from './features/chat/components'
 import { AppRoutes, preloadRoutes } from './routes'
 import { trackPageView } from './lib/analytics/tracker'
+import { allowsIslandNotifications } from './lib/notificationScope'
 import { songs } from './config/songs'
 
 function AppContent() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { onlineCount, presenceSynced } = usePresence()
   const musicPlayerRef = useRef(null)
   // Starts false and is corrected by the player's own state events. Assuming
@@ -37,6 +40,13 @@ function AppContent() {
   const [autoplayOnTrackChange, setAutoplayOnTrackChange] = useState(true)
   const sessionId = localStorage.getItem('session_id') || 'anonymous'
   const { unreadCount, lastIncoming } = useChat(isChatOpen)
+  // A new post is only news while you aren't already looking at the feed. Chat
+  // covering the feed still counts as away from it.
+  const isViewingFeed = location.pathname === '/social/feed' && !isChatOpen
+  const {
+    unreadCount: unreadPosts,
+    lastIncoming: lastIncomingPost,
+  } = usePostAlerts(isViewingFeed)
 
   const currentSong = songs[currentSongIndex]
 
@@ -114,6 +124,33 @@ function AppContent() {
     setIsChatOpen(true)
   }, [])
 
+  const openFeedFromIsland = useCallback(() => {
+    setIsChatOpen(false)
+    navigate('/social/feed')
+  }, [navigate])
+
+  // The island shows one thing at a time, so the two streams feed one slot and
+  // whichever arrives last wins. Each stream pushes its own arrival rather than
+  // the two being compared by created_at: usePostAlerts awaits an ownership RPC
+  // before publishing, so a post can reach state after a chat message that was
+  // written later, and picking by timestamp would hand back the message the
+  // island had already shown. Its lastSeenId guard would then treat the loser
+  // as a repeat and drop it outright. Arrival order has no such hole.
+  //
+  // Tagging the chat side here rather than inside useChat keeps that hook
+  // unaware of the island's event vocabulary.
+  const [islandEvent, setIslandEvent] = useState(null)
+
+  useEffect(() => {
+    if (!lastIncoming) return
+    setIslandEvent({ ...lastIncoming, kind: 'chat' })
+  }, [lastIncoming])
+
+  useEffect(() => {
+    if (!lastIncomingPost) return
+    setIslandEvent(lastIncomingPost)
+  }, [lastIncomingPost])
+
   const closeChat = useCallback(() => setIsChatOpen(false), [])
 
   // Sidebar toggles with a functional updater, so this has to forward whatever
@@ -151,10 +188,13 @@ function AppContent() {
         onSkipBack={() => skipTrack(-1)}
         onSkipForward={() => skipTrack(1)}
         getProgress={getProgress}
-        lastIncoming={lastIncoming}
+        lastIncoming={islandEvent}
         isChatOpen={isChatOpen}
+        isViewingFeed={isViewingFeed}
+        interruptible={allowsIslandNotifications(location.pathname)}
         chatOpenedFromIsland={chatSource === 'island'}
         onOpenChat={openChatFromIsland}
+        onOpenFeed={openFeedFromIsland}
         onCloseChat={closeChat}
       />
       {/* Global sidebar - persists on every route EXCEPT admin, which has its
@@ -168,6 +208,7 @@ function AppContent() {
           isChatOpen={isChatOpen}
           setIsChatOpen={setChatOpenFromSidebar}
           unreadCount={unreadCount}
+          unreadPosts={unreadPosts}
         />
       )}
       {/* Rendered on every route, including /admin. Gating this on

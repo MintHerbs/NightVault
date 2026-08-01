@@ -1,5 +1,5 @@
 import { memo, useCallback, useState } from 'react'
-import { BookOpen, ChatCircle, Globe, House } from '@phosphor-icons/react'
+import { BookOpen, ChatCircle, Globe } from '@phosphor-icons/react'
 import ChatAvatar from '../../../../features/chat/components/ChatAvatar/ChatAvatar'
 import NotificationBadge from '../../../effects/smoothui/components/notification-badge'
 import AppearanceDialog from '../../AppearanceDialog/AppearanceDialog'
@@ -25,21 +25,36 @@ function SidebarIcon({ icon, tooltip, isActive, activeColor = colors.iconActive,
 }
 
 function CollapsedView({
-  path,
   go,
   isChatOpen,
   setIsChatOpen,
   unreadCount = 0,
+  unreadPosts = 0,
   mode,
   setMode,
   sessionId,
 }) {
   const [isAppearanceOpen, setIsAppearanceOpen] = useState(false)
+  const isSocial = mode === 'social'
 
   const handleMoonClick = useCallback((e) => {
     e.preventDefault()
     go('/home', 'Home')
   }, [go])
+
+  // One button for both directions, showing the mode it switches *to* rather
+  // than the one you're in. That's why it carries no active bar: it's an
+  // action, not a destination, so highlighting it as "current" would be a lie.
+  const toggleMode = useCallback(() => {
+    if (isSocial) {
+      go('/home', 'Home')
+      return
+    }
+    // Social has no landing page of its own; the feed is the entry point, so
+    // there is no separate Home icon below to reach it with.
+    setMode('social')
+    go('/social/feed', 'social-feed')
+  }, [isSocial, go, setMode])
 
   return (
     <div className="flex flex-col items-center justify-between h-full">
@@ -49,85 +64,49 @@ function CollapsedView({
       </a>
 
       <div className={styles.nav}>
-        {mode === 'social' ? (
-          <>
-            <SidebarIcon
-              icon={<House size={20} weight="regular" />}
-              tooltip="Home Feed"
-              isActive={path.startsWith('/social/feed') && !isChatOpen}
-              activeColor={colors.iconActive}
-              onClick={() => go('/social/feed', 'social-feed')}
-            />
+        {/* While in Academia this is the only social icon on the bar, so it
+            carries everything waiting over there: new posts and unread chat as
+            one number. In Social it becomes the Academia button, which has
+            nothing to report, and the chat icon below takes over the messages
+            half. */}
+        <NotificationBadge
+          count={!isSocial ? unreadCount + unreadPosts : 0}
+          max={10}
+          variant="count"
+          position="top-right"
+          showZero={false}
+        >
+          <SidebarIcon
+            icon={
+              isSocial
+                ? <BookOpen size={20} weight="regular" />
+                : <Globe size={20} weight="regular" />
+            }
+            tooltip={isSocial ? 'Academia' : 'Social'}
+            onClick={toggleMode}
+          />
+        </NotificationBadge>
 
-            <NotificationBadge
-              count={!isChatOpen && unreadCount > 0 ? unreadCount : 0}
-              max={10}
-              variant="count"
-              position="top-right"
-              showZero={false}
-            >
-              <div
-                className={styles.iconWrapper}
-                onClick={() => setIsChatOpen?.((p) => !p)}
-                title="Community Chat"
-              >
-                {isChatOpen && <span className={styles.activeBar} style={{ background: colors.iconActive }} />}
-                <div className={styles.iconInner} style={{ '--hover-color': colors.iconActive }}>
-                  <ChatCircle
-                    size={20}
-                    weight="regular"
-                    style={{ color: isChatOpen ? colors.iconActive : colors.iconOff }}
-                  />
-                </div>
-                <span className={styles.tooltip}>Community Chat</span>
-              </div>
-            </NotificationBadge>
-          </>
-        ) : null}
-      </div>
-
-      <div className={styles.bottom}>
-        <div className={styles.divider} />
-        <div className={styles.modeSwitch}>
+        {isSocial && (
           <NotificationBadge
-            count={mode !== 'social' && unreadCount > 0 ? unreadCount : 0}
+            count={!isChatOpen && unreadCount > 0 ? unreadCount : 0}
             max={10}
             variant="count"
             position="top-right"
             showZero={false}
           >
-            <div
-              className={styles.iconWrapper}
-              onClick={() => {
-                setMode('social')
-                go('/social/feed', 'social-feed')
-              }}
-              title="Social"
-            >
-              {mode === 'social' && <span className={styles.activeBar} style={{ background: colors.iconActive }} />}
-              <div className={styles.iconInner} style={{ '--hover-color': colors.iconActive }}>
-                <Globe
-                  size={20}
-                  weight="regular"
-                  style={{ color: mode === 'social' ? colors.iconActive : colors.iconOff }}
-                />
-              </div>
-              <span className={styles.tooltip}>Social</span>
-            </div>
+            <SidebarIcon
+              icon={<ChatCircle size={20} weight="regular" />}
+              tooltip="Community Chat"
+              isActive={isChatOpen}
+              onClick={() => setIsChatOpen?.((p) => !p)}
+            />
           </NotificationBadge>
+        )}
+      </div>
 
-          <div className={styles.iconWrapper} onClick={() => go('/home', 'Home')} title="Academia">
-            {mode === 'academia' && <span className={styles.activeBar} style={{ background: colors.iconActive }} />}
-            <div className={styles.iconInner} style={{ '--hover-color': colors.iconActive }}>
-              <BookOpen
-                size={20}
-                weight="regular"
-                style={{ color: mode === 'academia' ? colors.iconActive : colors.iconOff }}
-              />
-            </div>
-            <span className={styles.tooltip}>Academia</span>
-          </div>
-        </div>
+      <div className={styles.bottom}>
+        <div className={styles.divider} />
 
         <div
           className={styles.avatarContainer}

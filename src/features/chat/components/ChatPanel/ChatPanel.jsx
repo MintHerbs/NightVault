@@ -1,5 +1,6 @@
 // Community chat panel - full screen overlay with messages and input
 import { useEffect, useRef } from 'react'
+import { ArrowLeft } from '@phosphor-icons/react'
 import ChatBubble from '../ChatBubble/ChatBubble'
 import ChatInput from '../ChatInput/ChatInput'
 import TypingIndicator from '../TypingIndicator/TypingIndicator'
@@ -54,6 +55,21 @@ export default function ChatPanel({ isOpen, onClose, sessionId }) {
       <div className={styles.starfieldContainer}>
         <Starfield />
       </div>
+
+      {/* The panel is an overlay, so dismissing it reveals the route already
+          underneath, which is /social/feed on every path that reaches chat
+          from the sidebar. No navigation needed, and a visitor who opened chat
+          from the Dynamic Island elsewhere gets their own page back rather
+          than being dropped into social. */}
+      <button
+        type="button"
+        className={styles.backButton}
+        onClick={onClose}
+        aria-label="Back to feed"
+        title="Back to feed"
+      >
+        <ArrowLeft size={20} weight="regular" />
+      </button>
 
       {/* Messages Area */}
       <div className={styles.messagesArea}>

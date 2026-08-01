@@ -11,6 +11,17 @@ export default defineConfig({
     },
   },
   assetsInclude: ['**/*.json'],
+  server: {
+    watch: {
+      // Agent worktrees live under .claude/worktrees and are full checkouts of
+      // this repo, so the dev server was watching a second copy of every file
+      // and full-reloading the page whenever one changed. That reload also
+      // wipes in-memory state (unread counts, the island's entrance phase),
+      // which makes anything stateful impossible to observe while a worktree
+      // is active.
+      ignored: ['**/.claude/**'],
+    },
+  },
   build: {
     rollupOptions: {
       output: {

@@ -263,6 +263,106 @@
   overflow: hidden;
 }
 
+/* Notifications switch -------------------------------------------------- */
+
+.switchRow {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--md-shape-md);
+  background: var(--md-surface-container);
+  color: var(--md-on-surface);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.switchRow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--md-on-surface);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.switchRow:hover::after { opacity: var(--md-state-hover); }
+.switchRow:active::after { opacity: var(--md-state-pressed); }
+
+.switchIcon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--md-on-surface-variant);
+}
+
+.switchText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.switchLabel {
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.switchHint {
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: var(--md-on-surface-variant);
+}
+
+/* M3 switch: 52x32 track, 24px thumb offset to either end. */
+.switchTrack {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  border: 2px solid var(--md-outline);
+  border-radius: 999px;
+  background: var(--md-surface-container-high);
+  transition:
+    background var(--md-duration-short) var(--md-easing-emphasized),
+    border-color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.switchTrackOn {
+  border-color: var(--md-primary);
+  background: var(--md-primary);
+}
+
+.switchThumb {
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--md-outline);
+  transform: translateY(-50%);
+  transition:
+    left var(--md-duration-short) var(--md-easing-emphasized),
+    width var(--md-duration-short) var(--md-easing-emphasized),
+    height var(--md-duration-short) var(--md-easing-emphasized),
+    background var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.switchTrackOn .switchThumb {
+  left: 21px;
+  width: 20px;
+  height: 20px;
+  background: var(--md-on-primary);
+}
+
 /* --breakpoint-md */
 @media (max-width: 640px) {
   .panel {

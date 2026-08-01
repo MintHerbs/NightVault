@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Check, ChevronDown, Monitor, Moon, Palette, Sun, X } from 'lucide-react'
+import { Bell, BellOff, Check, ChevronDown, Monitor, Moon, Palette, Sun, X } from 'lucide-react'
 import {
   Dialog,
   DialogBackdrop,
@@ -10,6 +10,9 @@ import {
 import ChatAvatar from '../../../features/chat/components/ChatAvatar/ChatAvatar'
 import ColorWheel from '../../ui/ColorWheel/ColorWheel'
 import { useTheme } from '../../../hooks/useTheme'
+import useIslandNotifications, {
+  setIslandNotificationsEnabled,
+} from '../../../hooks/useIslandNotifications'
 import styles from './AppearanceDialog.module.css'
 
 const MODE_OPTIONS = [
@@ -24,6 +27,7 @@ export default function AppearanceDialog({ open, onClose, sessionId }) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [wheelOpen, setWheelOpen] = useState(isCustom)
   const dropdownRef = useRef(null)
+  const notificationsEnabled = useIslandNotifications()
 
   const activeTheme = themes.find((t) => t.key === colorTheme)
   const activeLabel = isCustom ? 'Custom' : (activeTheme?.name ?? 'Theme')
@@ -156,6 +160,37 @@ export default function AppearanceDialog({ open, onClose, sessionId }) {
               </motion.div>
             )}
           </AnimatePresence>
+
+          <div className={styles.divider} />
+
+          {/* Notifications — the pill only. The sidebar badge keeps counting
+              either way, so this can never lose a message. */}
+          <div className={styles.sectionLabel}>Notifications</div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={notificationsEnabled}
+            className={styles.switchRow}
+            onClick={() => setIslandNotificationsEnabled(!notificationsEnabled)}
+          >
+            <span className={styles.switchIcon}>
+              {notificationsEnabled ? <Bell size={16} /> : <BellOff size={16} />}
+            </span>
+            <span className={styles.switchText}>
+              <span className={styles.switchLabel}>Pop-up alerts</span>
+              <span className={styles.switchHint}>
+                New posts and messages appear in the island. The sidebar badge
+                counts them either way.
+              </span>
+            </span>
+            <span
+              className={`${styles.switchTrack} ${
+                notificationsEnabled ? styles.switchTrackOn : ''
+              }`}
+            >
+              <span className={styles.switchThumb} />
+            </span>
+          </button>
         </DialogPanel>
       </div>
     </Dialog>

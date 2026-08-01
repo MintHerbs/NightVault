@@ -22,6 +22,37 @@
   z-index: 0;
 }
 
+/* Back to the feed. Sits above .messagesArea::before (z-index 2), which is a
+   fixed fade strip across the whole top edge and would otherwise swallow it. */
+.backButton {
+  position: absolute;
+  top: 18px;
+  left: 20px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.backButton:hover {
+  background: rgba(var(--color-fg-rgb), 0.08);
+  color: var(--color-text);
+}
+
+.backButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 /* Messages Area */
 .messagesArea {
   position: relative;

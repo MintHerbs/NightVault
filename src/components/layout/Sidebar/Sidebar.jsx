@@ -10,7 +10,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './Sidebar.module.css'
 import CollapsedView from './CollapsedView/CollapsedView'
 
-function Sidebar({ activeChild, onChildSelect, isChatOpen, setIsChatOpen, unreadCount = 0 }) {
+function Sidebar({ activeChild, onChildSelect, isChatOpen, setIsChatOpen, unreadCount = 0, unreadPosts = 0 }) {
   const navigate  = useNavigate()
   const location  = useLocation()
   const sessionId = localStorage.getItem('session_id') || 'anonymous'
@@ -79,13 +79,13 @@ function Sidebar({ activeChild, onChildSelect, isChatOpen, setIsChatOpen, unread
 
       <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
         <CollapsedView
-          path={path}
           go={go}
           activeChild={activeChild}
           onChildSelect={onChildSelect}
           isChatOpen={isChatOpen}
           setIsChatOpen={setIsChatOpen}
           unreadCount={unreadCount}
+          unreadPosts={unreadPosts}
           mode={mode}
           setMode={setMode}
           sessionId={sessionId}
