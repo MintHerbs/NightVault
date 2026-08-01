@@ -9,7 +9,7 @@
 // (src/lib/asciiArt/fields) each tool's card renders on the home page and
 // on every course landing page.
 
-import { graphPulse, codeRain, spiralZoom, barMeter, truthTree } from '../lib/asciiArt/fields'
+import { graphPulse, codeRain, spiralZoom, barMeter, truthTree, latticeGrid, algebraCascade, stateOrbit, circuitPulse } from '../lib/asciiArt/fields'
 import { BTREE_COVER } from './coverPresets'
 
 /**
@@ -69,6 +69,47 @@ export const TOOLS = [
     field: truthTree,
     route: '/logic/semantic-tableaux',
     courses: ['computer-science'],
+  },
+  // The Digital Logic Lab (T-089) used to be one "Digital Logic" tool with a
+  // Mode dropdown inside it (algebra / K-map / sandbox / state machine). Each
+  // mode is its own card now (owner decision) — DigitalLogicPage.jsx still
+  // reads the same `?mode=` param, it just has no in-page switcher left to
+  // set it, so these routes are the only way in.
+  {
+    id: 'boolean-algebra',
+    title: 'Boolean Algebra',
+    description: 'Simplify an expression step by step, with the law used at each stage.',
+    field: algebraCascade,
+    route: '/arch/digital-logic?mode=algebra',
+    courses: ['computer-science'],
+  },
+  {
+    id: 'truth-table-kmap',
+    title: 'Truth Table & K-Map',
+    description: 'Expression to truth table to K-map to circuit.',
+    field: latticeGrid,
+    route: '/arch/digital-logic?mode=kmap',
+    courses: ['computer-science'],
+  },
+  {
+    id: 'state-machine',
+    title: 'State Machine',
+    description: 'Describe a machine in English and get a synthesised sequential circuit.',
+    field: stateOrbit,
+    route: '/arch/digital-logic?mode=fsm',
+    courses: ['computer-science'],
+  },
+  // Not on any course page (`courses: []`): the sandbox is a standalone
+  // workbench, not a Computer Science artefact specifically, so it sits on
+  // the home page instead (owner decision) — HomePage.jsx looks this entry up
+  // by id directly, the same way it already does for Grade Toolkit.
+  {
+    id: 'circuit-sandbox',
+    title: 'Circuit Sandbox',
+    description: 'Build and run a circuit with gates, wires, and flip-flops.',
+    field: circuitPulse,
+    route: '/arch/digital-logic?mode=sandbox',
+    courses: [],
   },
   {
     id: 'grades',

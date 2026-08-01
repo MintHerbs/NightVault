@@ -27,6 +27,7 @@ export const PAGE_ROUTES = [
   '/algo/recurrence',
   '/logic/proof',
   '/logic/tableaux',
+  '/arch/digital-logic',
   '/tools/grade-toolkit',
   '/notes',
   '/notes-browser',
@@ -83,6 +84,7 @@ export const TOOL_BY_ROUTE = {
   '/logic/tableaux': 'tableaux',
   '/tools/grade-toolkit': 'grade-toolkit',
   '/notes-browser': 'notes-browser',
+  '/arch/digital-logic': 'digital-logic',
 }
 
 /**
@@ -99,6 +101,14 @@ export const TOOL_EVENTS = {
   'tableaux': ['open', 'solve', 'example'],
   'grade-toolkit': ['open', 'edit', 'mode-cpa', 'mode-minmax'],
   'notes-browser': ['open', 'open-file'],
+  // Four modes behind one dropdown (T-089), so the mode-* events are the only
+  // way to tell which part of the tool is actually being used. 'to-sandbox'
+  // measures the handoff that justifies them sharing a page at all.
+  'digital-logic': [
+    'open', 'solve', 'step',
+    'mode-algebra', 'mode-kmap', 'mode-sandbox', 'mode-fsm',
+    'generate', 'manual', 'simulate', 'to-sandbox',
+  ],
 }
 
 /** Display names. Kept beside the keys so the dashboard cannot drift from them. */
@@ -111,6 +121,7 @@ export const TOOL_LABELS = {
   'tableaux': 'Semantic tableaux',
   'grade-toolkit': 'Grade toolkit',
   'notes-browser': 'Notes browser',
+  'digital-logic': 'Digital Logic',
 }
 
 export const ROUTE_LABELS = {
@@ -121,6 +132,7 @@ export const ROUTE_LABELS = {
   '/algo/recurrence': 'Recurrence',
   '/logic/proof': 'Logic proof',
   '/logic/tableaux': 'Semantic tableaux',
+  '/arch/digital-logic': 'Digital Logic',
   '/tools/grade-toolkit': 'Grade toolkit',
   '/notes': 'Notes (reading)',
   '/notes-browser': 'Notes browser',

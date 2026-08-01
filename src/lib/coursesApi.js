@@ -52,6 +52,16 @@ export async function listCourses() {
 function toCourse(r) {
   return {
     id: r.id,
+    // Prod's live courses table (0025's discovery) has no slug column at all —
+    // its `id` IS the human-readable string ('computer-science') tools.js's
+    // registry matches against. Local dev's courses table (0024) is the other
+    // schema: a generated uuid `id` plus a real `slug` column holding that same
+    // string. Falling back to `id` makes this field always resolve to the
+    // slug-shaped value regardless of which schema is live, so a single call
+    // site (toolsForCourse) works unmodified in both — everything else in the
+    // app (routing, sidebar_modules.course_id, notes) keeps using `id` as
+    // today, unchanged.
+    slug: r.slug ?? r.id,
     name: r.display_name,
     createdAt: r.created_at,
     hidden: !!r.hidden,

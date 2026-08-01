@@ -51,6 +51,12 @@ export const MODULE_TOOLS = {
     { id: 'truth-tree',        label: 'Truth Tree.js',        route: '/logic/truth-tree' },
     { id: 'semantic-tableaux', label: 'Semantic Tableaux.js', route: '/logic/semantic-tableaux' },
   ],
+  'computer-architecture': [
+    { id: 'boolean-algebra', label: 'Boolean Algebra.js', route: '/arch/digital-logic?mode=algebra' },
+    { id: 'truth-table-kmap', label: 'Truth Table & K-Map.js', route: '/arch/digital-logic?mode=kmap' },
+    { id: 'state-machine', label: 'State Machine.js', route: '/arch/digital-logic?mode=fsm' },
+    { id: 'circuit-sandbox', label: 'Circuit Sandbox.js', route: '/arch/digital-logic?mode=sandbox' },
+  ],
   database: [
     { id: 'btree', label: 'B+ Tree.js',        route: '/tree' },
     { id: 'erd',   label: 'ERD Visualizer.js', route: '/erd' },

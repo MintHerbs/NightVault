@@ -71,7 +71,7 @@ export default function CourseLandingPage() {
             to={`/notes-browser/${course.id}`}
             cta="Open"
           />
-          {toolsForCourse(course.id).map((tool) => (
+          {toolsForCourse(course.slug).map((tool) => (
             <AsciiCard
               key={tool.id}
               title={tool.title}

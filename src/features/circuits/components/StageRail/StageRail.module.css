@@ -1,0 +1,122 @@
+/* M3 primary tabs. Tokens: --md-* in src/styles/global.css */
+
+.rail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  border-bottom: 1px solid var(--md-outline-variant);
+}
+
+.tabs {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 16px;
+  border: none;
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.tabSelected {
+  color: var(--md-primary);
+}
+
+.tabLocked {
+  color: var(--md-on-surface-variant);
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.tab:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: -3px;
+}
+
+/* The numbered token in the tab. Tonal chip when selected, hairline otherwise:
+   it reads as a step number without competing with the label. */
+.tabIndex {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--md-outline-variant);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    box-shadow var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.tabSelected .tabIndex {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  box-shadow: none;
+}
+
+/* M3 primary-tab indicator: 3px, full-round top corners, inset from the tab
+   edges so it sits under the label rather than the whole touch target. */
+.indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--md-primary);
+  transition: transform var(--md-duration-medium) var(--md-easing-emphasized),
+    width var(--md-duration-medium) var(--md-easing-emphasized);
+  pointer-events: none;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding-bottom: 4px;
+}
+
+/* --breakpoint-md */
+@media (max-width: 640px) {
+  .rail {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tabs {
+    justify-content: flex-start;
+  }
+
+  .actions {
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indicator {
+    transition: none;
+  }
+}

@@ -1,0 +1,99 @@
+/* M3 error card. Tokens: --md-* in src/styles/global.css */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 560px;
+  padding: 32px 24px;
+  border-radius: var(--md-shape-xl);
+  background: var(--md-error-container);
+  color: var(--md-on-error-container);
+  text-align: center;
+}
+
+/* M3 tonal icon container, inverted against the error container it sits on. */
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: color-mix(in srgb, currentcolor 16%, transparent);
+}
+
+.headline {
+  margin: 0;
+  max-width: 42ch;
+}
+
+/* The echoed input sits on its own surface so the underline reads against a
+   neutral background rather than against the error tint. */
+.echo {
+  width: 100%;
+  margin: 0;
+  padding: 16px;
+  border-radius: var(--md-shape-md);
+  background: var(--md-surface-container-low);
+  color: var(--md-on-surface-variant);
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  text-align: left;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.mark {
+  background: var(--md-error);
+  color: var(--md-on-error);
+  border-radius: 3px;
+  padding: 1px 2px;
+}
+
+.hint {
+  margin: 0;
+  max-width: 46ch;
+  opacity: 0.88;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Buttons on the error container need their own roles: --md-primary is tuned
+   for the page background and washes out here. */
+.primaryAction {
+  background: var(--md-on-error-container);
+  color: var(--md-error-container);
+}
+
+.examples {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.examplesLabel {
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+
+.exampleChips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.exampleChip {
+  box-shadow: inset 0 0 0 1px currentcolor;
+  color: var(--md-on-error-container);
+  opacity: 0.82;
+}

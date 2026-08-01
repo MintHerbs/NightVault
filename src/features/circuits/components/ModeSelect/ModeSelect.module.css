@@ -1,0 +1,109 @@
+/* M3 filled select. Tokens: --md-* in src/styles/global.css */
+
+.wrap,
+.wrapCompact {
+  display: flex;
+  flex-direction: column;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 320px;
+}
+
+.wrapCompact {
+  min-width: 210px;
+}
+
+.field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  background: var(--md-surface-container-high);
+  border-radius: var(--md-shape-sm) var(--md-shape-sm) 0 0;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.wrapCompact .field {
+  min-height: 48px;
+}
+
+.field:hover {
+  background: color-mix(in srgb, var(--md-on-surface) 8%, var(--md-surface-container-high));
+}
+
+/* body-small, floated: the value is always present, so the label never rests */
+.label {
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  color: var(--md-on-surface-variant);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.025em;
+  pointer-events: none;
+}
+
+.wrapCompact .label {
+  top: 5px;
+}
+
+.select {
+  appearance: none;
+  flex: 1;
+  min-width: 0;
+  height: 56px;
+  padding: 22px 44px 6px 16px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--md-on-surface);
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  letter-spacing: 0.031em;
+  cursor: pointer;
+}
+
+.wrapCompact .select {
+  height: 48px;
+  padding: 19px 40px 4px 16px;
+  font-size: 0.875rem;
+}
+
+/* The popup itself is OS-rendered, so it needs explicit colours or it inherits
+   the page background and paints dark text on dark. */
+.select option {
+  background: var(--md-surface-container-high);
+  color: var(--md-on-surface);
+}
+
+.select option:disabled {
+  color: var(--md-on-surface-variant);
+}
+
+.caret {
+  position: absolute;
+  right: 12px;
+  color: var(--md-on-surface-variant);
+  pointer-events: none;
+}
+
+.indicator {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 1px;
+  background: var(--md-on-surface-variant);
+  transition: height var(--md-duration-short) var(--md-easing-emphasized),
+    background var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.field:focus-within .indicator {
+  height: 2px;
+  background: var(--md-primary);
+}
+
+.field:focus-within .label {
+  color: var(--md-primary);
+}

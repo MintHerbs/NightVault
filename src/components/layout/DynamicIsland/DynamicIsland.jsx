@@ -83,6 +83,9 @@ export default function DynamicIsland({
   onPlayPause,
   aiState = 'idle',
   errorMessage = '',
+  // Where the pill lives. 'top' everywhere except surfaces that need the top
+  // centre for their own chrome; see src/hooks/useIslandDock.js.
+  dock = 'top',
   currentSong,
   onSkipBack,
   onSkipForward,
@@ -397,11 +400,17 @@ export default function DynamicIsland({
       }
 
   return (
-    <div className={styles.wrapper} data-navbar>
+    <div className={styles.wrapper} data-navbar data-dock={dock}>
       <span className={styles.srOnly} role="status" aria-live="polite">
         {announcement}
       </span>
-      <div className={styles.innerCenter}>
+      {/* `layout` is what makes a dock change fly rather than teleport: the
+          wrapper's flex alignment moves the pill, and FLIP animates the gap. */}
+      <motion.div
+        layout
+        className={styles.innerCenter}
+        transition={reducedMotion ? { duration: 0 } : { type: 'spring', bounce: 0.28, duration: 0.55 }}
+      >
         <motion.div
           ref={pillRef}
           className={styles.pill}
@@ -602,7 +611,7 @@ export default function DynamicIsland({
             </motion.div>
           </AnimatePresence>
         </motion.div>
-      </div>
+      </motion.div>
     </div>
   )
 }

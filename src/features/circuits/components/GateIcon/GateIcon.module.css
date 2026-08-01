@@ -1,0 +1,48 @@
+/* Palette icons. Everything is currentColor so the button's own M3 state layer
+   and disabled/selected colours carry straight through. */
+
+.icon {
+  display: block;
+  overflow: visible;
+}
+
+.stroke {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.strokeOnly {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.6;
+}
+
+.bubble {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.4;
+}
+
+.lead {
+  stroke: currentcolor;
+  stroke-width: 1.4;
+  opacity: 0.6;
+}
+
+.wave {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.glyph {
+  fill: currentcolor;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  text-anchor: middle;
+}

@@ -1,0 +1,230 @@
+/* Same title / subtitle / pill stack as ERDStep1 and ExpressionInput
+   (docs/rules.md §14.1). */
+
+.input {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 760px;
+
+  /* This view is mounted inside the page's full-width sandbox column, which
+     stretches its children. Without the auto margin the landing screen sits
+     hard against the left edge while the result view (which has its own) is
+     centred. */
+  margin: 0 auto;
+  padding: 0 16px;
+  text-align: center;
+}
+
+/* Same soft pulse as every other tool's hero
+   (src/components/layout/PageShell/PageShell.module.css). */
+.title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.2em;
+  margin: 0;
+  color: var(--color-accent);
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 700;
+  animation: softGlow 3s ease-in-out infinite;
+}
+
+@keyframes softGlow {
+  0%,
+  100% {
+    text-shadow:
+      0 0 10px rgb(var(--color-accent-rgb) / 30%),
+      0 0 20px rgb(var(--color-accent-rgb) / 20%),
+      0 0 30px rgb(var(--color-accent-rgb) / 10%);
+  }
+
+  50% {
+    text-shadow:
+      0 0 20px rgb(var(--color-accent-rgb) / 50%),
+      0 0 30px rgb(var(--color-accent-rgb) / 30%),
+      0 0 40px rgb(var(--color-accent-rgb) / 20%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title {
+    animation: none;
+  }
+}
+
+.subtitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 52ch;
+  margin: 0;
+  color: rgba(var(--color-fg-rgb), 0.55);
+  font-size: clamp(0.9rem, 2vw, 1.15rem);
+  font-weight: 400;
+}
+
+.supporting {
+  max-width: 52ch;
+  margin: -12px 0 0;
+}
+
+/* Escape hatch to the manual carousel. Same affordance as ERDStep1's, so the
+   two tools offer it the same way. */
+.manualLink {
+  margin-top: 2px;
+  padding: 0;
+  border: none;
+  border-bottom: 1px solid rgba(var(--color-accent-rgb), 0.35);
+  background: none;
+  color: var(--md-on-surface-variant);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.manualLink:hover {
+  color: var(--color-text);
+}
+
+.manualLink:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 3px;
+}
+
+/* --- Result --------------------------------------------------------------- */
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 940px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.heading span {
+  text-transform: uppercase;
+}
+
+.heading h2 {
+  margin: 0;
+  color: var(--md-on-surface);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px;
+  border-radius: var(--md-shape-md);
+  box-shadow: inset 0 0 0 1px var(--md-outline-variant);
+  color: var(--md-on-surface-variant);
+}
+
+.notices p {
+  margin: 0;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.control > span {
+  text-transform: uppercase;
+}
+
+.stage {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 320px;
+  padding-top: 8px;
+}
+
+.kmaps,
+.circuit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.functionPicker {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.equation {
+  margin: 0;
+  padding: 12px 20px;
+  border-radius: var(--md-shape-md);
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  font-family: var(--font-mono);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.equations {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--md-shape-lg);
+  background: var(--md-surface-container-low);
+}
+
+.equationLine {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--md-on-surface);
+  overflow-wrap: anywhere;
+}
+
+/* --breakpoint-md */
+@media (max-width: 640px) {
+  .controls {
+    gap: 12px;
+  }
+
+  .control {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

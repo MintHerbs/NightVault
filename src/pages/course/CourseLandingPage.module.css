@@ -6,11 +6,36 @@
   margin-bottom: 28px;
 }
 
+/* Same soft pulse as every other tool's hero (src/pages/home/home.module.css). */
 .heroTitle {
   font-size: clamp(2rem, 5vw, 3rem);
   font-weight: 700;
   color: var(--color-accent);
   margin: 0;
+  animation: softGlow 3s ease-in-out infinite;
+}
+
+@keyframes softGlow {
+  0%,
+  100% {
+    text-shadow:
+      0 0 10px rgb(var(--color-accent-rgb) / 30%),
+      0 0 20px rgb(var(--color-accent-rgb) / 20%),
+      0 0 30px rgb(var(--color-accent-rgb) / 10%);
+  }
+
+  50% {
+    text-shadow:
+      0 0 20px rgb(var(--color-accent-rgb) / 50%),
+      0 0 30px rgb(var(--color-accent-rgb) / 30%),
+      0 0 40px rgb(var(--color-accent-rgb) / 20%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroTitle {
+    animation: none;
+  }
 }
 
 /* auto-fill, not auto-fit — and it must stay in step with .toolGrid in

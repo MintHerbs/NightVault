@@ -30,6 +30,9 @@
   width: 100%;
 }
 
+/* Same soft pulse as every other tool's hero (src/pages/home/home.module.css,
+   src/components/effects/HeroText/HeroText.module.css). Shared by every mode
+   this page serves (Semantic Tableaux, Truth Tree, English to Logic). */
 .title {
   font-size: clamp(2.2rem, 5vw, 3.8rem);
   font-weight: 700;
@@ -39,6 +42,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: softGlow 3s ease-in-out infinite;
+}
+
+@keyframes softGlow {
+  0%,
+  100% {
+    text-shadow:
+      0 0 10px rgb(var(--color-accent-rgb) / 30%),
+      0 0 20px rgb(var(--color-accent-rgb) / 20%),
+      0 0 30px rgb(var(--color-accent-rgb) / 10%);
+  }
+
+  50% {
+    text-shadow:
+      0 0 20px rgb(var(--color-accent-rgb) / 50%),
+      0 0 30px rgb(var(--color-accent-rgb) / 30%),
+      0 0 40px rgb(var(--color-accent-rgb) / 20%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title {
+    animation: none;
+  }
 }
 
 .subtitle {

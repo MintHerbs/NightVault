@@ -10,6 +10,7 @@ It is the single source of truth for what exists in the codebase.
 ## Other reference folders
 
 - [docs/design/](design/) — full design-language reference (colors, typography, motion, components, iconography), expanding on [docs/design.md](design.md).
+- [docs/specs/](specs/) — feature specifications, written as input to implementation (so a spec here may describe work that has not shipped yet).
 - [tickets/](../tickets/) — individual bug/feature tickets tracked outside GitHub Issues.
 - [epics/](../epics/) — groups of related tickets toward a larger outcome.
 

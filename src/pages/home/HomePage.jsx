@@ -14,6 +14,10 @@ import styles from './home.module.css';
 // Socials aren't tied to any one course, so they stay standalone
 // top-level cards instead of moving inside a course page (T-077).
 const GRADE_TOOLKIT = TOOLS.find((t) => t.id === 'grades');
+// Circuit Sandbox is a standalone workbench rather than a Computer Science
+// artefact, so it sits here instead of on that course's landing page (owner
+// decision) — `courses: []` in tools.js keeps it out of toolsForCourse().
+const CIRCUIT_SANDBOX = TOOLS.find((t) => t.id === 'circuit-sandbox');
 
 export default function HomePage() {
   const [courses, setCourses] = useState([]);
@@ -79,6 +83,13 @@ export default function HomePage() {
                 cta="Get started"
               />
             ))}
+            <AsciiCard
+              title={CIRCUIT_SANDBOX.title}
+              description={CIRCUIT_SANDBOX.description}
+              field={CIRCUIT_SANDBOX.field}
+              to={CIRCUIT_SANDBOX.route}
+              cta="Get started"
+            />
             <AsciiCard
               title={GRADE_TOOLKIT.title}
               description={GRADE_TOOLKIT.description}

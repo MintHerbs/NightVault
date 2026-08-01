@@ -1,0 +1,288 @@
+/* M3-styled Karnaugh map. Tokens: --md-* in src/styles/global.css,
+   group hues from --kmap-group-N. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+/* Filled surface holding the grid, so the map reads as one object rather than
+   a set of floating cells. */
+.board {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 32px;
+  max-width: 100%;
+  padding: 24px;
+  background: var(--md-surface-container-low);
+  border-radius: var(--md-shape-lg);
+  overflow-x: auto;
+}
+
+.plane {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.planeLabel {
+  font-family: var(--font-mono);
+  color: var(--md-on-surface-variant);
+  font-size: 0.75rem;
+  letter-spacing: 0.025em;
+}
+
+.svg {
+  max-width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Cells are the next tone up from the board, which is how M3 expresses a
+   raised surface: a lighter container, never a shadow. */
+.cell,
+.cellHighlighted {
+  fill: var(--md-surface-container-high);
+  stroke: none;
+  transition: fill var(--md-duration-short) var(--md-easing-emphasized);
+  cursor: crosshair;
+}
+
+.cellHighlighted {
+  fill: var(--md-primary-container);
+}
+
+.value,
+.valueOne {
+  fill: var(--md-on-surface-variant);
+  font-family: var(--font-mono);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.valueOne {
+  fill: var(--md-on-surface);
+  font-weight: 700;
+}
+
+.mintermIndex {
+  fill: var(--md-on-surface-variant);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.axisLabel,
+.axisLabelRight {
+  fill: var(--md-on-surface-variant);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.045em;
+  text-anchor: middle;
+}
+
+.axisLabelRight {
+  text-anchor: end;
+}
+
+.axisName {
+  fill: var(--md-primary);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+}
+
+/* Group outlines. Rounded to the shape scale so they echo the cells they
+   enclose rather than cutting across them. */
+.group,
+.groupActive {
+  fill: rgba(var(--group-rgb), 0.16);
+  stroke: rgb(var(--group-rgb));
+  stroke-width: 2.5;
+  transition: fill var(--md-duration-short) var(--md-easing-emphasized),
+    stroke-width var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.groupActive {
+  fill: rgba(var(--group-rgb), 0.34);
+  stroke-width: 3.5;
+}
+
+/* M3 list: one row per group, 56px, leading tonal avatar. */
+.legend {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  max-width: 560px;
+  background: var(--md-surface-container-low);
+  border-radius: var(--md-shape-lg);
+  overflow: hidden;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 8px 16px;
+  cursor: default;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.legendItem + .legendItem {
+  box-shadow: inset 0 1px 0 var(--md-outline-variant);
+}
+
+.legendItem:hover {
+  background: color-mix(in srgb, var(--md-on-surface) 8%, transparent);
+}
+
+/* M3 leading avatar, tinted with the group's own hue. */
+.swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: rgba(var(--group-rgb), 0.24);
+  color: rgb(var(--group-rgb));
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.legendText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.legendTerm {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--md-on-surface);
+}
+
+.legendMeta {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.025em;
+  color: var(--md-on-surface-variant);
+}
+
+.legendBadge {
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: var(--md-shape-sm);
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  white-space: nowrap;
+}
+
+.legendEmpty {
+  padding: 20px;
+  font-size: 0.875rem;
+  color: var(--md-on-surface-variant);
+  text-align: center;
+}
+
+/* Alternatives panel: tonal container, because it is telling the student
+   something rather than offering a destructive choice. */
+.alternatives {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  border-radius: var(--md-shape-lg);
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  max-width: 560px;
+  text-align: center;
+}
+
+.alternativesTitle {
+  margin: 0;
+}
+
+.alternativeChips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Chips on a tonal container need their own outline colour: the default
+   --md-outline-variant is tuned for the page background and disappears here. */
+.alternativeChip,
+.alternativeChipSelected {
+  min-width: 40px;
+  justify-content: center;
+  font-family: var(--font-mono);
+}
+
+.alternativeChip {
+  box-shadow: inset 0 0 0 1px currentcolor;
+  color: var(--md-on-primary-container);
+  opacity: 0.72;
+}
+
+.alternativeChipSelected {
+  background: var(--md-on-primary-container);
+  color: var(--md-primary-container);
+  box-shadow: none;
+}
+
+.alternativesNote {
+  max-width: 44ch;
+  opacity: 0.86;
+}
+
+.unsupported {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 32px;
+  border-radius: var(--md-shape-lg);
+  background: var(--md-surface-container-low);
+  color: var(--md-on-surface-variant);
+  text-align: center;
+  max-width: 48ch;
+}
+
+.unsupportedNote {
+  color: var(--md-on-surface-variant);
+  opacity: 0.8;
+}
+
+/* --breakpoint-md */
+@media (max-width: 640px) {
+  .board {
+    padding: 12px;
+    gap: 16px;
+  }
+
+  .legendBadge {
+    display: none;
+  }
+}

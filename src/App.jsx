@@ -5,6 +5,8 @@ import { usePresence } from './hooks/usePresence'
 import useChat from './hooks/useChat'
 import usePostAlerts from './hooks/usePostAlerts'
 import { ThemeProvider } from './hooks/useTheme'
+import { AIActivityProvider } from './hooks/useAIActivity'
+import useIslandDock from './hooks/useIslandDock'
 import MusicPlayer from './components/layout/MusicPlayer/MusicPlayer'
 import DynamicIsland from './components/layout/DynamicIsland'
 import Sidebar from './components/layout/Sidebar'
@@ -26,6 +28,8 @@ function AppContent() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [aiState, setAIState] = useState('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  // Set by whichever surface is showing; see src/hooks/useIslandDock.js.
+  const islandDock = useIslandDock()
   const [activeChild, setActiveChild] = useState('btree')
   const [isChatOpen, setIsChatOpen] = useState(false)
   // Which surface opened chat. The island only offers its "Back" shortcut for
@@ -59,6 +63,13 @@ function AppContent() {
   // ERD renders its own comet-free Starfield; a second global one would run
   // behind .erdPage's opaque background, costing frames while never being seen
   const isERDRoute = location.pathname.startsWith('/erd')
+  // The Digital Logic sandbox is a workbench rather than something to read over
+  // a backdrop: stars drifting behind a schematic compete with the wires for
+  // the same attention, and the canvas covers the whole viewport anyway. The
+  // sidebar rail goes with it (T-093) — the mode is a bare canvas with floating
+  // controls, and its own transport dock carries the way back out.
+  const isCircuitSandbox = location.pathname === '/arch/digital-logic'
+    && new URLSearchParams(location.search).get('mode') === 'sandbox'
 
   useEffect(() => {
     const t = setTimeout(preloadRoutes, 3000)
@@ -174,8 +185,8 @@ function AppContent() {
   }
 
   return (
-    <>
-      {!isAdminRoute && !isNoteRoute && !isERDRoute && <Starfield />}
+    <AIActivityProvider>
+      {!isAdminRoute && !isNoteRoute && !isERDRoute && !isCircuitSandbox && <Starfield />}
       {isChatOpen && !isToolsRoute && <ChatDimOverlay />}
       <DynamicIsland
         onlineCount={onlineCount}
@@ -184,6 +195,7 @@ function AppContent() {
         onPlayPause={handlePlayPause}
         aiState={aiState}
         errorMessage={errorMessage}
+        dock={islandDock}
         currentSong={currentSong}
         onSkipBack={() => skipTrack(-1)}
         onSkipForward={() => skipTrack(1)}
@@ -200,7 +212,7 @@ function AppContent() {
       {/* Global sidebar - persists on every route EXCEPT admin, which has its
           own AdminBrowser + EditorNavbar chrome (owner decision 2026-07-23:
           sidebar persistent incl. on notes, but not over the admin panel). */}
-      {!isAdminRoute && (
+      {!isAdminRoute && !isCircuitSandbox && (
         <Sidebar
           defaultOpenGroup="database"
           activeChild={activeChild}
@@ -246,7 +258,7 @@ function AppContent() {
         onClose={closeChat}
         sessionId={sessionId}
       />
-    </>
+    </AIActivityProvider>
   )
 }
 

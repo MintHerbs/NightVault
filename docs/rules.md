@@ -502,9 +502,128 @@ describe('TreeNode', () => {
 
 ---
 
-## 14. Enforcement
+## 14. Shared Input Surfaces
 
-### 14.1 Code Review Checklist
+### 14.1 One Input Language
+
+**MANDATORY**: A tool that asks the visitor a question uses the shared pill.
+Do not build a new text input.
+
+| Input | Use it for |
+|---|---|
+| `src/components/ui/PillInput/PillInput.jsx` | Single-line questions — a scenario, an expression, a formula |
+| `src/components/ui/CodePillInput/CodePillInput.jsx` | The same, when the answer is code or notation that needs a monospace face |
+| `src/features/chat/components/ChatInput/ChatInput.jsx` | Chat only |
+
+Every tool's landing screen is the same three things in the same order:
+`ScrambleText` title → subtitle → pill. `ERDStep1.jsx` is the reference.
+
+```jsx
+// ✅ CORRECT
+import PillInput from '../../../../components/ui/PillInput/PillInput'
+
+<PillInput
+  onSubmit={handleSubmit}
+  onAIStateChange={onAIStateChange}
+  placeholder="e.g. A university has students who enroll in courses..."
+/>
+```
+
+```jsx
+// ❌ WRONG — a second text field in the app's fourth visual language
+<div className={styles.field}>
+  <label className={styles.label}>{label}</label>
+  <input className={styles.input} value={value} onChange={...} />
+</div>
+```
+
+### 14.2 What May Sit Around It
+
+Tool-specific affordances **beside** the pill are fine and encouraged: a symbol
+bar, example chips, a mode dropdown, an escape hatch link. The rule is about the
+input control itself. One question, one pill.
+
+### 14.3 Extending Rather Than Forking
+
+If the shared pill cannot do what a tool needs, **extend the shared component**
+and keep the change additive — a new optional prop that leaves every existing
+call site behaving exactly as before. Forking it into a feature folder is what
+this rule exists to prevent.
+
+If a bespoke input is genuinely unavoidable, say why in a comment at the top of
+the file and in the ticket. An input that exists because nobody checked is a
+defect, not a decision.
+
+---
+
+## 15. The Dynamic Island Is the Feedback Channel
+
+### 15.1 Every Tool Input Drives It
+
+**MANDATORY**: When a visitor interacts with a tool's input, the island reacts.
+A page that computes silently looks broken, whether it took 4ms or 4s.
+
+Pages receive `onAIStateChange` as a prop
+(`src/routes/index.jsx` → `src/App.jsx`) and pass it down. The vocabulary is
+fixed — `src/components/layout/DynamicIsland/AIStateContent.jsx` is the only
+place that maps a state to a visual:
+
+| State | When |
+|---|---|
+| `observing` | The input has focus. Fires on click, before any typing |
+| `waiting` | Queued behind something — a rate limit, another request |
+| `thinking` | Working locally. Parsing, minimising, laying out |
+| `generating` | A model call is in flight |
+| `error` | Failed, with `errorMessage` set |
+| `idle` | Nothing happening. **Always** the resting state |
+
+### 15.2 Always Return to Idle
+
+Every path out of a working state sets `idle`, including the error path and
+unmount:
+
+```jsx
+// ✅ CORRECT — the pill cannot be stranded mid-animation
+useEffect(() => () => setAIState('idle'), [setAIState])
+```
+
+### 15.3 Route Through a Stable Wrapper
+
+`App` recreates its handler every render. Calling the prop directly re-fires
+island effects on unrelated re-renders. Hold it in a ref:
+
+```jsx
+const notifyRef = useRef(onAIStateChange)
+useEffect(() => { notifyRef.current = onAIStateChange }, [onAIStateChange])
+const setAIState = useCallback((state) => {
+  if (typeof notifyRef.current === 'function') notifyRef.current(state)
+}, [])
+```
+
+Then use `setAIState` **everywhere** in the page, including the props passed to
+child input components. One raw-prop call site defeats the wrapper.
+
+### 15.4 Synchronous Work Still Needs a Visible State
+
+Setting `thinking` and `idle` in the same synchronous block paints nothing. Work
+that finishes instantly holds its state for a minimum dwell before clearing.
+`src/hooks/useAIState.js` does this; the dwell belongs in the caller, never in
+the island — the island's job is to show a state, not to guess how long it
+should have lasted.
+
+### 15.5 Give States Their Own Character
+
+The animations are `GridLoader`
+(`src/components/effects/smoothui/grid-loader/index.tsx`), which exposes ~50
+patterns plus `mode`, `color`, `blur` and `gap`. Different kinds of work should
+not animate identically — a local minimisation is not a model call, and reading
+the same amber frame for both tells the visitor nothing.
+
+---
+
+## 16. Enforcement
+
+### 16.1 Code Review Checklist
 
 Before submitting code, verify:
 
@@ -517,8 +636,10 @@ Before submitting code, verify:
 - [ ] Animations respect `prefers-reduced-motion`
 - [ ] Input validation is present
 - [ ] File has descriptive header comment
+- [ ] Question inputs use the shared pill (§14), not a bespoke field
+- [ ] The island reacts to the input and always returns to idle (§15)
 
-### 14.2 Refactoring Triggers
+### 16.2 Refactoring Triggers
 
 Refactor immediately when:
 - Component exceeds 300 lines
@@ -529,9 +650,9 @@ Refactor immediately when:
 
 ---
 
-## 15. Examples
+## 17. Examples
 
-### 15.1 Good Component Example
+### 17.1 Good Component Example
 
 ```jsx
 // Animated text component that scrambles characters on view transitions

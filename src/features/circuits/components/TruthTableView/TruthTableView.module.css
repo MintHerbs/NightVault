@@ -1,0 +1,124 @@
+/* M3 data table. Tokens: --md-* in src/styles/global.css */
+
+.wrap,
+.scroller {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.scroller {
+  max-height: min(58vh, 560px);
+  overflow: auto;
+}
+
+/* Filled surface, so no border: an M3 surface is filled or outlined, never
+   both. Overflow hidden keeps the sticky header inside the rounded corners. */
+.shell {
+  background: var(--md-surface-container-low);
+  border-radius: var(--md-shape-lg);
+  overflow: hidden;
+}
+
+.table {
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--md-on-surface);
+}
+
+.caption {
+  caption-side: bottom;
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.025em;
+  color: var(--md-on-surface-variant);
+  text-align: center;
+  max-width: 46ch;
+}
+
+/* M3 table header: 56px, label-large, on-surface-variant, one divider below. */
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 56px;
+  padding: 0 20px;
+  background: var(--md-surface-container-high);
+  border-bottom: 1px solid var(--md-outline-variant);
+  color: var(--md-on-surface-variant);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.006em;
+}
+
+.outputHead {
+  color: var(--md-primary);
+}
+
+.indexHead,
+.index {
+  color: var(--md-on-surface-variant);
+  font-size: 0.75rem;
+}
+
+/* M3 table row: 52px, body-medium, hairline divider. */
+.table td {
+  height: 40px;
+  padding: 0 20px;
+  text-align: center;
+  border-bottom: 1px solid var(--md-outline-variant);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.row {
+  position: relative;
+  outline: none;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized);
+  cursor: crosshair;
+}
+
+/* State layer, not a colour swap: hovering a row is an interaction, and M3
+   expresses interaction as a tonal overlay. */
+.row:hover {
+  background: color-mix(in srgb, var(--md-on-surface) 8%, transparent);
+}
+
+.highlighted {
+  background: var(--md-primary-container);
+}
+
+.highlighted td {
+  color: var(--md-on-primary-container);
+}
+
+.output {
+  font-weight: 700;
+}
+
+.isOne .output {
+  color: var(--md-primary);
+}
+
+.highlighted .output {
+  color: var(--md-on-primary-container);
+}
+
+.isDontCare .output {
+  color: var(--md-on-surface-variant);
+  font-style: italic;
+}
+
+.constant {
+  padding: 32px;
+  background: var(--md-surface-container-low);
+  border-radius: var(--md-shape-lg);
+  color: var(--md-on-surface-variant);
+  text-align: center;
+}

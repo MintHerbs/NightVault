@@ -1,0 +1,193 @@
+/* Digital Logic page shell. M3 tokens: --md-* in src/styles/global.css */
+
+/* Transparent, not --color-bg: the global Starfield (App.jsx) renders behind
+   every route's content in DOM order, at the same implicit stacking level as
+   this div. An opaque background here painted over it, which is why every
+   non-sandbox mode showed flat black instead of stars. .pageFull below is the
+   one variant that legitimately wants a solid backdrop — App.jsx suppresses
+   the Starfield there on purpose (T-093) — so the opaque colour moved to it. */
+.page {
+  position: relative;
+  min-height: 100vh;
+  color: var(--md-on-surface);
+}
+
+/* The sandbox is the page: nothing scrolls, nothing is padded, and the canvas
+   reaches every edge. The controls float on top of it from inside the sandbox
+   itself, so there is no shell left to lay out (T-093). */
+.pageFull {
+  display: flex;
+  height: 100vh;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+/* Everything below the Starfield. The left gutter clears the global fixed
+   56px Sidebar rail (src/components/layout/Sidebar/Sidebar.module.css) — same
+   reason BackButton offsets to left: 80px. The rail goes off-canvas at 968px,
+   so the gutter is inside a query. The sandbox has no shell at all: it hides
+   the rail as well as the navbar. */
+.shell {
+  position: relative;
+  z-index: 1;
+  padding: 12px 16px;
+}
+
+/* Clears the top strip the dynamic island occupies. The full-screen variant
+   needs no such gap because it parks the island in the bottom-right corner,
+   which is the whole reason it does. */
+.shell {
+  padding-top: 60px;
+}
+
+/* --breakpoint-sidebar */
+@media (min-width: 969px) {
+  .shell {
+    padding-left: calc(16px + 56px);
+  }
+}
+
+/* Replaces LabNavbar (removed) and, later, the in-page Mode dropdown
+   (removed): each mode is reached from its own card on the course landing
+   page / home page now, so all that is left to show here is the one action
+   (New question) that only makes sense once there is a question. */
+.modeBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+/* The shell already carries the sidebar gutter, so .main only owns its own
+   vertical rhythm. */
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 140px);
+  padding: 32px 0 48px;
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.echo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.echoLabel {
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.echoValue {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--md-on-surface);
+  overflow-wrap: anywhere;
+}
+
+.toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggleLabel {
+  text-transform: uppercase;
+}
+
+.stage {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 300px;
+  padding-top: 8px;
+}
+
+.footnote {
+  margin: 0;
+  color: var(--md-on-surface-variant);
+  text-align: center;
+}
+
+/* Outlined, not filled: this is an empty state, and a filled container would
+   give it more presence than a "not built yet" deserves. */
+.pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 460px;
+  padding: 40px 24px;
+  border-radius: var(--md-shape-xl);
+  box-shadow: inset 0 0 0 1px var(--md-outline-variant);
+  text-align: center;
+}
+
+.pendingTitle {
+  margin: 0;
+  color: var(--md-on-surface);
+}
+
+.pendingBody {
+  margin: 0;
+}
+
+/* --breakpoint-md */
+@media (max-width: 640px) {
+  .toggles {
+    gap: 16px;
+  }
+
+  .toggle {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+.sandbox {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.circuitStage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}

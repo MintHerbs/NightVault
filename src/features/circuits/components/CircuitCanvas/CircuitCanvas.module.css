@@ -1,0 +1,133 @@
+/* M3-styled circuit canvas. Tokens: --md-* in src/styles/global.css */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.frame {
+  position: relative;
+  width: 100%;
+  height: min(52vh, 460px);
+  background: var(--md-surface-container-low);
+  border-radius: var(--md-shape-lg);
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+
+.frame:active {
+  cursor: grabbing;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.wire {
+  fill: none;
+  stroke: var(--md-on-surface-variant);
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.pin {
+  fill: var(--md-on-surface-variant);
+}
+
+/* Gates are the tonal primary container: they are the active elements of the
+   diagram, and the container role is how M3 says "this belongs to primary
+   without shouting". */
+.gate {
+  fill: var(--md-primary-container);
+  stroke: var(--md-primary);
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+}
+
+.gateOutline {
+  fill: none;
+  stroke: var(--md-primary);
+  stroke-width: 1.75;
+}
+
+.bubble {
+  fill: var(--md-surface-container-low);
+  stroke: var(--md-primary);
+  stroke-width: 1.75;
+}
+
+/* Pins are a raised surface, so a tone up from the canvas. */
+.pinBox {
+  fill: var(--md-surface-container-high);
+  stroke: none;
+}
+
+.pinLabel {
+  fill: var(--md-on-surface);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.constBox {
+  fill: transparent;
+  stroke: var(--md-outline-variant);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.constLabel {
+  fill: var(--md-on-surface-variant);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+/* Gate tally as M3 assist-chip-shaped stats. */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--md-shape-sm);
+  background: var(--md-surface-container);
+  color: var(--md-on-surface-variant);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.025em;
+}
+
+.statValue {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--md-on-surface);
+}
+
+.hint {
+  margin-left: auto;
+  color: var(--md-on-surface-variant);
+  opacity: 0.8;
+}
+
+/* --breakpoint-md */
+@media (max-width: 640px) {
+  .hint {
+    display: none;
+  }
+}

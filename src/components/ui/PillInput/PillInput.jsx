@@ -2,20 +2,35 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from './PillInput.module.css'
 
-function PillInput({ activeTool, onSubmit, onAIStateChange, placeholder, defaultValue = '', inputRef, disabled = false, onValueChange }) {
-  const [value, setValue] = useState(defaultValue)
+/**
+ * The shared question input (docs/rules.md §14). Uncontrolled by default.
+ *
+ * Passing `value` switches it to controlled, for the one case the uncontrolled
+ * form cannot serve: a caller that writes into the field itself, such as a
+ * symbol bar inserting at the caret. Additive on purpose — `value` undefined is
+ * exactly the old component, so the existing call sites did not have to change.
+ */
+function PillInput({ activeTool, onSubmit, onAIStateChange, placeholder, defaultValue = '', value: controlledValue, inputRef, disabled = false, onValueChange }) {
+  const isControlled = controlledValue !== undefined
+  const [internalValue, setInternalValue] = useState(defaultValue)
+  const value = isControlled ? controlledValue : internalValue
   const internalRef = useRef(null)
   const hasTriggeredObserving = useRef(false)
-  
+
   // Use provided ref or internal ref
   const effectiveRef = inputRef || internalRef
 
   // Update value if defaultValue changes
   useEffect(() => {
+    if (isControlled) return
     if (defaultValue) {
-      setValue(defaultValue)
+      setInternalValue(defaultValue)
     }
-  }, [defaultValue])
+  }, [defaultValue, isControlled])
+
+  const setValue = (next) => {
+    if (!isControlled) setInternalValue(next)
+  }
 
   const handleChange = (e) => {
     const newValue = e.target.value

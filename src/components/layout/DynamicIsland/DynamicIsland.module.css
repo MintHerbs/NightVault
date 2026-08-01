@@ -3,19 +3,25 @@
    entrance animations are gated on prefers-reduced-motion there; the
    CSS-driven transitions are muted at the bottom of this file. */
 
-/* Wrapper: handles fixed positioning + full width */
+/* Wrapper: fixed over the whole viewport, but inert — only .innerCenter takes
+   pointer events. Full-viewport rather than a 64px strip so the pill can be
+   parked in a corner by a surface that needs the top centre for its own
+   chrome (data-dock; see src/hooks/useIslandDock.js). */
 .wrapper {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 64px;
+  inset: 0;
   padding-top: 8px;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   z-index: 9999;
   pointer-events: none; /* doesn't block clicks on the page */
+}
+
+.wrapper[data-dock="bottom-right"] {
+  padding: 0 24px 24px 0;
+  justify-content: flex-end;
+  align-items: flex-end;
 }
 
 /* Stable live region for screen readers. Kept outside the pill so it can't
@@ -130,6 +136,29 @@
   height: 36px;
   max-height: 44px;
   overflow: hidden;
+}
+
+/* The free-running "no text, just breathe" state (CircuitSandbox, owner
+   report: a label that changes with every clock pulse reads as noise once
+   the clock is actually ticking). Morphs the pill into a plain circle around
+   the grid glyph instead of showing words that would only flicker.
+   `:global()` reaches the marker class ThinkingAnimation.jsx sets directly on
+   its own wrapper — that component isn't a CSS-modules consumer, so there is
+   no local class of its own to compose from here. `!important` on
+   border-radius specifically: the pill's own inline style (DynamicIsland.jsx,
+   `style={{ borderRadius: 32 }}`) otherwise wins over any stylesheet rule
+   regardless of selector specificity. */
+.pill:has(:global(.island-circle-mode)) {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+}
+
+.pill:has(:global(.island-circle-mode)) .content {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  justify-content: center;
 }
 
 /* Error state */

@@ -1,0 +1,193 @@
+/* M3 result card + term list. Tokens: --md-* in src/styles/global.css */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.rowLabel {
+  text-transform: uppercase;
+}
+
+.original {
+  font-family: var(--font-mono);
+  color: var(--md-on-surface-variant);
+  font-size: 0.875rem;
+}
+
+/* The answer, in the highest-emphasis tonal role the token set has. */
+.result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 28px 24px;
+  border-radius: var(--md-shape-xl);
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+.resultLabel {
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+
+.expression {
+  font-family: var(--font-mono);
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
+  line-height: 1.3;
+  font-weight: 500;
+  text-align: center;
+  word-break: break-word;
+}
+
+/* Four stat tiles on one filled surface. */
+.cost {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  margin: 0;
+  width: 100%;
+  background: var(--md-outline-variant);
+  border-radius: var(--md-shape-lg);
+  overflow: hidden;
+}
+
+.costItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 16px 8px;
+  background: var(--md-surface-container-low);
+}
+
+.costItem dt {
+  color: var(--md-on-surface-variant);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.costItem dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 1.375rem;
+  font-weight: 500;
+  color: var(--md-on-surface);
+}
+
+/* M3 two-line list. */
+.terms {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  background: var(--md-surface-container-low);
+  border-radius: var(--md-shape-lg);
+  overflow: hidden;
+}
+
+.term {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 8px 16px;
+}
+
+.term + .term {
+  box-shadow: inset 0 1px 0 var(--md-outline-variant);
+}
+
+.termText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.termExpression {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--md-on-surface);
+}
+
+.termMeta {
+  color: var(--md-on-surface-variant);
+}
+
+/* The cube pattern, as a monospace tonal token. */
+.termBits {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: var(--md-shape-sm);
+  background: var(--md-surface-container-high);
+  color: var(--md-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.16em;
+}
+
+.termBadge {
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: var(--md-shape-sm);
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  white-space: nowrap;
+}
+
+.note {
+  margin: 0;
+  color: var(--md-on-surface-variant);
+  text-align: center;
+  max-width: 52ch;
+}
+
+/* Outlined, not filled: this is a caveat about completeness, not an error. */
+.warning {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: var(--md-shape-md);
+  box-shadow: inset 0 0 0 1px var(--md-outline-variant);
+  color: var(--md-on-surface-variant);
+  text-align: center;
+}
+
+/* --breakpoint-md */
+@media (max-width: 640px) {
+  .cost {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .term {
+    flex-wrap: wrap;
+  }
+
+  .termBadge {
+    margin-left: 0;
+  }
+}

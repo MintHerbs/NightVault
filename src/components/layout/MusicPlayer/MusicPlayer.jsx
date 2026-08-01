@@ -121,7 +121,24 @@ const MusicPlayer = forwardRef(({
     }
   }, [videoId])
 
-  return <div id="yt-player" className={styles.hidden} />
+  /**
+   * The wrapper is load-bearing, not styling.
+   *
+   * `new YT.Player('yt-player')` *replaces* the element it is given with an
+   * iframe, so the node React thinks is its child stops being in the document
+   * the moment the API loads. Any later sibling insertion in App then asks the
+   * DOM to `insertBefore` that missing node and throws, taking the render with
+   * it — which is what happened the first time a sibling became conditional
+   * (T-093 made the global Sidebar unmount for the circuit sandbox).
+   *
+   * Wrapping gives React a child it still owns. The API only ever swaps the
+   * inner div, which nothing reconciles against afterwards.
+   */
+  return (
+    <div className={styles.hidden}>
+      <div id="yt-player" />
+    </div>
+  )
 })
 
 MusicPlayer.displayName = 'MusicPlayer'

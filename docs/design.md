@@ -77,6 +77,19 @@ library — see the Session 10/11 rule below.
   many `rgba(255,255,255,α)` washes became `rgba(var(--color-fg-rgb), α)`,
   so text, borders and overlays all invert together.
 
+### M3 error roles + K-map group palette (T-089)
+
+Two additions to the token set, both in
+[global.css](../src/styles/global.css):
+
+| Token group | Tokens | Why not per-theme |
+|---|---|---|
+| M3 error | `--md-error` (= `--color-danger`), `--md-on-error`, `--md-error-container` `#4a1028` / `#ffd9e6`, `--md-on-error-container` `#ffd9e6` / `#3d0020` | M3 keeps error outside the seed derivation, so two blocks cover all nine themes. Built from the existing `--color-danger` pink rather than M3's baseline red: that pink was chosen deliberately for contrast on these surfaces, and a second error hue beside it reads as two different kinds of wrong |
+| K-map groups | `--kmap-group-1..8` + matching `-rgb` triplets | A K-map shows several groups at once and they must be told apart **from each other**, not from the page. Eight hues cannot come from one seed, and recolouring them per theme would collapse the distinctions the map depends on. Restated once for light mode: the dark set sits at ~1.5:1 on a near-white cell |
+
+Both blocks are declared **before** `[data-mode="light"]`, which has equal
+specificity and only wins by source order.
+
 **Rule:** No new colours without updating this table first.
 **Rule:** Dynamic Island pill is always `#000` — never themed, in any mode,
 and neither is anything inside it (its text stays white, its album-art slot

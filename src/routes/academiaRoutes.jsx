@@ -18,6 +18,7 @@ const DisclaimerPage = lazy(() => import('../pages/disclaimer/DisclaimerPage'))
 const TermsPage = lazy(() => import('../pages/legal/TermsPage'))
 const LogicalEquivalencePage = lazy(() => import('../pages/logic/proof/LogicalEquivalencePage'))
 const TableauxPage = lazy(() => import('../pages/logic/tableaux/TableauxPage'))
+const DigitalLogicPage = lazy(() => import('../pages/arch/digital-logic/DigitalLogicPage'))
 const GradeToolkitPage = lazy(() => import('../pages/tools/grade-toolkit/GradeToolkitPage'))
 const HomePage = lazy(() => import('../pages/home/HomePage'))
 // Unlisted directory of the tools kept off the sidebar and the home page.
@@ -48,6 +49,7 @@ export const routeComponents = {
   '/logic/tableaux': TableauxPage,
   '/logic/truth-tree': TableauxPage,
   '/logic/semantic-tableaux': TableauxPage,
+  '/arch/digital-logic': DigitalLogicPage,
   '/about': AboutPage,
   '/disclaimer': DisclaimerPage,
   '/terms': TermsPage,
@@ -63,6 +65,7 @@ export function preloadAcademiaRoutes() {
   import('../pages/erd/ERDPage')
   import('../pages/logic/proof/LogicalEquivalencePage')
   import('../pages/logic/tableaux/TableauxPage')
+  import('../pages/arch/digital-logic/DigitalLogicPage')
   import('../pages/algo/complexity/ComplexityPage')
   import('../pages/algo/recurrence/RecurrencePage')
   import('../pages/tools/grade-toolkit/GradeToolkitPage')

@@ -1,0 +1,69 @@
+/* Floating parts dock. M3 tokens: --md-* in src/styles/global.css */
+
+.dock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  max-width: min(100%, 760px);
+  padding: 6px 8px;
+  border-radius: var(--md-shape-lg);
+  background: var(--md-surface-container-high);
+  box-shadow: inset 0 0 0 1px var(--md-outline-variant), 0 6px 20px rgb(0 0 0 / 22%);
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.divider {
+  width: 1px;
+  height: 24px;
+  margin: 0 6px;
+  background: var(--md-outline-variant);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: var(--md-shape-sm);
+  background: transparent;
+  color: var(--md-on-surface);
+  cursor: grab;
+  transition: background-color var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.item:hover {
+  background: rgba(var(--color-accent-rgb), 0.12);
+  color: var(--md-primary);
+}
+
+.item:active {
+  cursor: grabbing;
+}
+
+.item:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+/* --breakpoint-lg */
+@media (max-width: 768px) {
+  .item {
+    width: 36px;
+    height: 36px;
+  }
+
+  .divider {
+    margin: 0 3px;
+  }
+}

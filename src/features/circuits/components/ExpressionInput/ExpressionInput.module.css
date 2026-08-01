@@ -1,0 +1,131 @@
+/* The title / subtitle / pill stack is deliberately identical to ERDStep1's, so
+   the two tools read as one app (docs/rules.md §14.1). */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 760px;
+  padding: 0 16px;
+  text-align: center;
+}
+
+/* Same soft pulse as every other tool's hero
+   (src/components/layout/PageShell/PageShell.module.css). */
+.title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.2em;
+  margin: 0;
+  color: var(--color-accent);
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 700;
+  animation: softGlow 3s ease-in-out infinite;
+}
+
+@keyframes softGlow {
+  0%,
+  100% {
+    text-shadow:
+      0 0 10px rgb(var(--color-accent-rgb) / 30%),
+      0 0 20px rgb(var(--color-accent-rgb) / 20%),
+      0 0 30px rgb(var(--color-accent-rgb) / 10%);
+  }
+
+  50% {
+    text-shadow:
+      0 0 20px rgb(var(--color-accent-rgb) / 50%),
+      0 0 30px rgb(var(--color-accent-rgb) / 30%),
+      0 0 40px rgb(var(--color-accent-rgb) / 20%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title {
+    animation: none;
+  }
+}
+
+.subtitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.5em;
+  max-width: 46ch;
+  margin: 0;
+  color: rgba(var(--color-fg-rgb), 0.55);
+  font-size: clamp(0.9rem, 2vw, 1.15rem);
+  font-weight: 400;
+}
+
+/* Supporting text for the pill. It used to be the filled field's own supporting
+   line; the shared pill has no such slot, so it sits under it instead. */
+.hint {
+  max-width: 52ch;
+  margin: -8px 0 0;
+}
+
+.symbolBar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Outlined M3 surface at icon-button size. The glyph is the content, so it is
+   sized like a label rather than an icon. */
+.symbolButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 40px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--md-shape-sm);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--md-outline-variant);
+  color: var(--md-primary);
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: box-shadow var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.symbolButton:hover {
+  box-shadow: inset 0 0 0 1px var(--md-primary);
+}
+
+.symbolButton:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+.examples {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.examplesLabel {
+  text-transform: uppercase;
+}
+
+.exampleChips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* --breakpoint-md */
+@media (max-width: 640px) {
+  .container {
+    gap: 16px;
+  }
+}

@@ -1,0 +1,90 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.board {
+  width: 100%;
+  max-width: 620px;
+  padding: 16px;
+  background: var(--md-surface-container-low);
+  border-radius: var(--md-shape-lg);
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.state,
+.stateActive {
+  fill: var(--md-surface-container-high);
+  stroke: var(--md-outline-variant);
+  stroke-width: 1.75;
+  transition: fill var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.stateActive {
+  fill: var(--md-primary-container);
+  stroke: var(--md-primary);
+  stroke-width: 2.5;
+}
+
+.stateId {
+  fill: var(--md-on-surface);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.stateOutput {
+  fill: var(--md-primary);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  text-anchor: middle;
+}
+
+.stateLabel {
+  fill: var(--md-on-surface-variant);
+  font-size: 0.625rem;
+  text-anchor: middle;
+}
+
+.edge {
+  fill: none;
+  stroke: var(--md-on-surface-variant);
+  stroke-width: 1.5;
+}
+
+.arrowHead {
+  fill: var(--md-on-surface-variant);
+}
+
+.resetArrow {
+  fill: none;
+  stroke: var(--md-primary);
+  stroke-width: 2;
+}
+
+.edgeLabel {
+  fill: var(--md-on-surface);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--md-surface-container-low);
+  stroke-width: 3.5;
+  stroke-linejoin: round;
+}
+
+.legend {
+  margin: 0;
+  max-width: 56ch;
+  color: var(--md-on-surface-variant);
+  text-align: center;
+}

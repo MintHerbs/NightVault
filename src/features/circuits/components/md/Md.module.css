@@ -1,0 +1,346 @@
+/* Material You (M3) primitives for the Digital Logic tool (T-089).
+   Tokens: --md-* in src/styles/global.css. Hand-built CSS Modules, no MUI and
+   no @material/web, per docs/rules.md §5.2.
+
+   The rules that shape everything below:
+     - a surface is filled OR outlined, never both;
+     - interaction is a tonal state layer, never a translateY or a scale;
+     - corners come from the shape scale, motion from the duration/easing pair.
+*/
+
+/* ── State layer ──────────────────────────────────────────────────────────
+   Applied to anything interactive. The ::after overlay carries the tint so
+   the element's own background stays whatever role it was assigned. */
+.stateLayer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.stateLayer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentcolor;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.stateLayer:hover:not(:disabled)::after {
+  opacity: var(--md-state-hover);
+}
+
+.stateLayer:focus-visible::after {
+  opacity: var(--md-state-focus);
+}
+
+.stateLayer:active:not(:disabled)::after {
+  opacity: var(--md-state-pressed);
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────
+   M3's five button types. All are pill-shaped (shape-xl) at 40px tall, which
+   is the spec's standard density. */
+.button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 24px;
+  border: none;
+  border-radius: var(--md-shape-xl);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.006em;
+  line-height: 1.25rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+/* Icon-leading buttons get less padding on the icon side, per spec. */
+.button > svg {
+  flex-shrink: 0;
+}
+
+.button:has(> svg:first-child) {
+  padding-left: 16px;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.button:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+/* Filled: the single highest-emphasis action on a view. */
+.filled {
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+}
+
+/* Filled tonal: the middle ground. Used far more here than filled, because
+   most of this tool's actions are peers rather than one obvious next step. */
+.tonal {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+/* Outlined: a hairline over the page background, no fill. */
+.outlined {
+  background: transparent;
+  color: var(--md-primary);
+  box-shadow: inset 0 0 0 1px var(--md-outline-variant);
+}
+
+/* Text: lowest emphasis, no container until hovered. */
+.text {
+  background: transparent;
+  color: var(--md-primary);
+  padding: 0 12px;
+}
+
+/* Icon button: 40px square target around a 24px glyph. */
+.iconButton {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: var(--md-shape-xl);
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.iconButton:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+.iconButtonFilled {
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+}
+
+.iconButtonTonal {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+.iconButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+/* ── Segmented button ─────────────────────────────────────────────────────
+   One outlined container, hairline dividers between segments, the selected
+   one filled with the container role. The spec puts a check icon in the
+   selected segment; that is what `.segmentCheck` is for. */
+.segmented {
+  display: inline-flex;
+  height: 40px;
+  border-radius: var(--md-shape-xl);
+  box-shadow: inset 0 0 0 1px var(--md-outline-variant);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.segment {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+  border: none;
+  background: transparent;
+  color: var(--md-on-surface);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.006em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.segment + .segment {
+  box-shadow: inset 1px 0 0 var(--md-outline-variant);
+}
+
+.segmentSelected {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+.segment:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: -3px;
+}
+
+.segmentCheck {
+  flex-shrink: 0;
+}
+
+/* ── Chips ────────────────────────────────────────────────────────────────
+   Assist chips: 32px, outlined, shape-sm. Used for the examples row and the
+   alternative-cover selector. */
+.chip {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--md-shape-sm);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--md-outline-variant);
+  color: var(--md-on-surface-variant);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.006em;
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    box-shadow var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.chipSelected {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  box-shadow: none;
+}
+
+.chip:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+/* ── Surfaces ─────────────────────────────────────────────────────────────
+   M3 elevation is tonal: a raised surface is a lighter container tone, not a
+   drop shadow. */
+.surface {
+  background: var(--md-surface-container);
+  border-radius: var(--md-shape-lg);
+  color: var(--md-on-surface);
+}
+
+.surfaceLow {
+  background: var(--md-surface-container-low);
+  border-radius: var(--md-shape-lg);
+  color: var(--md-on-surface);
+}
+
+.surfaceHigh {
+  background: var(--md-surface-container-high);
+  border-radius: var(--md-shape-lg);
+  color: var(--md-on-surface);
+}
+
+.outlinedSurface {
+  background: transparent;
+  border-radius: var(--md-shape-lg);
+  box-shadow: inset 0 0 0 1px var(--md-outline-variant);
+  color: var(--md-on-surface);
+}
+
+/* ── Type scale ───────────────────────────────────────────────────────────
+   The subset of M3's scale this tool uses. Sizes are the spec's, converted
+   to rem; display-large is clamped so it survives a phone. */
+.displayLarge {
+  font-size: clamp(2.25rem, 7vw, 3.5625rem);
+  line-height: 1.12;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+
+.headlineSmall {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.titleMedium {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 0.009em;
+}
+
+.titleSmall {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  letter-spacing: 0.006em;
+}
+
+.bodyLarge {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0.031em;
+}
+
+.bodyMedium {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 400;
+  letter-spacing: 0.016em;
+}
+
+.bodySmall {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.025em;
+}
+
+.labelLarge {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  letter-spacing: 0.006em;
+}
+
+.labelMedium {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.038em;
+}
+
+.labelSmall {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+}
+
+/* Secondary text on a surface. */
+.variantText {
+  color: var(--md-on-surface-variant);
+}

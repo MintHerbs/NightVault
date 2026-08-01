@@ -25,12 +25,40 @@
   margin-bottom: 18px;
 }
 
+/* Same soft pulse as every other tool's hero (src/pages/home/home.module.css).
+   --md-primary is the same value as --color-accent in every theme (see
+   global.css), so the colour itself doesn't change, only the accent it
+   already was gains the animation the rest of the app's tools have. */
 .title {
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--md-on-surface);
+  color: var(--color-accent);
   margin-bottom: 4px;
+  animation: softGlow 3s ease-in-out infinite;
+}
+
+@keyframes softGlow {
+  0%,
+  100% {
+    text-shadow:
+      0 0 10px rgb(var(--color-accent-rgb) / 30%),
+      0 0 20px rgb(var(--color-accent-rgb) / 20%),
+      0 0 30px rgb(var(--color-accent-rgb) / 10%);
+  }
+
+  50% {
+    text-shadow:
+      0 0 20px rgb(var(--color-accent-rgb) / 50%),
+      0 0 30px rgb(var(--color-accent-rgb) / 30%),
+      0 0 40px rgb(var(--color-accent-rgb) / 20%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title {
+    animation: none;
+  }
 }
 
 .subtitle {

@@ -1,0 +1,123 @@
+/* M3 filled text field. Tokens: --md-* in src/styles/global.css */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.field {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  min-height: 56px;
+  padding: 0 4px 0 16px;
+  background: var(--md-surface-container-high);
+  /* Filled fields round the top only: the bottom edge carries the indicator,
+     and rounding it would cut the line short of the container. */
+  border-radius: var(--md-shape-sm) var(--md-shape-sm) 0 0;
+  cursor: text;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.field:hover {
+  background: color-mix(in srgb, var(--md-on-surface) 8%, var(--md-surface-container-high));
+}
+
+/* Resting indicator: a 1px hairline across the bottom edge. */
+.indicator {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 1px;
+  background: var(--md-on-surface-variant);
+  transition: height var(--md-duration-short) var(--md-easing-emphasized),
+    background var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.focused .indicator {
+  height: 2px;
+  background: var(--md-primary);
+}
+
+.error .indicator {
+  background: var(--md-error);
+}
+
+.labelResting,
+.labelFloating {
+  position: absolute;
+  left: 16px;
+  color: var(--md-on-surface-variant);
+  pointer-events: none;
+  transition: top var(--md-duration-short) var(--md-easing-emphasized),
+    font-size var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+/* body-large, vertically centred */
+.labelResting {
+  top: 17px;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  letter-spacing: 0.031em;
+}
+
+/* body-small, tucked into the top of the container */
+.labelFloating {
+  top: 8px;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.025em;
+}
+
+.focused .labelFloating {
+  color: var(--md-primary);
+}
+
+.error .labelFloating,
+.error .labelResting {
+  color: var(--md-error);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  margin: 24px 0 8px;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--md-on-surface);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  line-height: 1.5rem;
+  letter-spacing: 0.02em;
+}
+
+.input::placeholder {
+  color: var(--md-on-surface-variant);
+  opacity: 0.7;
+}
+
+.trailing {
+  display: flex;
+  align-items: center;
+  align-self: center;
+  padding-bottom: 0;
+}
+
+/* body-small, indented to the M3 supporting-text position */
+.supporting {
+  margin: 0;
+  padding: 0 16px;
+  color: var(--md-on-surface-variant);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.025em;
+}
+
+.error .supporting {
+  color: var(--md-error);
+}
