@@ -7,8 +7,9 @@ import { visit } from 'unist-util-visit'
 import CodeBlock from '../social/CodeBlock/CodeBlock'
 import NotePlayground from './NotePlayground'
 import MoleculeStructure from './MoleculeStructure/MoleculeStructure'
+import ReactionScheme from './ReactionScheme/ReactionScheme'
 import { PLAYGROUND_ID_RE } from '../../constants/notePlaygrounds'
-import { isValidSmiles, isValidLabel } from '../../lib/chem/noteChem'
+import { isValidSmiles, isValidLabel, parseReactionBlock } from '../../lib/chem/noteChem'
 import RichTooltip, { YouTubeIcon, InstagramIcon, LinkedInIcon } from '../ui/smoothui/rich-popover/index.tsx'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../lib/noteImageSrc'
 import { parseImageTitle } from '../../lib/noteImageWidth'
@@ -217,6 +218,16 @@ const markdownComponents = {
     // which only ever carries the first word), so this is the only place it
     // can be read from.
     const title = typeof node?.data?.meta === 'string' ? node.data.meta.trim() : ''
+
+    // ```reaction — a fenced JSON payload (T-090), not a code sample. A
+    // malformed block (bad JSON, oversized payload, over a step/item cap)
+    // falls through to the ordinary CodeBlock rendering below rather than
+    // throwing — the raw block stays visible as code, same degradation as an
+    // invalid `::molecule`.
+    if (language === 'reaction') {
+      const parsed = parseReactionBlock(codeString)
+      if (parsed.ok) return <ReactionScheme data={{ steps: parsed.steps }} />
+    }
 
     return isBlock ? (
       <CodeBlock code={codeString} language={language || 'auto'} title={title || undefined} />

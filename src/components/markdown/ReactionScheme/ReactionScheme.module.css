@@ -1,0 +1,87 @@
+/* Reaction scheme wrapper. Wide content (a multi-step scheme can easily
+   exceed the prose column) scrolls horizontally inside its own container —
+   the identical rule `.katex-display`/`.tableWrapper` already use in
+   MarkdownRenderer.module.css for the same "content wider than the column"
+   problem, deliberately not reinvented here (T-090). */
+.wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 1.5rem 0;
+  padding: 1rem 0;
+}
+
+.canvas {
+  position: relative;
+  color: var(--color-text);
+}
+
+.structureWrap {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.structureCell {
+  display: inline-block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.structureCell :global(svg) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.plusCell {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(var(--color-fg-rgb), 0.7);
+}
+
+.arrowCell {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.conditions {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+}
+
+.conditionLine {
+  font-size: 0.75rem;
+  line-height: 16px;
+  white-space: nowrap;
+  color: rgba(var(--color-fg-rgb), 0.8);
+}
+
+.arrowSvg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.agentCell {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.agentLabel {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  color: rgba(var(--color-fg-rgb), 0.7);
+}

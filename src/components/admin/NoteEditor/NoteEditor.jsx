@@ -6,12 +6,15 @@ import remarkDirective from 'remark-directive'
 import CodeBlock from '../../social/CodeBlock/CodeBlock'
 import NotePlayground from '../../markdown/NotePlayground'
 import MoleculeStructure from '../../markdown/MoleculeStructure/MoleculeStructure'
+import ReactionScheme from '../../markdown/ReactionScheme/ReactionScheme'
 import { PLAYGROUND_ID_RE } from '../../../constants/notePlaygrounds'
 import { loadOCL } from '../../../lib/chem/loadChem'
 import {
   isValidSmiles,
   isValidLabel,
+  parseReactionBlock,
   detectMolBlock,
+  convertChemPaste,
 } from '../../../lib/chem/noteChem'
 import { resolveDraftSrc } from '../../../lib/draftImagePreviews'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../../lib/noteImageSrc'
@@ -544,6 +547,21 @@ const codeBlockView = $view(codeBlockSchema, () => (node) => {
   const root = createRoot(dom)
   const render = (n) => queueMicrotask(() => {
     try {
+      // ```reaction fences are a JSON payload (T-090), not a code sample —
+      // codeBlockView is the one place ALL fenced code renders, in both the
+      // reader and here, so this is the only spot that needs to know about
+      // it. `::reaction` gets no new $nodeSchema: fenced code already
+      // round-trips losslessly through codeBlockSchema (ADR 0001), so only
+      // the render branches, same as the reader's `code()` handler. A
+      // malformed block (bad JSON, oversized payload, over a cap) falls
+      // through to the ordinary CodeBlock rendering — never a thrown render.
+      if (n.attrs.language === 'reaction') {
+        const parsed = parseReactionBlock(n.textContent)
+        if (parsed.ok) {
+          root.render(<ReactionScheme data={{ steps: parsed.steps }} />)
+          return
+        }
+      }
       root.render(
         <CodeBlock
           code={n.textContent}
@@ -854,6 +872,15 @@ const markdownClipboard = $prose((ctx) => new Plugin({
       if (view.state.selection.$from.parent.type.spec.code) return false
       const text = clip.getData('text/plain')
       if (!text) return false
+
+      // Reaction SMILES (`reactants>agents>products`, T-090) is unambiguous
+      // and needs no OCL to convert — a plain string splitter (noteChem.js)
+      // — so this path stays fully synchronous, unlike the MOL-block path
+      // below. `conditionsAbove` is always empty here: reaction SMILES
+      // carries no condition text, a documented gap (chemistry-notes.md),
+      // not a bug — the author fills conditions in via the toolbar after.
+      const converted = convertChemPaste(text)
+      if (converted && dispatchMarkdownInsert(view, ctx, converted)) return true
 
       // MOL block (T-091): unambiguous (a V2000/V3000 counts line), but
       // converting it to SMILES needs OpenChemLib, which is lazy-loaded —
