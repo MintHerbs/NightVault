@@ -15,6 +15,7 @@ import EditorNavbar from '../../components/admin/EditorNavbar'
 import PreviewModal from '../../components/admin/PreviewModal'
 import ImageCleanupDrawer from '../../components/admin/ImageCleanupDrawer'
 import FormulaModal from '../../components/admin/FormulaModal'
+import ChemistryModal from '../../components/admin/ChemistryModal'
 import SocialLinkModal from '../../components/admin/SocialLinkModal'
 import ToastNotification, { useToast } from '../../components/admin/ToastNotification'
 import { Monitor } from '@phosphor-icons/react'
@@ -212,7 +213,8 @@ function AdminEditorContent() {
     title, setTitle, content, setContent,
     unsaved, setUnsaved, saving, setSaving,
     previewOpen, setPreviewOpen,
-    formulaModalOpen, setFormulaModalOpen, socialLinkModalOpen, setSocialLinkModalOpen,
+    formulaModalOpen, setFormulaModalOpen, chemistryModalOpen, setChemistryModalOpen,
+    socialLinkModalOpen, setSocialLinkModalOpen,
     selectedPath, setSelectedPath, originalPath, setOriginalPath,
     currentStyle, setCurrentStyle,
     isTooNarrow, setIsTooNarrow, editorRef, fileInputRef,
@@ -516,6 +518,24 @@ function AdminEditorContent() {
     editor.focus()
   }
 
+  const handleInsertChemistry = (markdown) => {
+    if (USE_WYSIWYG) {
+      noteEditorRef.current?.insertMarkdown(markdown)
+      return
+    }
+    if (!editorRef.current) return
+
+    const editor = editorRef.current
+    const selection = editor.getSelection()
+
+    editor.executeEdits('', [{
+      range: selection,
+      text: markdown,
+    }])
+
+    editor.focus()
+  }
+
   const handleInsertSocialLink = (markdown) => {
     if (USE_WYSIWYG) {
       noteEditorRef.current?.insertMarkdown(markdown)
@@ -676,6 +696,12 @@ function AdminEditorContent() {
         onInsert={handleInsertFormula}
       />
 
+      <ChemistryModal
+        open={chemistryModalOpen}
+        onClose={() => setChemistryModalOpen(false)}
+        onInsert={handleInsertChemistry}
+      />
+
       <SocialLinkModal
         open={socialLinkModalOpen}
         onClose={() => setSocialLinkModalOpen(false)}
@@ -710,6 +736,7 @@ function AdminEditorContent() {
         onFormatAction={onFormat}
         onInsertImage={() => fileInputRef.current?.click()}
         onInsertFormula={() => setFormulaModalOpen(true)}
+        onInsertChemistry={() => setChemistryModalOpen(true)}
         onInsertSocialLink={() => setSocialLinkModalOpen(true)}
         onSetTextColor={onSetTextColor}
         onSetHighlight={onSetHighlight}
