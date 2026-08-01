@@ -18,7 +18,6 @@ export default function GuidelinesPage() {
         onNewFormula={() => navigate(-1)}
         newFormulaText="← Back"
         showAbout={false}
-        showDisclaimer={false}
       />
 
       <main className={styles.main}>

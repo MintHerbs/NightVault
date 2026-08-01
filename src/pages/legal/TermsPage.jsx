@@ -5,7 +5,7 @@ import Starfield from '../../components/effects/Starfield/Starfield'
 import Navbar from '../../components/layout/Navbar/Navbar'
 import Callout from '../../components/social/Callout/Callout'
 import Alert from '../../components/social/Alert/Alert'
-import styles from './TermsPage.module.css'
+import styles from './LegalPage.module.css'
 
 const CONTACT_EMAIL = 'nightveult@gmail.com'
 
@@ -20,7 +20,6 @@ export default function TermsPage() {
         onNewFormula={() => navigate(-1)}
         newFormulaText="← Back"
         showAbout={true}
-        showDisclaimer={false}
       />
 
       <main className={styles.main}>
@@ -94,9 +93,26 @@ export default function TermsPage() {
             className={styles.section}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.35 }}
+          >
+            <h2 className={styles.sectionTitle}>2. Acceptable Use</h2>
+            <p className={styles.sectionIntro}>
+              Night Vault includes a public chat and social feed. Full conduct rules live on the{' '}
+              <a href="/social/guidelines" className={styles.inlineLink}>Community Guidelines</a>{' '}
+              page; by using those features you agree to follow them. In short: no harassment,
+              hate speech, illegal activity, or sharing others' personal information. Content
+              that breaches the guidelines may be removed without notice, and access to
+              individual features may be restricted for repeated abuse.
+            </p>
+          </motion.div>
+
+          <motion.div
+            className={styles.section}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.4 }}
           >
-            <h2 className={styles.sectionTitle}>2. Contributor Guidelines: No Names</h2>
+            <h2 className={styles.sectionTitle}>3. Contributor Guidelines: No Names</h2>
             <p className={styles.sectionIntro}>
               Reproducing or distributing a lecturer's own teaching material without permission
               can amount to copyright infringement. To keep contributors and the platform clear
@@ -141,7 +157,7 @@ export default function TermsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.6 }}
           >
-            <h2 className={styles.sectionTitle}>3. Copyright & Takedown Requests</h2>
+            <h2 className={styles.sectionTitle}>4. Copyright & Takedown Requests</h2>
             <p className={styles.sectionIntro}>
               If you believe content on Night Vault infringes your copyright, names you without
               consent, or otherwise breaches these terms, email{' '}
@@ -158,7 +174,7 @@ export default function TermsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.7 }}
           >
-            <h2 className={styles.sectionTitle}>4. No Warranty, No Liability</h2>
+            <h2 className={styles.sectionTitle}>5. No Warranty, No Liability</h2>
             <ul className={styles.rulesList}>
               <li>
                 <strong>Provided "as is".</strong> Night Vault, its tools, and all content on it
@@ -185,7 +201,7 @@ export default function TermsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.8 }}
           >
-            <h2 className={styles.sectionTitle}>5. Indemnification</h2>
+            <h2 className={styles.sectionTitle}>6. Indemnification</h2>
             <p className={styles.sectionIntro}>
               By submitting content to Night Vault, you agree to indemnify and hold harmless
               Night Vault and its creators, maintainers, and contributors from any claim,
@@ -200,7 +216,7 @@ export default function TermsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.9 }}
           >
-            <h2 className={styles.sectionTitle}>6. No Affiliation, Open Source, No Profit</h2>
+            <h2 className={styles.sectionTitle}>7. No Affiliation, Open Source, No Profit</h2>
             <ul className={styles.rulesList}>
               <li>
                 <strong>Independent project.</strong> Night Vault is an independent, unofficial
@@ -225,7 +241,23 @@ export default function TermsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 1.0 }}
           >
-            <h2 className={styles.sectionTitle}>7. Governing Law & Changes</h2>
+            <h2 className={styles.sectionTitle}>8. Third-Party Services & Your Data</h2>
+            <p className={styles.sectionIntro}>
+              Night Vault runs on Supabase (database and backend infrastructure) and embeds
+              third-party content such as YouTube. These services operate under their own
+              terms and privacy policies, which Night Vault does not control. For what Night
+              Vault itself stores and why, see the{' '}
+              <a href="/privacy" className={styles.inlineLink}>Privacy Policy</a>.
+            </p>
+          </motion.div>
+
+          <motion.div
+            className={styles.section}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 1.1 }}
+          >
+            <h2 className={styles.sectionTitle}>9. Governing Law & Changes</h2>
             <p className={styles.sectionIntro}>
               These terms are governed by the laws of the Republic of Mauritius. If any part of
               these terms is found unenforceable, the rest remains in effect. These terms may be

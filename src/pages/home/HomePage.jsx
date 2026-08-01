@@ -55,7 +55,7 @@ export default function HomePage() {
   );
 
   return (
-    <PageShell variant="content" navbar={{ showAbout: true, showDisclaimer: true }}>
+    <PageShell variant="content" navbar={{ showAbout: true }}>
       <section className={styles.hero}>
         <h1 className={styles.heroTitle}>Night Vault</h1>
         <p className={styles.heroTagline}>

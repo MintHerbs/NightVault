@@ -450,6 +450,4 @@ export function runProof(premisesArray, conclusionString) {
   assert(t4.success === false, '4: should fail');
   assert(t4.error !== null, '4: has error message');
   assert(t4.error.includes('Could not derive') || t4.error.includes('not reachable'), '4: correct error message');
-  
-  console.log('[proofEngine] all tests passed ✓');
 })();

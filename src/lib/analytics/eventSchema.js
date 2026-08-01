@@ -38,6 +38,7 @@ export const PAGE_ROUTES = [
   '/about',
   '/disclaimer',
   '/terms',
+  '/privacy',
   '/experimental',
 ]
 
@@ -143,6 +144,7 @@ export const ROUTE_LABELS = {
   '/about': 'About',
   '/disclaimer': 'Disclaimer',
   '/terms': 'Terms',
+  '/privacy': 'Privacy',
   '/experimental': 'Experimental',
 }
 

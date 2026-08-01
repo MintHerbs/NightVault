@@ -1,4 +1,5 @@
 // Vite entry point - renders the React app into the DOM
+import './lib/consoleBanner.js'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'

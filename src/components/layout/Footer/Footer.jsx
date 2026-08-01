@@ -22,6 +22,7 @@ const TOOL_LINKS = [
 
 const LEGAL_LINKS = [
   { label: 'Terms & Conditions', to: '/terms' },
+  { label: 'Privacy Policy', to: '/privacy' },
   { label: 'Disclaimer', to: '/disclaimer' },
 ];
 

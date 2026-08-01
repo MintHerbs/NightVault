@@ -16,6 +16,7 @@ const RecurrencePage = lazy(() =>
 const AboutPage = lazy(() => import('../pages/about/AboutPage'))
 const DisclaimerPage = lazy(() => import('../pages/disclaimer/DisclaimerPage'))
 const TermsPage = lazy(() => import('../pages/legal/TermsPage'))
+const PrivacyPage = lazy(() => import('../pages/legal/PrivacyPage'))
 const LogicalEquivalencePage = lazy(() => import('../pages/logic/proof/LogicalEquivalencePage'))
 const TableauxPage = lazy(() => import('../pages/logic/tableaux/TableauxPage'))
 const DigitalLogicPage = lazy(() => import('../pages/arch/digital-logic/DigitalLogicPage'))
@@ -53,6 +54,7 @@ export const routeComponents = {
   '/about': AboutPage,
   '/disclaimer': DisclaimerPage,
   '/terms': TermsPage,
+  '/privacy': PrivacyPage,
   '/tools/grade-toolkit': GradeToolkitPage,
   '/tools/lazy-grades': LazyGradesRedirect,
   '/tools/cpa-calculator': CpaCalculatorRedirect,

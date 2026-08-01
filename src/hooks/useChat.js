@@ -2,8 +2,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-console.log('[Chat] Supabase client created')
-
 // Read fresh on every message rather than cached at mount: usePresence is
 // what creates session_id, and there's no ordering guarantee that it has
 // run before this hook's subscription receives its first row.
@@ -52,7 +50,6 @@ export default function useChat(isChatOpen) {
           return
         }
 
-        console.log('[Chat] Initial messages loaded:', (data || []).length)
         setMessages(data || [])
       } catch (err) {
         console.error('Failed to fetch messages:', err)
@@ -72,7 +69,6 @@ export default function useChat(isChatOpen) {
         },
         (payload) => {
           const message = payload.new
-          console.log('[Chat] New message received:', message)
           setMessages((prev) => [...prev, message])
 
           // Your own message is not news. Nothing filtered on session_id

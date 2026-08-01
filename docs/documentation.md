@@ -1433,8 +1433,7 @@ Navbar({
   resultText = '',          // Result text (e.g., "VALID", "SATISFIABLE")
   showNewFormula = false,   // Show "← New Formula" button
   onNewFormula = null,      // New formula button click handler
-  showAbout = true,         // Show "About" link (default: true)
-  showDisclaimer = false    // Show "Disclaimer" link
+  showAbout = true          // Show "About" link (default: true)
 })
 ```
 
@@ -1459,7 +1458,6 @@ Navbar({
   title="B+ Tree Visualizer"
   showReset={true}
   onReset={handleReset}
-  showDisclaimer={true}
 />
 ```
 
