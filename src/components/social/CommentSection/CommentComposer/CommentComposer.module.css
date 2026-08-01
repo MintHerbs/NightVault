@@ -1,0 +1,162 @@
+.composer {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.avatar {
+  display: flex;
+  border-radius: 50%;
+  overflow: hidden;
+  line-height: 0;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.textarea {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--md-surface-container);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-md);
+  color: var(--md-on-surface);
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  resize: none;
+  outline: none;
+  overflow-y: hidden;
+  transition: border-color var(--md-duration-short) var(--md-easing-emphasized),
+    box-shadow var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.textarea:focus {
+  border-color: rgba(var(--color-accent-rgb), 0.5);
+  box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.13);
+}
+
+.textarea::placeholder {
+  color: var(--md-on-surface-variant);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.count {
+  margin-right: auto;
+  color: var(--md-on-surface-variant);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--md-shape-xl);
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.btn:hover:not(:disabled) {
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
+}
+
+.btn:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  background: var(--color-accent);
+  color: var(--md-on-primary);
+  font-weight: 600;
+}
+
+/* M3 state layer, not a swap to --color-accent-bright. That token is a
+   lighter tint of the accent, which raises contrast against a dark surface
+   but collapses it against a light one: hub/light went 4.5:1 at rest to
+   2.5:1 on hover, supabase/light to 1.9:1. The state layer is the content
+   colour at 10% over the unchanged base, so it cannot invert pass/fail. */
+.btnPrimary:hover:not(:disabled) {
+  background:
+    linear-gradient(rgba(var(--color-bg-rgb), 0.1), rgba(var(--color-bg-rgb), 0.1)),
+    var(--color-accent);
+  color: var(--md-on-primary);
+}
+
+.btnPrimary:disabled {
+  background: rgba(var(--color-fg-rgb), 0.12);
+  color: var(--md-on-surface-variant);
+  opacity: 1;
+}
+
+.spinner {
+  animation: commentSpin 0.9s linear infinite;
+}
+
+@keyframes commentSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Was a hardcoded #f87171, the one danger literal T-070 flagged in this
+   surface that the --color-danger retarget missed. */
+.error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* --breakpoint-md */
+@media (max-width: 640px) {
+  .btn {
+    height: 44px;
+    flex: 1;
+  }
+
+  .count {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .textarea,
+  .btn {
+    transition: none;
+  }
+
+  .spinner {
+    animation-duration: 2s;
+  }
+}

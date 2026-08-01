@@ -22,7 +22,7 @@ export default function PollBuilder({ poll, onChange }) {
 
   if (normalized.type === 'binary') {
     return (
-      <div className={styles.card}>
+      <div className={styles.builder}>
         <div className={styles.binaryRow}>
           <div className={`${styles.binaryTile} ${styles.binaryYes}`}>
             <ThumbsUp size={18} strokeWidth={2.25} />
@@ -55,7 +55,7 @@ export default function PollBuilder({ poll, onChange }) {
   }
 
   return (
-    <div className={styles.card}>
+    <div className={styles.builder}>
       <div className={styles.options}>
         {options.map((value, idx) => (
           <div key={idx} className={styles.optionRow}>

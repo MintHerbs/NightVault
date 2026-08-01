@@ -1,184 +1,141 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { useComments } from '../../../hooks/useComments'
-import AgentAvatar from '../../effects/smoothui/agent-avatar'
-import styles from './CommentSection.module.css'
+import CommentComposer from './CommentComposer/CommentComposer'
 import CommentItem from '../CommentItem/CommentItem'
+import styles from './CommentSection.module.css'
 
-const MAX_CHARS = 500
-const COUNTER_VISIBLE_FROM = 400
+const SORTS = [
+  { key: 'newest', label: 'Newest' },
+  { key: 'top', label: 'Top' },
+]
+/** Longer than this and the thread buries the next post in the feed. */
+const COLLAPSE_AFTER = 5
+
+function netScore(comment) {
+  return (comment?.upvotes ?? 0) - (comment?.downvotes ?? 0)
+}
 
 export default function CommentSection({ postId, sessionId, isOpen }) {
   const [shouldInit, setShouldInit] = useState(false)
-  const [newContent, setNewContent] = useState('')
-  const [error, setError] = useState(null)
-  const [isPosting, setIsPosting] = useState(false)
-  const [isFocused, setIsFocused] = useState(false)
-
-  const textareaRef = useRef(null)
+  const [sort, setSort] = useState('newest')
+  const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
     if (isOpen) setShouldInit(true)
   }, [isOpen])
 
-  const { comments, isLoading, createComment, voteComment, deleteComment, getUserCommentVote, isOwnComment } =
-    useComments(shouldInit ? postId : null)
+  const {
+    comments,
+    isLoading,
+    createComment,
+    voteComment,
+    deleteComment,
+    getUserCommentVote,
+    isOwnComment,
+  } = useComments(shouldInit ? postId : null)
 
-  const isExpanded = useMemo(() => {
-    if (!newContent) return false
-    if (newContent.includes('\n')) return true
-    return newContent.length > 80
-  }, [newContent])
-
-  const resizeTextarea = () => {
-    const el = textareaRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    const computed = window.getComputedStyle(el)
-    const lineHeight = Number.parseFloat(computed.lineHeight || '20') || 20
-    const maxHeight = Math.round(lineHeight * 6 + 20)
-    const next = Math.min(el.scrollHeight, maxHeight)
-    el.style.height = `${next}px`
-    el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden'
-  }
-
-  useEffect(() => {
-    resizeTextarea()
-  }, [newContent])
-
-  const trimmed = newContent.trim()
-  const canPost = trimmed.length > 0 && !isPosting
-  // The action row only appears once the field is in use, so a closed comment
-  // thread is not two buttons taller than it needs to be.
-  const showActions = isFocused || newContent.length > 0
-
-  const handlePost = async () => {
-    if (!canPost) return
-    setError(null)
-    setIsPosting(true)
-    const res = await createComment?.(trimmed)
-    if (res?.error) {
-      setError(res.error)
-      setIsPosting(false)
-      return
+  // Sorting is client-side on the already-fetched array: the thread is capped
+  // small, and re-querying per sort would cost a round trip to reorder rows
+  // the browser already holds. Replies stay chronological under either sort —
+  // a reply out of order reads as a different conversation.
+  const sorted = useMemo(() => {
+    const list = [...(comments || [])]
+    if (sort === 'top') {
+      return list.sort(
+        (a, b) => netScore(b) - netScore(a) || new Date(b.created_at) - new Date(a.created_at)
+      )
     }
-    setNewContent('')
-    setIsPosting(false)
-  }
+    return list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+  }, [comments, sort])
 
-  const handleKeyDown = (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-      e.preventDefault()
-      handlePost()
-    }
-  }
+  const total = useMemo(
+    () => (comments || []).reduce((sum, c) => sum + 1 + (c.replies?.length || 0), 0),
+    [comments]
+  )
 
-  const handleReply = async (content, parentId) => {
-    const res = await createComment?.(content, parentId)
-    return res
-  }
-
-  const total = (comments || []).reduce((sum, c) => sum + 1 + (c.replies?.length || 0), 0)
+  const isCollapsed = !showAll && sorted.length > COLLAPSE_AFTER
+  const visible = isCollapsed ? sorted.slice(0, COLLAPSE_AFTER) : sorted
+  const hiddenCount = sorted.length - visible.length
 
   return (
     <div className={styles.section}>
       <AnimatePresence initial={false}>
         {isOpen && (
           <motion.div
-            className={styles.panel}
+            className={styles.wrapper}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
+            transition={{ duration: 0.22, ease: [0.2, 0, 0, 1] }}
           >
             <div className={styles.content}>
-              <div className={styles.threadHeader}>
-                Discussion
-                {total > 0 && <span className={styles.threadCount}>{total}</span>}
+              <div className={styles.head}>
+                <h4 className={styles.heading}>
+                  Discussion
+                  {total > 0 && <span className={styles.count}>{total}</span>}
+                </h4>
+
+                {sorted.length > 1 && (
+                  <div className={styles.sort} role="group" aria-label="Sort comments">
+                    {SORTS.map(({ key, label }) => (
+                      <button
+                        key={key}
+                        type="button"
+                        className={`${styles.sortBtn} ${sort === key ? styles.sortBtnActive : ''}`}
+                        onClick={() => setSort(key)}
+                        aria-pressed={sort === key}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Composer first. It used to sit underneath the whole thread,
-                  so replying to a busy post meant scrolling past every comment
-                  to find the box. */}
-              <div className={styles.newComment}>
-                <div className={styles.newCommentAvatar}>
-                  <AgentAvatar seed={sessionId || 'anon'} size={28} animated={true} />
-                </div>
-
-                <div className={styles.newCommentBody}>
-                  <textarea
-                    ref={textareaRef}
-                    className={`${styles.textarea} ${isExpanded ? styles.textareaExpanded : ''}`}
-                    placeholder="Add a thoughtful reply"
-                    value={newContent}
-                    onChange={(e) => setNewContent(e.target.value.slice(0, MAX_CHARS))}
-                    onKeyDown={handleKeyDown}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    maxLength={MAX_CHARS}
-                    rows={1}
-                    aria-label="Add a comment"
-                  />
-
-                  {error && (
-                    <div className={styles.error} role="alert">
-                      {error}
-                    </div>
-                  )}
-
-                  {showActions && (
-                    <div className={styles.actions}>
-                      {newContent.length >= COUNTER_VISIBLE_FROM && (
-                        <span className={styles.charCount}>
-                          {newContent.length}/{MAX_CHARS}
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        className={styles.btn}
-                        onClick={() => {
-                          setNewContent('')
-                          setError(null)
-                        }}
-                        disabled={isPosting || !newContent}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        className={`${styles.btn} ${styles.btnPrimary}`}
-                        onClick={handlePost}
-                        disabled={!canPost}
-                      >
-                        {isPosting && <Loader2 size={14} className={styles.spinner} />}
-                        {isPosting ? 'Posting' : 'Comment'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
+              {/* Composer first. It used to sit underneath the whole thread, so
+                  replying to a busy post meant scrolling past every comment to
+                  find the box. */}
+              <CommentComposer
+                sessionId={sessionId}
+                onSubmit={(content) => createComment?.(content)}
+              />
 
               <div className={styles.thread}>
                 {isLoading && total === 0 ? (
-                  <div className={styles.threadEmpty}>Loading comments…</div>
+                  <p className={styles.empty}>Loading comments…</p>
                 ) : total === 0 ? (
-                  <div className={styles.threadEmpty}>No comments yet. Start the discussion.</div>
+                  <p className={styles.empty}>No comments yet. Start the discussion.</p>
                 ) : (
-                  (comments || []).map((c) => (
-                    <CommentItem
-                      key={c.id}
-                      comment={c}
-                      sessionId={sessionId}
-                      isOwn={isOwnComment(c.id)}
-                      depth={0}
-                      onVote={(commentId, voteType) => voteComment?.(commentId, voteType)}
-                      onReply={handleReply}
-                      onDelete={(commentId) => deleteComment?.(commentId)}
-                      getUserVote={getUserCommentVote}
-                      isOwnComment={isOwnComment}
-                    />
-                  ))
+                  <>
+                    {visible.map((c) => (
+                      <CommentItem
+                        key={c.id}
+                        comment={c}
+                        sessionId={sessionId}
+                        isOwn={isOwnComment(c.id)}
+                        depth={0}
+                        onVote={(commentId, voteType) => voteComment?.(commentId, voteType)}
+                        onReply={(content, parentId) => createComment?.(content, parentId)}
+                        onDelete={(commentId) => deleteComment?.(commentId)}
+                        getUserVote={getUserCommentVote}
+                        isOwnComment={isOwnComment}
+                      />
+                    ))}
+
+                    {sorted.length > COLLAPSE_AFTER && (
+                      <button
+                        type="button"
+                        className={styles.more}
+                        onClick={() => setShowAll((v) => !v)}
+                        aria-expanded={showAll}
+                      >
+                        {isCollapsed
+                          ? `Show ${hiddenCount} more ${hiddenCount === 1 ? 'comment' : 'comments'}`
+                          : 'Collapse thread'}
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>

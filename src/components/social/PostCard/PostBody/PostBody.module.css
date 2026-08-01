@@ -1,0 +1,225 @@
+.body {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  margin: 0 0 6px;
+  font-size: 1.0625rem;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--md-on-surface);
+  overflow-wrap: anywhere;
+}
+
+/* Clamped by height rather than by slicing the string, so the full text stays
+   in the DOM (selectable, searchable, screen-readable) and the cut lands on a
+   rendered line instead of a newline character. The clamp is always on while
+   collapsed, because PostBody measures against it to decide whether there is
+   anything to reveal. */
+.text {
+  max-height: calc(6 * 1.62em);
+  overflow: hidden;
+  font-size: 0.9rem;
+  line-height: 1.62;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: rgba(var(--color-fg-rgb), 0.82);
+  transition: max-height var(--md-duration-medium) var(--md-easing-emphasized);
+}
+
+/* The fade is separate from the clamp and only applied once the text really
+   does overflow. Putting it on .text unconditionally washed out the last line
+   of every short post — on a one-line body the whole line falls inside the
+   2.2em ramp, so it rendered at partial opacity for no reason. */
+.textFading {
+  /* A mask stop, not a colour: `black` means "fully opaque" here, so it is
+     mode-independent and must not be swapped for a theme token. */
+  mask-image: linear-gradient(to bottom, black calc(100% - 2.2em), transparent 100%);
+}
+
+.textExpanded {
+  max-height: none;
+  mask-image: none;
+}
+
+/* A real button, not a bare div with a hover translate. */
+.toggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  margin-top: 4px;
+  padding: 0 10px 0 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-accent);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.toggle:hover {
+  color: var(--color-accent-bright);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+  border-radius: var(--md-shape-sm);
+}
+
+/* Nested one tone up from the card, per the M3 elevation-is-tone rule. */
+.panel {
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.panel > * + * {
+  margin-top: 10px;
+}
+
+.textarea {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--md-surface-container);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-md);
+  color: var(--md-on-surface);
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--md-duration-short) var(--md-easing-emphasized),
+    box-shadow var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.textarea:focus {
+  border-color: rgba(var(--color-accent-rgb), 0.55);
+  box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.14);
+}
+
+.panelActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--md-shape-xl);
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.btn:hover:not(:disabled) {
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
+}
+
+.btn:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  background: var(--color-accent);
+  color: var(--md-on-primary);
+  font-weight: 600;
+}
+
+/* State layer over the unchanged fill rather than a swap to
+   --color-accent-bright: the swap drops several themes' contrast below 4.5:1
+   in light mode, and a bounded overlay cannot shift the hue. */
+.btnPrimary:hover:not(:disabled) {
+  background:
+    linear-gradient(rgba(var(--color-bg-rgb), 0.1), rgba(var(--color-bg-rgb), 0.1)),
+    var(--color-accent);
+  color: var(--md-on-primary);
+}
+
+.btnPrimary:disabled {
+  background: rgba(var(--color-fg-rgb), 0.12);
+  color: var(--md-on-surface-variant);
+  opacity: 1;
+}
+
+.btnDanger {
+  background: var(--color-danger);
+  color: var(--color-on-danger);
+  font-weight: 600;
+}
+
+.btnDanger:hover:not(:disabled) {
+  background:
+    linear-gradient(rgba(var(--color-on-danger-rgb), 0.1), rgba(var(--color-on-danger-rgb), 0.1)),
+    var(--color-danger);
+  color: var(--color-on-danger);
+}
+
+.danger {
+  padding: 12px 14px;
+  margin-top: 12px;
+  background: rgba(var(--color-danger-rgb), 0.09);
+  border: 1px solid rgba(var(--color-danger-rgb), 0.32);
+  border-radius: var(--md-shape-md);
+}
+
+.dangerText {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--md-on-surface);
+}
+
+/* --breakpoint-md */
+@media (max-width: 640px) {
+  .title {
+    font-size: 1rem;
+  }
+
+  .toggle {
+    min-height: 40px;
+  }
+
+  .btn {
+    height: 44px;
+    flex: 1;
+  }
+
+  .panelActions {
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text,
+  .toggle,
+  .textarea,
+  .btn {
+    transition: none;
+  }
+}

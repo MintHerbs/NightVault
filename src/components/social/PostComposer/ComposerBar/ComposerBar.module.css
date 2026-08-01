@@ -1,0 +1,183 @@
+/* Height/opacity shell for the reveal; the rows inside carry the divider and
+   the spacing so the wrapper can collapse to 0 without fighting them. */
+.bar {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--md-outline-variant);
+}
+
+/* M3 toggle chip: outlined at rest, tonal-container filled when selected. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-xl);
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    border-color var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.chip:hover {
+  background: rgba(var(--color-accent-rgb), var(--md-state-hover));
+  border-color: rgba(var(--color-accent-rgb), 0.35);
+  color: var(--md-on-surface);
+}
+
+.chip:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+}
+
+.chipActive {
+  background: var(--md-primary-container);
+  border-color: transparent;
+  color: var(--md-on-primary-container);
+  font-weight: 600;
+}
+
+.chipActive:hover {
+  background: var(--md-primary-container);
+  border-color: transparent;
+  color: var(--md-on-primary-container);
+}
+
+.chipLabel {
+  white-space: nowrap;
+}
+
+.submit {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.count {
+  font-size: 0.75rem;
+  color: var(--md-on-surface-variant);
+  font-variant-numeric: tabular-nums;
+}
+
+.countWarn {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+/* M3 filled button. Flat fill, not a gradient: the gradient's second stop was
+   --color-accent-bright, which drops below 4.5:1 against --md-on-primary in
+   several light themes, so the label's contrast depended on where in the
+   button it fell. */
+.post {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 22px;
+  border: 1px solid transparent;
+  border-radius: var(--md-shape-xl);
+  background: var(--color-accent);
+  color: var(--md-on-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized),
+    border-color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.post:not(.postIdle):hover:not(:disabled) {
+  background:
+    linear-gradient(rgba(var(--color-bg-rgb), 0.1), rgba(var(--color-bg-rgb), 0.1)),
+    var(--color-accent);
+}
+
+/* Nothing to post yet: drop to low emphasis rather than to `disabled`, so the
+   click still lands and the composer can shake to say why. */
+.postIdle {
+  background: transparent;
+  border-color: var(--md-outline-variant);
+  color: var(--md-on-surface-variant);
+}
+
+.postIdle:hover {
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
+}
+
+.post:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+}
+
+.post:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinner {
+  animation: composerSpin 0.9s linear infinite;
+}
+
+@keyframes composerSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --breakpoint-md */
+@media (max-width: 640px) {
+  /* Chips stop competing with the action for one row; each gets a 44px
+     target and the action takes its own full-width line. */
+  .chip {
+    height: 44px;
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    padding: 0 8px;
+  }
+
+  .chipLabel {
+    font-size: 0.75rem;
+  }
+
+  .post {
+    flex: 1;
+    height: 46px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip,
+  .post {
+    transition: none;
+  }
+
+  .spinner {
+    animation-duration: 2s;
+  }
+}

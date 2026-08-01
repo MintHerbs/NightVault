@@ -1,12 +1,19 @@
 ---
 id: T-070
 title: Social CSS still carries un-tokenised danger colours, sub-40px mobile controls, and mislabelled breakpoint comments
-status: backlog
+status: in-progress
 severity: low
 area: social
 epic: E-008
 created: 2026-07-28
 ---
+
+**Absorbed by T-087** (2026-08-01), per that ticket's Phase 5. All four fixes
+below are present on the `worktree-social-chat-ui-rebuild` branch: danger
+colours tokenised and the six breakpoint comments corrected in commits
+`a859074`/`ab9bf89`; `.actionBtn` and `PollBuilder`'s controls raised to
+40-44px as part of T-087's uncommitted working changes. This ticket closes
+when T-087 lands rather than separately; do not fix twice.
 
 ## Summary
 

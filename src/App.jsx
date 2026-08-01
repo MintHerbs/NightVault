@@ -241,10 +241,16 @@ function AppContent() {
       </div>
 
       {/* Chat panel outside the fading wrapper */}
+      {/* onlineCount comes from the one usePresence subscription up here.
+          The panel's header needs it, but calling the hook again inside the
+          panel would open a second presence channel for the same visitor and
+          inflate the number it is trying to report. */}
       <ChatPanel
         isOpen={isChatOpen}
         onClose={closeChat}
         sessionId={sessionId}
+        onlineCount={onlineCount}
+        presenceSynced={presenceSynced}
       />
     </>
   )
