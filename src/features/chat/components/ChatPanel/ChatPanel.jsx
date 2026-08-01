@@ -24,7 +24,7 @@ function sameRun(a, b) {
   return Math.abs(new Date(b.created_at) - new Date(a.created_at)) <= GROUP_WINDOW_MS
 }
 
-export default function ChatPanel({ isOpen, onClose, sessionId, onlineCount, presenceSynced }) {
+export default function ChatPanel({ isOpen, onClose, sessionId }) {
   const { messages, sendMessage, sendAttachment, isLoading } = useChat()
   const { typingSessions, notifyTyping, notifyStopped } = useTypingIndicator(sessionId)
   const { seenAt, markRead } = useReadReceipts(sessionId)
@@ -104,7 +104,7 @@ export default function ChatPanel({ isOpen, onClose, sessionId, onlineCount, pre
           from the sidebar, and a visitor who opened chat from the Dynamic
           Island elsewhere gets their own page back rather than being dropped
           into social. */}
-      <ChatHeader onClose={onClose} onlineCount={onlineCount} presenceSynced={presenceSynced} />
+      <ChatHeader onClose={onClose} />
 
       <div className={styles.messagesArea}>
         {isLoading && messages.length === 0 ? (

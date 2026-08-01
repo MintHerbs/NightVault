@@ -15,6 +15,9 @@ const DRAWER_TABS = [
   { key: 'gifs', label: 'GIFs' },
   { key: 'stickers', label: 'Stickers' },
 ]
+/** MediaPicker's plural tab keys (KLIPY's own vocabulary) to the singular
+    values messages.attachment_type and send_message actually accept. */
+const ATTACHMENT_KIND = { gifs: 'gif', stickers: 'sticker' }
 
 export default function ChatInput({ onSend, onSendMedia, onTyping, onIdle, disabled = false }) {
   const [value, setValue] = useState('')
@@ -97,7 +100,12 @@ export default function ChatInput({ onSend, onSendMedia, onTyping, onIdle, disab
     }
 
     messageTimes.current.push(Date.now())
-    onSendMedia?.(item.fullUrl, kind)
+    // MediaPicker's `kind` is 'gifs' / 'stickers' — plural, because that is
+    // what the KLIPY search API (and its edge function) expects. The
+    // messages table's attachment_type and the send_message RPC both check
+    // against singular 'gif' / 'sticker', so every send failed that check
+    // and got swallowed as a console-only error with no UI feedback.
+    onSendMedia?.(item.fullUrl, ATTACHMENT_KIND[kind] ?? kind)
     setIsDrawerOpen(false)
   }
 
