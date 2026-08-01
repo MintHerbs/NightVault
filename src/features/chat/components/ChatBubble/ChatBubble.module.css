@@ -91,6 +91,16 @@
   object-fit: contain;
 }
 
+.mediaCaption {
+  display: block;
+  margin-top: 6px;
+  padding: 0 6px 3px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 /* Absolutely positioned so revealing it cannot reflow the thread. */
 .timestamp {
   position: absolute;

@@ -8,8 +8,6 @@ import styles from './ChatHeader.module.css'
 export default function ChatHeader({ onClose }) {
   return (
     <header className={styles.header}>
-      <h2 className={styles.title}>Community chat</h2>
-
       <button type="button" className={styles.close} onClick={onClose} aria-label="Close chat">
         <X size={18} aria-hidden="true" />
       </button>

@@ -1,6 +1,6 @@
 // Chat input: auto-growing pill field with an always-present send action
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, Smile } from 'lucide-react'
+import { Send, Smile, X } from 'lucide-react'
 import MediaPicker from '../../../../components/ui/MediaPicker/MediaPicker'
 import styles from './ChatInput.module.css'
 
@@ -23,6 +23,9 @@ export default function ChatInput({ onSend, onSendMedia, onTyping, onIdle, disab
   const [value, setValue] = useState('')
   const [hint, setHint] = useState(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  // A picked GIF/sticker waits here until Send is pressed, rather than going
+  // out the moment it's tapped — lets the sender add a caption or back out.
+  const [pendingAttachment, setPendingAttachment] = useState(null)
   const textareaRef = useRef(null)
   const messageTimes = useRef([]) // Track message timestamps for rate limiting
   const hintTimer = useRef(null)
@@ -62,7 +65,7 @@ export default function ChatInput({ onSend, onSendMedia, onTyping, onIdle, disab
 
   const handleSend = () => {
     const content = value.trim()
-    if (!content || disabled) return
+    if ((!content && !pendingAttachment) || disabled) return
 
     // Previously this returned silently, so a rate-limited message just
     // vanished with no explanation and the input looked broken.
@@ -72,8 +75,13 @@ export default function ChatInput({ onSend, onSendMedia, onTyping, onIdle, disab
     }
 
     messageTimes.current.push(Date.now())
-    onSend(content)
+    if (pendingAttachment) {
+      onSendMedia?.(pendingAttachment.url, pendingAttachment.kind, content)
+    } else {
+      onSend(content)
+    }
     setValue('')
+    setPendingAttachment(null)
     setHint(null)
   }
 
@@ -86,7 +94,8 @@ export default function ChatInput({ onSend, onSendMedia, onTyping, onIdle, disab
 
   const handleDrawerSelect = (item, kind) => {
     // Emoji inserts into the field and leaves the drawer open for picking
-    // more than one; GIFs/stickers are a discrete attachment, sent at once.
+    // more than one; GIFs/stickers are staged as a pending attachment so the
+    // sender can add a caption (or change their mind) before it goes out.
     if (kind === 'emoji') {
       setValue((prev) => prev + item.char)
       textareaRef.current?.focus()
@@ -94,20 +103,23 @@ export default function ChatInput({ onSend, onSendMedia, onTyping, onIdle, disab
     }
 
     if (disabled) return
-    if (isRateLimited()) {
-      showHint('Slow down a moment before sending again')
-      return
-    }
 
-    messageTimes.current.push(Date.now())
     // MediaPicker's `kind` is 'gifs' / 'stickers' — plural, because that is
     // what the KLIPY search API (and its edge function) expects. The
     // messages table's attachment_type and the send_message RPC both check
     // against singular 'gif' / 'sticker', so every send failed that check
     // and got swallowed as a console-only error with no UI feedback.
-    onSendMedia?.(item.fullUrl, ATTACHMENT_KIND[kind] ?? kind)
+    setPendingAttachment({
+      url: item.fullUrl,
+      kind: ATTACHMENT_KIND[kind] ?? kind,
+      previewUrl: item.previewUrl,
+      title: item.title,
+    })
     setIsDrawerOpen(false)
+    textareaRef.current?.focus()
   }
+
+  const clearPendingAttachment = () => setPendingAttachment(null)
 
   const handleChange = (e) => {
     const newValue = e.target.value
@@ -125,7 +137,7 @@ export default function ChatInput({ onSend, onSendMedia, onTyping, onIdle, disab
     else onIdle?.()
   }
 
-  const canSend = value.trim().length > 0 && !disabled
+  const canSend = (value.trim().length > 0 || !!pendingAttachment) && !disabled
 
   return (
     <div className={styles.wrapper}>
@@ -136,6 +148,24 @@ export default function ChatInput({ onSend, onSendMedia, onTyping, onIdle, disab
             onSelect={handleDrawerSelect}
             onClose={() => setIsDrawerOpen(false)}
           />
+        </div>
+      )}
+
+      {pendingAttachment && (
+        <div className={styles.pendingAttachment}>
+          <img
+            className={styles.pendingAttachmentImg}
+            src={pendingAttachment.previewUrl}
+            alt={pendingAttachment.title || (pendingAttachment.kind === 'sticker' ? 'Sticker' : 'GIF')}
+          />
+          <button
+            type="button"
+            className={styles.pendingAttachmentRemove}
+            onClick={clearPendingAttachment}
+            aria-label="Remove attachment"
+          >
+            <X size={13} aria-hidden="true" />
+          </button>
         </div>
       )}
 
@@ -157,7 +187,7 @@ export default function ChatInput({ onSend, onSendMedia, onTyping, onIdle, disab
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
+          placeholder={pendingAttachment ? 'Add a caption (optional)...' : 'Type a message...'}
           rows={1}
           disabled={disabled}
           enterKeyHint="send"

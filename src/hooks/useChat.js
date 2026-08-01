@@ -137,9 +137,9 @@ export default function useChat(isChatOpen) {
     return insertMessage({ content: content.trim() })
   }, [insertMessage])
 
-  const sendAttachment = useCallback((url, kind) => {
+  const sendAttachment = useCallback((url, kind, content = '') => {
     if (!url) return
-    return insertMessage({ attachmentUrl: url, attachmentType: kind })
+    return insertMessage({ content: content.trim(), attachmentUrl: url, attachmentType: kind })
   }, [insertMessage])
 
   return {

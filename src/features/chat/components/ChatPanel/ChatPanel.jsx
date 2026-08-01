@@ -35,9 +35,9 @@ export default function ChatPanel({ isOpen, onClose, sessionId }) {
     sendMessage(content)
   }
 
-  const handleSendMedia = (url, kind) => {
+  const handleSendMedia = (url, kind, content) => {
     notifyStopped()
-    sendAttachment(url, kind)
+    sendAttachment(url, kind, content)
   }
 
   // Grouping is computed once over the message list rather than inside each

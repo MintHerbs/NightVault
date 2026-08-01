@@ -176,6 +176,52 @@
   line-height: 1.4;
 }
 
+/* Staged GIF/sticker: sits above the field until Send is pressed, so picking
+   one is a compose action rather than an instant send. */
+.pendingAttachment {
+  position: relative;
+  align-self: flex-start;
+  width: 88px;
+  height: 88px;
+  margin-left: 6px;
+  border-radius: var(--md-shape-md);
+  overflow: hidden;
+  background: var(--md-surface-container);
+  border: 1px solid var(--md-outline-variant);
+}
+
+.pendingAttachmentImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pendingAttachmentRemove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  cursor: pointer;
+}
+
+.pendingAttachmentRemove:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.pendingAttachmentRemove:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.8);
+  outline-offset: 1px;
+}
+
 /* --breakpoint-lg */
 @media (max-width: 768px) {
   .wrapper {

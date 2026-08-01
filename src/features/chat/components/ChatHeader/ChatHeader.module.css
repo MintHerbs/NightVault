@@ -6,32 +6,11 @@
   z-index: 3;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   padding: 14px 20px;
   background: rgba(var(--color-bg-rgb), 0.82);
-  border-bottom: 1px solid var(--md-outline-variant);
   backdrop-filter: blur(12px);
-}
-
-/* Layer 3 signature, same rule as the post card and the composer. */
-.header::after {
-  content: '';
-  position: absolute;
-  inset: auto 0 -1px 0;
-  height: 2px;
-  background: var(--signature-gradient);
-  opacity: 0.4;
-  pointer-events: none;
-}
-
-.title {
-  margin: 0;
-  min-width: 0;
-  font-size: 0.95rem;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-  color: var(--md-on-surface);
 }
 
 .close {

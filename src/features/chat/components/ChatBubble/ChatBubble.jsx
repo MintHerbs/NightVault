@@ -37,12 +37,15 @@ export default function ChatBubble({ message, isOwnMessage, isGroupStart, isGrou
             .join(' ')}
         >
           {isMedia ? (
-            <img
-              className={styles.attachmentImg}
-              src={message.attachment_url}
-              alt={message.attachment_type === 'sticker' ? 'Sticker' : 'GIF'}
-              loading="lazy"
-            />
+            <>
+              <img
+                className={styles.attachmentImg}
+                src={message.attachment_url}
+                alt={message.attachment_type === 'sticker' ? 'Sticker' : 'GIF'}
+                loading="lazy"
+              />
+              {message.content && <span className={styles.mediaCaption}>{message.content}</span>}
+            </>
           ) : (
             <span className={styles.text}>{message.content}</span>
           )}
