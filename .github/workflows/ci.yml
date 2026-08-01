@@ -1,0 +1,101 @@
+# PR checks (T-097). Three independent gates beyond the CSS contrast guard
+# in lint.yml: the production build must succeed, the full test:* suite
+# (src/lib, src/hooks, src/test/{tree,erd,analytics}) must pass, and the
+# db/sql/*.sql manifest (minus entries marked ci_skip — see
+# db/migrations.yaml and T-098) must apply cleanly, in full, to a freshly
+# created Supabase Postgres.
+#
+# Deliberately excludes `npm run test:gemini` (hits the live Gemini API with
+# a real key) — this workflow must never touch prod or shared dev data, and
+# only ever runs migrations against its own disposable, job-scoped stack.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+  test:
+    name: Test suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run test:* suite
+        run: npm test
+
+  migrations:
+    name: Migration validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # db-migrate.mjs only refuses a migration whose id is already recorded
+    # with a different checksum (drift). A freshly started local stack has
+    # no schema_migrations rows yet, so this applies the full manifest from
+    # scratch every run — the same check a new environment would hit, and
+    # the only way to catch a broken db/sql/*.sql file before it reaches an
+    # environment that already has history to drift against.
+    env:
+      SUPABASE_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - uses: supabase/setup-cli@v1
+        with:
+          # Matches the "supabase" devDependency pin in package.json —
+          # `latest` would let CI silently drift onto a CLI version nobody
+          # has run against this project's supabase/config.toml locally.
+          version: '2.98.2'
+
+      - name: Start local Supabase stack
+        run: supabase start
+
+      - name: Apply db/sql/*.sql via the migration runner
+        run: npm run db:migrate -- --ci
+
+      - name: Stop local Supabase stack
+        if: always()
+        run: supabase stop --no-backup

@@ -92,7 +92,18 @@ wrapped as `npm run db:migrate`:
 npm run db:migrate                  # apply pending migrations
 npm run db:migrate -- --status      # list applied vs pending, no writes
 npm run db:migrate -- --dry-run     # show what would run, no writes
+npm run db:migrate -- --ci          # apply against a fresh schema, skipping ci_skip entries
 ```
+
+`--ci` is for [.github/workflows/ci.yml](../.github/workflows/ci.yml)'s
+migration-validation job, which applies the full manifest to a freshly
+started local Supabase stack on every PR. It excludes any entry with
+`ci_skip: true` (currently `0025` and `0026` — see their comments in
+`migrations.yaml`: both target prod's pre-existing, non-migration-created
+`courses` table and fail outright against the `courses` table `0024`
+creates on a fresh schema). Don't run `--ci` against dev or prod — those
+entries would be left permanently pending there. See T-098 for the
+courses-table reconciliation that would let `--ci` stop skipping them.
 
 The runner reads `SUPABASE_DB_URL` from `.env` and `.env.local`
 automatically (via Node's built-in `--env-file-if-exists`), so no

@@ -22,6 +22,7 @@ const HELP = `Usage:
   npm run db:migrate                 apply pending migrations
   npm run db:migrate -- --status     list applied vs pending, no writes
   npm run db:migrate -- --dry-run    show what would be applied, no writes
+  npm run db:migrate -- --ci         skip manifest entries marked ci_skip
   npm run db:migrate -- --help       this message
 
 Reads the database URL from SUPABASE_DB_URL (preferred) or DATABASE_URL.
@@ -31,12 +32,21 @@ For a local Supabase stack (npx supabase start), the URL is:
 
 Bookkeeping lives in public.schema_migrations on the target database
 (created automatically on first run).
+
+--ci is for validating the manifest against a freshly created schema (see
+.github/workflows/ci.yml) and excludes any entry with \`ci_skip: true\` in
+migrations.yaml — used for migrations documented as targeting a specific
+environment's pre-existing schema rather than one this repo's own
+migrations produce from scratch (see db/README.md). Do not use --ci
+against dev or prod: it would leave those entries permanently pending
+there.
 `
 
 const { values: flags } = parseArgs({
   options: {
     'dry-run': { type: 'boolean', default: false },
     status:    { type: 'boolean', default: false },
+    ci:        { type: 'boolean', default: false },
     help:      { type: 'boolean', short: 'h', default: false },
   },
 })
@@ -59,7 +69,18 @@ if (!manifest?.migrations?.length) {
   process.exit(1)
 }
 
-const planned = manifest.migrations.map((m) => {
+const entries = flags.ci
+  ? manifest.migrations.filter((m) => !m.ci_skip)
+  : manifest.migrations
+
+if (flags.ci) {
+  const skipped = manifest.migrations.filter((m) => m.ci_skip)
+  if (skipped.length) {
+    console.log(`--ci: skipping ${skipped.length} manifest entr${skipped.length === 1 ? 'y' : 'ies'} marked ci_skip: ${skipped.map((m) => m.id).join(', ')}`)
+  }
+}
+
+const planned = entries.map((m) => {
   if (!m.id || !m.file) {
     throw new Error(`Manifest entry missing id or file: ${JSON.stringify(m)}`)
   }

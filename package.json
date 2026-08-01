@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint:css": "stylelint \"src/**/*.css\"",
+    "test": "npm run test:math && npm run test:hooks && npm run test:chem && npm run test:recurrence && npm run test:tree && npm run test:logic && npm run test:circuits && npm run test:erd && npm run test:analytics",
     "test:math": "node src/lib/noteMath.test.js",
     "test:hooks": "node src/hooks/useAIState.test.js",
     "test:chem": "node src/lib/chem/noteChem.test.js && node src/lib/chem/reactionLayout.test.js",

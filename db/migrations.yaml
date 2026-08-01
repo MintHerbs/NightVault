@@ -221,6 +221,17 @@ migrations:
     created: 2026-07-25
     applied_envs: ["prod"]
     related_issues: ["T-051"]
+    # T-097: this file's `course_id text references public.courses(id)`
+    # targets prod's pre-existing text-keyed courses table. Against a fresh
+    # schema built from this repo's own migrations, 0024 has already created
+    # a *different* courses table (id uuid), so this INSERTs a text slug
+    # into a uuid column and fails outright — not a bug introduced by CI,
+    # the file's own header has documented the divergence since 2026-07-25.
+    # `npm run db:migrate -- --ci` (used by the fresh-schema CI job) skips
+    # entries with ci_skip so that job can validate every other migration
+    # without needing the courses-table reconciliation this ticket doesn't
+    # attempt. See db/README.md and T-098.
+    ci_skip: true
 
   - id: "0026"
     file: sql/0026_courses_primary_owner_lockdown.sql
@@ -228,6 +239,12 @@ migrations:
     author: agent
     created: 2026-07-25
     applied_envs: ["prod"]
+    # T-097: same reason as 0025 — this backfills course_id against prod's
+    # pre-existing courses table and recreates is_primary_owner() for it;
+    # both already exist from 0024 on a fresh schema, and the backfill
+    # target ('computer-science' as admin_users.course_id) hits the same
+    # uuid-vs-text mismatch. Skipped by `--ci`. See db/README.md and T-098.
+    ci_skip: true
     related_issues: ["T-051"]
 
   - id: "0027"

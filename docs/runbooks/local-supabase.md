@@ -1,9 +1,7 @@
 # Running Supabase locally with Docker
 
-> Status: **Working procedure** for everything below except §5 (CI
-> integration) and the `npm run db:migrate` helper called out in §4.3
-> and §7. The CLI is installed as a dev dependency, and the schema in
-> [db/sql/](../../db/) can be applied to a local stack today.
+> Status: **Working procedure**, including §5 (CI integration, T-097) and
+> the `npm run db:migrate` helper called out in §4.3 and §7.
 
 ---
 
@@ -180,31 +178,37 @@ drop the data volume too.
 
 ---
 
-## 5. Using local Supabase in tests *(planned)*
+## 5. Using local Supabase in CI
 
-Once Vitest is in place ([Issue #9](https://github.com/MintHerbs/b-tree/issues/9)),
-integration tests will:
-
-1. Start the stack in CI via the `supabase/setup-cli` GitHub Action.
-2. Apply migrations with `npm run db:migrate -- --env ci`.
-3. Run a `tests/integration/setup.js` that resets the DB before each
-   suite.
-4. Read `VITE_SUPABASE_URL=http://127.0.0.1:54321` from a test-only
-   `.env.test`.
-
-The CI workflow will look approximately like:
+Implemented in [.github/workflows/ci.yml](../../.github/workflows/ci.yml)
+(T-097) as its own `migrations` job, separate from the plain `test` job
+(the existing `test:*` suite has no database dependency — see
+[db/README.md](../../db/README.md)):
 
 ```yaml
-# .github/workflows/ci.yml (excerpt — full version per Issue #9)
+# .github/workflows/ci.yml (migrations job, abridged)
 - uses: supabase/setup-cli@v1
   with:
-    version: latest
-- run: npx supabase start
-- run: npm run db:migrate -- --env ci
-- run: npm test
+    version: '2.98.2'  # matches the supabase devDependency pin
+- run: supabase start
+- run: npm run db:migrate -- --ci
 - if: always()
-  run: npx supabase stop --no-backup
+  run: supabase stop --no-backup
 ```
+
+`--ci` (not `--env ci` — see `scripts/db-migrate.mjs --help`) applies the
+full manifest to the stack's freshly created schema and skips any entry
+marked `ci_skip: true` in `migrations.yaml`. Two entries (`0025`, `0026`)
+carry that flag today: both are prod-only hotfixes against a `courses`
+table that predates this repo's migrations and diverges from the one
+`0024` creates, so they fail outright on a from-scratch apply — see
+`db/README.md` and T-098 for the reconciliation that would remove the
+need for `ci_skip`.
+
+There is no integration-test scaffolding yet (no `tests/integration/`,
+no DB-backed test in the `test:*` suite) — the CI job's job today is
+purely to catch a `db/sql/*.sql` file that doesn't apply cleanly, not to
+run application tests against the database.
 
 ---
 
@@ -229,5 +233,6 @@ The CI workflow will look approximately like:
 - [x] [db/migrations.yaml](../../db/migrations.yaml) manifest
 - [x] `supabase/config.toml` checked into the repo
 - [x] `npm run db:migrate` walks the manifest and tracks applied state in `public.schema_migrations`
-- [ ] Vitest + integration-test scaffolding ([Issue #9](https://github.com/MintHerbs/b-tree/issues/9))
-- [ ] CI workflow that runs against local Supabase
+- [x] CI workflow that runs against local Supabase (T-097)
+- [ ] Vitest + integration-test scaffolding, i.e. app-level tests that read/write through the local stack rather than pure-function `test:*` scripts ([Issue #9](https://github.com/MintHerbs/b-tree/issues/9) — the CI-workflow half of that issue is now covered by T-097; this line is what remains of it)
+- [ ] Reconcile `0024`'s `courses` table with prod's pre-existing one, so `0025`/`0026` no longer need `ci_skip` (T-098)
