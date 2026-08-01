@@ -43,7 +43,6 @@ import {
   getMarkdown,
   markdownToSlice,
   $prose,
-  $view,
   $remark,
   $command,
   $markSchema,
@@ -316,55 +315,82 @@ const moleculeSchema = $nodeSchema('molecule', () => ({
 }))
 
 // Molecule node view: renders the real reader component (MoleculeStructure),
-// so the author sees exactly what a visitor gets. Mirrors playgroundNodeView's
-// react-dom-root approach; deferred a microtask for the same reason.
-const moleculeNodeView = $view(moleculeSchema, () => (node) => {
-  const dom = document.createElement('div')
-  const root = createRoot(dom)
-  const render = (n) => queueMicrotask(() => {
-    try {
-      root.render(<MoleculeStructure smiles={n.attrs.smiles} label={n.attrs.label} />)
-    } catch { /* editor may have torn down */ }
-  })
-  render(node)
-  return {
-    dom,
-    update: (updated) => {
-      if (updated.type !== node.type) return false
-      render(updated)
-      return true
+// so the author sees exactly what a visitor gets.
+//
+// Registered as a raw ProseMirror `nodeViews` prop (matching
+// `youtubeNodeViewPlugin` below), not via Milkdown's `$view()` utility.
+// `$view()` registers into `nodeViewCtx` behind `await ctx.wait(SchemaReady)`
+// — an async step that can lose the race against the EditorView's own
+// creation, so the node view silently never attaches and the node falls back
+// to its bare `toDOM`. Confirmed live: pasting `::molecule{...}` (or a
+// `` ```reaction `` fence via the identically-`$view`-based `codeBlockView`)
+// produced the correct node/attrs but rendered as the schema's raw `toDOM`,
+// with no SVG — on this worktree AND on unmodified `main`, so this is a
+// pre-existing gap in every `$view`-based node view here (molecule,
+// playground, code block), not something new. `youtubeNodeViewPlugin`'s raw
+// `Plugin({props: {nodeViews}})` registration is synchronous and reliably
+// attaches, so every node view in this file now uses that shape instead.
+const moleculeNodeView = $prose(() => new Plugin({
+  key: new PluginKey('NOTE_EDITOR_MOLECULE_VIEW'),
+  props: {
+    nodeViews: {
+      molecule: (node) => {
+        const dom = document.createElement('div')
+        const root = createRoot(dom)
+        const render = (n) => queueMicrotask(() => {
+          try {
+            root.render(<MoleculeStructure smiles={n.attrs.smiles} label={n.attrs.label} />)
+          } catch { /* editor may have torn down */ }
+        })
+        render(node)
+        return {
+          dom,
+          update: (updated) => {
+            if (updated.type !== node.type) return false
+            render(updated)
+            return true
+          },
+          ignoreMutation: () => true,
+          destroy: () => queueMicrotask(() => root.unmount()),
+        }
+      },
     },
-    ignoreMutation: () => true,
-    destroy: () => queueMicrotask(() => root.unmount()),
-  }
-})
+  },
+}))
 
 // Playground node view: the real reader component, so the author sees and can
-// drive the same live document a visitor gets. Mirrors codeBlockView's
-// react-dom-root approach; deferred a microtask for the same reason.
-const playgroundNodeView = $view(playgroundSchema, () => (node) => {
-  const dom = document.createElement('div')
-  const root = createRoot(dom)
-  const render = (n) => queueMicrotask(() => {
-    try {
-      root.render(<NotePlayground playgroundId={n.attrs.playgroundId} />)
-    } catch { /* editor may have torn down */ }
-  })
-  render(node)
-  return {
-    dom,
-    update: (updated) => {
-      if (updated.type !== node.type) return false
-      render(updated)
-      return true
+// drive the same live document a visitor gets. See moleculeNodeView above for
+// why this is a raw `nodeViews` prop registration rather than `$view()`.
+const playgroundNodeView = $prose(() => new Plugin({
+  key: new PluginKey('NOTE_EDITOR_PLAYGROUND_VIEW'),
+  props: {
+    nodeViews: {
+      playground: (node) => {
+        const dom = document.createElement('div')
+        const root = createRoot(dom)
+        const render = (n) => queueMicrotask(() => {
+          try {
+            root.render(<NotePlayground playgroundId={n.attrs.playgroundId} />)
+          } catch { /* editor may have torn down */ }
+        })
+        render(node)
+        return {
+          dom,
+          update: (updated) => {
+            if (updated.type !== node.type) return false
+            render(updated)
+            return true
+          },
+          ignoreMutation: () => true,
+          // The playground owns its own buttons, tabs and editor panes —
+          // ProseMirror must not treat clicks inside them as selection changes.
+          stopEvent: () => true,
+          destroy: () => queueMicrotask(() => root.unmount()),
+        }
+      },
     },
-    ignoreMutation: () => true,
-    // The playground owns its own buttons, tabs and editor panes — ProseMirror
-    // must not treat clicks inside them as document selection changes.
-    stopEvent: () => true,
-    destroy: () => queueMicrotask(() => root.unmount()),
-  }
-})
+  },
+}))
 
 // YouTube node view: rounded thumbnail + play button (mirrors imageWrap's
 // rounded-corner treatment), swapped for a lazy-mounted iframe on click so
@@ -542,49 +568,66 @@ function configureCodeBlockMeta(ctx) {
 // T-037). The node's text stays in the doc model, so Markdown round-trip is
 // unaffected. React root mount/unmount is deferred a microtask to stay clear of
 // ProseMirror's synchronous view-update cycle.
-const codeBlockView = $view(codeBlockSchema, () => (node) => {
-  const dom = document.createElement('div')
-  const root = createRoot(dom)
-  const render = (n) => queueMicrotask(() => {
-    try {
-      // ```reaction fences are a JSON payload (T-090), not a code sample —
-      // codeBlockView is the one place ALL fenced code renders, in both the
-      // reader and here, so this is the only spot that needs to know about
-      // it. `::reaction` gets no new $nodeSchema: fenced code already
-      // round-trips losslessly through codeBlockSchema (ADR 0001), so only
-      // the render branches, same as the reader's `code()` handler. A
-      // malformed block (bad JSON, oversized payload, over a cap) falls
-      // through to the ordinary CodeBlock rendering — never a thrown render.
-      if (n.attrs.language === 'reaction') {
-        const parsed = parseReactionBlock(n.textContent)
-        if (parsed.ok) {
-          root.render(<ReactionScheme data={{ steps: parsed.steps }} />)
-          return
+//
+// Registered as a raw `nodeViews` prop, not `$view()` — see moleculeNodeView's
+// comment above for why: `$view()`'s registration into `nodeViewCtx` is gated
+// on an async `ctx.wait(SchemaReady)`, which can lose the race against the
+// EditorView's own creation. Confirmed live (before this fix): every code
+// block — pasted, typed, or already saved in an existing note — rendered as
+// the commonmark preset's bare `<pre><code>`, never through this component,
+// on this worktree and on unmodified `main` alike. This is what made
+// `` ```reaction `` fall back to looking like plain formula text instead of
+// rendering, exactly as reported.
+const codeBlockView = $prose(() => new Plugin({
+  key: new PluginKey('NOTE_EDITOR_CODE_BLOCK_VIEW'),
+  props: {
+    nodeViews: {
+      code_block: (node) => {
+        const dom = document.createElement('div')
+        const root = createRoot(dom)
+        const render = (n) => queueMicrotask(() => {
+          try {
+            // ```reaction fences are a JSON payload (T-090), not a code sample —
+            // codeBlockView is the one place ALL fenced code renders, in both the
+            // reader and here, so this is the only spot that needs to know about
+            // it. `::reaction` gets no new $nodeSchema: fenced code already
+            // round-trips losslessly through codeBlockSchema (ADR 0001), so only
+            // the render branches, same as the reader's `code()` handler. A
+            // malformed block (bad JSON, oversized payload, over a cap) falls
+            // through to the ordinary CodeBlock rendering — never a thrown render.
+            if (n.attrs.language === 'reaction') {
+              const parsed = parseReactionBlock(n.textContent)
+              if (parsed.ok) {
+                root.render(<ReactionScheme data={{ steps: parsed.steps }} />)
+                return
+              }
+            }
+            root.render(
+              <CodeBlock
+                code={n.textContent}
+                language={n.attrs.language || 'auto'}
+                title={n.attrs.meta || undefined}
+              />
+            )
+          } catch { /* editor may have torn down */ }
+        })
+        render(node)
+        return {
+          dom,
+          update: (updated) => {
+            if (updated.type !== node.type) return false
+            render(updated)
+            return true
+          },
+          // React owns this subtree — keep ProseMirror's mutation observer out of it.
+          ignoreMutation: () => true,
+          stopEvent: () => false,
+          destroy: () => queueMicrotask(() => root.unmount()),
         }
-      }
-      root.render(
-        <CodeBlock
-          code={n.textContent}
-          language={n.attrs.language || 'auto'}
-          title={n.attrs.meta || undefined}
-        />
-      )
-    } catch { /* editor may have torn down */ }
-  })
-  render(node)
-  return {
-    dom,
-    update: (updated) => {
-      if (updated.type !== node.type) return false
-      render(updated)
-      return true
+      },
     },
-    // React owns this subtree — keep ProseMirror's mutation observer out of it.
-    ignoreMutation: () => true,
-    stopEvent: () => false,
-    destroy: () => queueMicrotask(() => root.unmount()),
-  }
-})
+  },
+}))
 
 // Image node view: renders the image with Material You hover controls —
 //   • a translucent circular "×" at the top-right that removes the image after a
