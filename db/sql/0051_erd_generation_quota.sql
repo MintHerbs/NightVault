@@ -16,8 +16,9 @@
 -- SECURITY DEFINER function below is for — same pattern as
 -- check_and_increment_rate_limit() in 0037.
 --
--- NOT APPLIED YET. db:migrate is blocked on the 0024 drift, so apply this by
--- hand (psql or the Supabase SQL editor) until the runner is unblocked.
+-- Applied to prod 2026-08-01 by hand (Supabase management API): db:migrate is
+-- still blocked on the 0024 drift, so every migration since 0043 has gone out
+-- this way. Not applied to local dev.
 
 BEGIN;
 
