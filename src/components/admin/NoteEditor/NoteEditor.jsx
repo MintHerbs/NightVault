@@ -5,7 +5,14 @@ import { Plugin, PluginKey, TextSelection } from '@milkdown/kit/prose/state'
 import remarkDirective from 'remark-directive'
 import CodeBlock from '../../social/CodeBlock/CodeBlock'
 import NotePlayground from '../../markdown/NotePlayground'
+import MoleculeStructure from '../../markdown/MoleculeStructure/MoleculeStructure'
 import { PLAYGROUND_ID_RE } from '../../../constants/notePlaygrounds'
+import { loadOCL } from '../../../lib/chem/loadChem'
+import {
+  isValidSmiles,
+  isValidLabel,
+  detectMolBlock,
+} from '../../../lib/chem/noteChem'
 import { resolveDraftSrc } from '../../../lib/draftImagePreviews'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../../lib/noteImageSrc'
 import { parseImageTitle, formatImageTitle, MIN_IMAGE_WIDTH } from '../../../lib/noteImageWidth'
@@ -248,6 +255,86 @@ const playgroundSchema = $nodeSchema('playground', () => ({
     },
   },
 }))
+
+// Molecule structure — a block atom round-tripping to
+// `::molecule{smiles="..." label="..."}` (T-091). Same shape as
+// youtubeSchema/playgroundSchema above, for the same reason: without a
+// schema declaring this node, Milkdown has no rule matching the directive, so
+// the parser drops it and the author's next save writes the note back with
+// the structure gone (the T-075 lesson).
+//
+// `smiles` is re-validated here on the write path with the same charset/
+// length gate the reader (MarkdownRenderer's remarkNoteDirectives) applies
+// on read — stored Markdown can also arrive via a GitHub backup restore,
+// bypassing this editor entirely.
+const moleculeSchema = $nodeSchema('molecule', () => ({
+  inline: false,
+  group: 'block',
+  atom: true,
+  selectable: true,
+  isolating: true,
+  attrs: {
+    smiles: { default: '', validate: 'string' },
+    label: { default: '', validate: 'string' },
+  },
+  parseDOM: [{
+    tag: 'div[data-type="molecule"]',
+    getAttrs: (dom) => {
+      if (!(dom instanceof HTMLElement)) return false
+      const smiles = dom.getAttribute('data-smiles') || ''
+      if (!isValidSmiles(smiles)) return false
+      const label = dom.getAttribute('data-label') || ''
+      return { smiles, label: isValidLabel(label) ? label : '' }
+    },
+  }],
+  toDOM: (node) => ['div', {
+    'data-type': 'molecule',
+    'data-smiles': node.attrs.smiles,
+    'data-label': node.attrs.label,
+  }],
+  parseMarkdown: {
+    match: (node) => node.type === 'leafDirective' && node.name === 'molecule',
+    runner: (state, node, type) => {
+      const smiles = node.attributes?.smiles || ''
+      if (!isValidSmiles(smiles)) return
+      const label = node.attributes?.label || ''
+      state.addNode(type, { smiles, label: isValidLabel(label) ? label : '' })
+    },
+  },
+  toMarkdown: {
+    match: (node) => node.type.name === 'molecule',
+    runner: (state, node) => {
+      state.addNode('leafDirective', undefined, undefined, {
+        name: 'molecule',
+        attributes: { smiles: node.attrs.smiles, label: node.attrs.label || '' },
+      })
+    },
+  },
+}))
+
+// Molecule node view: renders the real reader component (MoleculeStructure),
+// so the author sees exactly what a visitor gets. Mirrors playgroundNodeView's
+// react-dom-root approach; deferred a microtask for the same reason.
+const moleculeNodeView = $view(moleculeSchema, () => (node) => {
+  const dom = document.createElement('div')
+  const root = createRoot(dom)
+  const render = (n) => queueMicrotask(() => {
+    try {
+      root.render(<MoleculeStructure smiles={n.attrs.smiles} label={n.attrs.label} />)
+    } catch { /* editor may have torn down */ }
+  })
+  render(node)
+  return {
+    dom,
+    update: (updated) => {
+      if (updated.type !== node.type) return false
+      render(updated)
+      return true
+    },
+    ignoreMutation: () => true,
+    destroy: () => queueMicrotask(() => root.unmount()),
+  }
+})
 
 // Playground node view: the real reader component, so the author sees and can
 // drive the same live document a visitor gets. Mirrors codeBlockView's
@@ -741,6 +828,22 @@ const imageDeleteView = $prose(() => new Plugin({
 //              undelimited formula would otherwise paste in as plain text.
 //   • copy   → serialise the selection back to Markdown (so copying a formula
 //              yields its `$…$` source).
+// Parses `markdown` and replaces the current selection with it, reading
+// `view.state` fresh at call time — shared by the synchronous paste branch
+// below and the deferred MOL-block conversion, where "fresh at call time"
+// is the whole point (the view may have moved on by the time OCL resolves).
+function dispatchMarkdownInsert(view, ctx, markdown) {
+  let slice
+  try {
+    slice = markdownToSlice(markdown)(ctx)
+  } catch {
+    return false
+  }
+  if (!slice || typeof slice === 'string') return false
+  view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView())
+  return true
+}
+
 const markdownClipboard = $prose((ctx) => new Plugin({
   key: new PluginKey('NOTE_EDITOR_MD_CLIPBOARD'),
   props: {
@@ -751,6 +854,31 @@ const markdownClipboard = $prose((ctx) => new Plugin({
       if (view.state.selection.$from.parent.type.spec.code) return false
       const text = clip.getData('text/plain')
       if (!text) return false
+
+      // MOL block (T-091): unambiguous (a V2000/V3000 counts line), but
+      // converting it to SMILES needs OpenChemLib, which is lazy-loaded —
+      // detection is a cheap synchronous string check, but the conversion
+      // itself cannot run inside this synchronous handler. Claim the paste
+      // event now (returning true prevents the browser's own plain-text
+      // paste) and insert the `::molecule` node once loadOCL()'s conversion
+      // resolves, dispatching against the LATEST view state at that time —
+      // same as the synchronous dispatch above, just deferred, mirroring how
+      // codeBlockView/playgroundNodeView defer React work with
+      // queueMicrotask for "must run after this synchronous PM cycle".
+      if (detectMolBlock(text)) {
+        loadOCL().then((OCL) => {
+          let smiles
+          try {
+            smiles = OCL.Molecule.fromMolfile(text).toSmiles()
+          } catch {
+            return
+          }
+          if (!isValidSmiles(smiles)) return
+          dispatchMarkdownInsert(view, ctx, `::molecule{smiles="${smiles}"}`)
+        }).catch(() => {})
+        return true
+      }
+
       let slice
       try {
         slice = markdownToSlice(normalizeNoteMath(text))(ctx)
@@ -828,6 +956,8 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
       .use(createYoutubeAutoEmbed(applyingExternal))
       .use(playgroundSchema)
       .use(playgroundNodeView)
+      .use(moleculeSchema)
+      .use(moleculeNodeView)
       .use(markdownClipboard)
       .use(codeBlockView)
       .use(imageDeleteView)

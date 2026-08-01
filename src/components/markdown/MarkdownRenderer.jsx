@@ -6,7 +6,9 @@ import remarkDirective from 'remark-directive'
 import { visit } from 'unist-util-visit'
 import CodeBlock from '../social/CodeBlock/CodeBlock'
 import NotePlayground from './NotePlayground'
+import MoleculeStructure from './MoleculeStructure/MoleculeStructure'
 import { PLAYGROUND_ID_RE } from '../../constants/notePlaygrounds'
+import { isValidSmiles, isValidLabel } from '../../lib/chem/noteChem'
 import RichTooltip, { YouTubeIcon, InstagramIcon, LinkedInIcon } from '../ui/smoothui/rich-popover/index.tsx'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../lib/noteImageSrc'
 import { parseImageTitle } from '../../lib/noteImageWidth'
@@ -63,6 +65,20 @@ function remarkNoteDirectives() {
         if (!PLAYGROUND_ID_RE.test(id)) return
         data.hName = 'note-playground'
         data.hProperties = { playgroundId: id }
+        return
+      }
+      // `::molecule{smiles="..." label="..."}` (T-091). SMILES is re-validated
+      // here independently of the editor's own validation — stored Markdown
+      // can also arrive via a GitHub backup restore — same double-validation
+      // discipline as HEX_COLOR_RE above. An invalid smiles/label drops the
+      // directive entirely (renders as nothing), matching how an invalid
+      // hex/id already degrades for :color/:mark/::youtube.
+      if (node.type === 'leafDirective' && node.name === 'molecule') {
+        const smiles = attrs.smiles || ''
+        const label = attrs.label || ''
+        if (!isValidSmiles(smiles) || !isValidLabel(label)) return
+        data.hName = 'note-molecule'
+        data.hProperties = { smiles, label }
       }
     })
   }
@@ -264,6 +280,9 @@ const markdownComponents = {
   },
   'note-playground': function NotePlaygroundComponent({ playgroundId }) {
     return <NotePlayground playgroundId={playgroundId} />
+  },
+  'note-molecule': function NoteMoleculeComponent({ smiles, label }) {
+    return <MoleculeStructure smiles={smiles} label={label} />
   },
   img({ src, alt, title }) {
     // The image title carries the width chosen in the editor (`w=<px>`), so the
