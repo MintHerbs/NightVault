@@ -3,6 +3,7 @@ import { motion } from 'motion/react'
 import { Scale, Mail } from 'lucide-react'
 import Starfield from '../../components/effects/Starfield/Starfield'
 import Navbar from '../../components/layout/Navbar/Navbar'
+import BackButton from '../../components/common/BackButton/BackButton'
 import Callout from '../../components/social/Callout/Callout'
 import Alert from '../../components/social/Alert/Alert'
 import styles from './LegalPage.module.css'
@@ -15,12 +16,8 @@ export default function TermsPage() {
   return (
     <div className={styles.page}>
       <Starfield />
-      <Navbar
-        showNewFormula={true}
-        onNewFormula={() => navigate(-1)}
-        newFormulaText="← Back"
-        showAbout={true}
-      />
+      <BackButton onClick={() => navigate(-1)} />
+      <Navbar showAbout={true} />
 
       <main className={styles.main}>
         <motion.div

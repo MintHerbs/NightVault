@@ -3,6 +3,7 @@ import { motion } from 'motion/react'
 import { ShieldCheck, Flag, Heart, AlertTriangle, Scale, Eye } from 'lucide-react'
 import Starfield from '../../components/effects/Starfield/Starfield'
 import Navbar from '../../components/layout/Navbar/Navbar'
+import BackButton from '../../components/common/BackButton/BackButton'
 import Callout from '../../components/social/Callout/Callout'
 import Alert from '../../components/social/Alert/Alert'
 import styles from './guidelines.module.css'
@@ -13,12 +14,8 @@ export default function GuidelinesPage() {
   return (
     <div className={styles.page}>
       <Starfield />
-      <Navbar
-        showNewFormula={true}
-        onNewFormula={() => navigate(-1)}
-        newFormulaText="← Back"
-        showAbout={false}
-      />
+      <BackButton onClick={() => navigate(-1)} />
+      <Navbar showAbout={false} />
 
       <main className={styles.main}>
         <motion.div
