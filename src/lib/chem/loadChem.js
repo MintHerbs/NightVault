@@ -1,5 +1,5 @@
 // Lazy-loads OpenChemLib, mirroring `loadKatex()`'s cached-promise shape in
-// MarkdownRenderer.jsx (T-091/ADR 0002).
+// MarkdownRenderer.jsx (T-093/ADR 0002).
 //
 // Unlike mhchem (34 KB, a static import even in the admin editor),
 // OpenChemLib gzips to ~343 KB — meaningfully heavier — so this must be

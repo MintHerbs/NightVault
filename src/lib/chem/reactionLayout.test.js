@@ -1,4 +1,4 @@
-// Layout invariants for reaction schemes (T-090). Run with: npm run test:chem
+// Layout invariants for reaction schemes (T-092). Run with: npm run test:chem
 //
 // The whole point of this module is the non-overlap fix, so this asserts it
 // directly on deliberately mismatched fixtures rather than eyeballing

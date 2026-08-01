@@ -1,5 +1,5 @@
 ---
-id: T-091
+id: T-093
 title: Add the ::molecule directive and OpenChemLib structure renderer
 status: done
 severity: medium
@@ -15,7 +15,7 @@ Phase 3 of the chemistry-notes spec
 add the `::molecule{smiles="..." label="..."}` directive, wire it through the
 reader and the admin editor's Milkdown schema, and render it with OpenChemLib
 per [ADR 0002](../docs/adr/0002-chemistry-structure-renderer.md). This is the
-prerequisite T-090 (reaction schemes) depends on — both consume the same
+prerequisite T-092 (reaction schemes) depends on — both consume the same
 lazy-loaded renderer and SVG-sanitisation pass.
 
 ## Evidence
@@ -42,7 +42,7 @@ lazy-loaded renderer and SVG-sanitisation pass.
 ## Impact
 
 Without this, there is no way to author a chemistry structure at all — every
-downstream piece (reaction schemes/T-090, the structure builder) needs a
+downstream piece (reaction schemes/T-092, the structure builder) needs a
 molecule to render one. Without the bond-colour fix, every structure an
 author adds is invisible in dark mode from the moment this ships.
 
@@ -55,7 +55,7 @@ Summary:
 1. `npm install openchemlib` (no split entry points in the installed version —
    see ADR 0002; import from the package root).
 2. `src/lib/chem/noteChem.js`: SMILES character allowlist + 500-char cap,
-   shared by this ticket and T-090.
+   shared by this ticket and T-092.
 3. A lazy chem-renderer loader mirroring `loadKatex()` in
    `MarkdownRenderer.jsx`, but loaded from inside the structure component
    itself (not a module-level static import in either the reader or the
@@ -130,7 +130,7 @@ Summary:
   this ticket is Phase 3 of that spec
 - [docs/adr/0002-chemistry-structure-renderer.md](../docs/adr/0002-chemistry-structure-renderer.md) —
   renderer choice and the bond-colour finding this ticket must apply
-- [tickets/T-090-reaction-scheme-layout-and-overlap-fix.md](T-090-reaction-scheme-layout-and-overlap-fix.md) —
+- [tickets/T-092-reaction-scheme-layout-and-overlap-fix.md](T-092-reaction-scheme-layout-and-overlap-fix.md) —
   Phase 4, blocked on this ticket
 - `src/components/markdown/MarkdownRenderer.jsx:28-69`,
   `src/components/admin/NoteEditor/NoteEditor.jsx:173-283` — directive/schema

@@ -1,9 +1,9 @@
-// Validation and parsing core for chemistry note content (T-090/T-091).
+// Validation and parsing core for chemistry note content (T-092/T-093).
 //
 // This is the security boundary for two content shapes that both eventually
 // reach the DOM as OpenChemLib-rendered SVG:
-//   - `::molecule{smiles="..." label="..."}` (a leaf directive, T-091)
-//   - ```reaction\n{...json...}\n``` (a fenced code block, T-090)
+//   - `::molecule{smiles="..." label="..."}` (a leaf directive, T-093)
+//   - ```reaction\n{...json...}\n``` (a fenced code block, T-092)
 //
 // Everything here is a charset/shape/size gate, NOT full SMILES grammar or
 // chemistry validation — a string that passes `isValidSmiles` can still be
@@ -38,7 +38,7 @@ export function isValidLabel(label) {
 }
 
 // ---------------------------------------------------------------------------
-// Reaction JSON schema (T-090, Layer 3)
+// Reaction JSON schema (T-092, Layer 3)
 // ---------------------------------------------------------------------------
 
 /** Reject before `JSON.parse` is even called — the same reasoning as the
@@ -168,7 +168,7 @@ export function serializeReactionBlock(steps) {
 }
 
 // ---------------------------------------------------------------------------
-// Paste detection (T-091/T-090)
+// Paste detection (T-093/T-092)
 // ---------------------------------------------------------------------------
 
 /**

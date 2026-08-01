@@ -334,7 +334,7 @@ function ReactionTab({ open, onInsert, onClose }) {
 }
 
 /**
- * Toolbar entry point for constructing chemistry note content (T-090/T-091's
+ * Toolbar entry point for constructing chemistry note content (T-092/T-093's
  * follow-up toolbar work) — mirrors FormulaModal's shape exactly (same props,
  * same backdrop/header chrome) so it reads as a sibling, not a redesign. Two
  * tabs: Structure (a single `::molecule` directive) and Reaction (a

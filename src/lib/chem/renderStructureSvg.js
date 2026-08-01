@@ -1,5 +1,5 @@
 // Shared SVG rendering + sanitisation for the two structure-consuming
-// components, `MoleculeStructure` (T-091) and `ReactionScheme` (T-090). Both
+// components, `MoleculeStructure` (T-093) and `ReactionScheme` (T-092). Both
 // need the identical OpenChemLib `toSVG()` call, the identical
 // `rgb(0,0,0)` -> `currentColor` bond-stroke fix (ADR 0002), and the
 // identical allowlist sanitisation pass before the markup reaches the DOM —

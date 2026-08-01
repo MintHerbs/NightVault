@@ -1,5 +1,5 @@
 ---
-id: T-090
+id: T-092
 title: Render multi-step reaction schemes without overlapping structures
 status: done
 severity: medium
@@ -83,7 +83,7 @@ Full design is written up in
 
 - [x] **Blocked until Phase 2 (renderer spike: OpenChemLib vs SmilesDrawer)
       and Phase 3 (`::molecule` directive) are implemented** — both done
-      (ADR 0002; T-091), in the same worktree, before this ticket's work
+      (ADR 0002; T-093), in the same worktree, before this ticket's work
 - [x] A reaction scheme with differently-sized structures (e.g. a bare
       reagent next to a fused-ring structure) renders with zero bounding-box
       intersection between any two cells in the same row —
@@ -121,7 +121,7 @@ Full design is written up in
 - `ReactionScheme.jsx` reused a per-instance cell-id counter starting at 0 on
   every mount, so two `` ```reaction `` blocks on the same page collided on
   DOM id (same root cause and same `useId()` fix as `MoleculeStructure.jsx`,
-  see T-091).
+  see T-093).
 
 ## References
 

@@ -1,4 +1,4 @@
-// Pure layout for reaction schemes (T-090). No SVG, no React, no OpenChemLib
+// Pure layout for reaction schemes (T-092). No SVG, no React, no OpenChemLib
 // import — follows the same convention as this codebase's other diagram
 // layout modules (erdLayout.js, logic/tableauxLayout.js, algo/
 // recurrenceTreeLayout.js): a DEFAULTS constants object, a measuring step,

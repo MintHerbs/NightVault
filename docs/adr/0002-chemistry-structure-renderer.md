@@ -1,8 +1,8 @@
-# ADR 0002 — Structure-rendering library for chemistry notes (T-090, Phase 2 spike)
+# ADR 0002 — Structure-rendering library for chemistry notes (T-092, Phase 2 spike)
 
 **Status:** Accepted (spike passed)
 **Date:** 2026-08-01
-**Tickets:** T-090 — Reaction scheme layout and overlap fix; unblocks the
+**Tickets:** T-092 — Reaction scheme layout and overlap fix; unblocks the
 Phase 3 `::molecule` directive
 **Spec:** [docs/specs/chemistry-notes.md](../specs/chemistry-notes.md), Layer 2
 and Layer 3
@@ -10,7 +10,7 @@ and Layer 3
 ## Decision
 
 Use **OpenChemLib `9.24.0`** (`openchemlib`) as the structure renderer for
-both `::molecule` (Phase 3) and reaction schemes (Phase 4 / T-090), over
+both `::molecule` (Phase 3) and reaction schemes (Phase 4 / T-092), over
 **SmilesDrawer `2.4.1`** (`smiles-drawer`).
 
 ## Context
@@ -77,7 +77,7 @@ Choosing SmilesDrawer would mean either adding jsdom just to test the
 renderer, or leaving the renderer untested by the same convention every other
 diagram module in this codebase follows.
 
-### The bounding-box requirement (Layer 3 / T-090)
+### The bounding-box requirement (Layer 3 / T-092)
 
 `reactionLayout.js` needs each structure's real rendered size to place cells
 without overlap. OpenChemLib gives this two ways, both confirmed working:

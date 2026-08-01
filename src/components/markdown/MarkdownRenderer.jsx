@@ -68,7 +68,7 @@ function remarkNoteDirectives() {
         data.hProperties = { playgroundId: id }
         return
       }
-      // `::molecule{smiles="..." label="..."}` (T-091). SMILES is re-validated
+      // `::molecule{smiles="..." label="..."}` (T-093). SMILES is re-validated
       // here independently of the editor's own validation — stored Markdown
       // can also arrive via a GitHub backup restore — same double-validation
       // discipline as HEX_COLOR_RE above. An invalid smiles/label drops the
@@ -219,7 +219,7 @@ const markdownComponents = {
     // can be read from.
     const title = typeof node?.data?.meta === 'string' ? node.data.meta.trim() : ''
 
-    // ```reaction — a fenced JSON payload (T-090), not a code sample. A
+    // ```reaction — a fenced JSON payload (T-092), not a code sample. A
     // malformed block (bad JSON, oversized payload, over a step/item cap)
     // falls through to the ordinary CodeBlock rendering below rather than
     // throwing — the raw block stays visible as code, same degradation as an

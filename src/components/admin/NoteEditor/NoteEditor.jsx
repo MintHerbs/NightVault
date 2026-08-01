@@ -260,7 +260,7 @@ const playgroundSchema = $nodeSchema('playground', () => ({
 }))
 
 // Molecule structure — a block atom round-tripping to
-// `::molecule{smiles="..." label="..."}` (T-091). Same shape as
+// `::molecule{smiles="..." label="..."}` (T-093). Same shape as
 // youtubeSchema/playgroundSchema above, for the same reason: without a
 // schema declaring this node, Milkdown has no rule matching the directive, so
 // the parser drops it and the author's next save writes the note back with
@@ -588,7 +588,7 @@ const codeBlockView = $prose(() => new Plugin({
         const root = createRoot(dom)
         const render = (n) => queueMicrotask(() => {
           try {
-            // ```reaction fences are a JSON payload (T-090), not a code sample —
+            // ```reaction fences are a JSON payload (T-092), not a code sample —
             // codeBlockView is the one place ALL fenced code renders, in both the
             // reader and here, so this is the only spot that needs to know about
             // it. `::reaction` gets no new $nodeSchema: fenced code already
@@ -933,7 +933,7 @@ const markdownClipboard = $prose((ctx) => new Plugin({
       const text = clip.getData('text/plain')
       if (!text) return false
 
-      // Reaction SMILES (`reactants>agents>products`, T-090) has an
+      // Reaction SMILES (`reactants>agents>products`, T-092) has an
       // unambiguous SHAPE (noteChem.js's splitReactionSmiles — no OCL
       // needed), but shape alone isn't proof it's actual chemistry: plain
       // prose like "TODO>WIP>DONE" or "draft>review>done" also matches it,
@@ -973,7 +973,7 @@ const markdownClipboard = $prose((ctx) => new Plugin({
         return true
       }
 
-      // MOL block (T-091): unambiguous (a V2000/V3000 counts line), but
+      // MOL block (T-093): unambiguous (a V2000/V3000 counts line), but
       // converting it to SMILES needs OpenChemLib, which is lazy-loaded —
       // detection is a cheap synchronous string check, but the conversion
       // itself cannot run inside this synchronous handler. Claim the paste

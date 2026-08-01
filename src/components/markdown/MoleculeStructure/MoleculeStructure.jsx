@@ -9,7 +9,7 @@ const START_HEIGHT = 200
 
 /**
  * Renders a `::molecule{smiles="..." label="..."}` directive as an SVG
- * structure via OpenChemLib (T-091, ADR 0002). Used by both the note reader
+ * structure via OpenChemLib (T-093, ADR 0002). Used by both the note reader
  * (MarkdownRenderer) and the admin editor's node view, so an author sees
  * exactly what a visitor gets.
  *

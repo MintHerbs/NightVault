@@ -41,7 +41,7 @@ function StructureCell({ svg, fallback, className }) {
 }
 
 /**
- * Renders a parsed `` ```reaction `` block (T-090) — the `{steps}` shape
+ * Renders a parsed `` ```reaction `` block (T-092) — the `{steps}` shape
  * `parseReactionBlock` returns. Measures every distinct SMILES via the same
  * OpenChemLib renderer `MoleculeStructure` uses, feeds the real sizes into
  * `reactionLayout.js`, then places every cell absolutely per the layout's
