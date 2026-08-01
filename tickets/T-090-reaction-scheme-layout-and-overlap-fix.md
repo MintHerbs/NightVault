@@ -1,7 +1,7 @@
 ---
 id: T-090
 title: Render multi-step reaction schemes without overlapping structures
-status: backlog
+status: done
 severity: medium
 area: notes
 epic: none
@@ -81,28 +81,47 @@ Full design is written up in
 
 ## Acceptance criteria
 
-- [ ] **Blocked until Phase 2 (renderer spike: OpenChemLib vs SmilesDrawer)
-      and Phase 3 (`::molecule` directive) are implemented** — this ticket
-      renders structures via the same Layer 2 renderer and cannot land first
-- [ ] A reaction scheme with differently-sized structures (e.g. a bare
+- [x] **Blocked until Phase 2 (renderer spike: OpenChemLib vs SmilesDrawer)
+      and Phase 3 (`::molecule` directive) are implemented** — both done
+      (ADR 0002; T-091), in the same worktree, before this ticket's work
+- [x] A reaction scheme with differently-sized structures (e.g. a bare
       reagent next to a fused-ring structure) renders with zero bounding-box
-      intersection between any two cells in the same row
-- [ ] The motivating example (two-step diazotisation → azo-coupling, each step
+      intersection between any two cells in the same row —
+      `reactionLayout.test.js`'s `assertNoOverlaps` asserts this directly on
+      6 deliberately mismatched fixtures
+- [x] The motivating example (two-step diazotisation → azo-coupling, each step
       with a below-arrow reagent structure and two stacked condition lines)
-      renders correctly in both the note reader and the admin editor preview
-- [ ] A pasted reaction SMILES string auto-converts to a `reaction` block with
-      structures populated and conditions left blank for manual entry
-- [ ] A malformed `reaction` block (bad JSON, oversized payload, over the
+      renders correctly in both the note reader and the admin editor preview —
+      verified live via Playwright with the exact motivating fixture; the
+      scheme is wider than the prose column and scrolls horizontally to reveal
+      the final product, by design (`.wrapper`'s `overflow-x: auto`, same rule
+      `.katex-display`/`.tableWrapper` already use), confirmed not a clipping
+      bug by scrolling and re-screenshotting
+- [x] A pasted reaction SMILES string auto-converts to a `reaction` block with
+      structures populated and conditions left blank for manual entry —
+      hardened during self-review: the original charset-shape-only check
+      false-positived on plain prose that happens to match
+      `reactants>agents>products` shape (e.g. "TODO>WIP>DONE"); it now defers
+      to an OCL parse of every fragment before committing to the conversion,
+      falling back to the original pasted text otherwise
+- [x] A malformed `reaction` block (bad JSON, oversized payload, over the
       step/structure count cap) degrades to a plain rendered code block, never
       a thrown exception
-- [ ] The chemistry toolbar modal's Reaction tab builds a scheme step by step
+- [x] The chemistry toolbar modal's Reaction tab builds a scheme step by step
       with live preview and produces a working `reaction` directive via "copy
       as note directive"
-- [ ] `npm run test:chem` covers the fence validator and paste detector;
+- [x] `npm run test:chem` covers the fence validator and paste detector;
       `src/lib/chem/reactionLayout.test.js` asserts the non-overlap invariant
-      directly on deliberately mismatched fixtures
-- [ ] Non-chemistry and single-structure notes see no bundle-size or behavior
+      directly on deliberately mismatched fixtures (63 + 6 assertions)
+- [x] Non-chemistry and single-structure notes see no bundle-size or behavior
       change
+
+### Found during self-review (fixed, not part of the original scope)
+
+- `ReactionScheme.jsx` reused a per-instance cell-id counter starting at 0 on
+  every mount, so two `` ```reaction `` blocks on the same page collided on
+  DOM id (same root cause and same `useId()` fix as `MoleculeStructure.jsx`,
+  see T-091).
 
 ## References
 

@@ -1,7 +1,7 @@
 ---
 id: T-091
 title: Add the ::molecule directive and OpenChemLib structure renderer
-status: backlog
+status: done
 severity: medium
 area: notes
 epic: none
@@ -76,25 +76,53 @@ Summary:
 
 ## Acceptance criteria
 
-- [ ] `::molecule{smiles="..." label="..."}` renders as an SVG structure (not
-      raw directive text) in both the note reader and the admin editor
-- [ ] All ten spec fixture molecules render correctly (aromatic/fused rings,
+- [x] `::molecule{smiles="..." label="..."}` renders as an SVG structure (not
+      raw directive text) in both the note reader and the admin editor —
+      verified live via Playwright against both the admin editor's node view
+      and the reader path (NoteReader/MarkdownRenderer, exercised through the
+      editor's Preview modal)
+- [x] All ten spec fixture molecules render correctly (aromatic/fused rings,
       stereocentre, both charge forms, isotope); the deliberately-invalid
-      fixture degrades to a visible inline error, never a thrown exception
-- [ ] Bonds are visible in both light and dark theme (the `currentColor`
-      substitution is present and verified against the dark theme)
-- [ ] A malformed `smiles` (over the length cap, outside the character
+      fixture degrades to a visible inline error, never a thrown exception —
+      confirmed in ADR 0002's spike ("both libraries parsed all nine valid
+      fixtures and rejected the invalid one")
+- [x] Bonds are visible in both light and dark theme (the `currentColor`
+      substitution is present and verified against the dark theme) — extended
+      during implementation to a full theme-aware pastel atom-colour palette
+      (`--chem-atom-*` in global.css), validated with the dataviz skill's
+      palette validator against this app's own light/dark surfaces
+- [x] A malformed `smiles` (over the length cap, outside the character
       allowlist) degrades the directive to nothing, matching how an invalid
       `hex`/`id` already degrades for `:color`/`:mark`/`::youtube`
-- [ ] A pasted MOL block (`V2000`/`V3000` counts line) auto-converts to a
-      `::molecule` node
-- [ ] Saving a note containing `::molecule` in the admin editor round-trips
+- [x] A pasted MOL block (`V2000`/`V3000` counts line) auto-converts to a
+      `::molecule` node — verified live (ethanol V2000 fixture); a
+      malformed/unparseable MOL block now falls back to inserting the
+      original pasted text rather than silently discarding it (self-review
+      fix: the paste event was already claimed, so doing nothing on failure
+      deleted the user's clipboard content with no visible result)
+- [x] Saving a note containing `::molecule` in the admin editor round-trips
       the directive without dropping it (the T-075 lesson: no schema means
-      silent deletion on save)
-- [ ] `npm run test:chem` covers the SMILES validator and the MOL-block
-      detector
-- [ ] Non-chemistry and non-structure notes see no bundle-size change (the
+      silent deletion on save) — the underlying cause of this working at all,
+      a `$view()`-registration race that silently dropped every custom node
+      view including code blocks, was found and fixed during implementation
+- [x] `npm run test:chem` covers the SMILES validator and the MOL-block
+      detector (63 assertions, `noteChem.test.js`)
+- [x] Non-chemistry and non-structure notes see no bundle-size change (the
       renderer stays behind the lazy loader on both reader and editor paths)
+
+### Found during self-review (fixed, not part of the original scope)
+
+- Every `::molecule`/`` ```reaction `` structure used a fixed, non-unique SVG
+  `id` (`note-molecule`, `rxn-cell-N`), so a note with more than one structure
+  — the normal case for this feature — rendered duplicate DOM ids (OpenChemLib
+  embeds `id` into a `<style>` block and per-atom/bond element ids). Fixed with
+  `useId()` in both `MoleculeStructure.jsx` and `ReactionScheme.jsx`.
+- The reaction-SMILES paste path (`reactants>agents>products`) matched on
+  charset shape alone, which plain prose can satisfy too (`TODO>WIP>DONE`,
+  `draft>review>done` — letters pass the loose SMILES charset). Fixed by
+  deferring to an OCL parse of every fragment before committing to a reaction
+  render, falling back to the original pasted text otherwise (same shape as
+  the MOL-block path already used).
 
 ## References
 

@@ -14,6 +14,7 @@ import {
   isValidLabel,
   parseReactionBlock,
   detectMolBlock,
+  splitReactionSmiles,
   convertChemPaste,
 } from '../../../lib/chem/noteChem'
 import { resolveDraftSrc } from '../../../lib/draftImagePreviews'
@@ -905,6 +906,22 @@ function dispatchMarkdownInsert(view, ctx, markdown) {
   return true
 }
 
+// Plain-paste fallback: parses `text` as Markdown (bare LaTeX normalised
+// first) and replaces the current selection — the ordinary end of
+// `handlePaste` below, and also the async fallback a reaction-SMILES-shaped
+// paste takes once OCL confirms it wasn't real chemistry after all.
+function insertPlainTextPaste(view, ctx, text) {
+  let slice
+  try {
+    slice = markdownToSlice(normalizeNoteMath(text))(ctx)
+  } catch {
+    return false
+  }
+  if (!slice || typeof slice === 'string') return false
+  view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView())
+  return true
+}
+
 const markdownClipboard = $prose((ctx) => new Plugin({
   key: new PluginKey('NOTE_EDITOR_MD_CLIPBOARD'),
   props: {
@@ -916,14 +933,45 @@ const markdownClipboard = $prose((ctx) => new Plugin({
       const text = clip.getData('text/plain')
       if (!text) return false
 
-      // Reaction SMILES (`reactants>agents>products`, T-090) is unambiguous
-      // and needs no OCL to convert — a plain string splitter (noteChem.js)
-      // — so this path stays fully synchronous, unlike the MOL-block path
-      // below. `conditionsAbove` is always empty here: reaction SMILES
+      // Reaction SMILES (`reactants>agents>products`, T-090) has an
+      // unambiguous SHAPE (noteChem.js's splitReactionSmiles — no OCL
+      // needed), but shape alone isn't proof it's actual chemistry: plain
+      // prose like "TODO>WIP>DONE" or "draft>review>done" also matches it,
+      // since letters pass the deliberately loose SMILES charset. Confirmed
+      // via OCL: a bare multi-letter token with no brackets correctly throws
+      // ("unknown element label"), and a digits-only fragment like "1"
+      // parses but yields zero atoms — so real validation (does OCL actually
+      // parse every fragment as a non-empty molecule?) is required before
+      // committing to a reaction render, not just the charset shape check.
+      // That needs OpenChemLib, which is lazy-loaded, so this claims the
+      // paste synchronously (same reasoning as the MOL-block path below) and
+      // resolves to either the reaction render or, if any fragment isn't
+      // real chemistry, the ORIGINAL pasted text unchanged — a false-shape
+      // match must never silently eat the user's paste.
+      // `conditionsAbove` is always empty on this path: reaction SMILES
       // carries no condition text, a documented gap (chemistry-notes.md),
       // not a bug — the author fills conditions in via the toolbar after.
-      const converted = convertChemPaste(text)
-      if (converted && dispatchMarkdownInsert(view, ctx, converted)) return true
+      const reactionShape = splitReactionSmiles(text)
+      if (reactionShape) {
+        loadOCL().then((OCL) => {
+          const fragments = [
+            ...reactionShape.reactants, ...reactionShape.agents, ...reactionShape.products,
+          ]
+          const isRealChemistry = fragments.every((smiles) => {
+            try {
+              return OCL.Molecule.fromSmiles(smiles).getAllAtoms() > 0
+            } catch {
+              return false
+            }
+          })
+          if (isRealChemistry) {
+            const converted = convertChemPaste(text)
+            if (converted && dispatchMarkdownInsert(view, ctx, converted)) return
+          }
+          insertPlainTextPaste(view, ctx, text)
+        }).catch(() => { insertPlainTextPaste(view, ctx, text) })
+        return true
+      }
 
       // MOL block (T-091): unambiguous (a V2000/V3000 counts line), but
       // converting it to SMILES needs OpenChemLib, which is lazy-loaded —
@@ -935,29 +983,30 @@ const markdownClipboard = $prose((ctx) => new Plugin({
       // same as the synchronous dispatch above, just deferred, mirroring how
       // codeBlockView/playgroundNodeView defer React work with
       // queueMicrotask for "must run after this synchronous PM cycle".
+      // Every failure path (malformed MOL data, an oversized/invalid
+      // resulting SMILES, or loadOCL() itself rejecting) falls back to
+      // inserting the original pasted text — the paste event was already
+      // claimed, so silently doing nothing would just delete the user's
+      // clipboard content with no visible result.
       if (detectMolBlock(text)) {
         loadOCL().then((OCL) => {
           let smiles
           try {
             smiles = OCL.Molecule.fromMolfile(text).toSmiles()
           } catch {
+            insertPlainTextPaste(view, ctx, text)
             return
           }
-          if (!isValidSmiles(smiles)) return
+          if (!isValidSmiles(smiles)) {
+            insertPlainTextPaste(view, ctx, text)
+            return
+          }
           dispatchMarkdownInsert(view, ctx, `::molecule{smiles="${smiles}"}`)
-        }).catch(() => {})
+        }).catch(() => { insertPlainTextPaste(view, ctx, text) })
         return true
       }
 
-      let slice
-      try {
-        slice = markdownToSlice(normalizeNoteMath(text))(ctx)
-      } catch {
-        return false
-      }
-      if (!slice || typeof slice === 'string') return false
-      view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView())
-      return true
+      return insertPlainTextPaste(view, ctx, text)
     },
     clipboardTextSerializer: (slice) => {
       const serializer = ctx.get(serializerCtx)

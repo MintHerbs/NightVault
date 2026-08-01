@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { loadOCL } from '../../../lib/chem/loadChem'
 import { renderMoleculeSvg } from '../../../lib/chem/renderStructureSvg'
 import { isValidSmiles } from '../../../lib/chem/noteChem'
@@ -50,6 +50,11 @@ function StructureCell({ svg, fallback, className }) {
 export default function ReactionScheme({ data }) {
   const steps = useMemo(() => data?.steps || [], [data])
   const smilesList = useMemo(() => collectSmiles(steps), [steps])
+  // Same duplicate-id concern as MoleculeStructure: a per-instance counter
+  // starting at 0 collides across multiple reaction blocks on one page
+  // (a note can have several, and a note can render alongside its own
+  // preview in the admin editor) — useId() scopes each instance's cell ids.
+  const instanceId = useId().replace(/[^a-zA-Z0-9]/g, '')
 
   const [structures, setStructures] = useState({})
   const [measured, setMeasured] = useState(false)
@@ -67,7 +72,7 @@ export default function ReactionScheme({ data }) {
             next[smiles] = renderMoleculeSvg(OCL, smiles, {
               width: MEASURE_WIDTH,
               height: MEASURE_HEIGHT,
-              id: `rxn-cell-${Object.keys(next).length}`,
+              id: `rxn-${instanceId}-cell-${Object.keys(next).length}`,
             })
           } catch {
             // Left absent — cellSizes falls back to the minimum cell size
@@ -81,7 +86,7 @@ export default function ReactionScheme({ data }) {
     )
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [smilesList.join('\0')])
+  }, [smilesList.join('\0'), instanceId])
 
   const cellSizes = useMemo(() => {
     const sizes = {}

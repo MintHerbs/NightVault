@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { loadOCL } from '../../../lib/chem/loadChem'
 import { renderMoleculeSvg } from '../../../lib/chem/renderStructureSvg'
 import { isValidSmiles } from '../../../lib/chem/noteChem'
@@ -23,6 +23,15 @@ const START_HEIGHT = 200
 export default function MoleculeStructure({ smiles, label }) {
   const cleanSmiles = typeof smiles === 'string' ? smiles : ''
   const [state, setState] = useState({ status: 'loading' })
+  // OCL's toSVG embeds `id` into a `<style>` block scoping its own font/
+  // pointer-events rules (`#${id} text {...}`) plus per-bond/atom element
+  // ids — a fixed literal here means every `::molecule` on the page (a note
+  // commonly has more than one) renders a duplicate DOM id, which is invalid
+  // HTML and would silently break any future id-scoped behaviour. useId()
+  // gives each instance a real one; stripped of `:` since that "reserved
+  // name" punctuation would need escaping in the unescaped CSS selector OCL
+  // emits, and is otherwise inert here (harmless, not a correctness risk).
+  const instanceId = useId().replace(/[^a-zA-Z0-9]/g, '')
 
   useEffect(() => {
     if (!isValidSmiles(cleanSmiles)) {
@@ -40,7 +49,7 @@ export default function MoleculeStructure({ smiles, label }) {
           const rendered = renderMoleculeSvg(OCL, cleanSmiles, {
             width: START_WIDTH,
             height: START_HEIGHT,
-            id: 'note-molecule',
+            id: `note-molecule-${instanceId}`,
           })
           setState({ status: 'ready', ...rendered })
         } catch {
@@ -51,7 +60,7 @@ export default function MoleculeStructure({ smiles, label }) {
     )
 
     return () => { cancelled = true }
-  }, [cleanSmiles])
+  }, [cleanSmiles, instanceId])
 
   const ariaLabel = (typeof label === 'string' && label.trim()) || cleanSmiles || 'Chemical structure'
 
