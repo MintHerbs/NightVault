@@ -12,6 +12,29 @@
 
 const BOND_STROKE_RE = /stroke="rgb\(0,0,0\)"/g
 
+// OpenChemLib's literal CPK-ish atom-label colours (confirmed by direct
+// inspection of toSVG() output across the fixture set — see ADR 0002) mapped
+// to this app's own theme-aware, validated pastel tokens (global.css,
+// [data-mode="dark"|"light"]). Order matters: longer/more-specific rgb()
+// strings first is unnecessary here since every value is a distinct exact
+// match, but ATOM_COLOR_MAP must run before OTHER_ATOM_FILL_RE, which mops up
+// anything left (metals, B, Si, and any element not explicitly listed).
+const ATOM_COLOR_MAP = [
+  [/fill="rgb\(255,13,13\)"/g, 'fill="var(--chem-atom-o)"'], // O
+  [/fill="rgb\(48,80,248\)"/g, 'fill="var(--chem-atom-n)"'], // N
+  [/fill="rgb\(205,205,38\)"/g, 'fill="var(--chem-atom-s)"'], // S
+  [/fill="rgb\(144,224,80\)"/g, 'fill="var(--chem-atom-halogen)"'], // F
+  [/fill="rgb\(31,240,31\)"/g, 'fill="var(--chem-atom-halogen)"'], // Cl
+  [/fill="rgb\(166,41,41\)"/g, 'fill="var(--chem-atom-br)"'], // Br
+  [/fill="rgb\(148,0,148\)"/g, 'fill="var(--chem-atom-i)"'], // I
+  [/fill="rgb\(255,128,0\)"/g, 'fill="var(--chem-atom-p)"'], // P
+]
+// Anything else OpenChemLib colours a text label with (B, Si, metals, any
+// element not explicitly mapped above) falls back to one neutral token,
+// applied after the specific substitutions above so it only catches what
+// they didn't.
+const OTHER_ATOM_FILL_RE = /fill="rgb\([^)]+\)"/g
+
 // Exactly the elements/attributes OpenChemLib's toSVG() is confirmed (by
 // direct inspection, across the aromatic/charged/stereo/isotope fixture set)
 // to emit, plus a small safety margin (g/rect/path/tspan/polyline) for
@@ -65,7 +88,9 @@ function sanitizeSvgElement(root) {
 export function renderMoleculeSvg(OCL, smiles, { width = 300, height = 200, id = 'note-molecule', margin = 5 } = {}) {
   const molecule = OCL.Molecule.fromSmiles(smiles)
   const raw = molecule.toSVG(width, height, id, { autoCrop: true, autoCropMargin: margin })
-  const fixed = raw.replace(BOND_STROKE_RE, 'stroke="currentColor"')
+  let fixed = raw.replace(BOND_STROKE_RE, 'stroke="currentColor"')
+  for (const [re, replacement] of ATOM_COLOR_MAP) fixed = fixed.replace(re, replacement)
+  fixed = fixed.replace(OTHER_ATOM_FILL_RE, 'fill="var(--chem-atom-other)"')
 
   // autoCrop tightens the emitted width/height to the real content size —
   // read it back off the string rather than trusting the requested canvas.
