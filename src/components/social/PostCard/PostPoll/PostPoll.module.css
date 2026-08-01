@@ -1,0 +1,126 @@
+.poll {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/* Outlined, not accent-filled: an unvoted option is a choice, not a state, so
+   accent would be spending the meaning layer on decoration. */
+.option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-xl);
+  background: transparent;
+  color: var(--md-on-surface);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    border-color var(--md-duration-short) var(--md-easing-emphasized);
+}
+
+.option:hover:not(:disabled) {
+  background: rgba(var(--color-accent-rgb), var(--md-state-hover));
+  border-color: rgba(var(--color-accent-rgb), 0.45);
+}
+
+.option:active:not(:disabled) {
+  background: rgba(var(--color-accent-rgb), var(--md-state-pressed));
+}
+
+.option:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.7);
+  outline-offset: 2px;
+}
+
+.option:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resultRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+}
+
+.resultLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--md-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.resultPercent {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--md-on-surface-variant);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Accent is reserved for the option this reader actually picked; the rest
+   read as neutral data. That is the only signal the old design carried in a
+   0.5-alpha gradient that was hard to tell from the 0.3-alpha one. */
+.chosen .resultLabel,
+.chosen .resultPercent {
+  color: var(--md-on-surface);
+  font-weight: 600;
+}
+
+.track {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(var(--color-fg-rgb), 0.08);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 3px;
+  background: rgba(var(--color-fg-rgb), 0.28);
+}
+
+.chosen .fill {
+  background: var(--color-accent);
+}
+
+.total {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: var(--md-on-surface-variant);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .option {
+    transition: none;
+  }
+}

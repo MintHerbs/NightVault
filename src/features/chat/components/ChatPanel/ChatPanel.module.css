@@ -8,75 +8,32 @@
   display: flex;
   flex-direction: column;
   transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--md-duration-medium) var(--md-easing-emphasized);
 }
 
 .panel.open {
   transform: translateY(0);
 }
 
-/* Starfield background */
 .starfieldContainer {
   position: absolute;
   inset: 0;
   z-index: 0;
 }
 
-/* Back to the feed. Sits above .messagesArea::before (z-index 2), which is a
-   fixed fade strip across the whole top edge and would otherwise swallow it. */
-.backButton {
-  position: absolute;
-  top: 18px;
-  left: 20px;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--md-on-surface-variant);
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.backButton:hover {
-  background: rgba(var(--color-fg-rgb), 0.08);
-  color: var(--color-text);
-}
-
-.backButton:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
-/* Messages Area */
+/* The header now covers messages passing under the top edge, so the old
+   `position: fixed` gradient mask — which had to hardcode `left: 56px` to
+   dodge the sidebar, and re-hardcode it at every breakpoint — is gone. A
+   back-to-feed control also no longer needs its own button here: it is
+   ChatHeader's close control now. */
 .messagesArea {
   position: relative;
   z-index: 1;
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
-  padding-top: 80px;
-  padding-bottom: 4vh;
+  padding: 20px 20px 8px;
   display: flex;
   flex-direction: column;
-}
-
-/* Fade-out gradient mask at top - messages disappear as they scroll up */
-.messagesArea::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 56px;
-  right: 0;
-  height: 80px;
-  background: linear-gradient(to bottom, var(--color-bg) 0%, var(--color-bg) 40%, transparent 100%);
-  z-index: 2;
-  pointer-events: none;
 }
 
 .messagesArea::-webkit-scrollbar {
@@ -88,55 +45,76 @@
 }
 
 .messagesArea::-webkit-scrollbar-thumb {
-  background: var(--md-surface-container-low);
+  background: rgba(var(--color-fg-rgb), 0.14);
   border-radius: 3px;
 }
 
 .messagesArea::-webkit-scrollbar-thumb:hover {
-  background: var(--md-surface-container);
+  background: rgba(var(--color-fg-rgb), 0.24);
 }
 
 .messagesContent {
-  max-width: min(800px, 90vw);
   width: 100%;
+  max-width: min(800px, 90vw);
   margin: 0 auto;
+  /* Pins the thread to the bottom of the viewport when it is shorter than the
+     scroll box, instead of leaving it stranded under the header. */
+  margin-top: auto;
 }
 
-/* Loading State */
-.loadingContainer {
+.centered {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 4px;
+  text-align: center;
 }
 
-/* Empty State */
-.emptyState {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--md-on-surface-variant);
+.emptyTitle {
+  margin: 0;
+  color: var(--md-on-surface);
   font-size: 0.95rem;
+  font-weight: 600;
 }
 
-/* Input Area */
+.emptyBody {
+  margin: 0;
+  color: var(--md-on-surface-variant);
+  font-size: 0.85rem;
+}
+
 .inputArea {
   position: relative;
   z-index: 1;
   padding: 12px 20px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
   margin-bottom: 3vh;
-  background: rgba(var(--color-bg-rgb), 0.8);
-  backdrop-filter: blur(10px);
+  background: rgba(var(--color-bg-rgb), 0.82);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--md-outline-variant);
 }
 
-/* Mobile */
+/* --breakpoint-md */
 @media (max-width: 640px) {
   .panel {
     left: 0;
   }
-  
-  .messagesArea::before {
-    left: 0;
+
+  .messagesArea {
+    padding: 14px 12px 6px;
+  }
+
+  .inputArea {
+    padding: 10px 12px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    margin-bottom: 1.5vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    transition: none;
   }
 }

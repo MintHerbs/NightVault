@@ -7,16 +7,16 @@
   background: transparent;
 }
 
+/* The column owns the gutters now. Cards used to each carry their own
+   `width: calc(100% - 32px)` plus a matching margin, so the feed's rhythm was
+   defined in three files at once and drifted between them. */
 .feedColumn {
   width: 100%;
   max-width: 780px;
   min-height: 100vh;
-  background: var(--color-bg);
-  border-left: 1px solid transparent;
-  border-right: 1px solid transparent;
   margin: 0 auto;
-  padding-top: var(--nav-offset, 64px);
-  padding-bottom: 80px;
+  padding: var(--nav-offset, 64px) 16px 96px;
+  background: var(--color-bg);
   isolation: isolate;
 }
 
@@ -39,107 +39,109 @@
 }
 
 .main {
-  width: 100%;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
   position: relative;
   z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .empty {
-  color: rgba(var(--color-fg-rgb), 0.7);
-  font-size: 13px;
+  margin: 24px 0;
+  padding: 40px 24px;
+  border: 1px dashed var(--md-outline-variant);
+  border-radius: var(--md-shape-lg);
   text-align: center;
-  padding: 30px 0;
+  color: var(--md-on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.emptyTitle {
+  margin: 0 0 6px;
+  color: var(--md-on-surface);
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .skeletonList {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 12px;
 }
 
+/* Mirrors PostCard exactly: same surface tone, same hairline, same radius,
+   same padding. The old skeleton drew the pre-T-087 card (accent border,
+   inset accent wash, accent-tinted shimmer), so the feed visibly changed
+   shape the moment loading finished. */
 .skeletonCard {
-  width: calc(100% - 32px);
-  background: var(--color-bg);
-  border: 1px solid rgba(var(--color-accent-rgb), 0.25);
-  border-radius: 16px;
-  padding: 16px 18px;
-  margin: 0 16px 12px;
-  overflow: hidden;
   position: relative;
-  box-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.4),
-    inset 0 0 60px rgba(var(--color-accent-rgb), 0.02);
+  width: 100%;
+  padding: 18px 20px 14px;
+  background: var(--md-surface-container-low);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-lg);
+  overflow: hidden;
 }
 
 .skeletonHeader {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 12px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .skeletonAvatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: rgba(var(--color-accent-rgb), 0.12);
   flex-shrink: 0;
+  background: rgba(var(--color-fg-rgb), 0.07);
   overflow: hidden;
   position: relative;
-  box-shadow: inset 0 0 10px rgba(var(--color-accent-rgb), 0.2);
 }
 
 .skeletonMeta {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 6px;
   flex: 1;
 }
 
 .skeletonContent {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 9px;
 }
 
 .skeletonActions {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-top: 4px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--md-outline-variant);
 }
 
 .pulseLine {
-  height: 10px;
   border-radius: 9999px;
-  background: rgba(var(--color-accent-rgb), 0.1);
-  margin-bottom: 10px;
+  background: rgba(var(--color-fg-rgb), 0.07);
   overflow: hidden;
   position: relative;
-  box-shadow: inset 0 0 10px rgba(var(--color-accent-rgb), 0.1);
 }
 
-.pulseLine:last-child {
-  margin-bottom: 0;
-}
-
+/* Neutral rather than accent-tinted: a loading placeholder is not a state
+   worth spending the accent on, and the accent sweep read as content. */
 .shimmer {
   position: absolute;
   inset: 0;
   transform: translateX(-60%);
   background: linear-gradient(
     90deg,
-    rgba(var(--color-accent-rgb), 0) 0%,
-    rgba(var(--color-accent-rgb), 0.3) 50%,
-    rgba(255, 208, 138, 0.2) 60%,
-    rgba(var(--color-accent-rgb), 0) 100%
+    rgba(var(--color-fg-rgb), 0) 0%,
+    rgba(var(--color-fg-rgb), 0.09) 50%,
+    rgba(var(--color-fg-rgb), 0) 100%
   );
-  animation: shimmer 1.2s infinite;
+  animation: shimmer 1.3s ease-in-out infinite;
 }
 
 @keyframes shimmer {
@@ -148,5 +150,25 @@
   }
   to {
     transform: translateX(60%);
+  }
+}
+
+/* --breakpoint-md */
+@media (max-width: 640px) {
+  .feedColumn {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .skeletonCard {
+    padding: 16px 14px 12px;
+    border-radius: var(--md-shape-md);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+    opacity: 0.6;
   }
 }

@@ -1,359 +1,119 @@
-# Social Components Library
+# Social components
 
-A collection of beautifully animated, reusable UI components for the social feed feature.
+The feed at `/social/feed` and its supporting pieces. The chat panel lives
+separately, under [src/features/chat/](../../features/chat/), but shares this
+surface's design language and two of its primitives.
 
-## 🎨 Components
+## Design language (T-087)
 
-### Alert
-Animated alert/notification component for displaying important messages.
+Three layers, each with exactly one job. Anything added here has to fit them,
+or the surface starts splitting in two again the way it did between T-065 and
+T-087.
 
-**Props:**
-- `type`: 'error' | 'success' | 'info' | 'warning' (default: 'info')
-- `title`: string (optional)
-- `message`: string
-- `onClose`: function (optional)
-- `className`: string (optional)
+**1. Surface carries structure.** Every container is a Material 3 tonal
+surface: an `--md-surface-container-*` fill, an `--md-outline-variant`
+hairline, an `--md-shape-*` radius. Elevation is tone, not shadow. A surface
+never gets both a tonal fill and an accent-tinted border. There is no hover
+lift anywhere in the feed.
 
-**Example:**
-```jsx
-import Alert from '@/components/social/Alert/Alert'
+Nesting goes `--md-surface-container-low` (card, composer) →
+`--md-surface-container` (attachment tray, comment field, chat bubble) →
+`--md-surface-container-high` (menu, dialog, code input, poll option row).
 
-<Alert 
-  type="error" 
-  title="Post Failed"
-  message="Unable to create post. Please try again."
-  onClose={() => setError(null)}
-/>
+**2. Accent carries meaning.** `--color-accent` appears only where it encodes
+state or identity: focus, the primary action, your own chat bubble, an active
+toggle chip, the poll option you picked, the "you" avatar ring. It is never
+decoration on static text. **No `text-shadow` glow** — that was the old idiom
+and it is gone.
+
+**3. One signature element per surface.** A 2px neon rule along the top edge,
+`var(--signature-gradient)`, dim at rest and bright on `:focus-within`. Painted
+by `PostComposer` and `ChatHeader`. `PostCard` deliberately does not carry it —
+owner call on 2026-08-01, one line per feed screen reads as clutter once every
+card has one. That single line is the whole cyberpunk budget for a container,
+which keeps `CodeBlock` the loudest thing on the page — correct, because it is
+the content.
+
+### Fixed exceptions
+
+- **Vote green `#22c55e` / red `#ef4444`** are hue-fixed literals across all
+  nine themes. Direction has to mean the same thing everywhere, so these do
+  not derive from the accent. Same for the chat header's online dot.
+- **Black shadows and scrims** (`rgba(0, 0, 0, …)`) stay literal. They carry no
+  text-contrast requirement and must not flip with the mode.
+- **[CodeBlock/](CodeBlock/) is frozen.** It renders published notes through
+  `MarkdownRenderer` as well as feed snippets, so a restyle here would change
+  every note. Its cyberpunk syntax palette is deliberate and out of scope. The
+  composer's code *input* is `PostComposer/CodeAttachment/`, a different
+  component, and that one does follow the three layers above.
+
+## Layout
+
+```
+HomeFeedPage
+├── PostComposer                  progressive: one line → title + body + chips
+│   ├── ComposerAttachments       the four tray states
+│   │   └── AttachmentTray        one chrome for poll / code / GIF
+│   │       ├── PollBuilder
+│   │       ├── CodeAttachment    code input, not CodeBlock
+│   │       └── ui/MediaPicker    shared with chat; frameless, host owns the card
+│   └── ComposerBar               chips + counter + Post
+└── PostCard
+    ├── PostHeader                avatar, Anon, time, overflow menu (edit/delete/flag)
+    ├── PostBody                  title, clamped text, read-more, edit + delete states
+    ├── CodeBlock                 frozen
+    ├── PostPoll                  options, then result rows
+    ├── PostActions               ui/VoteControl + comment toggle + flag read-out
+    ├── CommentSection            header + sort + collapse
+    │   ├── CommentComposer
+    │   └── CommentItem           thread connector, recursive one level
+    │       └── ReplyBox
+    └── FlagConfirmDialog
 ```
 
----
-
-### Callout
-Eye-catching callout component for highlighting important information.
-
-**Props:**
-- `variant`: 'tip' | 'highlight' | 'important' | 'note' (default: 'tip')
-- `title`: string (optional)
-- `children`: ReactNode
-- `icon`: LucideIcon (optional, overrides default)
-- `className`: string (optional)
-
-**Example:**
-```jsx
-import Callout from '@/components/social/Callout/Callout'
-import { Lightbulb } from 'lucide-react'
-
-<Callout variant="tip" title="Pro Tip" icon={Lightbulb}>
-  Use code attachments to share snippets with syntax highlighting!
-</Callout>
-```
-
----
-
-### Toast
-Temporary notification that appears and auto-dismisses.
-
-**Props:**
-- `type`: 'success' | 'error' | 'info' | 'warning' (default: 'info')
-- `message`: string
-- `onClose`: function (optional)
-- `duration`: number in ms (default: 5000, 0 = no auto-dismiss)
-- `position`: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center'
-
-**Example:**
-```jsx
-import { ToastContainer } from '@/components/social/Toast/Toast'
-import { useToast } from '@/hooks/useToast'
-
-function MyComponent() {
-  const { toasts, success, error, removeToast } = useToast()
-
-  const handleSuccess = () => {
-    success('Post created successfully!')
-  }
-
-  return (
-    <>
-      <button onClick={handleSuccess}>Create Post</button>
-      <ToastContainer 
-        toasts={toasts} 
-        onRemove={removeToast}
-        position="top-right"
-      />
-    </>
-  )
-}
-```
-
----
-
-### Badge
-Small label for counts, status, or categories.
-
-**Props:**
-- `children`: ReactNode
-- `variant`: 'default' | 'primary' | 'success' | 'error' | 'warning' | 'info' | 'purple'
-- `size`: 'sm' | 'md' | 'lg' (default: 'md')
-- `pulse`: boolean (default: false)
-- `className`: string (optional)
-
-**Example:**
-```jsx
-import Badge, { DotBadge } from '@/components/social/Badge/Badge'
-
-<Badge variant="success" size="sm">New</Badge>
-<Badge variant="primary" pulse>3</Badge>
-<DotBadge variant="error" pulse />
-```
-
----
-
-## 🎯 Animation Patterns
-
-### Entrance Animations
-All components use consistent entrance animations:
-- **Fade + Slide**: Opacity 0→1 with vertical movement
-- **Scale**: Scale 0.95→1.0 for subtle pop-in
-- **Spring**: Natural, bouncy motion using spring physics
-
-### Interaction Animations
-- **Hover Scale**: 1.0→1.05 for buttons and interactive elements
-- **Tap Scale**: 1.0→0.95 for press feedback
-- **Ripple**: Material Design-style ripple effect on primary actions
-- **Color Transitions**: Smooth color changes for state feedback
-
-### Exit Animations
-- **Fade Out**: Opacity 1→0
-- **Scale Down**: Scale 1.0→0.9
-- **Slide Out**: Movement in exit direction
-
----
-
-## 🎨 Color System
-
-### Variants
-- **Primary**: Orange (#EA6C0A, #fb923c)
-- **Success**: Green (#22c55e, #86efac)
-- **Error**: Red (#ef4444, #fca5a5)
-- **Warning**: Orange (#fb923c, #fdba74)
-- **Info**: Blue (#3b82f6, #93c5fd)
-- **Purple**: Purple (#8b5cf6, #c4b5fd)
-
-### Usage Guidelines
-- **Success**: Confirmations, completed actions
-- **Error**: Failures, validation errors
-- **Warning**: Cautions, important notices
-- **Info**: General information, tips
-- **Primary**: Brand actions, CTAs
-- **Purple**: Special features, highlights
-
----
-
-## 🚀 Performance
-
-All components are optimized for performance:
-- **GPU Acceleration**: Transform and opacity animations
-- **Layout Animations**: Automatic with Framer Motion
-- **Lazy Rendering**: AnimatePresence for conditional content
-- **Minimal Re-renders**: Memoized callbacks and values
-
----
-
-## 📱 Responsive Design
-
-Components are fully responsive:
-- **Mobile-First**: Touch-friendly tap targets
-- **Breakpoints**: Adaptive sizing for different screens
-- **Flexible Layouts**: Flexbox-based responsive layouts
-
----
-
-## ♿ Accessibility
-
-Components follow accessibility best practices:
-- **Semantic HTML**: Proper element usage
-- **ARIA Labels**: Screen reader support
-- **Keyboard Navigation**: Full keyboard support
-- **Focus States**: Clear focus indicators
-- **Color Contrast**: WCAG AA compliant
-
-**Note**: Add `prefers-reduced-motion` support for users who prefer reduced animations.
-
----
-
-## 🎓 Best Practices
-
-### When to Use Each Component
-
-**Alert**
-- Form validation errors
-- Action confirmations
-- Important warnings
-- Persistent notifications
-
-**Callout**
-- Tips and hints
-- Feature highlights
-- Important information blocks
-- Educational content
-
-**Toast**
-- Success confirmations
-- Temporary notifications
-- Background process updates
-- Non-critical alerts
-
-**Badge**
-- Counts (unread, new items)
-- Status indicators
-- Category labels
-- Small metadata
-
----
-
-## 🔧 Customization
-
-All components support custom styling via `className` prop:
-
-```jsx
-<Alert 
-  type="error"
-  message="Custom styled alert"
-  className="my-custom-class"
-/>
-```
-
-CSS Modules are used for styling, making it easy to override:
-
-```css
-/* MyComponent.module.css */
-.customAlert {
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-```
-
----
-
-## 📦 Dependencies
-
-- **motion/react**: Animation library
-- **lucide-react**: Icon library
-- **React**: 18+
-
----
-
-## 🎉 Examples
-
-### Complete Toast System
-```jsx
-import { ToastContainer } from '@/components/social/Toast/Toast'
-import { useToast } from '@/hooks/useToast'
-
-function App() {
-  const { toasts, success, error, info, warning, removeToast } = useToast()
-
-  const handleAction = async () => {
-    try {
-      info('Processing...')
-      await someAsyncAction()
-      success('Action completed!')
-    } catch (err) {
-      error('Action failed: ' + err.message)
-    }
-  }
-
-  return (
-    <>
-      <button onClick={handleAction}>Do Something</button>
-      <ToastContainer 
-        toasts={toasts} 
-        onRemove={removeToast}
-        position="top-right"
-      />
-    </>
-  )
-}
-```
-
-### Alert with Auto-Dismiss
-```jsx
-import { useState, useEffect } from 'react'
-import Alert from '@/components/social/Alert/Alert'
-
-function FormWithAlert() {
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setError(null), 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [error])
-
-  return (
-    <>
-      {error && (
-        <Alert 
-          type="error"
-          message={error}
-          onClose={() => setError(null)}
-        />
-      )}
-      <form onSubmit={handleSubmit}>
-        {/* form fields */}
-      </form>
-    </>
-  )
-}
-```
-
-### Callout Variations
-```jsx
-import Callout from '@/components/social/Callout/Callout'
-import { Lightbulb, Sparkles, Zap, Heart } from 'lucide-react'
-
-<Callout variant="tip" icon={Lightbulb}>
-  This is a helpful tip for users!
-</Callout>
-
-<Callout variant="highlight" icon={Sparkles}>
-  Check out this amazing new feature!
-</Callout>
-
-<Callout variant="important" icon={Zap}>
-  This requires your immediate attention.
-</Callout>
-
-<Callout variant="note" icon={Heart}>
-  A friendly note from the team.
-</Callout>
-```
-
----
-
-## 🐛 Troubleshooting
-
-### Animations Not Working
-- Ensure `motion/react` is installed
-- Check that parent components don't have `overflow: hidden`
-- Verify AnimatePresence is used for conditional rendering
-
-### Styling Issues
-- Check CSS Module imports
-- Verify className prop is passed correctly
-- Inspect browser DevTools for style conflicts
-
-### Performance Issues
-- Limit number of simultaneous toasts (max 3-5)
-- Use `will-change` sparingly
-- Consider reducing animation duration for slower devices
-
----
-
-## 📚 Further Reading
-
-- [Framer Motion Documentation](https://www.framer.com/motion/)
-- [Lucide Icons](https://lucide.dev/)
-- [CSS Modules](https://github.com/css-modules/css-modules)
-- [React Animation Best Practices](https://www.framer.com/motion/animation/)
+## Shared primitives
+
+Both live in [src/components/ui/](../ui/) because the chat uses them too.
+
+- **`ui/VoteControl`** — the segmented up / score / down control. Posts use
+  `size="md"`, comments `size="sm"`. Before T-087 these were two different
+  shapes for identical semantics.
+- **`ui/AvatarStack`** — overlapping seeded avatars with an overflow count.
+  Used by `TypingIndicator` and `SeenIndicator`, which each had their own copy.
+
+Timestamps come from
+[src/lib/social/relativeTime.js](../../lib/social/relativeTime.js)
+(`formatRelativeTime`, `formatAbsoluteTime`, `formatClockTime`,
+`formatDayLabel`, `isDifferentDay`), not from a private copy per component.
+
+## Standalone components
+
+[Alert/](Alert/), [Badge/](Badge/), [Callout/](Callout/) and [Toast/](Toast/)
+predate the language above and were **not** rebuilt. Only `Callout` has a live
+consumer, in [pages/social/guidelines.jsx](../../pages/social/guidelines.jsx);
+the other three are rendered solely by
+[pages/social/ComponentShowcase.jsx](../../pages/social/ComponentShowcase.jsx),
+which is not routed anywhere. Owner decision on 2026-08-01 was to leave all
+four alone rather than restyle or delete them, so they still carry their own
+hardcoded palettes. Do not copy their patterns into new work.
+
+## Conventions
+
+- **Motion** is `motion/react`. **Not** Framer Motion, and not GSAP. Durations
+  and easing come from the `--md-duration-*` / `--md-easing-emphasized` tokens.
+- **Icons** are `lucide-react` unless a custom SVG is specified.
+- Every `@media` rule carries a comment naming its `--breakpoint-*` token,
+  because custom properties cannot be read inside a media condition.
+- Every module that animates carries a `prefers-reduced-motion: reduce` block.
+- Interactive controls are at least 44px at the `--breakpoint-sm` (480px)
+  viewport.
+- `PostCard` is wrapped in `memo` and must keep receiving **scalar** props from
+  `HomeFeedPage`. Passing a rebuilt object re-renders all 50 cards on any vote
+  and re-tokenises every code block with them (T-064).
+
+## References
+
+- [T-087](../../../tickets/T-087-social-and-chat-ui-rebuild.md) — this rebuild
+- [E-008](../../../epics/E-008-social-feed-overhaul.md) — parent epic
+- [docs/design.md](../../../docs/design.md) — token table, breakpoints, decisions log
+- [docs/design/colors.md](../../../docs/design/colors.md) — `--md-*` roles

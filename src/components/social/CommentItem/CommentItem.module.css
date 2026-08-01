@@ -1,14 +1,15 @@
-/* Thread connector geometry. Every offset below is derived from the avatar,
-   so these four values are the only things to change if its size moves.
-   Neutral rather than accent-tinted: the line is structure, and an accent
-   line at this weight competes with the vote states sitting beside it. */
+/* Thread connector geometry, carried over from T-065 unchanged: it works, and
+   every offset below is derived from the avatar, so these five values are the
+   only things to touch if its size moves. Neutral rather than accent-tinted —
+   the line is structure, and an accent line at this weight would compete with
+   the vote states sitting beside it. */
 .item {
   --thread-line: rgba(var(--color-fg-rgb), 0.14);
   --thread-x: 11px; /* avatar centre (12px) less half the 2px line */
   --thread-drop: 26px; /* .avatar margin-top (2px) + avatar height (24px) */
   --thread-centre: 15px; /* .avatar margin-top (2px) + half of it, + 1px */
   --thread-elbow: 28px; /* connector width, i.e. how far the curve reaches */
-  --thread-gap: 10px; /* MUST track .body's flex gap; the segments butt across it */
+  --thread-gap: 10px; /* MUST track .body's flex gap; segments butt across it */
 
   display: flex;
   /* Tight, so the curve lands just shy of the avatar rather than pointing at
@@ -79,9 +80,26 @@
 }
 
 /* The reply box is not the avatar row, so its segment starts at its own top
-   rather than below an avatar it does not have. */
-.replyBox.spineSegment::after {
+   rather than below an avatar it does not have. Applied to ReplyBox from
+   here because the geometry lives in this module's custom properties. */
+.spineFromTop {
+  position: relative;
+}
+
+.spineFromTop::after {
+  content: '';
+  position: absolute;
+  left: var(--thread-x);
   top: 0;
+  bottom: calc(var(--thread-gap) * -1);
+  width: 2px;
+  background: var(--thread-line);
+}
+
+/* The connector supplies the visual indent, so this only has to land the
+   connector's left edge exactly on the spine the parent painted. */
+.indentReply {
+  margin-left: var(--thread-x);
 }
 
 .row {
@@ -91,8 +109,10 @@
 }
 
 .avatar {
+  display: flex;
   border-radius: 50%;
   overflow: hidden;
+  line-height: 0;
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -102,11 +122,33 @@
   min-width: 0;
 }
 
+/* Author and time above the text, matching PostHeader's order. The old layout
+   put the timestamp underneath, in the same row as the vote buttons, so the
+   metadata read as part of the controls. */
+.meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--md-on-surface);
+}
+
+.time {
+  font-size: 0.7rem;
+  color: var(--md-on-surface-variant);
+}
+
 .text {
   font-size: 0.875rem;
   line-height: 1.6;
-  color: rgba(var(--color-fg-rgb), 0.88);
+  color: rgba(var(--color-fg-rgb), 0.86);
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .removed {
@@ -114,44 +156,35 @@
   color: var(--md-on-surface-variant);
 }
 
-.meta {
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-size: 0.75rem;
-  color: var(--md-on-surface-variant);
-}
-
 .actions {
   display: flex;
-  gap: 4px;
   align-items: center;
+  gap: 6px;
+  margin-top: 8px;
   flex-wrap: wrap;
 }
 
-/* Zero-padding text with a 14px gap gave a ~16px tap target. These are pills
-   with real hit area, and they no longer jump on hover. */
 .actionBtn {
-  background: transparent;
-  border: 0;
-  color: rgba(var(--color-fg-rgb), 0.55);
   display: inline-flex;
   align-items: center;
   gap: 5px;
   height: 30px;
-  padding: 0 10px;
-  border-radius: 15px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--md-shape-xl);
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  font-family: inherit;
   font-size: 0.75rem;
   font-weight: 500;
-  font-family: inherit;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
 }
 
 .actionBtn:hover {
-  background: rgba(var(--color-fg-rgb), 0.08);
-  color: rgba(var(--color-fg-rgb), 0.9);
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
 }
 
 .actionBtn:focus-visible {
@@ -159,78 +192,16 @@
   outline-offset: 1px;
 }
 
-/* Same up/down semantics as PostActions, which used green/red while these
-   used two accent tokens that read as the same colour in most themes. */
-.activeUp {
-  color: #22c55e;
+.actionDanger:hover {
+  background: rgba(var(--color-danger-rgb), 0.12);
+  color: var(--color-danger);
 }
 
-.activeUp:hover {
-  background: rgba(34, 197, 94, 0.12);
-  color: #22c55e;
-}
-
-.activeDown {
-  color: #ef4444;
-}
-
-.activeDown:hover {
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
-}
-
-/* The connector now supplies the visual indent, so this only has to land the
-   connector's left edge exactly on the spine the parent painted. */
-.indentReply {
-  margin-left: var(--thread-x);
-}
-
-.replyBox {
-  /* Padding rather than margin: the spine segment is positioned against this
-     box's padding edge, so indenting with a margin would drag the line right
-     along with the box and break alignment with the row above. */
-  padding: 12px 0 12px 34px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.replyTextarea {
-  width: 100%;
-  background: rgba(var(--color-fg-rgb), 0.03);
-  border: 1px solid rgba(var(--color-fg-rgb), 0.1);
-  color: rgba(var(--color-fg-rgb), 0.9);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 0.85rem;
-  font-family: inherit;
-  line-height: 1.5;
-  resize: none;
-  outline: none;
-  overflow-y: hidden;
-  transition: border-color 0.2s ease;
-}
-
-.replyTextarea:focus {
-  border-color: rgba(var(--color-accent-rgb), 0.4);
-}
-
-.replyTextarea::placeholder {
-  color: var(--md-on-surface-variant);
-}
-
-.replyActions {
+.confirmActions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-}
-
-.charCount {
-  margin-right: auto;
-  font-size: 0.72rem;
-  color: var(--md-on-surface-variant);
-  font-variant-numeric: tabular-nums;
 }
 
 .btn {
@@ -240,20 +211,21 @@
   gap: 6px;
   height: 34px;
   padding: 0 14px;
-  background: transparent;
   border: 1px solid transparent;
-  color: rgba(var(--color-fg-rgb), 0.75);
-  border-radius: 17px;
+  border-radius: var(--md-shape-xl);
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  font-family: inherit;
   font-size: 0.8rem;
   font-weight: 500;
-  font-family: inherit;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition: background var(--md-duration-short) var(--md-easing-emphasized),
+    color var(--md-duration-short) var(--md-easing-emphasized);
 }
 
 .btn:hover:not(:disabled) {
-  background: rgba(var(--color-fg-rgb), 0.08);
-  color: rgba(var(--color-fg-rgb), 0.95);
+  background: rgba(var(--color-fg-rgb), var(--md-state-hover));
+  color: var(--md-on-surface);
 }
 
 .btn:focus-visible {
@@ -266,69 +238,39 @@
   cursor: not-allowed;
 }
 
-/* `--color-accent-alt` with a hardcoded #f97316 hover ignored the theme. */
-.btnPrimary {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-bg);
-  font-weight: 600;
-}
-
-/* State layer rather than a swap to --color-accent-bright — see the same
-   rule in CommentSection.module.css for the per-theme contrast numbers. */
-.btnPrimary:hover:not(:disabled) {
-  background:
-    linear-gradient(rgba(var(--color-bg-rgb), 0.08), rgba(var(--color-bg-rgb), 0.08)),
-    var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-bg);
-  box-shadow: 0 2px 10px rgba(var(--color-accent-rgb), 0.35);
-}
-
-.btnPrimary:disabled {
-  background: rgba(var(--color-fg-rgb), 0.12);
-  border-color: transparent;
-  color: var(--md-on-surface-variant);
-  opacity: 1;
-}
-
+/* Was #dc2626/#ef4444 with white text, a different red from PostCard's
+   delete-confirm for the identical action (T-070). Both are the token now. */
 .btnDanger {
-  background: #dc2626;
-  border-color: #dc2626;
-  color: #fff;
+  background: var(--color-danger);
+  color: var(--color-on-danger);
   font-weight: 600;
 }
 
 .btnDanger:hover:not(:disabled) {
-  background: #ef4444;
-  border-color: #ef4444;
-  color: #fff;
+  background:
+    linear-gradient(rgba(var(--color-on-danger-rgb), 0.1), rgba(var(--color-on-danger-rgb), 0.1)),
+    var(--color-danger);
+  color: var(--color-on-danger);
 }
 
-.deleteConfirm {
-  margin-top: 8px;
-  background: rgba(220, 38, 38, 0.1);
-  border: 1px solid rgba(220, 38, 38, 0.3);
-  border-radius: 12px;
-  padding: 12px;
+.confirm {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding: 10px 12px;
+  background: rgba(var(--color-danger-rgb), 0.09);
+  border: 1px solid rgba(var(--color-danger-rgb), 0.32);
+  border-radius: var(--md-shape-md);
 }
 
-.deleteConfirmText {
-  font-size: 0.85rem;
-  color: rgba(var(--color-fg-rgb), 0.9);
+.confirmText {
+  font-size: 0.82rem;
   font-weight: 500;
+  color: var(--md-on-surface);
 }
 
-.deleteConfirmActions {
-  display: flex;
-  gap: 8px;
-}
-
-/* --breakpoint-sm */
+/* --breakpoint-md */
 @media (max-width: 640px) {
   .item {
     /* Shorter reach so replies keep their width on a phone. .indentReply is
@@ -336,38 +278,28 @@
     --thread-elbow: 18px;
   }
 
-  .replyBox {
-    padding-left: 0;
-  }
-
-  /* Only indent when the spine actually runs past this box. At 0 the line
-     would draw over the textarea, whose background is translucent enough to
-     show it through; without a spine the box keeps the full phone width. */
-  .replyBox.spineSegment {
-    padding-left: 20px;
-  }
-
-  .meta {
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
+  /* Was 36px, under the 40px minimum, on the most-tapped control in a
+     thread (T-070). */
   .actionBtn {
-    height: 36px;
-    padding: 0 12px;
+    height: 44px;
+    padding: 0 14px;
   }
 
   .btn {
-    height: 40px;
+    height: 44px;
+    flex: 1;
   }
 
-  .deleteConfirm {
+  .confirm {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
   }
+}
 
-  .text {
-    overflow-wrap: anywhere;
+@media (prefers-reduced-motion: reduce) {
+  .actionBtn,
+  .btn {
+    transition: none;
   }
 }
