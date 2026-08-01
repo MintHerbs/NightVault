@@ -1,5 +1,5 @@
 /**
- * SandboxControls - the transport dock (T-089 phase 2, reshaped in T-093).
+ * SandboxControls - the transport dock (T-089 phase 2, reshaped in T-096).
  *
  * Floats over the top-left corner of the canvas rather than sitting in a row
  * above it, which is the FigJam shape the owner asked for: the canvas is the
@@ -9,7 +9,7 @@
  * reset, undo, redo, delete, timing — because splitting them across a navbar and
  * a toolbar is what gave the sandbox four bands of chrome.
  *
- * T-093 dropped the speed control ("the free run is 2 Hz, and picking a
+ * T-096 dropped the speed control ("the free run is 2 Hz, and picking a
  * frequency was a question nobody asked"). Reinstated by later owner request:
  * free run now visibly pulses the clock rather than completing a full edge
  * between renders, and once a clock actually blinks, how fast it blinks is a

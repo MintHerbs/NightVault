@@ -1,12 +1,12 @@
 /**
- * Connector routing (T-093).
+ * Connector routing (T-096).
  *
  * FigJam's "smart connector" behaviour, as pure geometry: leave the source pin
  * heading the way it faces, run orthogonally, arrive at the target pin heading
  * the way *it* faces, and round every corner. The sandbox draws committed wires
  * and the connector in flight through the same two functions, so a gesture
  * previews the route it is going to produce rather than a straight dashed line
- * that snaps into an elbow on release (T-092 shipped exactly that mismatch).
+ * that snaps into an elbow on release (T-095 shipped exactly that mismatch).
  *
  * Nothing here knows about React, SVG elements or the document model. It takes
  * two points with a facing and gives back a polyline, then that polyline as path

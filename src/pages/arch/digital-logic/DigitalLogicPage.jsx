@@ -144,7 +144,7 @@ export default function DigitalLogicPage({ onAIStateChange }) {
 
   // Binarised on the way out: the course teaches two-input gates, and a
   // four-literal product term otherwise synthesises to one four-input AND
-  // (T-093). The rewrite is equivalence-checked against the wide netlist over
+  // (T-096). The rewrite is equivalence-checked against the wide netlist over
   // the whole truth table in binarize.test.js.
   const netlist = useMemo(
     () => (solution ? binarize(synthesize(solution, { coverIndex, style })) : null),
@@ -201,7 +201,7 @@ export default function DigitalLogicPage({ onAIStateChange }) {
 
   // Full-screen mode: the canvas *is* the page. No navbar, no sidebar, no
   // Starfield — every control floats over the canvas from inside the sandbox
-  // itself, which is the FigJam shape T-093 asked for. The back arrow lives in
+  // itself, which is the FigJam shape T-096 asked for. The back arrow lives in
   // the transport dock.
   //
   // Rendered as a sibling of the normal shell rather than an early return that

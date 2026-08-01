@@ -1,5 +1,5 @@
 /**
- * Logisim `.circ` codec tests (T-093).
+ * Logisim `.circ` codec tests (T-096).
  * Run with: npm run test:circuits
  *
  * Two separate claims, and they need separate tests because they can pass and

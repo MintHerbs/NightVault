@@ -1,5 +1,5 @@
 /**
- * Gate silhouettes (T-092).
+ * Gate silhouettes (T-095).
  *
  * Pure geometry, no React. Both circuit surfaces draw from here — the read-only
  * CircuitCanvas and the editable CircuitSandbox — so a gate cannot look like an

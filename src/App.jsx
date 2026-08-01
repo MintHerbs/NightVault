@@ -66,7 +66,7 @@ function AppContent() {
   // The Digital Logic sandbox is a workbench rather than something to read over
   // a backdrop: stars drifting behind a schematic compete with the wires for
   // the same attention, and the canvas covers the whole viewport anyway. The
-  // sidebar rail goes with it (T-093) — the mode is a bare canvas with floating
+  // sidebar rail goes with it (T-096) — the mode is a bare canvas with floating
   // controls, and its own transport dock carries the way back out.
   const isCircuitSandbox = location.pathname === '/arch/digital-logic'
     && new URLSearchParams(location.search).get('mode') === 'sandbox'

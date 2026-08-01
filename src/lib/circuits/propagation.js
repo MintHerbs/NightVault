@@ -1,5 +1,5 @@
 /**
- * Propagation ordering for the sandbox's current animation (T-092).
+ * Propagation ordering for the sandbox's current animation (T-095).
  *
  * The simulator settles to a fixed point with no notion of time
  * (simulator.js:settle), which is right: its values must be correct, not

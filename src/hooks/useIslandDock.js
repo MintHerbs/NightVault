@@ -1,5 +1,5 @@
 /**
- * useIslandDock - where the Dynamic Island sits (T-092 follow-up).
+ * useIslandDock - where the Dynamic Island sits (T-095 follow-up).
  *
  * The island is global chrome owned by App, but *where* it belongs is a
  * per-surface decision: a full-screen editor wants it out of the way in a

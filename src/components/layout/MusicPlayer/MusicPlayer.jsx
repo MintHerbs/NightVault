@@ -129,7 +129,7 @@ const MusicPlayer = forwardRef(({
    * the moment the API loads. Any later sibling insertion in App then asks the
    * DOM to `insertBefore` that missing node and throws, taking the render with
    * it — which is what happened the first time a sibling became conditional
-   * (T-093 made the global Sidebar unmount for the circuit sandbox).
+   * (T-096 made the global Sidebar unmount for the circuit sandbox).
    *
    * Wrapping gives React a child it still owns. The API only ever swaps the
    * inner div, which nothing reconciles against afterwards.

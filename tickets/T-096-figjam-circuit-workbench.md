@@ -1,5 +1,5 @@
 ---
-id: T-093
+id: T-096
 title: Turn the circuit sandbox into a FigJam-shaped workbench — floating chrome, smart connectors, Logisim .circ files
 status: done
 severity: high
@@ -10,7 +10,7 @@ created: 2026-08-01
 
 ## Summary
 
-T-092 made the sandbox full-screen and got wiring working. It is still laid out
+T-095 made the sandbox full-screen and got wiring working. It is still laid out
 like a form: a fixed navbar across the top, a parts toolbar under it, a
 transport row under that, and a notices panel pinned along the bottom. Four
 horizontal bands before the canvas starts, and the canvas is what the tool is.
@@ -276,10 +276,10 @@ byte identical.
 - **Re-rendering a pressed pin cancelled the drag too.** Chromium answers the
   removal of a captured target with `pointercancel`, and pressing a pin
   re-renders it as an armed pin. The gesture now captures the **surface**, which
-  is never re-created. This is not the capture T-092 removed: that one was on
+  is never re-created. This is not the capture T-095 removed: that one was on
   the source pin and broke the drop, because the release over the target was
   delivered to the source. The surface is where the release is handled anyway.
-- **The capture then routed around T-092's other fix.** With the pointer
+- **The capture then routed around T-095's other fix.** With the pointer
   captured, the `click` after a press on a pin is delivered to the surface,
   whose handler cleared the armed wire and the selection — the exact bug the
   port's `stopPropagation` existed to prevent, reappearing through a different
@@ -333,7 +333,7 @@ global.css says in a comment.
 
 ## References
 
-- [tickets/T-092-…](T-092-digital-logic-playground-and-input-language.md) — the
+- [tickets/T-095-…](T-095-digital-logic-playground-and-input-language.md) — the
   round this continues; §"Wiring actually works" is what this replaces
 - [tickets/T-089-digital-logic-lab.md](T-089-digital-logic-lab.md) — the build
 - [docs/specs/digital-logic.md](../docs/specs/digital-logic.md)

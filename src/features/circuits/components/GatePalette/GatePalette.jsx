@@ -1,8 +1,8 @@
 /**
- * GatePalette - the parts dock (T-089 phase 2, reshaped in T-092 and T-093).
+ * GatePalette - the parts dock (T-089 phase 2, reshaped in T-095 and T-096).
  *
  * A floating icon strip along the bottom of the canvas, the way FigJam docks its
- * shape tools. T-092 had it as a full-width labelled toolbar above the canvas;
+ * shape tools. T-095 had it as a full-width labelled toolbar above the canvas;
  * that is a band of chrome in the one mode whose whole point is canvas.
  *
  * Icon-only, because for the gates the icon *is* the label — the silhouette is

@@ -1,5 +1,5 @@
 /**
- * GateIcon - the palette's picture of a component (T-092).
+ * GateIcon - the palette's picture of a component (T-095).
  *
  * Drawn from lib/circuits/gateShapes.js, so the button in the toolbar is the
  * same silhouette that lands on the canvas. A palette of text labels forces the

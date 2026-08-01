@@ -60,7 +60,7 @@ const SINGLE_PIN = new Set(['not', 'output'])
  * Everything lands on it: placement, drags, and the dotted background the
  * surface paints. A visible grid that components do not sit on is worse than no
  * grid at all, and snapping is what makes hand-drawn wires run straight instead
- * of stair-stepping by a few pixels (T-092).
+ * of stair-stepping by a few pixels (T-095).
  */
 export const GRID = 20
 
@@ -72,7 +72,7 @@ export function snap(value) {
 /**
  * How far the top of the canvas is spoken for by the floating transport dock.
  *
- * The docks sit *over* the canvas (T-093), so anything laid out at y = 0 is
+ * The docks sit *over* the canvas (T-096), so anything laid out at y = 0 is
  * hidden behind the controls and reads as missing. Both placement paths keep
  * clear of it: `nextFreePosition` starts its first row here, and `fromNetlist`
  * offsets an incoming layout by it.
@@ -214,7 +214,7 @@ export function nextFreePosition(doc, kind) {
     && y < box.y + box.height + MARGIN && box.y < y + size.height + MARGIN
   ))
 
-  // The first row starts below the floating transport dock (T-093): a component
+  // The first row starts below the floating transport dock (T-096): a component
   // placed at the very top-left lands underneath it and reads as a click that
   // did nothing.
   for (let row = 0; row < 12; row += 1) {
@@ -331,7 +331,7 @@ export function connect(doc, fromPort, toPort) {
  * is the wrong rule for a *gesture*. Dropping a connector on an occupied point
  * in any diagram editor re-points it, and refusing left the student with no way
  * to change a connection short of finding and deleting the old wire — which is
- * the "That input already has a wire" bar in T-093's screenshot.
+ * the "That input already has a wire" bar in T-096's screenshot.
  *
  * So the editor calls this and the file format still calls `connect`. The
  * invariant is unchanged; only the interaction is.
@@ -393,7 +393,7 @@ export function fromNetlist(netlist, layout) {
         ...component,
         x: snap(placed?.x ?? 40 + (i % 6) * 110),
         // Cleared of the floating transport dock, the same reason
-        // nextFreePosition starts its first row low (T-093). The layout engine
+        // nextFreePosition starts its first row low (T-096). The layout engine
         // starts near zero, which put the first input underneath the controls.
         y: DOCK_INSET + snap(placed?.y ?? 40 + Math.floor(i / 6) * 110),
       }

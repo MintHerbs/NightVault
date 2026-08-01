@@ -1,5 +1,5 @@
 /**
- * Connector routing tests (T-093).
+ * Connector routing tests (T-096).
  * Run with: npm run test:circuits
  *
  * The claims worth testing are geometric, not cosmetic:

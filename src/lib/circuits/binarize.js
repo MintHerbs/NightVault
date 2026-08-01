@@ -1,5 +1,5 @@
 /**
- * Two-input gates (T-093).
+ * Two-input gates (T-096).
  *
  * The course teaches AND, OR, NAND, NOR, XOR and XNOR as two-input gates. The
  * synthesiser does not: a product term with four literals becomes one AND with

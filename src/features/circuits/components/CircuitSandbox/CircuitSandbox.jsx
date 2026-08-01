@@ -1,6 +1,6 @@
 /**
- * CircuitSandbox - the editable, runnable circuit surface (T-089 phase 2, T-092,
- * reshaped into a FigJam-style workbench in T-093).
+ * CircuitSandbox - the editable, runnable circuit surface (T-089 phase 2, T-095,
+ * reshaped into a FigJam-style workbench in T-096).
  *
  * Logisim-shaped but deliberately narrower: 1-bit wires only, no buses, no
  * splitters, no subcircuits. That covers the whole course and removes most of
@@ -13,10 +13,10 @@
  * Undo is a snapshot stack rather than a command log. The documents are small
  * enough that diffing them would be more code for no benefit.
  *
- * ## What T-093 changed
+ * ## What T-096 changed
  *
  *  * **The canvas is the page.** Every control floats over it — transport
- *    top-left, files top-right, parts bottom-centre. T-092 had four horizontal
+ *    top-left, files top-right, parts bottom-centre. T-095 had four horizontal
  *    bands of chrome above the canvas in the one mode that is nothing but
  *    canvas.
  *  * **Connectors route.** lib/circuits/wireRouting.js draws both the committed
@@ -202,10 +202,10 @@ export default function CircuitSandbox({
   const full = variant === 'full'
 
   // The island shows a state while the circuit is free-running (owner decision,
-  // T-092 follow-up) — and now also while an edit is in flight (placing a
+  // T-095 follow-up) — and now also while an edit is in flight (placing a
   // part, dragging one), since those got their own island moment too (owner
   // request, T-094). Reported rather than set here: the island is App's, and a
-  // leaf component reaching for it directly is how the raw-prop bypass T-092
+  // leaf component reaching for it directly is how the raw-prop bypass T-095
   // already fixed once got in.
   const busy = running || Boolean(editingPulse)
   useEffect(() => {
@@ -290,7 +290,7 @@ export default function CircuitSandbox({
    * They used to move `doc` without touching storage, so the last *edit* stayed
    * saved and the undo did not: reloading the tab silently brought back work
    * the student had already undone, and no amount of undoing could get rid of
-   * it. Found by driving the real UI (T-092 follow-up).
+   * it. Found by driving the real UI (T-095 follow-up).
    */
   const restore = useCallback((next) => {
     setDocState(next)
@@ -325,7 +325,7 @@ export default function CircuitSandbox({
   /**
    * One transient line over the canvas.
    *
-   * Replaces T-092's `.notices` panel, which was pinned along the bottom and
+   * Replaces T-095's `.notices` panel, which was pinned along the bottom and
    * showed one entry per component with a loose pin — that is every component,
    * continuously, while a circuit is being built. A refusal is news; a
    * half-built circuit is not.
@@ -561,7 +561,7 @@ export default function CircuitSandbox({
    * which silently ends the drag one frame after it starts. The surface is the
    * one element that is never re-created.
    *
-   * This is not the capture T-092 removed. That one was on the source pin and
+   * This is not the capture T-095 removed. That one was on the source pin and
    * broke the *drop*, because the release over the target pin was delivered to
    * the source. Capturing the surface has no such problem: the surface is where
    * the release is handled anyway, and the drop is resolved by hit-testing the
@@ -739,7 +739,7 @@ export default function CircuitSandbox({
     if (!component) return
     if (component.kind === 'input' || component.kind === 'clock') {
       // The clock used to fall through here and do nothing, even though it has
-      // a level like any other source (T-093).
+      // a level like any other source (T-096).
       simulation.toggleInput(component.id)
       setVersion(v => v + 1)
       startSweep()
@@ -869,7 +869,7 @@ export default function CircuitSandbox({
     const reader = new FileReader()
     reader.onload = () => {
       const text = String(reader.result)
-      // T-092 and earlier exported our own JSON. Those files are on students'
+      // T-095 and earlier exported our own JSON. Those files are on students'
       // disks, so they still open.
       const result = text.trimStart().startsWith('{') ? deserialize(text) : fromCirc(text)
       if (!result.ok) { flash(result.reason); return }
@@ -916,7 +916,7 @@ export default function CircuitSandbox({
           // pointer on the surface means a click that began on a pin or a
           // component is delivered here too, and clearing on that un-armed the
           // wire it had just armed and dropped the selection it had just made —
-          // the same shape of bug T-092 fixed with a stopPropagation that the
+          // the same shape of bug T-095 fixed with a stopPropagation that the
           // capture then routed around.
           onClick={() => {
             if (gestureRef.current) { gestureRef.current = false; return }
@@ -1310,7 +1310,7 @@ function SandboxComponent({
 
   // Inputs and probes carry the bits the student is reading off the canvas, so
   // they get their own fixed colours rather than the neutral gate surface they
-  // all shared before (T-093). Blue is a source, green is a reading.
+  // all shared before (T-096). Blue is a source, green is a reading.
   const role = kind === 'input' || kind === 'const' || kind === 'clock' ? styles.bodySource
     : kind === 'output' ? styles.bodyProbe
       : ''

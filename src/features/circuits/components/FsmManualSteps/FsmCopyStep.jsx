@@ -1,5 +1,5 @@
 /**
- * FsmCopyStep - step 2 of the manual flow (T-092 follow-up).
+ * FsmCopyStep - step 2 of the manual flow (T-095 follow-up).
  *
  * Deliberately the same shape as ERDStep2: same three numbered instructions,
  * same copy card, same pagination dots, same "Next: paste the JSON" action. The

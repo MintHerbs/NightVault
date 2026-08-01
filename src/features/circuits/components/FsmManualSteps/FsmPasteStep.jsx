@@ -1,5 +1,5 @@
 /**
- * FsmPasteStep - step 3 of the manual flow (T-092 follow-up).
+ * FsmPasteStep - step 3 of the manual flow (T-095 follow-up).
  *
  * Mirrors ERDStep3: paste area, "Paste from clipboard", Ctrl/Cmd+Enter to
  * submit, and the error text that names what to check rather than just saying

@@ -1,5 +1,5 @@
 ---
-id: T-092
+id: T-095
 title: Rebuild the Digital Logic input layer on the shared pill, and turn the sandbox into a Logisim-shaped playground
 status: done
 severity: high

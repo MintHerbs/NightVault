@@ -1,5 +1,5 @@
 /**
- * Propagation-plan tests (T-092).
+ * Propagation-plan tests (T-095).
  * Run with: npm run test:circuits
  *
  * The load-bearing claim is that this is *display only*: the animation must not

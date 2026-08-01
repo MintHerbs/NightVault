@@ -1,5 +1,5 @@
 /**
- * LabNavbar - the Digital Logic Lab's top bar (T-092 follow-up).
+ * LabNavbar - the Digital Logic Lab's top bar (T-095 follow-up).
  *
  * Replaces the "Mode" dropdown that used to float over each view. A dropdown
  * made the tool's four modes feel like a setting on the current page; they are

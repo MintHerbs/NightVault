@@ -71,7 +71,7 @@
   --accent-green: #26de81;
   --accent-green-hover: #4df09a;
   /* Bare triplets of the two above, for the low-alpha fills the circuit canvas
-     paints behind an input or a probe (T-093). Same value, same non-themed
+     paints behind an input or a probe (T-096). Same value, same non-themed
      promise — a source is blue and a reading is green under every accent. */
   --accent-blue-rgb: 79, 142, 247;
   --accent-green-rgb: 38, 222, 129;

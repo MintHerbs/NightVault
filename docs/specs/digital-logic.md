@@ -1,10 +1,10 @@
 # digital-logic.md — Digital Logic Lab Specification
 
 > Status: **All four phases shipped** (T-089), then reworked by
-> [T-092](../../tickets/T-092-digital-logic-playground-and-input-language.md):
+> [T-095](../../tickets/T-095-digital-logic-playground-and-input-language.md):
 > the input layer moved onto the shared pill, the island was wired up, and the
 > sandbox became a Logisim-shaped playground. See §11 for the phases and §14 for
-> what T-092 changed.
+> what T-095 changed.
 > Subject: `computer-architecture` (CA). Route: `/arch/digital-logic`.
 
 ## Overview
@@ -690,7 +690,7 @@ re-openable; nothing is destroyed by moving forward.
 | Result ready | `idle` after 1s |
 
 The sandbox row **reverses** what this spec originally said (`idle`, do not hold
-a state for the whole run). Owner decision, T-092 follow-up: pressing Run should
+a state for the whole run). Owner decision, T-095 follow-up: pressing Run should
 say something, and a circuit ticking at 2Hz genuinely is being computed. The
 cost is real and accepted — a non-idle island suppresses chat notifications, so
 a long run is a quiet period.
@@ -699,7 +699,7 @@ The island also **moves** in sandbox mode: `src/hooks/useIslandDock.js` parks it
 in the bottom-right corner, because the full-screen canvas needs the top centre
 for its own navbar. It returns to the top on leaving.
 
-Wired through `src/hooks/useAIState.js` (T-092), which owns both the stable
+Wired through `src/hooks/useAIState.js` (T-095), which owns both the stable
 setter and the minimum dwell. The dwell is the load-bearing part here: `analyse()`
 returns in single-digit milliseconds, so setting `thinking` and clearing it in
 the same block paints nothing. `docs/rules.md` §15 is the general rule.
@@ -780,7 +780,7 @@ entry in `modules.js`, the four analytics maps in `eventSchema.js`, the K-map
 colour tokens in `global.css`, one `package.json` script, and the
 `erdQuota.js` → `generationQuota.js` generalisation.
 
-**Amended by T-092.** Two files on that list were changed after all, both
+**Amended by T-095.** Two files on that list were changed after all, both
 additively and both because the rule this spec was written under turned out to
 be the wrong rule:
 
@@ -793,7 +793,7 @@ be the wrong rule:
 
 ---
 
-## 14. T-092 — input language and the playground
+## 14. T-095 — input language and the playground
 
 Five changes, filed together because the first two are app-wide rules and the
 last three are one surface.
@@ -912,7 +912,7 @@ Sharing the truth tables between the simulator and its reference would make the
 comparison test the plumbing and nothing else, so both are written out twice on
 purpose.
 
-## 15. T-093 — the FigJam workbench
+## 15. T-096 — the FigJam workbench
 
 The sandbox stops being a panel with controls above it and becomes a canvas with
 controls on it. Sandbox mode renders no `LabNavbar`, no global `Sidebar` and no
@@ -991,7 +991,7 @@ present as "wiring works sometimes":
 - **capture on a re-rendered target.** Chromium cancels the pointer when a
   captured element is removed, and pressing a pin re-renders it. The gesture
   captures the **surface**, which is never re-created. This is not the capture
-  T-092 removed: that one was on the source pin and broke the drop. The
+  T-095 removed: that one was on the source pin and broke the drop. The
   consequence is that the trailing `click` is delivered to the surface, so the
   surface ignores any click belonging to a gesture that started on something.
 
@@ -1049,5 +1049,5 @@ T-junctions, where a point lies on another segment's interior — and matching t
 to computed pin coordinates.
 
 Buses, splitters, tunnels, subcircuits and rotated components are refused by
-name rather than half-read. Import still accepts the JSON T-089 and T-092 wrote,
+name rather than half-read. Import still accepts the JSON T-089 and T-095 wrote,
 because those files are on students' disks.

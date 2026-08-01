@@ -1,5 +1,5 @@
 /**
- * Gate silhouette tests (T-092).
+ * Gate silhouette tests (T-095).
  * Run with: npm run test:circuits
  *
  * The claim under test is the one the feature exists for: a student can tell

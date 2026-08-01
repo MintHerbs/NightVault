@@ -1,5 +1,5 @@
 /**
- * Two-input rewrite tests (T-093).
+ * Two-input rewrite tests (T-096).
  * Run with: npm run test:circuits
  *
  * The contract is equivalence, so it is checked by *running* both netlists over

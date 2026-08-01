@@ -1,5 +1,5 @@
 /**
- * Sandbox robustness suite (T-092 follow-up).
+ * Sandbox robustness suite (T-095 follow-up).
  * Run with: npm run test:circuits
  *
  * Three separate jobs, because "the sandbox works" means three different

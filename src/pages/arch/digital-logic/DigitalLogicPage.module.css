@@ -5,7 +5,7 @@
    this div. An opaque background here painted over it, which is why every
    non-sandbox mode showed flat black instead of stars. .pageFull below is the
    one variant that legitimately wants a solid backdrop — App.jsx suppresses
-   the Starfield there on purpose (T-093) — so the opaque colour moved to it. */
+   the Starfield there on purpose (T-096) — so the opaque colour moved to it. */
 .page {
   position: relative;
   min-height: 100vh;
@@ -14,7 +14,7 @@
 
 /* The sandbox is the page: nothing scrolls, nothing is padded, and the canvas
    reaches every edge. The controls float on top of it from inside the sandbox
-   itself, so there is no shell left to lay out (T-093). */
+   itself, so there is no shell left to lay out (T-096). */
 .pageFull {
   display: flex;
   height: 100vh;
