@@ -36,6 +36,7 @@ Monaco; (2) **full-bleed reader** shared by the live page and preview.
 - [x] T-075 — Web module notes (ch1-20) + interactive REPL playground node + code-block filenames
 - [x] T-076 — Order notes by date created, then naturally by number/name (adds notes.created_at)
 - [x] T-080 — Expand web notes ch10-20 to full depth, with 13 new diagrams
+- [x] T-104 — Fix the dead Code block toolbar button + code-destroying paste into inline `code`
 
 Consolidated 2026-07-22 from an initial 8-ticket breakdown to reduce ticket
 count: former code-theme + reader tickets folded into **T-035**; former

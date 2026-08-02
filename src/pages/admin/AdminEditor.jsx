@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Editor from '@monaco-editor/react'
 import NoteEditor from '../../components/admin/NoteEditor'
@@ -16,6 +16,7 @@ import PreviewModal from '../../components/admin/PreviewModal'
 import ImageCleanupDrawer from '../../components/admin/ImageCleanupDrawer'
 import FormulaModal from '../../components/admin/FormulaModal'
 import ChemistryModal from '../../components/admin/ChemistryModal'
+import CodeBlockModal from '../../components/admin/CodeBlockModal'
 import SocialLinkModal from '../../components/admin/SocialLinkModal'
 import ToastNotification, { useToast } from '../../components/admin/ToastNotification'
 import { Monitor } from '@phosphor-icons/react'
@@ -220,6 +221,7 @@ function AdminEditorContent() {
     previewOpen, setPreviewOpen,
     formulaModalOpen, setFormulaModalOpen, chemistryModalOpen, setChemistryModalOpen,
     socialLinkModalOpen, setSocialLinkModalOpen,
+    codeBlockModalOpen, setCodeBlockModalOpen, codeBlockDraft, setCodeBlockDraft,
     selectedPath, setSelectedPath, originalPath, setOriginalPath,
     currentStyle, setCurrentStyle,
     isTooNarrow, setIsTooNarrow, editorRef, fileInputRef,
@@ -577,6 +579,41 @@ function AdminEditorContent() {
     editor.focus()
   }
 
+  // Code blocks render read-only in the WYSIWYG editor (T-037), so both the
+  // toolbar button (`draft` null → insert) and a double-click on an existing
+  // block (`draft` set → replace it in place) go through CodeBlockModal.
+  //
+  // Stable identity matters here: NoteEditor keys its double-click listener off
+  // this callback, so a new function each render would detach and reattach the
+  // listener on every keystroke.
+  const openCodeBlockModal = useCallback((draft = null) => {
+    setCodeBlockDraft(draft)
+    setCodeBlockModalOpen(true)
+  }, [setCodeBlockDraft, setCodeBlockModalOpen])
+
+  // Under Monaco the author edits the fence as text, so there the same fields
+  // are just spliced in at the caret as Markdown.
+  const handleSubmitCodeBlock = ({ code, language, meta }) => {
+    if (USE_WYSIWYG) {
+      if (codeBlockDraft) {
+        noteEditorRef.current?.updateCodeBlock(
+          codeBlockDraft.pos, { code, language, meta }, codeBlockDraft.code
+        )
+      } else {
+        noteEditorRef.current?.insertCodeBlock({ code, language, meta })
+      }
+      return
+    }
+    if (!editorRef.current) return
+
+    const editor = editorRef.current
+    editor.executeEdits('', [{
+      range: editor.getSelection(),
+      text: `\`\`\`${[language, meta].filter(Boolean).join(' ')}\n${code}\n\`\`\`\n`,
+    }])
+    editor.focus()
+  }
+
   const onSetTextColor = (hex) => {
     if (USE_WYSIWYG) noteEditorRef.current?.setTextColor(hex)
   }
@@ -724,6 +761,13 @@ function AdminEditorContent() {
         onInsert={handleInsertChemistry}
       />
 
+      <CodeBlockModal
+        open={codeBlockModalOpen}
+        onClose={() => { setCodeBlockModalOpen(false); setCodeBlockDraft(null) }}
+        onSubmit={handleSubmitCodeBlock}
+        initial={codeBlockDraft}
+      />
+
       <SocialLinkModal
         open={socialLinkModalOpen}
         onClose={() => setSocialLinkModalOpen(false)}
@@ -757,6 +801,7 @@ function AdminEditorContent() {
         editorRef={editorRef}
         onFormatAction={onFormat}
         onInsertImage={() => fileInputRef.current?.click()}
+        onInsertCodeBlock={() => openCodeBlockModal()}
         onInsertFormula={() => setFormulaModalOpen(true)}
         onInsertChemistry={() => setChemistryModalOpen(true)}
         onInsertSocialLink={() => setSocialLinkModalOpen(true)}
@@ -786,6 +831,7 @@ function AdminEditorContent() {
               ref={noteEditorRef}
               content={content}
               onChange={handleContentChange}
+              onEditCodeBlock={openCodeBlockModal}
               resetKey={`${moduleId}/${subfolder}/${slug}`}
             />
           ) : (

@@ -51,6 +51,12 @@ const LABELS = {
   text: 'Text',
 }
 
+// The canonical languages an author can pick in CodeBlockModal — the LABELS
+// keys, which are exactly the resolved (post-alias) languages this highlighter
+// knows. Derived rather than hand-listed so a new language stays a one-line
+// change here.
+export const LANGUAGE_OPTIONS = Object.keys(LABELS)
+
 const KEYWORDS = {
   javascript: new Set('async await break case catch class const continue default do else export extends finally for from function if import in let new of return switch throw try typeof var void while yield'.split(' ')),
   jsx: new Set('async await break case catch class const continue default do else export extends finally for from function if import in let new of return switch throw try typeof var void while yield'.split(' ')),

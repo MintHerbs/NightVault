@@ -56,6 +56,7 @@ export default function EditorNavbar({
   editorRef,
   onFormatAction,
   onInsertImage,
+  onInsertCodeBlock,
   onInsertFormula,
   onInsertChemistry,
   onInsertSocialLink,
@@ -302,7 +303,7 @@ export default function EditorNavbar({
             <Tooltip.Trigger asChild>
               <button
                 className={styles.formatButton}
-                onClick={() => onFormatAction('code')}
+                onClick={onInsertCodeBlock}
               >
                 <Code size={18} />
               </button>

@@ -8,6 +8,10 @@ export function useEditorState() {
   const [previewOpen, setPreviewOpen] = useState(false)
   const [formulaModalOpen, setFormulaModalOpen] = useState(false)
   const [chemistryModalOpen, setChemistryModalOpen] = useState(false)
+  const [codeBlockModalOpen, setCodeBlockModalOpen] = useState(false)
+  // null = inserting a new block; { pos, code, language, meta } = editing the
+  // existing block at that document position (see CodeBlockModal).
+  const [codeBlockDraft, setCodeBlockDraft] = useState(null)
   const [socialLinkModalOpen, setSocialLinkModalOpen] = useState(false)
   const [selectedPath, setSelectedPath] = useState(null) // { moduleId, subfolder }
   const [originalPath, setOriginalPath] = useState(null) // GitHub path the loaded note came from, or null for a new note
@@ -27,6 +31,8 @@ export function useEditorState() {
     previewOpen, setPreviewOpen,
     formulaModalOpen, setFormulaModalOpen,
     chemistryModalOpen, setChemistryModalOpen,
+    codeBlockModalOpen, setCodeBlockModalOpen,
+    codeBlockDraft, setCodeBlockDraft,
     socialLinkModalOpen, setSocialLinkModalOpen,
     selectedPath, setSelectedPath,
     originalPath, setOriginalPath,

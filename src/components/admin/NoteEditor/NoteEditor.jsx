@@ -27,6 +27,7 @@ import { HEX_COLOR_RE } from '../../../constants/noteColors'
 import {
   commonmark,
   codeBlockSchema,
+  inlineCodeSchema,
   insertImageCommand,
   toggleStrongCommand,
   toggleEmphasisCommand,
@@ -563,6 +564,12 @@ function configureCodeBlockMeta(ctx) {
   })
 }
 
+// Fired on the editor's DOM when a rendered code block is double-clicked, so
+// AdminEditor can open CodeBlockModal on it. A DOM event rather than a ctx
+// callback because the node view is built by this module-level plugin, which
+// has no route back to React state.
+const EDIT_CODE_BLOCK_EVENT = 'note-editor:edit-code-block'
+
 // Render fenced code blocks with the shared social CodeBlock (themed, read-only)
 // so the editor matches the reader. Reuses the real React component via a
 // react-dom root; no contentDOM => not inline-editable here (reveal-to-edit is
@@ -582,6 +589,26 @@ function configureCodeBlockMeta(ctx) {
 const codeBlockView = $prose(() => new Plugin({
   key: new PluginKey('NOTE_EDITOR_CODE_BLOCK_VIEW'),
   props: {
+    // Double-click a rendered block to reopen it in CodeBlockModal. Because
+    // the node view below has no contentDOM there is no caret to put inside a
+    // code block, so this is the only way to change one after it is written
+    // (T-104); AdminEditor listens for the event on the editor surface.
+    handleDoubleClickOn: (view, pos, node, nodePos) => {
+      if (node.type.name !== 'code_block') return false
+      // ```reaction fences are a chemistry payload, not a code sample — they
+      // belong to ChemistryModal, so leave that double-click alone.
+      if (node.attrs.language === 'reaction') return false
+      view.dom.dispatchEvent(new CustomEvent(EDIT_CODE_BLOCK_EVENT, {
+        bubbles: true,
+        detail: {
+          pos: nodePos,
+          code: node.textContent,
+          language: node.attrs.language || 'auto',
+          meta: node.attrs.meta || '',
+        },
+      }))
+      return true
+    },
     nodeViews: {
       code_block: (node) => {
         const dom = document.createElement('div')
@@ -922,6 +949,63 @@ function insertPlainTextPaste(view, ctx, text) {
   return true
 }
 
+// Lands the caret on an empty paragraph after the block that was just
+// inserted (reusing one if it is already there). Block-level atoms — YouTube
+// embeds, read-only code blocks — otherwise leave the caret pinned to a node
+// selection with nothing below to click, so there is no way to keep typing
+// after inserting one at the end of a note. Not every parent takes a second
+// block (a GFM table cell holds exactly one paragraph), so where a paragraph
+// cannot go the caret simply stays put.
+function caretAfterBlock(view) {
+  const { state } = view
+  const paragraph = state.schema.nodes.paragraph
+  if (!paragraph) return
+  // A YouTube embed is an atom, so the selection already sits after it — but a
+  // code block holds text, so ProseMirror parks the caret *inside* the one just
+  // inserted, where a code block's `text*` content allows no sibling paragraph.
+  // Step out to just past it. Bounded to code nodes deliberately: climbing out
+  // of, say, a table cell (which holds exactly one paragraph) would drop the
+  // new paragraph after the entire table.
+  let $end = state.doc.resolve(state.selection.to)
+  while ($end.depth > 0 && $end.parent.type.spec.code) {
+    $end = state.doc.resolve($end.after($end.depth))
+  }
+  const end = $end.pos
+  const next = state.doc.nodeAt(end)
+  const parent = $end.parent
+  const index = $end.index()
+  const reusable = next?.type === paragraph && next.content.size === 0
+  if (!reusable && !parent.canReplaceWith(index, index, paragraph)) {
+    view.focus()
+    return
+  }
+  let tr = state.tr
+  if (!reusable) tr = tr.insert(end, paragraph.create())
+  const $target = tr.doc.resolve(Math.min(end + 1, tr.doc.content.size))
+  view.dispatch(tr.setSelection(TextSelection.near($target)).scrollIntoView())
+  view.focus()
+}
+
+// Builds a `code_block` node from the modal's fields. Returns null for empty
+// code: `schema.text('')` throws, and a blank block would be unreachable to
+// fix afterwards (nothing renders to double-click).
+function buildCodeBlock(ctx, schema, { code, language = '', meta = '' }) {
+  const text = String(code ?? '').replace(/\r\n?/g, '\n').replace(/\s+$/, '')
+  if (!text) return null
+  return codeBlockSchema.type(ctx).create({ language, meta }, schema.text(text))
+}
+
+// True when the current selection sits inside an inline `code` span: for a
+// collapsed caret that means the marks ProseMirror would apply to typed input,
+// and for a range it means the whole range already carries the mark (a
+// selection that only partly overlaps a span is not "in" it).
+function isInInlineCode(state, ctx) {
+  const type = inlineCodeSchema.type(ctx)
+  const { selection, storedMarks } = state
+  if (selection.empty) return !!type.isInSet(storedMarks || selection.$from.marks())
+  return state.doc.rangeHasMark(selection.from, selection.to, type)
+}
+
 const markdownClipboard = $prose((ctx) => new Plugin({
   key: new PluginKey('NOTE_EDITOR_MD_CLIPBOARD'),
   props: {
@@ -932,6 +1016,27 @@ const markdownClipboard = $prose((ctx) => new Plugin({
       if (view.state.selection.$from.parent.type.spec.code) return false
       const text = clip.getData('text/plain')
       if (!text) return false
+
+      // Inside an inline `code` span the clipboard is source too, for exactly
+      // the same reason — but the guard above only recognises code *blocks*,
+      // which are nodes. Inline code is a mark on an ordinary paragraph, so
+      // without this a snippet pasted between backticks went through the
+      // Markdown parser: indented lines following a blank line each became
+      // their own extra code block, `__init__` became bold, leading
+      // indentation was stripped and the span itself was split in two (T-104).
+      // "Is the caret in inline code" is answered the way ProseMirror answers
+      // it for typed input (stored marks, else the marks at $from), so pasting
+      // lands wherever typing would have.
+      // An inline span is one line by definition, so newlines collapse to
+      // single spaces rather than silently splitting the paragraph.
+      if (isInInlineCode(view.state, ctx)) {
+        const flattened = text.replace(/\r\n?/g, '\n').replace(/\s*\n\s*/g, ' ')
+        if (!flattened) return true
+        const mark = inlineCodeSchema.type(ctx).create()
+        const node = view.state.schema.text(flattened, [mark])
+        view.dispatch(view.state.tr.replaceSelectionWith(node, false).scrollIntoView())
+        return true
+      }
 
       // Reaction SMILES (`reactants>agents>products`, T-092) has an
       // unambiguous SHAPE (noteChem.js's splitReactionSmiles — no OCL
@@ -1017,7 +1122,7 @@ const markdownClipboard = $prose((ctx) => new Plugin({
   },
 }))
 
-const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, ref) {
+const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange, onEditCodeBlock }, ref) {
   // `lastEmitted` tracks the Markdown the editor last produced. Incoming
   // `content` equal to it means "our own change echoed back" — skip the reset
   // so typing never fights the controlled prop (the ProseMirror feedback-loop
@@ -1031,6 +1136,18 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
   const applyingExternal = useRef(false)
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
+  const surfaceRef = useRef(null)
+
+  // codeBlockView's double-click handler fires EDIT_CODE_BLOCK_EVENT on the
+  // ProseMirror DOM; it bubbles to this surface, where the callback prop can
+  // finally reach React state (AdminEditor's CodeBlockModal).
+  useEffect(() => {
+    const surface = surfaceRef.current
+    if (!surface || !onEditCodeBlock) return undefined
+    const handler = (event) => onEditCodeBlock(event.detail)
+    surface.addEventListener(EDIT_CODE_BLOCK_EVENT, handler)
+    return () => surface.removeEventListener(EDIT_CODE_BLOCK_EVENT, handler)
+  }, [onEditCodeBlock])
 
   useEditor((root) =>
     Editor.make()
@@ -1119,6 +1236,13 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
     focus() {
       getInstance()?.action((ctx) => ctx.get(editorViewCtx).focus())
     },
+    // Inline marks only. `code` here is the inline `code` span (Mod-e, or the
+    // `` `x` `` input rule) — NOT the toolbar's Code block button, which the
+    // tooltip always claimed it was and which now goes through
+    // `insertCodeBlock`. Note the odd one out: bold/italic/strike are plain
+    // `toggleMark`s and so apply to the next typed character on a bare caret,
+    // but the preset's inline-code command returns false on an empty
+    // selection, so `code` needs text selected to do anything.
     format(action) {
       const cmd = {
         bold: toggleStrongCommand,
@@ -1168,29 +1292,40 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
         const node = youtubeSchema.type(ctx).create({ videoId })
         view.dispatch(view.state.tr.replaceSelectionWith(node).scrollIntoView())
       })
-      // Same "land the caret below" treatment as insertImage, adapted for a
-      // block-level (rather than inline) atom: resolve just past the node's
-      // end position instead of walking up from an inline $from.
+      getInstance()?.action((ctx) => caretAfterBlock(ctx.get(editorViewCtx)))
+    },
+    // Insert a fenced code block (T-104). Built as a node rather than parsed
+    // from a ``` fence so the author's code can contain anything, backtick
+    // runs included, without needing the fence length negotiated here — the
+    // serialiser widens the fence on save if it has to.
+    insertCodeBlock({ code, language = '', meta = '' }) {
       getInstance()?.action((ctx) => {
         const view = ctx.get(editorViewCtx)
-        const { state } = view
-        const end = state.selection.to
-        const paragraph = state.schema.nodes.paragraph
-        if (!paragraph) return
-        const $end = state.doc.resolve(end)
-        const next = state.doc.nodeAt(end)
-        const parent = $end.parent
-        const index = $end.index()
-        const reusable = next?.type === paragraph && next.content.size === 0
-        if (!reusable && !parent.canReplaceWith(index, index, paragraph)) {
-          view.focus()
-          return
-        }
-        let tr = state.tr
-        if (!reusable) tr = tr.insert(end, paragraph.create())
-        const $target = tr.doc.resolve(Math.min(end + 1, tr.doc.content.size))
-        view.dispatch(tr.setSelection(TextSelection.near($target)).scrollIntoView())
-        view.focus()
+        const node = buildCodeBlock(ctx, view.state.schema, { code, language, meta })
+        if (!node) return
+        view.dispatch(view.state.tr.replaceSelectionWith(node).scrollIntoView())
+      })
+      getInstance()?.action((ctx) => caretAfterBlock(ctx.get(editorViewCtx)))
+    },
+    // Write an edited code block back over the one at `pos` (the position
+    // CodeBlockModal was opened from). Positions are only valid against the
+    // document they came from, so before replacing anything this checks that
+    // `pos` still holds a code block AND that it is still the same one —
+    // `expectedCode` is the text the modal was seeded with. Position alone is
+    // not enough: had the document shifted, `pos` could hold a *different*
+    // code block, and overwriting that one would silently destroy a snippet
+    // the author never opened.
+    updateCodeBlock(pos, { code, language = '', meta = '' }, expectedCode) {
+      getInstance()?.action((ctx) => {
+        const view = ctx.get(editorViewCtx)
+        const existing = view.state.doc.nodeAt(pos)
+        if (existing?.type.name !== 'code_block') return
+        if (expectedCode != null && existing.textContent !== expectedCode) return
+        const node = buildCodeBlock(ctx, view.state.schema, { code, language, meta })
+        if (!node) return
+        view.dispatch(
+          view.state.tr.replaceWith(pos, pos + existing.nodeSize, node).scrollIntoView()
+        )
       })
     },
     // Insert an image node at the current cursor position. `src` may be a
@@ -1280,16 +1415,21 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange }, r
   }), [loading, getInstance])
 
   return (
-    <div className={styles.editorSurface}>
+    <div className={styles.editorSurface} ref={surfaceRef}>
       <Milkdown />
     </div>
   )
 })
 
-const NoteEditor = forwardRef(function NoteEditor({ content, onChange }, ref) {
+const NoteEditor = forwardRef(function NoteEditor({ content, onChange, onEditCodeBlock }, ref) {
   return (
     <MilkdownProvider>
-      <MilkdownInner content={content} onChange={onChange} ref={ref} />
+      <MilkdownInner
+        content={content}
+        onChange={onChange}
+        onEditCodeBlock={onEditCodeBlock}
+        ref={ref}
+      />
     </MilkdownProvider>
   )
 })
