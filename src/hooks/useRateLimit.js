@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { getSessionId } from '../lib/sessionId'
 
 // Rate limiting and bot-blacklist enforcement for posts/comments/chat/votes
 // now live entirely inside create_post/create_comment/send_message/vote_post/
@@ -9,15 +10,6 @@ import { supabase } from '../lib/supabaseClient'
 // This hook is left with exactly the part of the old surface that still has
 // a caller: a passive "is this session already blacklisted" read, used to
 // warm a UI hint before the visitor tries to do anything.
-
-function getOrCreateSessionId() {
-  let sessionId = localStorage.getItem('session_id')
-  if (!sessionId) {
-    sessionId = crypto.randomUUID()
-    localStorage.setItem('session_id', sessionId)
-  }
-  return sessionId
-}
 
 /**
  * One blacklist lookup per session id, shared by every hook instance.
@@ -64,7 +56,7 @@ export function useRateLimit() {
 
   useEffect(() => {
     let isActive = true
-    const id = getOrCreateSessionId()
+    const id = getSessionId()
 
     readBlacklist(id).then((blacklisted) => {
       if (isActive && blacklisted) setIsBlacklisted(true)

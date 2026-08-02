@@ -24,6 +24,15 @@
   align-items: flex-end;
 }
 
+/* Centre stage, for the boot sequence only (T-099). The wrapper stays
+   pointer-events: none, so the page underneath is fully interactive for the
+   whole sequence — the island is putting on a show, not blocking anything. */
+.wrapper[data-dock="center"] {
+  padding: 0;
+  justify-content: center;
+  align-items: center;
+}
+
 /* Stable live region for screen readers. Kept outside the pill so it can't
    participate in the layout animation. */
 .srOnly {
@@ -194,6 +203,100 @@
   font-weight: 500;
   white-space: nowrap;
   letter-spacing: -0.01em;
+}
+
+/* Boot sequence (T-099). The pill grows into a real panel here, the same way
+   timer-set does: a glyph over a two-line log does not fit a strip, and the
+   whole point of the beat is that Sentinel has opened up to talk. */
+.pill[data-state="boot"] .content {
+  padding: 0;
+}
+
+.bootPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 320px;
+  padding: 26px 24px;
+}
+
+/* Fixed box so the log below does not jump when a 32px glyph is swapped for
+   the 64px avatar forge. */
+.bootGlyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+}
+
+.bootAvatar {
+  line-height: 0;
+  border-radius: 50%;
+}
+
+.bootLog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  width: 100%;
+  min-height: 40px;
+}
+
+.bootLine {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+.bootLinePrevious {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+/* Once the avatar has left for the sidebar there is nothing in the glyph slot,
+   and holding 72px of empty panel open behind it reads as something missing.
+   Collapsing it lets the panel close up in the avatar's wake, on the pill's own
+   eased layout transition. */
+.pill[data-state="boot"][data-stage="integrate"] .bootGlyph {
+  width: 0;
+  height: 0;
+}
+
+/* The collapsed beats at either end: the pill arrives and leaves as a pill, so
+   the expansion reads as Sentinel opening up rather than as the pill being
+   large for a while. */
+.pill[data-state="boot"][data-stage="wake"] .bootPanel,
+.pill[data-state="boot"][data-stage="settle"] .bootPanel {
+  width: auto;
+  gap: 0;
+  padding: 10px 16px;
+}
+
+.pill[data-state="boot"][data-stage="wake"] .bootGlyph,
+.pill[data-state="boot"][data-stage="settle"] .bootGlyph {
+  width: 24px;
+  height: 24px;
+}
+
+.pill[data-state="boot"][data-stage="wake"] .bootLog,
+.pill[data-state="boot"][data-stage="settle"] .bootLog {
+  display: none;
+}
+
+/* An ack is the glyph alone confirming a press. Square padding so the pill
+   reads as a dot reacting rather than as a strip that briefly appeared. */
+.pill[data-state="ack"] .content {
+  padding: 9px;
 }
 
 .pill[data-state="quip"] .content {

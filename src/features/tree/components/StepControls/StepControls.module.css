@@ -2,10 +2,17 @@
    canvas's own colour, deliberately not themed) rather than the page accent, so the
    controls read as part of the visualiser. */
 
+/* `left: 80px` clears the docked sidebar rail (56px wide, fixed, z-index 60),
+   with the same 24px of breathing room the bar's own padding uses. Without it
+   the leftmost button sat at x=24 with the rail on top of it, so "Previous
+   step" was only clickable on the 8px sliver that stuck out past the rail
+   (T-103). Matches how the tableaux transport has always handled this
+   (LogicStepControls.module.css); both drop back to 0 below 968px, where the
+   sidebar becomes a closed off-canvas drawer. */
 .controls {
   position: absolute;
   bottom: 0;
-  left: 0;
+  left: 80px;
   right: 0;
   z-index: 20;
   display: flex;
@@ -204,6 +211,8 @@
    media condition, so the raw value is repeated here. */
 @media (max-width: 968px) {
   .controls {
+    /* The sidebar is a closed drawer here, so the bar takes the full width. */
+    left: 0;
     height: auto;
     flex-wrap: wrap;
     gap: 12px;

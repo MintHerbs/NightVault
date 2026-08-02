@@ -1,14 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-
-function getOrCreateSessionId() {
-  let sessionId = localStorage.getItem('session_id')
-  if (!sessionId) {
-    sessionId = crypto.randomUUID()
-    localStorage.setItem('session_id', sessionId)
-  }
-  return sessionId
-}
+import { getSessionId } from '../lib/sessionId'
 
 function buildNestedComments(flatComments) {
   const topLevel = (flatComments || []).filter((c) => !c.parent_comment_id)
@@ -69,7 +61,7 @@ export function useComments(postId) {
     }
 
     setIsLoading(true)
-    const sessionId = getOrCreateSessionId()
+    const sessionId = getSessionId()
 
     // Explicit column list, not select('*'): comments.session_id has no
     // grant for anon/authenticated any more (T-078), and PostgREST 401s the
@@ -152,7 +144,7 @@ export function useComments(postId) {
   const createComment = useCallback(
     async (content, parentCommentId) => {
       if (!postId) return { error: 'Missing postId' }
-      const sessionId = getOrCreateSessionId()
+      const sessionId = getSessionId()
 
       const trimmed = String(content ?? '').trim()
       if (!trimmed) return { error: 'Empty comment' }
@@ -187,7 +179,7 @@ export function useComments(postId) {
   const voteComment = useCallback(
     async (commentId, voteType) => {
       if (voteType !== 'up' && voteType !== 'down') return { error: 'Invalid vote type' }
-      const sessionId = getOrCreateSessionId()
+      const sessionId = getSessionId()
 
       const previousVote = userVotesRef.current[commentId] ?? null
       const nextVote = previousVote === voteType ? null : voteType
@@ -222,7 +214,7 @@ export function useComments(postId) {
     // transaction-local GUC that the next request could not see. See T-069.
     const { data, error } = await supabase.rpc('soft_delete_comment', {
       p_comment_id: commentId,
-      p_session_id: localStorage.getItem('session_id'),
+      p_session_id: getSessionId(),
     })
 
     if (error || !data?.success) return { error: data?.error || 'Failed to delete comment' }

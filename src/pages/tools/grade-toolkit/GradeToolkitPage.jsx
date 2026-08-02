@@ -6,6 +6,7 @@ import BackButton from '../../../components/common/BackButton/BackButton'
 import CpaMode from './CpaMode'
 import MinMaxMode from './MinMaxMode'
 import { trackToolEvent } from '../../../lib/analytics/tracker'
+import { fireAck } from '../../../hooks/useSentinelQuip'
 import styles from './GradeToolkitPage.module.css'
 
 // The two tools this page fuses. `key` is what lives in the ?mode= query param
@@ -49,6 +50,7 @@ export default function GradeToolkitPage() {
     // and "min effort, max result" used to be separate tools, and this is the
     // only signal that says whether merging them matched demand.
     trackToolEvent('grade-toolkit', next === 'cpa' ? 'mode-cpa' : 'mode-minmax')
+    fireAck('mode-switch')
   }
 
   const active = MODES.find(m => m.key === mode) ?? MODES[0]

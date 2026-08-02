@@ -7,7 +7,7 @@ import GridLoader from '../../effects/smoothui/grid-loader/index.tsx'
  *
  * It therefore gets its own look rather than borrowing WaitingAnimation's
  * frame: a ripple spreading out from the centre, which reads as computation
- * radiating rather than as a queue turning over (docs/rules.md §15.5). Same
+ * radiating rather than as a queue turning over (docs/rules.md §15.6). Same
  * grid, different character.
  *
  * `speed="fast"` originally (400ms/cell) read as frantic for a state that can

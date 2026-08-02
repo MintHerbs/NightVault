@@ -16,6 +16,10 @@ import { useSyncExternalStore } from 'react'
 
 export const DOCK_TOP = 'top'
 export const DOCK_BOTTOM_RIGHT = 'bottom-right'
+// Centre stage, used only by the Sentinel boot sequence (T-099). Not for
+// pages: the island covering the middle of the screen is a takeover, and the
+// boot is the one thing entitled to do it.
+export const DOCK_CENTER = 'center'
 
 let current = DOCK_TOP
 const listeners = new Set()

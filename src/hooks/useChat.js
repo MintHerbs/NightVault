@@ -1,17 +1,7 @@
 // Chat state management hook using Supabase real-time subscriptions
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
-
-// Read fresh on every message rather than cached at mount: usePresence is
-// what creates session_id, and there's no ordering guarantee that it has
-// run before this hook's subscription receives its first row.
-function ownSessionId() {
-  try {
-    return localStorage.getItem('session_id')
-  } catch {
-    return null
-  }
-}
+import { getSessionId } from '../lib/sessionId'
 
 export default function useChat(isChatOpen) {
   const [messages, setMessages] = useState([])
@@ -75,7 +65,7 @@ export default function useChat(isChatOpen) {
           // before, and the only reason it didn't inflate the badge is that
           // the panel has to be open to send — close it quickly enough
           // after sending and you used to notify yourself (T-079).
-          if (message.session_id === ownSessionId()) return
+          if (message.session_id === getSessionId()) return
 
           setLastIncoming(message)
 
@@ -92,12 +82,10 @@ export default function useChat(isChatOpen) {
   }, [])
 
   const insertMessage = useCallback(async ({ content = '', attachmentUrl = null, attachmentType = null }) => {
-    const sessionId = localStorage.getItem('session_id')
-
-    if (!sessionId) {
-      console.error('No session_id found in localStorage')
-      return
-    }
+    // Always a real id now (src/lib/sessionId.js mints at module init), so the
+    // "no session id, bail out" branch that used to guard this has no reachable
+    // case left.
+    const sessionId = getSessionId()
 
     setIsLoading(true)
 

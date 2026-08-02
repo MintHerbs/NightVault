@@ -93,6 +93,14 @@ Deliberately not built:
 
 Still backlog: the whole retrofit list (`Loading.jsx` and friends).
 
+Split off into
+[T-099](T-099-sentinel-boot-sequence-and-universal-reactivity.md) rather
+than growing this ticket further: the first-visit boot sequence (which
+also settles the "two competing intro moments" overlap flagged under the
+greeting spec below), the session-identity defect it depends on, and an
+acknowledgement for every tool control. What stays here is the retrofit
+list.
+
 ## Implementation notes (2026-08-01)
 
 Shipped: the flagship greeting (`src/hooks/useSentinelGreeting.js`,

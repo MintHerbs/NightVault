@@ -31,8 +31,9 @@ function makeStorage() {
 globalThis.localStorage = makeStorage()
 globalThis.sessionStorage = makeStorage()
 
-const { deferQuip, fireQuip, setQuipBusy } = await import('./useSentinelQuip.js')
-const { QUIP_MIN_GAP_MS } = await import('../lib/sentinel/quips.js')
+const { deferQuip, fireAck, fireQuip, setQuipBusy } = await import('./useSentinelQuip.js')
+const { setSentinelPersonalityEnabled: setPersonality } = await import('./useSentinelPersonality.js')
+const { ACK_MIN_GAP_MS, QUIP_MIN_GAP_MS } = await import('../lib/sentinel/quips.js')
 
 const SEEN_KEY = 'sentinel-quips-seen'
 const PENDING_KEY = 'sentinel-quip-pending'
@@ -159,6 +160,40 @@ assert(!threw, '9: a pending entry in the old shape is survived')
 // 10. The floor between quips is long enough that clicking through folders is
 // not a running commentary.
 assert(QUIP_MIN_GAP_MS >= 10000, '10: at least ten seconds between quips')
+
+// 11. The ack tier's gates (T-099). Acks are the cheap tier, so what matters is
+// the opposite of the quip cases above: they must NOT be recorded, must not
+// preempt a remark, and must not strobe.
+globalThis.localStorage.clear()
+globalThis.sessionStorage.clear()
+setQuipBusy(false)
+
+assert(fireAck('step-forward') === false, '11: an unsubscribed island acks nothing')
+
+setQuipBusy(true)
+assert(fireAck('step-forward') === false, '11: a busy island acks nothing')
+assert(pending() === null, '11: and an ack is never deferred, unlike a quip')
+setQuipBusy(false)
+
+// Storage must stay untouched by the whole tier. An ack has no cooldown to
+// enforce, so recording one would churn a localStorage key on every keypress.
+assert(globalThis.localStorage.getItem(SEEN_KEY) === null,
+  '11: acks write nothing to the seen record')
+
+assert(fireAck('not-a-real-family') === false, '11: an unknown family acks nothing')
+assert(fireAck('constructor') === false, '11: a prototype key is not a family')
+
+// The preference gate covers both tiers: one switch, as shipped.
+globalThis.localStorage.setItem('sentinel-personality', 'off')
+setPersonality(false)
+assert(fireAck('play') === false, '11: reactions off silences acks too')
+setPersonality(true)
+globalThis.localStorage.setItem('sentinel-personality', 'on')
+
+// 12. Pacing constants for the tier.
+assert(ACK_MIN_GAP_MS > 0 && ACK_MIN_GAP_MS < QUIP_MIN_GAP_MS,
+  '12: an ack may re-fire far sooner than a quip')
+assert(ACK_MIN_GAP_MS >= 250, '12: but not fast enough to strobe on a held key')
 
 if (failures > 0) {
   console.error(`sentinel emitter: ${failures} failure(s)`)

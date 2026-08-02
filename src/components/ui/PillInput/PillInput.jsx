@@ -1,5 +1,6 @@
 // Pill-shaped text input with conditional send button
 import { useState, useEffect, useRef } from 'react'
+import { fireAck } from '../../../hooks/useSentinelQuip'
 import styles from './PillInput.module.css'
 
 /**
@@ -67,7 +68,15 @@ function PillInput({ activeTool, onSubmit, onAIStateChange, placeholder, default
   }
 
   const handleSubmit = () => {
-    if (disabled || value.trim().length === 0) return
+    // A refused submit used to be completely silent: whitespace, or a field
+    // that is disabled while something else is in flight, and the press simply
+    // did nothing anywhere on screen. Only the refusal gets an ack — a submit
+    // that goes through drives `aiState` instead (docs/rules.md §15.1), and two
+    // signals for one press would be the island talking over itself.
+    if (disabled || value.trim().length === 0) {
+      fireAck('reject')
+      return
+    }
 
     onSubmit(value)
     setValue('')

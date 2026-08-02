@@ -25,16 +25,28 @@ const MusicPlayer = forwardRef(({
   onPlayingChangeRef.current = onPlayingChange
   onTrackEndRef.current = onTrackEnd
 
+  // `new YT.Player()` hands back an object immediately, but the API attaches
+  // its methods asynchronously and only finishes by onReady. So the ref being
+  // non-null is not enough: every call has to check the method itself, which
+  // is what getProgress below already did and the other three did not:
+  // `playerRef.current?.unMute()` threw a TypeError out of App's
+  // first-interaction handler whenever someone clicked before the iframe came
+  // up (a fast click, a slow connection, or YouTube blocked outright).
+  const call = (method) => {
+    const player = playerRef.current
+    if (!player || typeof player[method] !== 'function') return false
+    player[method]()
+    return true
+  }
+
   useImperativeHandle(ref, () => ({
-    play: () => {
-      playerRef.current?.playVideo()
-    },
-    pause: () => {
-      playerRef.current?.pauseVideo()
-    },
-    unmute: () => {
-      playerRef.current?.unMute()
-    },
+    play: () => call('playVideo'),
+    pause: () => call('pauseVideo'),
+    // Returns whether it actually happened, so the caller can keep waiting.
+    // App unmutes on the first interaction and then stops listening; without
+    // this it would spend that one chance on a player that was not ready yet
+    // and stay muted for the rest of the session.
+    unmute: () => call('unMute'),
     // Polled by the island's music panel for its progress ring. Returns a
     // 0..1 fraction, or 0 while the player can't answer yet.
     getProgress: () => {

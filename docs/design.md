@@ -258,12 +258,28 @@ src/components/layout/
 `DynamicIsland.jsx`, which resolves them by precedence rather than storing a
 state name. Nothing else may write to `data-state`.
 
+0. `boot` — the first-ever visit, once per browser (T-099). The pill leaves its
+   dock, flies to the centre of the screen, expands into a panel, and runs
+   Sentinel's own initialisation as a two-line log: it introduces itself,
+   generates the session id, forges the avatar out of that id on a 6x6 canvas,
+   hands it to the bottom-left sidebar slot (grey until it arrives), then
+   collapses and flies home. Seven stages, ~16s, and any click or keypress ends
+   it. It ran at half that first and every line was gone before it could be
+   read: a stage has to cover the scramble resolving the text *and then* the
+   text sitting still, and the test asserts the margin. Everything moves on one
+   shared easing curve (`BOOT_EASE`), which overrides the pill's normal springs
+   for the duration: the boot is Sentinel introducing itself, not the pill
+   reacting to a click. Stage table in `src/lib/sentinel/boot.js`, machine and store in
+   `src/hooks/useSentinelBoot.js`, rendering in `BootContent.jsx` +
+   `AvatarForge.jsx`. Skipped entirely under `prefers-reduced-motion` or with
+   Sentinel reactions off; replayable from Appearance, and `?sentinel=boot`
+   forces it. This is the only thing that outranks an open panel, and the only
+   user of `DOCK_CENTER`
 1. `greeting` — entrance only, then collapses to `idle`. Skipped entirely
-   under `prefers-reduced-motion`. First visit ever (tracked in
-   `localStorage`, `src/hooks/useSentinelGreeting.js`): a blinking
-   GridLoader face and "Hi, I'm Sentinel", held ~2.8s, no online count.
-   Every visit after that: a static face, a randomly-picked welcome-back
-   line, then the online count segmented in beside it, held ~2s
+   under `prefers-reduced-motion`. A static face, a randomly-picked welcome-back
+   line, then the online count segmented in beside it, held ~2s. There is no
+   first-visit branch here: `boot` above is the introduction, which is why
+   `useSentinelGreeting.js` now only carries the welcome-back pool
 2. `idle` — small pill, green dot only. After a couple of minutes untouched
    the dot gives way to a drowsy Sentinel face, and after ten to a sleeping
    one (`src/hooks/useSentinelIdle.js`); any interaction restores the dot, and
@@ -283,11 +299,19 @@ state name. Nothing else may write to `data-state`.
 10. `chat` — coalesced chat notification, dot + count + snippet
 11. `quip` — Sentinel remarking on what you just did: a GridLoader unique to
     that remark plus one line, held 2.6s (T-094). A wordless variant shows the
-    glyph alone for 0.9s and is used for confirmations (a copy, a save, a
-    message sent). Catalog and resolution ladder in
+    glyph alone for 0.9s and is used for confirmations (a message sent, waking
+    from sleep). Catalog and resolution ladder in
     `src/lib/sentinel/quips.js`, gating in `src/hooks/useSentinelQuip.js`,
     browser-level triggers in `src/hooks/useSentinelSignals.js`. The whole
     system is behind the "Sentinel reactions" switch in Appearance
+11b. `ack` — the cheap tier under quips (T-099): a wordless glyph, 500ms, one
+    shape per *verb* rather than per button, answering a control the visitor
+    just pressed. 400ms floor, no cooldown, never recorded in storage, never
+    announced. Fired from `useAnimationPlayer` (so both transports inherit it),
+    from `PillInput`/`CodePillInput` on a refused submit, and from a handful of
+    per-tool controls. Table in `quips.js` (`ACKS`), emitter `fireAck()`. Its
+    reason for existing: a press that changes nothing on the island reads as a
+    dead button
 12. `return` — hover-only "← Back", offered for 60s after the island itself
     opened chat
 13. `observing` — blue pulse GridLoader + "Observing"
@@ -296,14 +320,28 @@ state name. Nothing else may write to `data-state`.
 16. `generating` — white stagger GridLoader + "Generating"
 17. `error` — red GridLoader face + message, auto-collapses after 3s
 
-**Precedence** (highest first): an open panel (`music`, `timer`, `timer-set`)
-beats a live AI state, beats `break`, beats `timer-done`, beats `chat`, beats
-`quip`, beats `return`, beats `greeting`, beats `hover`, beats `timer-running`,
-beats `idle`. A quip sits under everything that carries information and over
-everything merely ambient: it is flavour, and flavour never covers news. Chat is deliberately near-last: it never preempts an open panel or AI
-feedback the visitor is waiting on, and a notification blocked by either is
-dropped rather than deferred. The break reminder is the opposite — it is
-deferred until it can be shown, because it is hourly and deliberate.
+**Precedence** (highest first): `boot` beats everything, then an open panel
+(`music`, `timer`, `timer-set`), then `ack`, then a live AI state, beats
+`break`, beats `timer-done`, beats `chat`, beats `quip`, beats `return`, beats
+`greeting`, beats `hover`, beats `timer-running`, beats `idle`. A quip sits
+under everything that carries information and over everything merely ambient:
+it is flavour, and flavour never covers news. Chat is deliberately near-last: it
+never preempts an open panel or AI feedback the visitor is waiting on, and a
+notification blocked by either is dropped rather than deferred. The break
+reminder is the opposite — it is deferred until it can be shown, because it is
+hourly and deliberate.
+
+`ack` sitting *above* the AI state looks like it contradicts that, and does not.
+The tools that own a transport hold one steady `aiState` across a whole run
+(`TreePage`, `TableauxPage` both set `thinking` until `isAtEnd`), so the island
+is occupied for exactly as long as the transport is usable. Below the AI state
+an ack is emitted and instantly buried, which was measured: 0 of 8 transport
+presses produced a visible response. Above it, the 500ms flash is followed by
+the unchanged AI state resuming, and every transient state further down is
+self-holding — their dismissal timers key on `displayState`, so an ack pauses a
+countdown rather than eating a notification. The emitter has its own narrower
+gate for this (`setAckBusy`), which stands down only for an open panel and a
+pill that is not resting.
 
 **Dismissal is two-tier:** clicking away closes the island outright, while
 Escape steps back one level (`timer-set` → `timer`), matching that view's own
@@ -315,8 +353,11 @@ the break reminder, which is suppressed while hidden — a timer finishing in a
 background tab is exactly when a chime matters most.
 
 **Entrance phase** is tracked separately on `data-phase`
-(`hidden` → `greeting` → `collapsed`), because a pill that hasn't been
-revealed yet still reports `data-state="idle"`.
+(`boot` → `collapsed` on a first visit, otherwise
+`hidden` → `greeting` → `collapsed`), because a pill that hasn't been
+revealed yet still reports `data-state="idle"`. While booting, `data-stage`
+carries the current boot stage; the CSS keys the collapsed beats at either end
+of the sequence off it.
 
 **Pill colour:** Always `#000`. Box-shadow is the only separator from black background.
 

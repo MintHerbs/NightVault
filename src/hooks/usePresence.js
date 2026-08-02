@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient'
+import { getSessionId } from '../lib/sessionId'
 
 export function usePresence() {
   const [onlineCount, setOnlineCount] = useState(1)
@@ -11,12 +12,11 @@ export function usePresence() {
 
   useEffect(() => {
     if (!isSupabaseConfigured) return undefined
-    // Get or create session ID
-    let sessionId = localStorage.getItem('session_id')
-    if (!sessionId) {
-      sessionId = crypto.randomUUID()
-      localStorage.setItem('session_id', sessionId)
-    }
+    // Minted by src/lib/sessionId.js at module init, not here. This hook used
+    // to be the de-facto owner despite returning early whenever Supabase is
+    // unconfigured, which meant the id's existence depended on a setting that
+    // has nothing to do with identity.
+    const sessionId = getSessionId()
 
     // Open one WebSocket channel — stays open until browser closes
     const channel = supabase.channel('online-users', {

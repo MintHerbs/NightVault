@@ -1,16 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { getSessionId } from '../lib/sessionId'
 
 const FEED_LIMIT = 50
-
-function getOrCreateSessionId() {
-  let sessionId = localStorage.getItem('session_id')
-  if (!sessionId) {
-    sessionId = crypto.randomUUID()
-    localStorage.setItem('session_id', sessionId)
-  }
-  return sessionId
-}
 
 function stripHtmlTags(value) {
   if (!value) return ''
@@ -183,7 +175,7 @@ export function usePosts() {
 
     const fetchPosts = async () => {
       setIsLoading(true)
-      const sessionId = getOrCreateSessionId()
+      const sessionId = getSessionId()
       sessionIdRef.current = sessionId
 
       // Explicit column list, not select('*'): posts.session_id has no grant
@@ -373,7 +365,7 @@ export function usePosts() {
 
   const createPost = useCallback(
     async (data) => {
-      const sessionId = getOrCreateSessionId()
+      const sessionId = getSessionId()
 
       await supabase.from('sessions').upsert({ id: sessionId, last_seen: new Date().toISOString() })
 
@@ -410,7 +402,7 @@ export function usePosts() {
   )
 
   const updatePost = useCallback(async (id, data) => {
-    const sessionId = getOrCreateSessionId()
+    const sessionId = getSessionId()
     const patch = {}
 
     if (data?.title !== undefined) {
@@ -447,7 +439,7 @@ export function usePosts() {
   const deletePost = useCallback(async (id) => {
     const { data, error } = await supabase.rpc('soft_delete_post', {
       p_post_id: id,
-      p_session_id: localStorage.getItem('session_id'),
+      p_session_id: getSessionId(),
     })
 
     if (error || !data?.success) return { error: data?.error || 'Failed to delete post' }
@@ -470,7 +462,7 @@ export function usePosts() {
   const votePost = useCallback(
     async (postId, voteType) => {
       if (voteType !== 'up' && voteType !== 'down') return { error: 'Invalid vote type' }
-      const sessionId = getOrCreateSessionId()
+      const sessionId = getSessionId()
       sessionIdRef.current = sessionId
 
       const previousVote = userVotesRef.current[postId] ?? null
@@ -503,7 +495,7 @@ export function usePosts() {
   )
 
   const flagPost = useCallback(async (postId) => {
-    const sessionId = getOrCreateSessionId()
+    const sessionId = getSessionId()
     const wasFlagged = !!userFlagsRef.current[postId]
 
     setUserFlags((prev) => {
@@ -538,7 +530,7 @@ export function usePosts() {
 
   /** Optimistic poll vote; PostCard renders straight from `post.poll`. */
   const votePoll = useCallback(async (postId, pollId, optionIndex) => {
-    const sessionId = getOrCreateSessionId()
+    const sessionId = getSessionId()
     if (!pollId) return { error: 'Missing poll' }
 
     const current = postsRef.current.find((p) => p.id === postId)

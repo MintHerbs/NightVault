@@ -8,14 +8,31 @@ import TimerPanel from './TimerPanel'
 import TimerSetPanel from './TimerSetPanel'
 import SentinelFace from './SentinelFace'
 import QuipContent from './QuipContent'
+import BootContent from './BootContent'
 import useChatNotification from '../../../hooks/useChatNotification'
-import useSentinelQuip, { fireQuip, setQuipBusy } from '../../../hooks/useSentinelQuip'
+import useSentinelQuip, { fireQuip, setAckBusy, setQuipBusy } from '../../../hooks/useSentinelQuip'
 import useSentinelIdle from '../../../hooks/useSentinelIdle'
 import useSentinelPersonality from '../../../hooks/useSentinelPersonality'
 import useIslandNotifications from '../../../hooks/useIslandNotifications'
 import useStudyTimer from '../../../hooks/useStudyTimer'
 import useBreakReminder, { BREAK_INTERVAL_MS } from '../../../hooks/useBreakReminder'
 import useSentinelGreeting from '../../../hooks/useSentinelGreeting'
+import useSentinelBoot, {
+  bootMintedSession,
+  bootWillRun,
+  skipBoot,
+  startBoot,
+} from '../../../hooks/useSentinelBoot'
+import useSessionId from '../../../lib/sessionId'
+import {
+  BOOT_EASE,
+  BOOT_RESIZE_MS,
+  BOOT_STAGES,
+  BOOT_TRAVEL_MS,
+  lineFor,
+  stageIndexOf,
+} from '../../../lib/sentinel/boot'
+import { DOCK_CENTER } from '../../../hooks/useIslandDock'
 import styles from './DynamicIsland.module.css'
 
 // Entrance timing. The pill drops in already expanded, holds its greeting for
@@ -26,10 +43,6 @@ import styles from './DynamicIsland.module.css'
 const REVEAL_DELAY_MS = 3000
 const REVEAL_CAP_MS = 5000
 const GREETING_HOLD_MS = 2000
-// The one-time name introduction gets a beat longer than the ordinary
-// online-count greeting: there's a face blinking and a line to read, not
-// just a number.
-const SENTINEL_INTRO_HOLD_MS = 2800
 
 // How long after opening chat from the island the "Back" shortcut stays on
 // offer. Past this the island reverts to its normal behaviour and closing
@@ -73,10 +86,33 @@ function displayStateFor({
   isHovered,
   quip
 }) {
+  // The one thing that outranks an open panel: it owns the whole screen while
+  // it runs, and being preempted mid-sentence by a music panel would strand the
+  // pill expanded at centre stage with no way back. A replay from Appearance
+  // can start it while a panel is open, which is the case this ordering covers.
+  if (phase === 'boot') return 'boot'
   // An open panel means the visitor is actively interacting — nothing preempts it.
   if (intent === 'music') return 'music'
   if (intent === 'timer') return 'timer'
   if (intent === 'timer-set') return 'timer-set'
+  // An acknowledgement of a press the visitor just made, above the aiState it
+  // briefly covers. This looks like it contradicts the rule below, and the
+  // reason it does not is worth writing down.
+  //
+  // The tools that own a transport hold ONE aiState across a whole run: the B+
+  // tree and the tableaux both set 'thinking' for as long as the animation has
+  // not reached its end (TreePage.jsx, TableauxPage.jsx). That state describes
+  // the run, not the press. Left below it, an ack fired by a transport button
+  // would be emitted and instantly buried under a glyph that had not changed,
+  // so a visitor stepping through a tableau would press eight buttons and see
+  // the island do exactly nothing eight times, which is the gap this tier
+  // exists to close.
+  //
+  // Nothing is lost by going above. An aiState is steady and simply resumes
+  // after 500ms, and every transient state below it (break, timer-done, chat)
+  // is self-holding: their dismissal timers key on displayState, so an ack
+  // pauses the countdown rather than eating the notification.
+  if (quip?.tier === 'ack') return 'ack'
   // Task feedback the visitor is waiting on outranks anything ambient.
   if (aiState !== 'idle') return aiState
   // Hourly and deliberate, so it outranks chat.
@@ -88,6 +124,7 @@ function displayStateFor({
   // any of the above is showing (setQuipBusy below), so reaching this line and
   // losing is rare; when it happens the quip expires unseen rather than
   // queueing, matching how this file treats a late chat notification.
+  // Acks are handled higher up; anything still in the slot here is a remark.
   if (quip) return 'quip'
   // Hover-only offer: the collapsed pill stays a plain dot until pointed at.
   if (returnAvailable && isHovered) return 'return'
@@ -122,7 +159,10 @@ export default function DynamicIsland({
   onCloseChat,
   breakIntervalMs = BREAK_INTERVAL_MS
 }) {
-  const [phase, setPhase] = useState('hidden')
+  // 'boot' comes first on a first-ever visit. It is also re-entered by a replay
+  // from Appearance, which is why an effect below follows the machine into it
+  // rather than this being the only way in. See useSentinelBoot.js.
+  const [phase, setPhase] = useState(bootWillRun ? 'boot' : 'hidden')
   const [intent, setIntent] = useState('idle')
   // Frozen when the greeting starts, so someone joining or leaving mid-hold
   // can't relabel the pill while it's being read.
@@ -139,6 +179,8 @@ export default function DynamicIsland({
   const timer = useStudyTimer()
   const breakReminder = useBreakReminder(breakIntervalMs)
   const sentinelGreeting = useSentinelGreeting()
+  const boot = useSentinelBoot()
+  const sessionId = useSessionId()
   const quip = useSentinelQuip()
   const personality = useSentinelPersonality()
   // Only tracked while the pill is actually resting: a visitor mid-panel or
@@ -148,6 +190,31 @@ export default function DynamicIsland({
 
   const isPanelOpen = intent === 'music' || intent === 'timer' || intent === 'timer-set'
   const returnAvailable = isChatOpen && chatOpenedFromIsland && returnWindowOpen
+
+  // Centre stage is an override on the way out rather than a write to the dock
+  // store. Writing would mean holding an undo across seven seconds and then
+  // restoring it over whatever a page had set in the meantime; overriding here
+  // cannot stomp anything, and yielding is just a matter of not overriding.
+  // `settle` is excluded, which is what makes that stage the flight home.
+  const bootHoldsCentre = phase === 'boot' && boot.stage !== 'settle' && dock === 'top'
+  const effectiveDock = bootHoldsCentre ? DOCK_CENTER : dock
+
+  // A surface that wants the island somewhere specific outranks a flourish.
+  useEffect(() => {
+    if (phase === 'boot' && dock !== 'top') skipBoot()
+  }, [phase, dock])
+
+  const bootStage = boot.stage
+  const bootIndex = bootStage ? stageIndexOf(bootStage) : -1
+  const bootLine = bootIndex >= 0
+    ? lineFor(BOOT_STAGES[bootIndex], { minted: bootMintedSession() })
+    : ''
+  // The line before this one, so the log reads as a list being worked through.
+  // Skipped for `session-done`: "done!" answers "Session id generating...", and
+  // the pair belongs on one line rather than stacked.
+  const bootPreviousLine = bootIndex > 0 && bootStage !== 'session-done'
+    ? lineFor(BOOT_STAGES[bootIndex - 1], { minted: bootMintedSession() })
+    : ''
 
   const notificationsEnabled = useIslandNotifications()
 
@@ -223,8 +290,18 @@ export default function DynamicIsland({
     )
   }, [isPanelOpen, aiState, phase, breakReminder.isDue, timer.hasFinished, notification])
 
+  // The ack tier's much narrower gate; see setAckBusy for why it is not the
+  // same list. An open panel means the visitor is working inside the pill, and
+  // a phase other than 'collapsed' means there is no resting pill to flash.
+  useEffect(() => {
+    setAckBusy(isPanelOpen || phase !== 'collapsed')
+  }, [isPanelOpen, phase])
+
   // A stale `true` would silence Sentinel for the rest of the page's life.
-  useEffect(() => () => setQuipBusy(false), [])
+  useEffect(() => () => {
+    setQuipBusy(false)
+    setAckBusy(false)
+  }, [])
 
   // Starting a study timer is the plainest statement of intent the app has, so
   // it earns an acknowledgement. Keyed on the transition rather than on the
@@ -239,6 +316,44 @@ export default function DynamicIsland({
     }
     wasRunningRef.current = timer.isRunning
   }, [timer.isRunning])
+
+  // The boot sequence (T-099). Idempotent, so StrictMode's double-invoked
+  // effects and any remount are harmless.
+  useEffect(() => {
+    if (phase === 'boot') startBoot()
+  }, [phase])
+
+  // Follow the machine into the boot phase. On a first visit `phase` already
+  // starts at 'boot', so this only matters for a replay from Appearance, where
+  // the pill has long since collapsed: without it `replayBoot()` ran the whole
+  // machine invisibly and left the sidebar avatar stranded in greyscale,
+  // because the stage that restores its colour was never rendered.
+  useEffect(() => {
+    if (boot.active && phase !== 'boot') setPhase('boot')
+  }, [boot.active, phase])
+
+  // Leaving the boot hands control back to the ordinary lifecycle. Straight to
+  // 'collapsed' rather than to 'greeting': Sentinel has just spent seven
+  // seconds introducing itself, and a "welcome back" immediately afterwards
+  // would be absurd.
+  useEffect(() => {
+    if (phase !== 'boot' || boot.active) return
+    setPhase('collapsed')
+  }, [phase, boot.active])
+
+  // Any input at all ends it. Capture phase, so a click that also lands on
+  // something underneath still counts — the page stays interactive throughout,
+  // and this must not swallow the click that reaches it.
+  useEffect(() => {
+    if (phase !== 'boot') return undefined
+    const end = () => skipBoot()
+    window.addEventListener('pointerdown', end, true)
+    window.addEventListener('keydown', end, true)
+    return () => {
+      window.removeEventListener('pointerdown', end, true)
+      window.removeEventListener('keydown', end, true)
+    }
+  }, [phase])
 
   useEffect(() => {
     const delay = setTimeout(() => setRevealDelayElapsed(true), REVEAL_DELAY_MS)
@@ -268,10 +383,9 @@ export default function DynamicIsland({
 
   useEffect(() => {
     if (phase !== 'greeting') return undefined
-    const holdMs = sentinelGreeting.isFirstVisit ? SENTINEL_INTRO_HOLD_MS : GREETING_HOLD_MS
-    const timeout = setTimeout(() => setPhase('collapsed'), holdMs)
+    const timeout = setTimeout(() => setPhase('collapsed'), GREETING_HOLD_MS)
     return () => clearTimeout(timeout)
-  }, [phase, sentinelGreeting.isFirstVisit])
+  }, [phase])
 
   // The return shortcut's lifetime. Closing chat by any route, or opening it
   // from anywhere other than the island, ends the offer immediately.
@@ -443,7 +557,9 @@ export default function DynamicIsland({
   // on every state change) isn't reliably announced. Only states the visitor
   // needs told about are surfaced — hover is a mouse-only affordance.
   let announcement = ''
-  if (displayState === 'chat') {
+  if (displayState === 'boot') {
+    announcement = bootLine
+  } else if (displayState === 'chat') {
     const { count, kind } = notification
     if (kind === 'post') {
       announcement = count === 1 ? 'New post' : `${count} new posts`
@@ -464,6 +580,12 @@ export default function DynamicIsland({
     announcement = aiState
   }
 
+  const isBooting = displayState === 'boot'
+
+  // Everything below has a boot variant. The pill's normal motion is springy
+  // and quick because it is reacting to a click; the boot is Sentinel
+  // introducing itself, and the same springs there read as twitchy. One shared
+  // ease, no bounce, no snap (BOOT_EASE).
   const contentMotion = reducedMotion
     ? {
         initial: { opacity: 0 },
@@ -471,15 +593,36 @@ export default function DynamicIsland({
         exit: { opacity: 0 },
         transition: { duration: 0 }
       }
-    : {
-        initial: { opacity: 0, scale: 0.9, filter: 'blur(5px)' },
-        animate: { opacity: 1, scale: 1, filter: 'blur(0px)' },
-        exit: { opacity: 0, scale: 0.9, filter: 'blur(5px)' },
-        transition: { type: 'spring', bounce: 0.5, delay: 0.05 }
-      }
+    : isBooting
+      ? {
+          initial: { opacity: 0, scale: 0.96, filter: 'blur(6px)' },
+          animate: { opacity: 1, scale: 1, filter: 'blur(0px)' },
+          exit: { opacity: 0, scale: 0.98, filter: 'blur(6px)' },
+          transition: { duration: 0.75, ease: BOOT_EASE }
+        }
+      : {
+          initial: { opacity: 0, scale: 0.9, filter: 'blur(5px)' },
+          animate: { opacity: 1, scale: 1, filter: 'blur(0px)' },
+          exit: { opacity: 0, scale: 0.9, filter: 'blur(5px)' },
+          transition: { type: 'spring', bounce: 0.5, delay: 0.05 }
+        }
+
+  // The flight to centre stage and home again.
+  const dockTransition = reducedMotion
+    ? { duration: 0 }
+    : isBooting
+      ? { duration: BOOT_TRAVEL_MS / 1000, ease: BOOT_EASE }
+      : { type: 'spring', bounce: 0.28, duration: 0.55 }
+
+  // The panel growing around the log and shrinking back to a pill.
+  const pillTransition = reducedMotion
+    ? { duration: 0 }
+    : isBooting
+      ? { duration: BOOT_RESIZE_MS / 1000, ease: BOOT_EASE }
+      : { type: 'spring', bounce: 0.5, duration: 0.25 }
 
   return (
-    <div className={styles.wrapper} data-dock={dock}>
+    <div className={styles.wrapper} data-dock={effectiveDock}>
       <span className={styles.srOnly} role="status" aria-live="polite">
         {announcement}
       </span>
@@ -488,7 +631,7 @@ export default function DynamicIsland({
       <motion.div
         layout
         className={styles.innerCenter}
-        transition={reducedMotion ? { duration: 0 } : { type: 'spring', bounce: 0.28, duration: 0.55 }}
+        transition={dockTransition}
       >
         <motion.div
           ref={pillRef}
@@ -499,6 +642,9 @@ export default function DynamicIsland({
           // sized to the full viewport so the pill can dock anywhere.
           data-navbar
           data-state={displayState}
+          // Only meaningful while booting; the CSS keys the collapsed beats at
+          // either end of the sequence off it.
+          data-stage={displayState === 'boot' ? bootStage : undefined}
           // The entrance lifecycle, exposed separately because data-state
           // can't express it: a pill that hasn't been revealed yet still
           // reports data-state="idle", so this is the only way to tell
@@ -506,9 +652,7 @@ export default function DynamicIsland({
           data-phase={phase}
           layout
           style={{ borderRadius: 32 }}
-          transition={reducedMotion
-            ? { duration: 0 }
-            : { type: 'spring', bounce: 0.5, duration: 0.25 }}
+          transition={pillTransition}
           initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -24 }}
           animate={phase === 'hidden'
             ? (reducedMotion ? { opacity: 0 } : { opacity: 0, y: -24 })
@@ -517,9 +661,11 @@ export default function DynamicIsland({
           // reacting to a press, not just shrinking. Skipped on an open
           // panel — squishing a container of buttons because one was
           // clicked reads as the whole panel misbehaving, and reduced
-          // motion drops it entirely.
-          whileHover={!reducedMotion && !isPanelOpen ? { scale: 1.02 } : undefined}
-          whileTap={!reducedMotion && !isPanelOpen
+          // motion drops it entirely. Also skipped during the boot, where a
+          // hover squash would interrupt a sequence the visitor is watching
+          // rather than driving.
+          whileHover={!reducedMotion && !isPanelOpen && !isBooting ? { scale: 1.02 } : undefined}
+          whileTap={!reducedMotion && !isPanelOpen && !isBooting
             ? { scaleX: 0.94, scaleY: 1.06, transition: { type: 'spring', bounce: 0.6, duration: 0.15 } }
             : undefined}
           // A collapsed pill is a button; an open panel is a container of
@@ -539,8 +685,29 @@ export default function DynamicIsland({
               data-ai-state={aiState}
               {...contentMotion}
             >
+              {displayState === 'boot' && (
+                <BootContent
+                  stage={bootStage}
+                  line={bootLine}
+                  previousLine={bootPreviousLine}
+                  grid={bootIndex >= 0 ? BOOT_STAGES[bootIndex].grid : null}
+                  seed={sessionId}
+                  forging={bootStage === 'forge'}
+                  forgeMs={bootIndex >= 0 ? BOOT_STAGES[stageIndexOf('forge')].ms : 0}
+                  // Only during `forge`. Unmounting it as `integrate` begins is
+                  // what performs the handoff: the sidebar slot claims the
+                  // shared `layoutId` on the very same render, so motion flies
+                  // the avatar from here down to the corner. Keeping it mounted
+                  // through `integrate` meant two elements claiming one
+                  // layoutId, and the forge visibly flew up out of the sidebar
+                  // when it appeared.
+                  showAvatar={bootStage === 'forge'}
+                  reducedMotion={reducedMotion}
+                />
+              )}
+
               {/* AI states: observing, waiting, processing, thinking, generating, error */}
-              {aiState !== 'idle' && !isPanelOpen && (
+              {aiState !== 'idle' && !isPanelOpen && displayState !== 'boot' && (
                 <AIStateContent aiState={aiState} errorMessage={errorMessage} />
               )}
 
@@ -568,7 +735,7 @@ export default function DynamicIsland({
                 </div>
               )}
 
-              {displayState === 'quip' && (
+              {(displayState === 'quip' || displayState === 'ack') && (
                 <QuipContent line={quip.line} grid={quip.grid} />
               )}
 
@@ -594,18 +761,12 @@ export default function DynamicIsland({
                 </>
               )}
 
-              {/* First visit ever: the island introduces itself and the
-                  online count waits for the hover state. Every visit after
-                  that: a varied welcome-back line alongside the count, same
-                  segmented layout the hover state uses. */}
-              {displayState === 'greeting' && sentinelGreeting.isFirstVisit && (
-                <>
-                  <SentinelFace blink />
-                  <span className={styles.onlineText}>{sentinelGreeting.line}</span>
-                </>
-              )}
-
-              {displayState === 'greeting' && !sentinelGreeting.isFirstVisit && (
+              {/* A varied welcome-back line alongside the count, in the same
+                  segmented layout the hover state uses. There is no first-visit
+                  branch here any more: the boot sequence above is the
+                  introduction, which settles T-094's "two competing intro
+                  moments" question. */}
+              {displayState === 'greeting' && (
                 <>
                   <SentinelFace variant="soft" />
                   <span className={styles.onlineText}>{sentinelGreeting.line}</span>

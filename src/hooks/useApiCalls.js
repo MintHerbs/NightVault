@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
+import { getSessionId } from '../lib/sessionId';
 
 export function useApiCalls() {
   const [remainingCalls, setRemainingCalls] = useState(10);
@@ -17,14 +18,11 @@ export function useApiCalls() {
         return;
       }
 
-      // Get session_id from localStorage
-      let sessionId = localStorage.getItem('session_id');
-      
-      if (!sessionId) {
-        // If no session_id exists, we can't proceed
-        setIsLoading(false);
-        return;
-      }
+      // Always present now (src/lib/sessionId.js mints at module init). This
+      // used to read the key directly and give up when it was missing, so a
+      // visitor whose first action was an API call saw the quota fail to load
+      // purely because no other hook had happened to mint the id yet.
+      const sessionId = getSessionId();
 
       // Fetch the row for this session
       const { data, error } = await supabase
@@ -96,11 +94,7 @@ export function useApiCalls() {
   async function decrementCall() {
     try {
       if (!isSupabaseConfigured) return;
-      const sessionId = localStorage.getItem('session_id');
-      
-      if (!sessionId) {
-        return;
-      }
+      const sessionId = getSessionId();
 
       // Upsert: increment call_count by 1
       const { data, error } = await supabase

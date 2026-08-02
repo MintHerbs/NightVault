@@ -5,7 +5,7 @@ import GridLoader from '../../effects/smoothui/grid-loader/index.tsx'
  * Reserved for moments the island is speaking as itself (the entrance
  * greeting, an error, the resting face when nobody is around) rather than
  * reporting on work in progress; every aiState keeps its own abstract
- * pattern (docs/rules.md §15.5).
+ * pattern (docs/rules.md §15.6).
  */
 
 // Each variant's pattern and how it should move. Drowsy breathes slowly and

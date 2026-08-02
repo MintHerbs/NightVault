@@ -97,6 +97,21 @@ export const QUIP_HOLD_MS = 2600
  */
 export const QUIP_FLASH_MS = 900
 
+/**
+ * Floor between two acks (see the ACKS table below).
+ *
+ * Short enough that deliberate presses each get their own answer, long enough
+ * that a held arrow key produces a pulse rather than a strobe.
+ */
+export const ACK_MIN_GAP_MS = 400
+
+/**
+ * How long an ack holds. Shorter than even a wordless quip: this answers a
+ * press the visitor made a fraction of a second ago and has already moved on
+ * from, so it needs to register and get out of the way.
+ */
+export const ACK_FLASH_MS = 500
+
 // Cooldown shorthands for entries that should come round again sooner than the
 // fortnight a joke gets. An observation about the hour, or about a tool you are
 // still fighting with, is only worth making while it is still true.
@@ -325,16 +340,12 @@ export const QUIPS = {
   // Wordless beats. An empty line renders the glyph alone and holds for less
   // time: these confirm an action the visitor already knows they took, so a
   // sentence about it would be worse than a flash.
-  'moment:copied': {
-    frequent: true,
-    lines: [''],
-    grid: { pattern: 'plus-full', mode: 'pulse', color: 'green', speed: 'fast' },
-  },
-  'moment:saved': {
-    frequent: true,
-    lines: [''],
-    grid: { pattern: 'diamond', mode: 'pulse', color: 'green', speed: 'fast' },
-  },
+  //
+  // `copied` and `saved` used to live here and are now acks (see the ACKS table
+  // below): both answer a deliberate control press, which is that tier's whole
+  // job. The two left are not presses — sending a message is a content action
+  // with its own UI, and a startle is Sentinel waking up — so they stay quips
+  // and `frequent` keeps its users.
   'moment:message-sent': {
     frequent: true,
     lines: [''],
@@ -480,6 +491,77 @@ export const QUIPS = {
     lines: ['This has been sitting here a while'],
     grid: { pattern: 'twinkle', mode: 'pulse', color: 'amber', speed: 'slow' },
   },
+}
+
+/**
+ * ## Acks: the second tier
+ *
+ * A quip is a remark and has to be rationed. An ack is an acknowledgement and
+ * has to be reliable: press a control, get an answer, every time. Those are
+ * opposite requirements, which is why this is a separate table with separate
+ * pacing rather than a looser setting on the one above. Routing button presses
+ * through the quip gates would answer roughly one press in twenty, and
+ * loosening those gates would make the *worded* quips unbearable.
+ *
+ * Two rules make the tier bearable rather than a strobe:
+ *
+ *   wordless   an ack never carries text. There is nothing to read, so it
+ *              cannot crowd out anything that is worth reading, and it holds
+ *              for ACK_FLASH_MS rather than the 2.6s a line needs.
+ *   per verb   acks are keyed to the *action*, not to the button. "Sentinel
+ *              took my input" has to look the same in the B+ tree as in the
+ *              tableaux or it means nothing at all, and sixty distinct glyphs
+ *              would be sixty shapes nobody can tell apart.
+ *
+ * What deliberately has no entry here: anything that already drives `aiState`.
+ * docs/rules.md §15.1 makes every tool *input* move the island and §15.4
+ * guarantees even instant work paints a state, so an ack on a pill submit would
+ * be the island talking over itself. This tier is for the controls that set no
+ * state at all, which until now were silent.
+ */
+export const ACKS = {
+  // Transport, shared by every tool built on useAnimationPlayer.
+  'ack:step-forward': { pattern: 'T-right', mode: 'pulse', color: 'white', speed: 'fast' },
+  'ack:step-back': { pattern: 'T-left', mode: 'pulse', color: 'white', speed: 'fast' },
+  'ack:play': { pattern: 'duo-diag', mode: 'stagger', color: 'green', speed: 'fast' },
+  'ack:pause': { pattern: 'duo-h', mode: 'pulse', color: 'amber', speed: 'fast' },
+  'ack:skip-end': { pattern: 'line-v-right', mode: 'stagger', color: 'white', speed: 'fast' },
+  'ack:rewind': { pattern: 'line-v-left', mode: 'stagger', color: 'white', speed: 'fast' },
+  'ack:speed-up': { pattern: 'wave-lr', mode: 'stagger', color: 'amber', speed: 'fast' },
+  'ack:speed-down': { pattern: 'wave-rl', mode: 'stagger', color: 'amber', speed: 'slow' },
+
+  // Input that went nowhere. Only for refusals that do not set `error`
+  // themselves, so the island never reports the same failure twice.
+  'ack:reject': { pattern: 'x-shape', mode: 'pulse', color: 'red', speed: 'fast' },
+
+  // Confirmations, migrated off the quip table's `frequent` flag.
+  'ack:copy': { pattern: 'L-tr', mode: 'pulse', color: 'white', speed: 'fast' },
+  'ack:save': { pattern: 'L-bl', mode: 'pulse', color: 'green', speed: 'fast' },
+
+  // Chrome inside a tool.
+  'ack:mode-switch': { pattern: 'stripes-v', mode: 'stagger', color: 'blue', speed: 'fast' },
+  // `stagger`, not `pulse`: ripple-in shares its matrix with solo-center and
+  // breathing, and the pulsing white version is already the Operating Systems
+  // quip. The uniqueness test compares resolved matrices for exactly this
+  // reason.
+  'ack:clear': { pattern: 'ripple-in', mode: 'stagger', color: 'white', speed: 'fast' },
+}
+
+/**
+ * Resolve an ack family to its glyph, or null for silence.
+ *
+ * Deliberately far simpler than resolveQuip: there is no ladder, no variant
+ * pool and no context. An ack is one shape for one verb, which is the entire
+ * reason it can be read at 500ms.
+ *
+ * @param {string} family - e.g. 'step-forward'
+ * @returns {{ id: string, line: '', grid: object } | null}
+ */
+export function resolveAck(family) {
+  if (typeof family !== 'string' || !family) return null
+  const id = `ack:${family}`
+  if (!Object.prototype.hasOwnProperty.call(ACKS, id)) return null
+  return { id, line: '', grid: ACKS[id] }
 }
 
 /** A folder holding this many or more earns a remark about the pile. */

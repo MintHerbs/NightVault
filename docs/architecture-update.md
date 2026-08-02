@@ -23,7 +23,7 @@ real problems:
 | Empty placeholder folders | [src/server/](../src/server/), [src/model/](../src/model/), [test/](../test/) | Suggests structure that does not exist |
 | Naming convention is mixed at the same depth | `TreeCanvas/` (PascalCase) next to `animated-text/`, `dynamic-island/`, `smoothui/` (kebab-case) | No predictable rule for "where do I put a new component" |
 | Feature-grouped folders mixed with single-component folders at the same level | `components/chat/`, `components/logic/`, `components/algo/`, `components/landing/`, `components/layout/` mixed with `components/TreeCanvas/`, `components/TreeNode/`, `components/ERDCanvas/`, … | Two organising principles fighting each other |
-| `.tsx` files in a JS-only project | [src/components/smoothui/](../src/components/smoothui/) (`agent-avatar` ships both `.jsx` and `.tsx`, others are `.tsx` only) | Build inconsistency, contributor confusion |
+| `.tsx` files in a JS-only project | [src/components/smoothui/](../src/components/smoothui/) (`glow-hover-card`, `grid-loader`, `scramble-hover`) | Build inconsistency, contributor confusion |
 | Tests scattered across three places (and none of them runs) | [src/hooks/hooks.test.jsx](../src/hooks/hooks.test.jsx), [src/lib/treeLayout.test.js](../src/lib/treeLayout.test.js), [src/test/](../src/test/) (untracked), [test/](../test/) (empty) | Issue [#9](https://github.com/MintHerbs/b-tree/issues/9), [#16](https://github.com/MintHerbs/b-tree/issues/16) |
 | Schema lives as one ad-hoc file at repo root | [supabase_messages_table.sql](../supabase_messages_table.sql) | No history, no ordering, only one of several tables (`sessions`, `api_calls` are also referenced from code but have no SQL anywhere) |
 | Sensitive backend logic runs in the browser | [src/lib/geminiService.js](../src/lib/geminiService.js) calls Gemini directly with a `VITE_`-inlined key | Issue [#12](https://github.com/MintHerbs/b-tree/issues/12) — **High severity** |
@@ -282,11 +282,18 @@ rest of `smoothui/`.
 ### 3.5 No `.tsx` in a JS project
 
 The three `.tsx`-only files in `smoothui/` (`glow-hover-card`,
-`grid-loader`, `scramble-hover`) and the dual `.tsx`/`.jsx` pair in
-`agent-avatar/` need to be ported to `.jsx`. Vite tolerates `.tsx`
-without `tsconfig.json`, but mixing the two means two different module
-resolution rules in one tree — which has already produced a duplicate
-file (`agent-avatar/index.jsx` *and* `agent-avatar/index.tsx`).
+`grid-loader`, `scramble-hover`) need to be ported to `.jsx`. Vite tolerates
+`.tsx` without `tsconfig.json`, but mixing the two means two different module
+resolution rules in one tree.
+
+The cost this section warned about was not hypothetical. `agent-avatar/` carried
+both an `index.jsx` and an `index.tsx`; Vite resolved `.jsx` first, so the
+`.tsx` was dead, unimportable (it referenced a `@repo/shadcn-ui` package this
+repo does not have) and had silently drifted from the live file, losing the
+circle-clip fix and the IntersectionObserver gating. It was deleted in T-099,
+and the seed-to-pixels maths it duplicated now lives in a single
+`agent-avatar/generator.js` that both the avatar and Sentinel's boot sequence
+import.
 
 ---
 

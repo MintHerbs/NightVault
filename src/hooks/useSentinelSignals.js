@@ -11,7 +11,7 @@
  * throw, so none of this can interfere with the event it observes.
  */
 import { useEffect } from 'react'
-import { fireQuip } from './useSentinelQuip'
+import { fireAck, fireQuip } from './useSentinelQuip'
 import {
   nextRecord,
   readVisitRecord,
@@ -93,7 +93,7 @@ export default function useSentinelSignals({ enabled = true } = {}) {
       // nothing to show for it, which is not worth confirming.
       const selection = document.getSelection()?.toString() ?? ''
       if (!selection.trim()) return
-      fireQuip({ kind: 'moment', id: 'copied' })
+      fireAck('copy')
     }
 
     const onPrint = () => fireQuip({ kind: 'moment', id: 'print' })

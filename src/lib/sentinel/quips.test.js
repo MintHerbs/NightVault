@@ -19,18 +19,37 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 import {
+  ACKS,
+  ACK_FLASH_MS,
+  ACK_MIN_GAP_MS,
   CROWDED_ITEMS,
   DEEP_LEVELS,
   QUIPS,
   QUIP_COOLDOWN_MS,
+  QUIP_FLASH_MS,
   QUIP_HOLD_MS,
   QUIP_MIN_GAP_MS,
   QUIP_REPEAT_CHANCE,
   STALE_MS,
   gridSignature,
+  resolveAck,
   resolveQuip,
 } from './quips.js'
 import { buildToolRouteIndex, matchRouteQuip } from './routeMatch.js'
+import {
+  BOOT_EASE,
+  BOOT_RESIZE_MS,
+  BOOT_SCRAMBLE_MS,
+  BOOT_STAGES,
+  BOOT_TOTAL_MS,
+  BOOT_TRAVEL_MS,
+  EXPANDED_STAGES,
+  INTEGRATE_STAGE,
+  SETTLE_STAGE,
+  isExpanded,
+  lineFor,
+  stageIndexOf,
+} from './boot.js'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const SRC = join(HERE, '..', '..')
@@ -185,16 +204,31 @@ assert(resolveQuip({}, first) === null, '7: empty context')
 assert(resolveQuip({ kind: 'folder' }, first) === null, '7: a folder with no name or count')
 assert(resolveQuip({ kind: 'nonsense', id: 'web' }, first) === null, '7: an unknown kind')
 
-// 8. Every quip owns a unique animation. T-094's hard constraint, and the one
+// 8. Every moment owns a unique animation. T-094's hard constraint, and the one
 // rule that degrades silently: a copy-pasted entry still renders, it just makes
 // two moments indistinguishable.
+//
+// Three namespaces since T-099 added the ack tier and the boot sequence, and
+// the rule is that no two entries look alike *anywhere*: an ack that matched a
+// quip would make "I copied something" and "this folder is empty" the same
+// shape. So they all go into one map rather than being checked per table.
+const resolved = (grid) => {
+  const matrix = PATTERN_NAMES.get(grid.pattern) ?? grid.pattern
+  return `${matrix}#${grid.mode}#${grid.color}#${grid.speed}`
+}
+
 const signatures = new Map()
-for (const [id, quip] of Object.entries(QUIPS)) {
-  const matrix = PATTERN_NAMES.get(quip.grid.pattern) ?? quip.grid.pattern
-  const signature = `${matrix}#${quip.grid.mode}#${quip.grid.color}#${quip.grid.speed}`
+const claimSignature = (id, grid, label) => {
+  const signature = resolved(grid)
   const claimed = signatures.get(signature)
-  assert(!claimed, `8: ${id} looks identical to ${claimed} (${gridSignature(quip.grid)})`)
+  assert(!claimed, `8: ${label} ${id} looks identical to ${claimed} (${gridSignature(grid)})`)
   signatures.set(signature, id)
+}
+
+for (const [id, quip] of Object.entries(QUIPS)) claimSignature(id, quip.grid, 'quip')
+for (const [id, grid] of Object.entries(ACKS)) claimSignature(id, grid, 'ack')
+for (const stage of BOOT_STAGES) {
+  if (stage.grid) claimSignature(`boot:${stage.id}`, stage.grid, 'boot stage')
 }
 
 // 9. Every quip is renderable. A pattern GridLoader does not know silently
@@ -259,6 +293,88 @@ assert(QUIP_HOLD_MS < QUIP_MIN_GAP_MS, '12: a quip clears well before another ma
 assert(QUIP_MIN_GAP_MS < QUIP_COOLDOWN_MS, '12: the per-quip cooldown outlasts the global gap')
 assert(QUIP_REPEAT_CHANCE > 0 && QUIP_REPEAT_CHANCE < 1, '12: repeats are possible but not certain')
 assert(QUIP_HOLD_MS >= 1500, '12: a quip stays up long enough to read')
+
+// 13. The ack tier (T-099). Renderable, wordless, and paced as the cheap tier.
+for (const [id, grid] of Object.entries(ACKS)) {
+  assert(id.startsWith('ack:'), `13: ${id} is namespaced`)
+  assert(PATTERN_NAMES.has(grid.pattern), `13: ${id} uses a real pattern (${grid.pattern})`)
+  assert(MODES.has(grid.mode), `13: ${id} uses a real mode (${grid.mode})`)
+  assert(COLOR_KEYS.has(grid.color), `13: ${id} uses a real color (${grid.color})`)
+  assert(SPEED_KEYS.has(grid.speed), `13: ${id} uses a real speed (${grid.speed})`)
+}
+
+// An ack that carried words would be a quip with the pacing of a strobe. This
+// is the rule the whole tier rests on, so it is asserted on the resolver rather
+// than on the table.
+for (const id of Object.keys(ACKS)) {
+  const ack = resolveAck(id.slice('ack:'.length))
+  assert(ack !== null, `13: ${id} resolves`)
+  assert(ack.line === '', `13: ${id} is wordless`)
+  assert(ack.id === id, `13: ${id} keeps its namespaced id`)
+}
+
+assert(resolveAck('not-a-family') === null, '13: an unknown family is silence, not a throw')
+assert(resolveAck('') === null, '13: an empty family is silence')
+assert(resolveAck(null) === null, '13: a missing family is silence')
+// Prototype keys must not resolve: `ack:constructor` would otherwise return a
+// function as a grid and take the pill down.
+assert(resolveAck('constructor') === null, '13: a prototype key is not a family')
+assert(resolveAck('toString') === null, '13: a prototype key is not a family')
+
+assert(ACK_MIN_GAP_MS < QUIP_MIN_GAP_MS, '13: acks answer far more often than quips')
+assert(ACK_FLASH_MS < QUIP_FLASH_MS, '13: an ack is briefer than a wordless quip')
+assert(ACK_FLASH_MS <= ACK_MIN_GAP_MS + 200, '13: an ack clears at roughly the rate it may re-fire')
+
+// 14. The boot sequence's stage table (T-099).
+assert(BOOT_STAGES.length > 0, '14: there are stages')
+assert(new Set(BOOT_STAGES.map((s) => s.id)).size === BOOT_STAGES.length, '14: stage ids are unique')
+assert(BOOT_STAGES.every((s) => Number.isFinite(s.ms) && s.ms > 0), '14: every stage has a duration')
+assert(BOOT_STAGES.at(-1).id === SETTLE_STAGE, '14: settle is last, so the pill flies home at the end')
+assert(stageIndexOf(INTEGRATE_STAGE) === BOOT_STAGES.length - 2,
+  '14: integrate is immediately before settle')
+assert(stageIndexOf('nope') === -1, '14: an unknown stage is -1, not a crash')
+
+// The budget, as a ceiling to argue against rather than a number to drift past.
+// Raised from 7500 after the sequence was watched: at that pace every line was
+// gone before it could be read, because a stage has to cover the scramble
+// resolving the text *and then* the text sitting still (owner decision). It is
+// affordable only because the sequence runs once ever, does not block the page,
+// and ends on any input.
+assert(BOOT_TOTAL_MS <= 17000, `14: the whole sequence fits its budget (${BOOT_TOTAL_MS}ms)`)
+
+// Every stage has to outlast the scramble that fills it, or the line is still
+// churning when the stage ends and is never readable at all. This is the rule
+// the original timings actually broke.
+for (const stage of BOOT_STAGES) {
+  if (!lineFor(stage, { minted: true })) continue
+  assert(stage.ms >= BOOT_SCRAMBLE_MS + 600,
+    `14: ${stage.id} leaves reading time after the scramble (${stage.ms}ms vs ${BOOT_SCRAMBLE_MS}ms)`)
+}
+
+// Nothing in the sequence snaps.
+assert(Array.isArray(BOOT_EASE) && BOOT_EASE.length === 4, '14: there is one shared easing curve')
+assert(BOOT_TRAVEL_MS >= 800 && BOOT_RESIZE_MS >= 600, '14: the pill moves and resizes slowly')
+
+// The pill arrives and leaves collapsed; the expansion is the middle.
+assert(!isExpanded('wake'), '14: wake is collapsed')
+assert(!isExpanded(SETTLE_STAGE), '14: settle is collapsed')
+assert(isExpanded(INTEGRATE_STAGE), '14: integrate is expanded')
+assert(EXPANDED_STAGES.size === BOOT_STAGES.length - 2, '14: exactly the middle stages expand')
+
+// Copy. Wordless stages are deliberate, but a stage that says it is generating
+// an id it did not generate is Sentinel lying about its own work.
+const sessionStage = BOOT_STAGES[stageIndexOf('session')]
+assert(/generating/i.test(lineFor(sessionStage, { minted: true })),
+  '14: a freshly minted id is narrated as generated')
+assert(!/generating/i.test(lineFor(sessionStage, { minted: false })),
+  '14: an id that already existed is not claimed as generated')
+assert(lineFor(null) === '', '14: a missing stage has no line')
+assert(lineFor(BOOT_STAGES[0]) === '', '14: a wordless stage has no line')
+for (const stage of BOOT_STAGES) {
+  const line = lineFor(stage, { minted: true })
+  assert(line.length <= 44, `14: ${stage.id} line fits the pill (${line.length} chars)`)
+  assert(line === '' || line.trim() === line, `14: ${stage.id} line has no stray whitespace`)
+}
 
 if (failures > 0) {
   console.error(`sentinel quips: ${failures} failure(s)`)

@@ -1,5 +1,6 @@
 // Code pill input with expanding textarea for Python code
 import { useState, useRef } from 'react'
+import { fireAck } from '../../../hooks/useSentinelQuip'
 import styles from './CodePillInput.module.css'
 
 function CodePillInput({ onSubmit, onAIStateChange }) {
@@ -41,7 +42,12 @@ function CodePillInput({ onSubmit, onAIStateChange }) {
   }
 
   const handleSubmit = () => {
-    if (code.trim().length === 0) return
+    // See PillInput: only the refused submit is acked, because a real one
+    // already drives aiState.
+    if (code.trim().length === 0) {
+      fireAck('reject')
+      return
+    }
     
     if (typeof onAIStateChange === 'function') {
       onAIStateChange('thinking')

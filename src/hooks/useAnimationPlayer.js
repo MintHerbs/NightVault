@@ -1,7 +1,18 @@
 // React hook for playing through animation steps with timing control.
 // Manages: current step index, play/pause state, speed, navigation.
+//
+// Also where the transport's Sentinel acks are fired (T-099). Wired here rather
+// than in each transport bar because the bars are per-tool and this is not: the
+// B+ tree's StepControls and the tableaux' LogicStepControls both take a
+// `player` of exactly this shape, so one edit gives both of them a response to
+// every button, and a future tool inherits it by using this hook at all. Same
+// leverage aiMoments.js takes from the aiState stream.
+//
+// fireAck gates itself (preference, island busy, 400ms floor) and never throws,
+// so none of this can affect playback.
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { fireAck } from './useSentinelQuip'
 
 const DEFAULTS = {
   // Start playing as soon as a new run arrives, rather than waiting for a click.
@@ -33,6 +44,8 @@ export function useAnimationPlayer(steps = [], options = {}) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [speed, setSpeed] = useState(initialSpeed)
+  // Mirrors `speed` for updateSpeed's direction test; see the comment there.
+  const speedRef = useRef(initialSpeed)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const intervalRef = useRef(null)
 
@@ -84,9 +97,13 @@ export function useAnimationPlayer(steps = [], options = {}) {
     // Replay from the start rather than sitting on the last frame doing nothing.
     setCurrentStepIndex((prev) => (prev >= totalSteps - 1 ? 0 : prev))
     setIsPlaying(true)
+    fireAck('play')
   }, [totalSteps])
 
-  const pause = useCallback(() => setIsPlaying(false), [])
+  const pause = useCallback(() => {
+    setIsPlaying(false)
+    fireAck('pause')
+  }, [])
 
   const togglePlayPause = useCallback(() => {
     if (isPlaying) pause()
@@ -96,13 +113,19 @@ export function useAnimationPlayer(steps = [], options = {}) {
   const next = useCallback(() => {
     setIsPlaying(false)
     setCurrentStepIndex((prev) => Math.min(totalSteps - 1, prev + 1))
+    fireAck('step-forward')
   }, [totalSteps])
 
   const prev = useCallback(() => {
     setIsPlaying(false)
     setCurrentStepIndex((p) => Math.max(0, p - 1))
+    fireAck('step-back')
   }, [])
 
+  // Deliberately silent. This is the slider, and it fires on every value the
+  // drag passes through — the 400ms floor would turn a scrub into a stutter of
+  // acks answering positions the visitor never meant to stop at. The step they
+  // land on is shown on the canvas, which is the feedback that matters here.
   const goToStep = useCallback((index) => {
     setIsPlaying(false)
     setCurrentStepIndex(Math.max(0, Math.min(totalSteps - 1, index)))
@@ -111,15 +134,26 @@ export function useAnimationPlayer(steps = [], options = {}) {
   const skipToEnd = useCallback(() => {
     setIsPlaying(false)
     setCurrentStepIndex(Math.max(0, totalSteps - 1))
+    fireAck('skip-end')
   }, [totalSteps])
 
   const updateSpeed = useCallback((newSpeed) => {
-    setSpeed(Math.max(minSpeed, Math.min(maxSpeed, newSpeed)))
+    const clamped = Math.max(minSpeed, Math.min(maxSpeed, newSpeed))
+    // Read from a ref rather than from inside the setSpeed updater: an updater
+    // is called twice under StrictMode, and firing from in there would make the
+    // ack a side effect of rendering. Compared against the previous value
+    // rather than keyed to a button, so the glyph says which way the speed went
+    // even where the control is a list of presets rather than a pair of arrows.
+    if (clamped > speedRef.current) fireAck('speed-up')
+    else if (clamped < speedRef.current) fireAck('speed-down')
+    speedRef.current = clamped
+    setSpeed(clamped)
   }, [minSpeed, maxSpeed])
 
   const reset = useCallback(() => {
     setCurrentStepIndex(0)
     setIsPlaying(false)
+    fireAck('rewind')
   }, [])
 
   useEffect(() => {

@@ -1,6 +1,8 @@
 import { memo, useCallback, useState } from 'react'
+import { motion } from 'motion/react'
 import { BookOpen, ChatCircle, Globe } from '@phosphor-icons/react'
 import ChatAvatar from '../../../../features/chat/components/ChatAvatar/ChatAvatar'
+import { useAvatarIntegrated } from '../../../../hooks/useSentinelBoot'
 import NotificationBadge from '../../../effects/smoothui/components/notification-badge'
 import AppearanceDialog from '../../AppearanceDialog/AppearanceDialog'
 import { colors } from '../../../../constants/colors'
@@ -36,6 +38,10 @@ function CollapsedView({
 }) {
   const [isAppearanceOpen, setIsAppearanceOpen] = useState(false)
   const isSocial = mode === 'social'
+  // False only while Sentinel is still forging the avatar on its first-ever
+  // visit (T-099). Every other load this is true before the first paint, so
+  // there is no boot-shaped code path in the ordinary case.
+  const avatarIntegrated = useAvatarIntegrated()
 
   const handleMoonClick = useCallback((e) => {
     e.preventDefault()
@@ -122,7 +128,41 @@ function CollapsedView({
             }
           }}
         >
-          <ChatAvatar sessionId={sessionId} size={26} />
+          {/* Grey until Sentinel hands the avatar over: the real seeded avatar
+              under a filter, never a different seed. Swapping seeds would
+              change the *pattern*, which reads as one avatar replacing another
+              rather than as this one gaining colour.
+
+              The `layoutId` is claimed only once integrated, and that timing is
+              the whole trick. It is the same id the boot's forge carries, and
+              exactly one element may hold it at a time: the forge unmounts on
+              the same render this claims it, so motion animates the avatar from
+              the middle of the screen down into this slot. Holding it from
+              first paint instead meant two live claimants, and the forge flew
+              *up out of this corner* when it mounted. */}
+          <motion.div
+            // The `key` is what makes the flight happen, not just the
+            // `layoutId`. Motion starts a shared-layout transition when an
+            // element bearing the id *mounts*; merely granting the id to an
+            // element that was already on screen registers it silently and
+            // animates nothing. Flipping the key forces a fresh mount on the
+            // same render the forge unmounts, which is the pairing motion
+            // matches on.
+            key={avatarIntegrated ? 'avatar-integrated' : 'avatar-pending'}
+            layoutId={avatarIntegrated ? 'sentinel-avatar' : undefined}
+            style={{
+              lineHeight: 0,
+              borderRadius: '50%',
+              filter: avatarIntegrated ? 'none' : 'grayscale(1) brightness(0.75)',
+              // Slow, and eased at both ends: the colour coming up is the
+              // payoff of the whole sequence, and at 600ms it was over before
+              // the eye had followed the avatar down here.
+              transition: 'filter 1400ms cubic-bezier(0.65, 0, 0.35, 1)',
+            }}
+            transition={{ duration: 1.5, ease: [0.65, 0, 0.35, 1] }}
+          >
+            <ChatAvatar sessionId={sessionId} size={26} />
+          </motion.div>
         </div>
 
         <AppearanceDialog

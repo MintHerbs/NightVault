@@ -7,6 +7,7 @@ import usePostAlerts from './hooks/usePostAlerts'
 import { ThemeProvider } from './hooks/useTheme'
 import { AIActivityProvider } from './hooks/useAIActivity'
 import useIslandDock from './hooks/useIslandDock'
+import useSessionId from './lib/sessionId'
 import MusicPlayer from './components/layout/MusicPlayer/MusicPlayer'
 import DynamicIsland from './components/layout/DynamicIsland'
 import Sidebar from './components/layout/Sidebar'
@@ -51,7 +52,7 @@ function AppContent() {
   // Whether the next track change should start playing or just cue. A track
   // ending should roll on; a visitor skipping while paused should stay paused.
   const [autoplayOnTrackChange, setAutoplayOnTrackChange] = useState(true)
-  const sessionId = localStorage.getItem('session_id') || 'anonymous'
+  const sessionId = useSessionId()
   const { unreadCount, lastIncoming } = useChat(isChatOpen)
   // A new post is only news while you aren't already looking at the feed. Chat
   // covering the feed still counts as away from it.
@@ -140,8 +141,15 @@ function AppContent() {
   useEffect(() => {
     // Player autoplays muted (browsers block unmuted autoplay). Unmute
     // as soon as the visitor interacts with the page in any way.
+    //
+    // Only stops listening once the unmute actually took. The YouTube iframe
+    // API attaches its methods asynchronously, so an interaction that lands
+    // before the player is ready cannot be honoured, and this used to spend
+    // its one chance on it anyway (in fact it threw, which is the only reason
+    // the listeners survived to try again). Now it simply waits for the next
+    // interaction.
     const unmuteOnInteraction = () => {
-      musicPlayerRef.current?.unmute()
+      if (!musicPlayerRef.current?.unmute()) return
       window.removeEventListener('pointerdown', unmuteOnInteraction)
       window.removeEventListener('keydown', unmuteOnInteraction)
     }

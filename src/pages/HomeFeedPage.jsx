@@ -8,6 +8,7 @@ import { usePosts } from '../hooks/usePosts'
 import { useRateLimit } from '../hooks/useRateLimit'
 import { fireQuip } from '../hooks/useSentinelQuip'
 import { isLateHour } from '../lib/sentinel/session'
+import useSessionId from '../lib/sessionId'
 import styles from './HomeFeedPage.module.css'
 
 // One-time marker for the first post ever made from this browser.
@@ -73,7 +74,7 @@ function FeedSkeleton() {
 }
 
 export default function HomeFeedPage({ onAIStateChange }) {
-  const sessionId = localStorage.getItem('session_id') || 'anonymous'
+  const sessionId = useSessionId()
   const [showCarousel, setShowCarousel] = useState(false)
   const [navOffset, setNavOffset] = useState(64)
 

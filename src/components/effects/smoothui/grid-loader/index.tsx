@@ -102,7 +102,7 @@ export type PresetPattern =
   // Edge
   | "edge-cw"
   | "border"
-  // Faces (Sentinel speaking as itself, see docs/rules.md §15.5)
+  // Faces (Sentinel speaking as itself, see docs/rules.md §15.6)
   | "face-grin"
   | "face-wink"
   | "face-soft"
@@ -519,7 +519,7 @@ const PATTERNS: Record<PresetPattern, GridMatrix> = {
   // Faces — eyes + mouth read as an expression at 3x3. Reserved for moments
   // the island is speaking as itself (the Sentinel greeting, an error)
   // rather than reporting on work; every other state keeps an abstract
-  // pattern (docs/rules.md §15.5).
+  // pattern (docs/rules.md §15.6).
   "face-grin": [
     [1, 0, 1],
     [0, 0, 0],

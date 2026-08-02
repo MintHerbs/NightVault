@@ -14,6 +14,7 @@ import { normalizeKey } from '../../lib/BPlusTree'
 import { useAnimationPlayer } from '../../hooks/useAnimationPlayer'
 import { traceBuild, traceInsertMany, traceDeleteMany, traceDelete, traceReplace } from '../../lib/treeTrace'
 import { trackToolEvent } from '../../lib/analytics/tracker'
+import { fireAck } from '../../hooks/useSentinelQuip'
 import styles from './TreePage.module.css'
 
 // Stable identity, so the player does not treat "no run yet" as a new run every render.
@@ -157,6 +158,10 @@ function TreePage({ onAIStateChange, onChatOpen }) {
     setIsPanelOpen(false)
     setSteps(NO_STEPS)
     trackToolEvent('tree', 'reset')
+    // Acked rather than left silent: this drops the visitor back to the landing
+    // screen and sets aiState to 'idle', so without it the one control that
+    // throws away their whole tree is the one that makes the island go blank.
+    fireAck('clear')
     if (typeof onAIStateChange === 'function') {
       onAIStateChange('idle')
     }

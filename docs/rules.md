@@ -611,7 +611,48 @@ that finishes instantly holds its state for a minimum dwell before clearing.
 the island — the island's job is to show a state, not to guess how long it
 should have lasted.
 
-### 15.5 Give States Their Own Character
+### 15.5 Controls That Set No State Still Need an Answer
+
+§15.1 covers a tool's *inputs*. It does not cover its *controls*: stepping an
+animation, pausing it, changing speed, switching mode, clearing a canvas. Those
+set no `aiState`, and a press that changes nothing on the island reads as a dead
+button.
+
+Those get an **ack** instead (T-099): a wordless glyph on the island for 500ms,
+fired with `fireAck('<family>')` from `src/hooks/useSentinelQuip.js`.
+
+```jsx
+// ✅ CORRECT — a control with no aiState of its own
+const handleClear = () => {
+  setBoard(EMPTY)
+  fireAck('clear')
+}
+```
+
+```jsx
+// ❌ WRONG — this already drives the island; the ack talks over it
+const handleSubmit = (value) => {
+  setAIState('thinking')
+  fireAck('submit')
+}
+```
+
+Three rules:
+
+- **One glyph per verb, not per button.** Acks are keyed to the action
+  (`step-forward`, `pause`, `clear`, `mode-switch`, …) and shared across every
+  tool that fires them, so the shape means the same thing everywhere. Add a
+  family to the `ACKS` table in `src/lib/sentinel/quips.js`; do not invent a
+  per-button one.
+- **Never on top of an `aiState` you are also setting.** If the action already
+  moves the island, that is the response.
+- **Never for typing.** `fireAck` has a 400ms floor and drops rather than
+  queues, but per-keystroke acks are not on the table regardless.
+
+If a tool builds its transport on `useAnimationPlayer`, it inherits the eight
+transport acks for free and should not fire them itself.
+
+### 15.6 Give States Their Own Character
 
 The animations are `GridLoader`
 (`src/components/effects/smoothui/grid-loader/index.tsx`), which exposes ~50

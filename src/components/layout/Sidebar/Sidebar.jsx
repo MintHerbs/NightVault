@@ -9,11 +9,12 @@ import { memo, useCallback, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './Sidebar.module.css'
 import CollapsedView from './CollapsedView/CollapsedView'
+import useSessionId from '../../../lib/sessionId'
 
 function Sidebar({ activeChild, onChildSelect, isChatOpen, setIsChatOpen, unreadCount = 0, unreadPosts = 0 }) {
   const navigate  = useNavigate()
   const location  = useLocation()
-  const sessionId = localStorage.getItem('session_id') || 'anonymous'
+  const sessionId = useSessionId()
   const [mode, setMode] = useState('academia')
   const [isMobile, setIsMobile] = useState(false)
   const [isOpen, setIsOpen] = useState(false)

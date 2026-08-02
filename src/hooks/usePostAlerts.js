@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { getSessionId } from '../lib/sessionId'
 
 /**
  * New-post alerts for the whole app (not just the feed page).
@@ -18,16 +19,13 @@ const MAX_UNREAD = 10
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-// Read fresh each time: usePresence is what creates session_id, and there's no
-// ordering guarantee it has run before the first row arrives (same reasoning
-// as useChat's ownSessionId).
+// The id itself is always present (src/lib/sessionId.js), so this is purely a
+// shape guard now: `get_my_post_ids` takes a uuid, and a hand-edited storage
+// value would fail the RPC rather than this check. Returning null skips the
+// ownership lookup, which falls through to notifying.
 function ownSessionId() {
-  try {
-    const id = localStorage.getItem('session_id')
-    return UUID_RE.test(id || '') ? id : null
-  } catch {
-    return null
-  }
+  const id = getSessionId()
+  return UUID_RE.test(id) ? id : null
 }
 
 /**

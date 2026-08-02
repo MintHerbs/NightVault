@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Bell, BellOff, Check, ChevronDown, Monitor, Moon, Palette, Smile, Sun, X, Zap } from 'lucide-react'
+import { Bell, BellOff, Check, ChevronDown, Monitor, Moon, Palette, Smile, Sparkle, Sun, X, Zap } from 'lucide-react'
 import {
   Dialog,
   DialogBackdrop,
@@ -16,6 +16,7 @@ import useIslandNotifications, {
 import useSentinelPersonality, {
   setSentinelPersonalityEnabled,
 } from '../../../hooks/useSentinelPersonality'
+import { replayBoot } from '../../../hooks/useSentinelBoot'
 import styles from './AppearanceDialog.module.css'
 
 const MODE_OPTIONS = [
@@ -225,6 +226,32 @@ export default function AppearanceDialog({ open, onClose, sessionId }) {
               <span className={styles.switchThumb} />
             </span>
           </button>
+
+          {/* The boot sequence runs once per browser ever, which makes it the
+              one Sentinel moment nobody can go back and look at. Offered only
+              while reactions are on, since it is the loudest thing the
+              personality does. */}
+          {personalityEnabled && (
+            <button
+              type="button"
+              className={styles.switchRow}
+              onClick={() => {
+                onClose?.()
+                // After the dialog has closed, or the sequence plays behind it.
+                setTimeout(replayBoot, 220)
+              }}
+            >
+              <span className={styles.switchIcon}>
+                <Sparkle size={16} />
+              </span>
+              <span className={styles.switchText}>
+                <span className={styles.switchLabel}>Replay Sentinel&apos;s introduction</span>
+                <span className={styles.switchHint}>
+                  The first-run sequence: session id, avatar, handover.
+                </span>
+              </span>
+            </button>
+          )}
         </DialogPanel>
       </div>
     </Dialog>

@@ -31,12 +31,15 @@
 import { useEffect, useState } from 'react'
 import { isSentinelPersonalityEnabled } from './useSentinelPersonality.js'
 import {
+  ACK_FLASH_MS,
+  ACK_MIN_GAP_MS,
   QUIP_COOLDOWN_MS,
   QUIP_FLASH_MS,
   QUIP_FREQUENT_GAP_MS,
   QUIP_HOLD_MS,
   QUIP_MIN_GAP_MS,
   QUIP_REPEAT_CHANCE,
+  resolveAck,
   resolveQuip,
 } from '../lib/sentinel/quips.js'
 
@@ -45,7 +48,16 @@ const PENDING_KEY = 'sentinel-quip-pending'
 
 let listener = null
 let lastFiredAt = 0
+let lastAckAt = 0
+// When the quip currently on screen stops occupying the pill. Tracked here
+// rather than fed back from the hook so that fireAck can enforce "an ack never
+// preempts a remark" without the emitter needing to know what is rendered.
+let quipHoldsUntil = 0
 let busy = false
+// Acks have their own, narrower notion of "the island is occupied": see
+// setAckBusy. Separate flag rather than a parameter on setQuipBusy so neither
+// caller can accidentally widen the other.
+let ackBusy = false
 
 // Same trade-off useSentinelGreeting and useTheme take: storage can be
 // unavailable (private mode, blocked cookies), and a personality flourish must
@@ -146,6 +158,22 @@ function takePending() {
  * on a fresh load the island is hidden and then greeting, and only once that
  * finishes is there a pill free to speak from.
  */
+/**
+ * Tell the emitter whether the island can be interrupted by an acknowledgement.
+ * Called by DynamicIsland; nothing else should.
+ *
+ * Deliberately much narrower than setQuipBusy. A quip stands down for anything
+ * carrying information, including a live aiState. An ack does not, because the
+ * tools that own a transport hold one steady aiState across a whole run: with
+ * the wider gate, every transport press during an animation would be silently
+ * dropped, which is exactly what this tier exists to fix. What an ack does
+ * stand down for is an open panel (the visitor is working inside the pill) and
+ * a pill that is not resting (hidden, mid-entrance, or booting).
+ */
+export function setAckBusy(next) {
+  ackBusy = next
+}
+
 export function setQuipBusy(next) {
   const wasBusy = busy
   busy = next
@@ -201,7 +229,47 @@ export function fireQuip(context, { deferIfBusy = false } = {}) {
   }
 
   lastFiredAt = now
-  listener(quip)
+  quipHoldsUntil = now + (quip.line ? QUIP_HOLD_MS : QUIP_FLASH_MS)
+  listener({ ...quip, tier: 'quip' })
+  return true
+}
+
+/**
+ * Acknowledge something the visitor just pressed.
+ *
+ * The cheap tier (see the ACKS table in src/lib/sentinel/quips.js). Wordless,
+ * unrecorded, and answers its action nearly every time, which is the opposite
+ * contract to fireQuip's. Safe to call from any handler.
+ *
+ * Four things stop an ack, all of them "drop it" rather than "queue it", which
+ * matches how this file treats everything else that arrives late:
+ *
+ *   preference the visitor switched Sentinel off.
+ *   busy       the island is showing something that carries information. An
+ *              ack is the lowest-value thing here and never preempts.
+ *   quip       a remark is mid-sentence. Cutting a line off after 500ms to
+ *              confirm a keypress would be worse than not confirming it.
+ *   floor      ACK_MIN_GAP_MS, so a held arrow key pulses instead of strobing.
+ *
+ * There is deliberately no defer: a confirmation that arrives after the moment
+ * has passed is confirming nothing.
+ *
+ * @param {string} family - an ACKS family, e.g. 'step-forward'
+ * @returns {boolean} whether an ack was actually shown
+ */
+export function fireAck(family) {
+  if (!isSentinelPersonalityEnabled()) return false
+  if (ackBusy || !listener) return false
+
+  const now = Date.now()
+  if (now < quipHoldsUntil) return false
+  if (now - lastAckAt < ACK_MIN_GAP_MS) return false
+
+  const ack = resolveAck(family)
+  if (!ack) return false
+
+  lastAckAt = now
+  listener({ ...ack, tier: 'ack' })
   return true
 }
 
@@ -225,11 +293,17 @@ export default function useSentinelQuip() {
   // still restarts the hold.
   useEffect(() => {
     if (!quip) return undefined
+    // Three holds, shortest first: an ack is a flash answering a press, a
+    // wordless quip is a confirmation, a worded one has to be read.
+    let holdMs = QUIP_HOLD_MS
+    if (quip.tier === 'ack') holdMs = ACK_FLASH_MS
+    else if (!quip.line) holdMs = QUIP_FLASH_MS
+
     const timeout = setTimeout(() => {
       // Only clear what this effect was scheduled for, so a quip that arrived
       // during the wait keeps its full time on screen.
       setQuip((current) => (current === quip ? null : current))
-    }, quip.line ? QUIP_HOLD_MS : QUIP_FLASH_MS)
+    }, holdMs)
     return () => clearTimeout(timeout)
   }, [quip])
 
