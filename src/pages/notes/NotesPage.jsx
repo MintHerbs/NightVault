@@ -6,6 +6,8 @@ import { deriveSubfolder, getNoteAuthors } from '../../lib/notesApi'
 import { loadNote } from '../../lib/noteCache'
 import { trackNoteRead } from '../../lib/analytics/tracker'
 import { listModulesCached } from '../../lib/modulesApi'
+import useSentinelReading from '../../hooks/useSentinelReading'
+import useSentinelPersonality from '../../hooks/useSentinelPersonality'
 
 /** "getting-started" / "notes/img-push" → "Getting Started" (last segment, humanised). */
 function humaniseFilename(subpath) {
@@ -67,6 +69,14 @@ function NotesPage() {
       ? `/notes-browser/${courseId}/${section}/${encodeURIComponent(folder)}`
       : `/notes-browser/${courseId}/${section}`)
   }
+
+  // How the note is read, not what it says: see src/hooks/useSentinelReading.js.
+  const sentinelPersonality = useSentinelPersonality()
+  useSentinelReading({
+    noteKey: `${section}/${subpath}`,
+    ready: status === 'loaded',
+    enabled: sentinelPersonality,
+  })
 
   useEffect(() => {
     let cancelled = false

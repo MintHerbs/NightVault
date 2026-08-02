@@ -28,7 +28,10 @@ export default function QuipContent({ line, grid }) {
         size="sm"
         speed={grid.speed}
       />
-      <span className={styles.quipText}>{line}</span>
+      {/* Wordless moments render the glyph alone. They confirm an action the
+          visitor just took deliberately (a copy, a save, a message sent), and
+          a sentence restating it would be worse than a flash. */}
+      {line ? <span className={styles.quipText}>{line}</span> : null}
     </>
   )
 }

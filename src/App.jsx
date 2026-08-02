@@ -16,6 +16,9 @@ import { AppRoutes, preloadRoutes } from './routes'
 import { trackPageView } from './lib/analytics/tracker'
 import { fireQuip } from './hooks/useSentinelQuip'
 import { routeQuipContext } from './lib/sentinel/routeQuips'
+import { INITIAL_AI_MEMORY, nextAIMemory } from './lib/sentinel/aiMoments'
+import useSentinelSignals from './hooks/useSentinelSignals'
+import useSentinelPersonality from './hooks/useSentinelPersonality'
 import { allowsIslandNotifications } from './lib/notificationScope'
 import { songs } from './config/songs'
 
@@ -29,9 +32,13 @@ function AppContent() {
   // browser blocked autoplay, with nothing to ever correct it (T-079).
   const [isPlaying, setIsPlaying] = useState(false)
   const [aiState, setAIState] = useState('idle')
+  // The aiState stream's own memory: an error run to notice, and when the
+  // current piece of work started. A ref, because nothing renders from it.
+  const aiMemoryRef = useRef({ memory: INITIAL_AI_MEMORY, previous: 'idle' })
   const [errorMessage, setErrorMessage] = useState('')
   // Set by whichever surface is showing; see src/hooks/useIslandDock.js.
   const islandDock = useIslandDock()
+  const sentinelPersonality = useSentinelPersonality()
   const [activeChild, setActiveChild] = useState('btree')
   const [isChatOpen, setIsChatOpen] = useState(false)
   // Which surface opened chat. The island only offers its "Back" shortcut for
@@ -55,6 +62,11 @@ function AppContent() {
   } = usePostAlerts(isViewingFeed)
 
   const currentSong = songs[currentSongIndex]
+
+  // Everything Sentinel notices without a page's help: connectivity, copying,
+  // printing, a file dragged in, a long absence, the hour you turned up, and
+  // the egg. One mount, all passive listeners.
+  useSentinelSignals({ enabled: sentinelPersonality })
 
   const isToolsRoute = location.pathname.startsWith('/tools/')
   const isAdminRoute = location.pathname.startsWith('/admin')
@@ -108,6 +120,22 @@ function AppContent() {
   useEffect(() => {
     if (isChatOpen) fireQuip({ kind: 'chrome', id: 'chat' }, { deferIfBusy: true })
   }, [isChatOpen])
+
+  // Tool reactions, derived from the aiState stream every tool already reports
+  // through (docs/rules.md §15). Wired once here rather than ten times: a new
+  // tool inherits "there we go", "take your time" and "too easy" by reporting
+  // its state at all, without knowing Sentinel exists.
+  useEffect(() => {
+    const previous = aiMemoryRef.current.previous
+    if (previous === aiState) return
+    const { memory, moment } = nextAIMemory(aiMemoryRef.current.memory, {
+      previous,
+      next: aiState,
+      now: Date.now(),
+    })
+    aiMemoryRef.current = { memory, previous: aiState }
+    if (moment) fireQuip(moment)
+  }, [aiState])
 
   useEffect(() => {
     // Player autoplays muted (browsers block unmuted autoplay). Unmute

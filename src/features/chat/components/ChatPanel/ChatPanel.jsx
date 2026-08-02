@@ -11,6 +11,7 @@ import Loading from '../../../../components/ui/Loading'
 import useChat from '../../../../hooks/useChat'
 import useTypingIndicator from '../../../../hooks/useTypingIndicator'
 import useReadReceipts from '../../../../hooks/useReadReceipts'
+import { fireQuip } from '../../../../hooks/useSentinelQuip'
 import { isDifferentDay } from '../../../../lib/social/relativeTime'
 import styles from './ChatPanel.module.css'
 
@@ -30,14 +31,41 @@ export default function ChatPanel({ isOpen, onClose, sessionId }) {
   const { seenAt, markRead } = useReadReceipts(sessionId)
   const messagesEndRef = useRef(null)
 
+  // Sending is confirmed wordlessly, and a burst of them gets a word. The
+  // window is short on purpose: three messages in ten seconds is a train of
+  // thought, five is a monologue.
+  const RAPID_WINDOW_MS = 10000
+  const RAPID_LIMIT = 5
+  const sendTimes = useRef([])
+
+  // An empty room is only worth mentioning once it has actually finished
+  // loading, or every open would flash it before the history arrives.
+  useEffect(() => {
+    if (!isOpen || isLoading || messages.length > 0) return
+    fireQuip({ kind: 'moment', id: 'alone-in-chat' })
+  }, [isOpen, isLoading, messages.length])
+
+  const registerSend = () => {
+    const now = Date.now()
+    sendTimes.current = [...sendTimes.current, now].filter((t) => now - t < RAPID_WINDOW_MS)
+    if (sendTimes.current.length >= RAPID_LIMIT) {
+      sendTimes.current = []
+      fireQuip({ kind: 'moment', id: 'rapid-chat' })
+      return
+    }
+    fireQuip({ kind: 'moment', id: 'message-sent' })
+  }
+
   const handleSend = (content) => {
     notifyStopped()
     sendMessage(content)
+    registerSend()
   }
 
   const handleSendMedia = (url, kind, content) => {
     notifyStopped()
     sendAttachment(url, kind, content)
+    registerSend()
   }
 
   // Grouping is computed once over the message list rather than inside each

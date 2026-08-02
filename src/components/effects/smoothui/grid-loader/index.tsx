@@ -102,10 +102,16 @@ export type PresetPattern =
   // Edge
   | "edge-cw"
   | "border"
-  // Faces (Sentinel greeting/error only, see docs/rules.md §15.5)
+  // Faces (Sentinel speaking as itself, see docs/rules.md §15.5)
   | "face-grin"
   | "face-wink"
-  | "face-soft";
+  | "face-soft"
+  | "face-drowsy"
+  | "face-sleep"
+  | "face-surprised"
+  | "face-flat"
+  | "face-squint"
+  | "face-wince";
 
 export interface GridLoaderProps {
   /** Blur amount in pixels — creates a soft glow effect */
@@ -523,6 +529,42 @@ const PATTERNS: Record<PresetPattern, GridMatrix> = {
     [1, 0, 0],
     [0, 0, 0],
     [1, 1, 1],
+  ],
+  // Drowsy, then out. Eyes drop to the middle row as the lids lower, and the
+  // mouth goes last: run as a sequence they read as one face falling asleep.
+  "face-drowsy": [
+    [0, 0, 0],
+    [1, 0, 1],
+    [0, 1, 0],
+  ],
+  "face-sleep": [
+    [0, 0, 0],
+    [1, 0, 1],
+    [0, 0, 0],
+  ],
+  // Caught out: eyes up, mouth a small open circle under them.
+  "face-surprised": [
+    [1, 0, 1],
+    [0, 1, 0],
+    [0, 0, 0],
+  ],
+  // Unimpressed. Eyes and nothing else, which reads flatter than any mouth.
+  "face-flat": [
+    [1, 0, 1],
+    [0, 0, 0],
+    [0, 0, 0],
+  ],
+  "face-squint": [
+    [0, 0, 0],
+    [1, 0, 1],
+    [1, 1, 1],
+  ],
+  // A wince, for the island owning a failure rather than reporting one: the
+  // whole face pulled off-centre.
+  "face-wince": [
+    [0, 1, 1],
+    [0, 0, 0],
+    [1, 1, 0],
   ],
   "face-soft": [
     [1, 0, 1],

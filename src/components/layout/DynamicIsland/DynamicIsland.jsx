@@ -9,7 +9,9 @@ import TimerSetPanel from './TimerSetPanel'
 import SentinelFace from './SentinelFace'
 import QuipContent from './QuipContent'
 import useChatNotification from '../../../hooks/useChatNotification'
-import useSentinelQuip, { setQuipBusy } from '../../../hooks/useSentinelQuip'
+import useSentinelQuip, { fireQuip, setQuipBusy } from '../../../hooks/useSentinelQuip'
+import useSentinelIdle from '../../../hooks/useSentinelIdle'
+import useSentinelPersonality from '../../../hooks/useSentinelPersonality'
 import useIslandNotifications from '../../../hooks/useIslandNotifications'
 import useStudyTimer from '../../../hooks/useStudyTimer'
 import useBreakReminder, { BREAK_INTERVAL_MS } from '../../../hooks/useBreakReminder'
@@ -33,6 +35,11 @@ const SENTINEL_INTRO_HOLD_MS = 2800
 // offer. Past this the island reverts to its normal behaviour and closing
 // chat is manual again (owner decision, T-080).
 const RETURN_WINDOW_MS = 60000
+
+// Poking the pill. Five in three seconds is unmistakably deliberate; fewer
+// would catch someone double-clicking their way into the music panel.
+const POKE_LIMIT = 5
+const POKE_WINDOW_MS = 3000
 
 const BREAK_DISMISS_MS = 8000
 const TIMER_DONE_DISMISS_MS = 10000
@@ -126,12 +133,18 @@ export default function DynamicIsland({
   const [revealCapElapsed, setRevealCapElapsed] = useState(false)
   const [returnWindowOpen, setReturnWindowOpen] = useState(false)
   const pillRef = useRef(null)
+  const pokeTimes = useRef([])
 
   const reducedMotion = useReducedMotion()
   const timer = useStudyTimer()
   const breakReminder = useBreakReminder(breakIntervalMs)
   const sentinelGreeting = useSentinelGreeting()
   const quip = useSentinelQuip()
+  const personality = useSentinelPersonality()
+  // Only tracked while the pill is actually resting: a visitor mid-panel or
+  // mid-task is plainly present, and timers running behind that would only ever
+  // be reset by the next interaction anyway.
+  const idleState = useSentinelIdle({ enabled: personality })
 
   const isPanelOpen = intent === 'music' || intent === 'timer' || intent === 'timer-set'
   const returnAvailable = isChatOpen && chatOpenedFromIsland && returnWindowOpen
@@ -212,6 +225,20 @@ export default function DynamicIsland({
 
   // A stale `true` would silence Sentinel for the rest of the page's life.
   useEffect(() => () => setQuipBusy(false), [])
+
+  // Starting a study timer is the plainest statement of intent the app has, so
+  // it earns an acknowledgement. Keyed on the transition rather than on the
+  // flag, so a re-render mid-session cannot repeat it.
+  const wasRunningRef = useRef(false)
+  useEffect(() => {
+    if (timer.isRunning && !wasRunningRef.current) {
+      // Deferred: a timer is started from inside the open timer panel, and an
+      // open panel outranks a quip, so firing inline would drop this every
+      // time. It lands when the panel closes.
+      fireQuip({ kind: 'moment', id: 'locked-in' }, { deferIfBusy: true })
+    }
+    wasRunningRef.current = timer.isRunning
+  }, [timer.isRunning])
 
   useEffect(() => {
     const delay = setTimeout(() => setRevealDelayElapsed(true), REVEAL_DELAY_MS)
@@ -333,9 +360,21 @@ export default function DynamicIsland({
     if (intent === 'hover') setIntent('idle')
   }
 
+  // Jabbing at the pill. Counted at the top of handleActivate rather than in
+  // its tail, so it registers whatever the click went on to do.
+  const registerPoke = () => {
+    const now = Date.now()
+    pokeTimes.current = [...pokeTimes.current, now].filter((t) => now - t < POKE_WINDOW_MS)
+    if (pokeTimes.current.length >= POKE_LIMIT) {
+      pokeTimes.current = []
+      fireQuip({ kind: 'moment', id: 'poke' })
+    }
+  }
+
   // Keyed off what's actually on screen rather than off the underlying flags,
   // so a state that is present but outranked never captures the click.
   const handleActivate = () => {
+    registerPoke()
     if (displayState === 'return') {
       onCloseChat?.()
       return
@@ -533,7 +572,20 @@ export default function DynamicIsland({
                 <QuipContent line={quip.line} grid={quip.grid} />
               )}
 
-              {displayState === 'idle' && <div className={styles.greenDot} />}
+              {/* The resting pill. A drowsy or sleeping face stands in for the
+                  online dot once nothing has happened for a while; any
+                  interaction at all puts the dot back (useSentinelIdle), and
+                  hovering still shows the real count. */}
+              {displayState === 'idle' && idleState === 'awake' && (
+                <div className={styles.greenDot} />
+              )}
+
+              {displayState === 'idle' && idleState !== 'awake' && (
+                <SentinelFace
+                  variant={idleState === 'asleep' ? 'sleep' : 'drowsy'}
+                  color="white"
+                />
+              )}
 
               {displayState === 'timer-running' && (
                 <>
@@ -600,7 +652,14 @@ export default function DynamicIsland({
                   onSelectMinutes={timer.selectMinutes}
                   onOpenCustom={() => setIntent('timer-set')}
                   onToggle={timer.toggle}
-                  onReset={timer.reset}
+                  onReset={() => {
+                    // Resetting a running timer is abandonment; pausing one is
+                    // not, which is why this hangs off Reset alone.
+                    if (timer.isRunning) {
+                      fireQuip({ kind: 'moment', id: 'timer-abandoned' }, { deferIfBusy: true })
+                    }
+                    timer.reset()
+                  }}
                 />
               )}
 

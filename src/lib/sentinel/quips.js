@@ -1,9 +1,15 @@
 /**
- * Sentinel quips: what the island says about the thing you just opened.
+ * Sentinel quips: what the island says about what you just did.
  *
  * Distinct from the `aiState` vocabulary (docs/rules.md §15), which reports on
- * work in progress. A quip is Sentinel reacting to a navigation choice, so it
- * carries text and never blocks anything.
+ * work in progress. A quip is Sentinel reacting, so it carries text (or, for a
+ * confirmation, deliberately none) and never blocks anything.
+ *
+ * Three families, all resolved through the same ladder:
+ *
+ *   what you opened   a Subject, folder, file, tool or chrome action
+ *   what you did      copying, saving, sending, skimming, giving up on a timer
+ *   what is true      the hour, a visit streak, the connection dropping
  *
  * Everything here is pure. The gating (cooldown, freshness, rate limit) and the
  * React wiring live in src/hooks/useSentinelQuip.js; this file only answers
@@ -35,10 +41,26 @@
  * ## Unique animation per quip
  *
  * T-094's hard constraint: every personality moment gets its own grid
- * animation, not a reuse of another moment's. `grid` is a GridLoader prop bag
- * and the signature (pattern + mode + color + speed) is asserted unique in
- * quips.test.js, so adding a quip that silently clones another one fails the
- * suite rather than shipping.
+ * animation, not a reuse of another moment's. `grid` is a GridLoader prop bag,
+ * and quips.test.js asserts uniqueness over the *resolved matrix* plus mode,
+ * colour and speed rather than over the pattern name. That matters because the
+ * loader carries aliases whose matrices are identical (border, frame and
+ * ripple-out are one shape; so are sparkle and checkerboard), so two entries
+ * could read as different and still look the same on screen.
+ *
+ * ## Pacing
+ *
+ * Three knobs, all optional per entry:
+ *
+ *   frequent    a wordless confirmation that must answer its action every
+ *               time. Skips the cooldown and uses a much shorter floor. Only
+ *               valid on an entry whose lines are empty, which the test
+ *               enforces: a worded quip firing this often would be unbearable.
+ *   cooldownMs  overrides the fortnight a joke gets. An observation about the
+ *               hour or about a tool you are still fighting with is only worth
+ *               making while it is still true.
+ *   fallback    what a line with a {n} placeholder reads as when there is
+ *               nothing to fill it with.
  */
 
 /** How long a quip stays retired after being shown. A joke is funny once. */
@@ -46,6 +68,17 @@ export const QUIP_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000
 
 /** Floor between any two quips, whatever fired them. */
 export const QUIP_MIN_GAP_MS = 20000
+
+/**
+ * The floor for `frequent` quips instead.
+ *
+ * A confirmation is not a joke. "You just copied that" has to answer the
+ * action every time or it reads as broken, so those entries opt out of both
+ * the cooldown and the ordinary floor. They are wordless flashes, so they
+ * cannot crowd out anything worth reading; this shorter floor exists only to
+ * stop a held key or a save loop strobing the pill.
+ */
+export const QUIP_FREQUENT_GAP_MS = 1500
 
 /**
  * Chance a quip fires when it has been shown before and has since come off
@@ -56,6 +89,19 @@ export const QUIP_REPEAT_CHANCE = 0.35
 
 /** Long enough to read a short line without stalling the pill. */
 export const QUIP_HOLD_MS = 2600
+
+/**
+ * Hold for a quip with no line. There is nothing to read, so the beat only has
+ * to register as having happened; holding one of these for the full 2.6s reads
+ * as the pill having got stuck.
+ */
+export const QUIP_FLASH_MS = 900
+
+// Cooldown shorthands for entries that should come round again sooner than the
+// fortnight a joke gets. An observation about the hour, or about a tool you are
+// still fighting with, is only worth making while it is still true.
+const HOURLY = 60 * 60 * 1000
+const DAILY = 20 * HOURLY
 
 /**
  * The catalog. Keys are `<kind>:<id>` for the curated rungs and `struct:<name>`
@@ -233,6 +279,182 @@ export const QUIPS = {
     grid: { pattern: 'duo-v', mode: 'pulse', color: 'amber', speed: 'fast' },
   },
 
+  // Session and time of day. Fired when the island settles rather than by any
+  // click, so they read as Sentinel noticing rather than answering.
+  'moment:late-night': {
+    cooldownMs: DAILY,
+    lines: ['You should sleep'],
+    grid: { pattern: 'face-drowsy', mode: 'pulse', color: 'amber', speed: 'slow' },
+  },
+  'moment:early-start': {
+    cooldownMs: DAILY,
+    lines: ['Early start'],
+    grid: { pattern: 'wave-tb', mode: 'stagger', color: 'amber', speed: 'slow' },
+  },
+  'moment:streak': {
+    cooldownMs: DAILY,
+    lines: ['Day {n}'],
+    fallback: 'Back again',
+    grid: { pattern: 'stripes-v', mode: 'stagger', color: 'green', speed: 'normal' },
+  },
+  'moment:anniversary': {
+    lines: ['One year'],
+    grid: { pattern: 'spiral-cw', mode: 'stagger', color: 'amber', speed: 'normal' },
+  },
+  'moment:back-again': {
+    cooldownMs: HOURLY * 2,
+    lines: ["Oh, you're back"],
+    grid: { pattern: 'face-surprised', mode: 'pulse', color: 'white', speed: 'normal' },
+  },
+
+  // Connectivity.
+  'moment:offline': {
+    // Not `frequent`, despite being information rather than a joke: it carries
+    // text, so it holds for the full read. A flapping connection would
+    // otherwise put a 2.6s message on the pill every couple of seconds.
+    cooldownMs: 2 * 60 * 1000,
+    lines: ['No connection'],
+    grid: { pattern: 'breathing', mode: 'pulse', color: 'red', speed: 'slow' },
+  },
+  'moment:online': {
+    cooldownMs: 2 * 60 * 1000,
+    lines: ["We're back"],
+    grid: { pattern: 'ripple-out', mode: 'pulse', color: 'green', speed: 'normal' },
+  },
+
+  // Wordless beats. An empty line renders the glyph alone and holds for less
+  // time: these confirm an action the visitor already knows they took, so a
+  // sentence about it would be worse than a flash.
+  'moment:copied': {
+    frequent: true,
+    lines: [''],
+    grid: { pattern: 'plus-full', mode: 'pulse', color: 'green', speed: 'fast' },
+  },
+  'moment:saved': {
+    frequent: true,
+    lines: [''],
+    grid: { pattern: 'diamond', mode: 'pulse', color: 'green', speed: 'fast' },
+  },
+  'moment:message-sent': {
+    frequent: true,
+    lines: [''],
+    grid: { pattern: 'wave-lr', mode: 'stagger', color: 'green', speed: 'fast' },
+  },
+  'moment:startle': {
+    frequent: true,
+    lines: [''],
+    grid: { pattern: 'face-surprised', mode: 'pulse', color: 'white', speed: 'fast' },
+  },
+
+  // Interaction signals picked up globally, no page involvement.
+  'moment:print': {
+    lines: ['Killing trees'],
+    grid: { pattern: 'stripes-h', mode: 'stagger', color: 'white', speed: 'slow' },
+  },
+  'moment:drag': {
+    cooldownMs: HOURLY / 2,
+    lines: ["I'll take that"],
+    grid: { pattern: 'T-top', mode: 'pulse', color: 'blue', speed: 'fast' },
+  },
+  'moment:poke': {
+    cooldownMs: HOURLY,
+    lines: ['Stop poking me'],
+    grid: { pattern: 'face-squint', mode: 'pulse', color: 'amber', speed: 'fast' },
+  },
+
+  // Derived from aiState transitions, so every tool gets these for free.
+  'moment:recovered': {
+    cooldownMs: HOURLY / 2,
+    lines: ['There we go'],
+    grid: { pattern: 'face-grin', mode: 'pulse', color: 'green', speed: 'normal' },
+  },
+  'moment:struggling': {
+    cooldownMs: HOURLY / 2,
+    lines: ['Take your time'],
+    grid: { pattern: 'face-soft', mode: 'pulse', color: 'amber', speed: 'slow' },
+  },
+  'moment:instant': {
+    cooldownMs: HOURLY / 2,
+    lines: ['Too easy'],
+    grid: { pattern: 'face-wink', mode: 'pulse', color: 'green', speed: 'fast' },
+  },
+
+  // Study timer.
+  'moment:locked-in': {
+    cooldownMs: HOURLY * 2,
+    lines: ['Locked in'],
+    grid: { pattern: 'frame-sync', mode: 'pulse', color: 'green', speed: 'slow' },
+  },
+  'moment:timer-abandoned': {
+    lines: ["We don't talk about that timer"],
+    grid: { pattern: 'face-flat', mode: 'pulse', color: 'white', speed: 'slow' },
+  },
+
+  // Reading a note.
+  'moment:finished-note': {
+    lines: ['You actually finished it'],
+    grid: { pattern: 'line-h-bot', mode: 'stagger', color: 'green', speed: 'slow' },
+  },
+  'moment:skimming': {
+    cooldownMs: HOURLY,
+    lines: ['Skimming, are we'],
+    grid: { pattern: 'rain', mode: 'stagger', color: 'white', speed: 'fast' },
+  },
+  'moment:note-again': {
+    lines: ['This one again'],
+    grid: { pattern: 'face-squint', mode: 'pulse', color: 'white', speed: 'normal' },
+  },
+
+  // Searching.
+  'moment:no-results': {
+    cooldownMs: HOURLY,
+    lines: ['Nothing. Try fewer words'],
+    grid: { pattern: 'face-flat', mode: 'pulse', color: 'amber', speed: 'normal' },
+  },
+  'moment:still-looking': {
+    cooldownMs: HOURLY,
+    lines: ['Still looking?'],
+    grid: { pattern: 'ripple-in', mode: 'pulse', color: 'white', speed: 'normal' },
+  },
+
+  // Social.
+  'moment:first-post': {
+    lines: ['Your first post. Bold.'],
+    grid: { pattern: 'sparkle', mode: 'stagger', color: 'green', speed: 'normal' },
+  },
+  'moment:rapid-chat': {
+    cooldownMs: HOURLY,
+    lines: ["Slow down, I'm reading"],
+    grid: { pattern: 'chaos', mode: 'stagger', color: 'blue', speed: 'fast' },
+  },
+  'moment:alone-in-chat': {
+    cooldownMs: HOURLY * 2,
+    lines: ['Just us then'],
+    grid: { pattern: 'solo-center', mode: 'pulse', color: 'white', speed: 'slow' },
+  },
+  'moment:late-post': {
+    lines: ['Posting at this hour?'],
+    grid: { pattern: 'face-drowsy', mode: 'pulse', color: 'blue', speed: 'normal' },
+  },
+
+  // Editing.
+  'moment:published': {
+    cooldownMs: HOURLY,
+    lines: ['Live'],
+    grid: { pattern: 'ripple-out', mode: 'stagger', color: 'green', speed: 'slow' },
+  },
+  'moment:unsaved': {
+    cooldownMs: HOURLY / 2,
+    lines: ['Unsaved for a while'],
+    grid: { pattern: 'face-wince', mode: 'pulse', color: 'amber', speed: 'normal' },
+  },
+
+  // Easter eggs.
+  'easter:konami': {
+    cooldownMs: HOURLY,
+    lines: ['You found it'],
+    grid: { pattern: 'chaos', mode: 'stagger', color: 'green', speed: 'slow' },
+  },
   // Derived from the shape of what was opened.
   'struct:empty': {
     lines: ['Nothing here. Bold choice.'],
@@ -277,9 +499,11 @@ const LAB_RE = /\blabs?\b/i
  * Which curated rung a context can hit, if any. Kinds that have no curated
  * table (folder, file) skip straight to the derived rungs.
  */
+const CURATED_KINDS = new Set(['module', 'tool', 'chrome', 'moment', 'easter'])
+
 function curatedKey({ kind, id }) {
   if (!id) return null
-  if (kind !== 'module' && kind !== 'tool' && kind !== 'chrome') return null
+  if (!CURATED_KINDS.has(kind)) return null
   const key = `${kind}:${id}`
   // Only a key the catalog actually carries counts as a match. Returning the
   // key unconditionally would let any Subject an admin creates short-circuit
@@ -326,11 +550,18 @@ function structuralKey({ kind, name, itemCount, depth, updatedAt, now }) {
 function buildLine(quip, context, rand) {
   const line = quip.lines[Math.floor(rand() * quip.lines.length)] ?? quip.lines[0]
   if (!line.includes('{n}')) return line
+
+  // Two sources, in the order the two placeholder-bearing quips need them: a
+  // caller-supplied count (a visit streak), then digits lifted out of a folder
+  // name (week N).
+  if (Number.isFinite(context.count)) return line.replace('{n}', String(context.count))
   const match = WEEK_RE.exec(context.name ?? '')
-  // A pattern-matched quip whose placeholder cannot be filled would render the
-  // literal "{n}", so fall back to a plain reading of the same beat.
-  if (!match) return 'Getting somewhere'
-  return line.replace('{n}', match[1])
+  if (match) return line.replace('{n}', match[1])
+
+  // A placeholder with nothing to fill it would render the literal "{n}", so
+  // fall back to a plain reading of the same beat rather than showing the
+  // template.
+  return quip.fallback ?? 'Getting somewhere'
 }
 
 /**
@@ -344,8 +575,10 @@ function buildLine(quip, context, rand) {
  * @param {number} [context.depth] - levels below the course root
  * @param {string} [context.updatedAt] - ISO timestamp, for files
  * @param {number} [context.now] - epoch ms, injected for testing
+ * @param {number} [context.count] - fills the {n} placeholder, for a streak
  * @param {() => number} [rand]
- * @returns {{ id: string, line: string, grid: object } | null}
+ * @returns {{ id: string, line: string, grid: object, frequent: boolean,
+ *   cooldownMs: number } | null}
  */
 export function resolveQuip(context, rand = Math.random) {
   if (!context || typeof context !== 'object') return null
@@ -369,7 +602,13 @@ export function resolveQuip(context, rand = Math.random) {
   // entry. Silence beats throwing inside a navigation handler.
   if (!quip) return null
 
-  return { id: key, line: buildLine(quip, ctx, rand), grid: quip.grid }
+  return {
+    id: key,
+    line: buildLine(quip, ctx, rand),
+    grid: quip.grid,
+    frequent: quip.frequent === true,
+    cooldownMs: quip.cooldownMs ?? QUIP_COOLDOWN_MS,
+  }
 }
 
 /** Signature the uniqueness rule is checked against. */

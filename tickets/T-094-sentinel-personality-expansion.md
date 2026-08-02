@@ -19,9 +19,11 @@ curated moments and a unique grid animation per moment.
   quip contexts, with the tool half derived from the TOOLS registry so a
   renamed route cannot leave a stale copy. Split in two because the node
   test runner cannot resolve the registry's own import chain.
-- `src/hooks/useSentinelQuip.js` — module-level emitter with three gates
+- `src/hooks/useSentinelQuip.js` — module-level emitter with its gates
   (island busy, 20s global floor, 14-day per-quip cooldown plus a 35%
   repeat roll), and `deferQuip` for actions that end in a hard navigation.
+  A preference gate and the per-entry pacing knobs were added in the
+  second pass below.
 - `src/components/layout/DynamicIsland/QuipContent.jsx` plus a new `quip`
   state in `displayStateFor()`, ranked under everything informational.
 - `GridLoader` gained an optional `label` prop: its hardcoded
@@ -37,11 +39,59 @@ curated moments and a unique grid animation per moment.
   second covers the emitter's gates (drop vs. hold vs. spend) and its
   behaviour against hostile or corrupt storage.
 
-Still backlog from the sections below: every ambient/session moment
-(idle-sleep, offline, tab-away, 404, error boundary, easter eggs,
-battery, streaks) and the whole retrofit list. The infrastructure those
-need now exists: `fireQuip` is callable from anywhere, and the `quip`
-display state is the slot they would render into.
+## Implementation notes (2026-08-02, later): ambient moments
+
+The ambient/session half, taking the catalog to 76 moments.
+
+- Six more 3x3 faces on `GridLoader` (drowsy, sleep, surprised, flat,
+  squint, wince), and `SentinelFace` gained a variant table.
+- `src/hooks/useSentinelIdle.js` — the pill's resting face. Drowsy after
+  two minutes untouched, asleep after ten, both halved after midnight,
+  with a wordless startle on waking. This is where the "mood" idea from
+  the original spec actually landed: rather than a mood variable nothing
+  reads, Sentinel simply gets tired sooner at night, which is the only
+  place a mood would have been visible.
+- `src/hooks/useSentinelSignals.js` — browser-level moments wired once in
+  App: connectivity both ways, copy, print, a file dragged onto the
+  window, returning after five minutes away, the Konami code, and the
+  arrival remark (hour of day, visit streak, one-year anniversary).
+- `src/lib/sentinel/session.js` — visit record and streak arithmetic,
+  local-day based so a late-night session does not break a run.
+- `src/lib/sentinel/aiMoments.js` — "there we go", "take your time" and
+  "too easy" derived from the aiState stream in App, so all ten tools get
+  them without any tool page changing.
+- `src/hooks/useSentinelReading.js` — finished a long note, skimming, or
+  opening the same note a third time this session.
+- Wordless quips: an empty line renders the glyph alone for 0.9s instead
+  of 2.6s, used for confirmations (copy, save, message sent, startle).
+- Pacing gained two per-entry knobs, `frequent` and `cooldownMs`, because
+  a confirmation and a joke want opposite treatment.
+- Fire points also added for: the study timer (started, abandoned),
+  poking the pill, chat (sent, burst, empty room), the feed (first post
+  ever, posting after midnight), the editor (saved, published, unsaved
+  for ten minutes), and empty/repeated searches.
+- **Appearance gained a "Sentinel reactions" switch**
+  (`src/hooks/useSentinelPersonality.js`), separate from the existing
+  pop-up alerts toggle: wanting to be told about a message and not
+  wanting a remark about a folder is a reasonable pair of preferences.
+- Tests: `src/lib/sentinel/session.test.js` covers the streak and
+  aiState machines; the catalog suite now checks uniqueness over the
+  resolved matrix rather than the pattern name, because the loader
+  carries aliases that render identically.
+
+Deliberately not built:
+
+- **404 and error-boundary cameos.** This app has no catch-all route and
+  no global error boundary (only `EditorErrorBoundary`, scoped to the
+  note editor). Adding either is an architecture decision, not a
+  personality one, and should be its own ticket.
+- **A devtools easter egg.** Every reliable detection is a hack (timing a
+  `debugger`, watching window-size deltas) and reads as user-hostile.
+- **Typing-indicator replacement, circuit heartbeat ramp, ERD quota
+  tiredness, post-like reactions.** Each needs surgery inside a
+  subsystem rather than a fire point, and the risk outweighs the beat.
+
+Still backlog: the whole retrofit list (`Loading.jsx` and friends).
 
 ## Implementation notes (2026-08-01)
 

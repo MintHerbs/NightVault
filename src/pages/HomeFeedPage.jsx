@@ -6,7 +6,12 @@ import PostCard from '../components/social/PostCard/PostCard'
 import OnboardingCarousel from '../components/social/OnboardingCarousel/OnboardingCarousel'
 import { usePosts } from '../hooks/usePosts'
 import { useRateLimit } from '../hooks/useRateLimit'
+import { fireQuip } from '../hooks/useSentinelQuip'
+import { isLateHour } from '../lib/sentinel/session'
 import styles from './HomeFeedPage.module.css'
+
+// One-time marker for the first post ever made from this browser.
+const FIRST_POST_KEY = 'sentinel-first-post'
 
 const SKELETON_ROWS = [
   ['96%', '88%', '72%'],
@@ -110,13 +115,32 @@ export default function HomeFeedPage({ onAIStateChange }) {
 
   const feedPosts = posts || []
 
+  // Posting. The first one ever is a one-time beat, tracked in localStorage
+  // rather than derived from userPosts: that list is scoped to the current
+  // session id, so a cleared session would make an old hand a debutant again.
+  const handlePost = (postData) => {
+    createPost?.(postData)
+
+    let firstEver = false
+    try {
+      firstEver = !localStorage.getItem(FIRST_POST_KEY)
+      if (firstEver) localStorage.setItem(FIRST_POST_KEY, String(Date.now()))
+    } catch {
+      // Storage unavailable: it just reads as a repeat post, which is the
+      // quieter of the two wrong answers.
+    }
+
+    if (firstEver) fireQuip({ kind: 'moment', id: 'first-post' })
+    else if (isLateHour(Date.now())) fireQuip({ kind: 'moment', id: 'late-post' })
+  }
+
   return (
     <div className={styles.page}>
       <Starfield />
 
       <div className={styles.feedColumn} style={{ '--nav-offset': `${navOffset}px` }}>
         <main className={styles.main}>
-          <PostComposer sessionId={sessionId} onPost={(postData) => createPost?.(postData)} />
+          <PostComposer sessionId={sessionId} onPost={handlePost} />
 
           {isLoading && <FeedSkeleton />}
 

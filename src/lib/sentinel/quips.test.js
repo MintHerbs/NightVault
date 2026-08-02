@@ -40,7 +40,16 @@ const assert = (cond, msg) => {
   if (!cond) { failures++; console.error(`  FAIL: ${msg}`) }
 }
 
-/** Pattern names GridLoader really carries, read off its PATTERNS record. */
+/**
+ * Pattern name to its 3x3 matrix, read off GridLoader's PATTERNS record.
+ *
+ * The matrix matters, not just the name: the loader carries a number of
+ * aliases whose matrices are identical (border/frame/ripple-out, sparkle and
+ * checkerboard, heartbeat and plus-full, and more). Two quips picking two
+ * names for the same matrix at the same speed and colour would look the same
+ * on screen however different their entries read, so uniqueness is checked
+ * against what actually renders.
+ */
 function readGridPatterns() {
   const source = readFileSync(
     join(SRC, 'components', 'effects', 'smoothui', 'grid-loader', 'index.tsx'),
@@ -48,7 +57,12 @@ function readGridPatterns() {
   )
   const body = source.slice(source.indexOf('const PATTERNS'))
   // Hyphenated names are quoted, plain identifiers ("frame", "chaos") are not.
-  return new Set([...body.matchAll(/^ {2}"?([A-Za-z0-9-]+)"?:\s*\[/gm)].map((m) => m[1]))
+  const re = /^ {2}"?([A-Za-z0-9-]+)"?:\s*\[\s*\n\s*\[([^\]]*)\],\s*\n\s*\[([^\]]*)\],\s*\n\s*\[([^\]]*)\],/gm
+  const out = new Map()
+  for (const m of body.matchAll(re)) {
+    out.set(m[1], [m[2], m[3], m[4]].map((row) => row.replace(/\s/g, '')).join('|'))
+  }
+  return out
 }
 
 /** { id, route } for every tool, read off the TOOLS registry. */
@@ -68,6 +82,7 @@ const routeQuip = (pathname, search) => matchRouteQuip(TOOL_ROUTES, pathname, se
 // The parsers themselves have to be right, or every check below passes vacuously.
 assert(PATTERN_NAMES.size > 50, `0: parsed GridLoader patterns (${PATTERN_NAMES.size})`)
 assert(PATTERN_NAMES.has('face-grin'), '0: parsed through to the last pattern in the record')
+assert(PATTERN_NAMES.get('face-grin') === '1,0,1|0,0,0|1,1,1', '0: parsed matrices, not just names')
 assert(TOOL_REGISTRY.length >= 10, `0: parsed the TOOLS registry (${TOOL_REGISTRY.length})`)
 assert(TOOL_REGISTRY.every((t) => t.id && t.route), '0: every parsed tool has an id and a route')
 
@@ -120,11 +135,16 @@ assert(resolveQuip({ kind: 'folder', name: 'Collaboration', itemCount: 4 }, firs
 assert(resolveQuip({ kind: 'folder', name: 'Weekly Digest', itemCount: 4 }, first) === null,
   '4: "Weekly" is not a numbered week')
 
-// 5. The placeholder can never reach the screen unfilled.
+// 5. The placeholder can never reach the screen unfilled. Two quips carry one:
+// the week folder fills it from the name, the streak from a caller count.
+const PLACEHOLDER_QUIPS = new Set(['word:week', 'moment:streak'])
+
 for (const [id, quip] of Object.entries(QUIPS)) {
   for (const line of quip.lines) {
     if (line.includes('{n}')) {
-      assert(id === 'word:week', `5: only word:week may carry a placeholder (${id})`)
+      assert(PLACEHOLDER_QUIPS.has(id), `5: ${id} carries a placeholder without a filler`)
+      assert(typeof QUIPS[id].fallback === 'string' || id === 'word:week',
+        `5: ${id} needs a fallback for when its placeholder cannot be filled`)
     }
   }
 }
@@ -170,9 +190,10 @@ assert(resolveQuip({ kind: 'nonsense', id: 'web' }, first) === null, '7: an unkn
 // two moments indistinguishable.
 const signatures = new Map()
 for (const [id, quip] of Object.entries(QUIPS)) {
-  const signature = gridSignature(quip.grid)
+  const matrix = PATTERN_NAMES.get(quip.grid.pattern) ?? quip.grid.pattern
+  const signature = `${matrix}#${quip.grid.mode}#${quip.grid.color}#${quip.grid.speed}`
   const claimed = signatures.get(signature)
-  assert(!claimed, `8: ${id} reuses ${claimed}'s animation (${signature})`)
+  assert(!claimed, `8: ${id} looks identical to ${claimed} (${gridSignature(quip.grid)})`)
   signatures.set(signature, id)
 }
 
@@ -184,7 +205,11 @@ const COLOR_KEYS = new Set(['white', 'red', 'blue', 'green', 'amber'])
 const SPEED_KEYS = new Set(['slow', 'normal', 'fast'])
 for (const [id, quip] of Object.entries(QUIPS)) {
   assert(Array.isArray(quip.lines) && quip.lines.length > 0, `9: ${id} has at least one line`)
-  assert(quip.lines.every((l) => typeof l === 'string' && l.trim().length > 0), `9: ${id} lines are non-empty`)
+  // A wordless quip is a deliberate kind, not an empty entry: it renders the
+  // glyph alone. What must never happen is a line that is only whitespace,
+  // which would size the pill for text nobody can see.
+  assert(quip.lines.every((l) => typeof l === 'string' && (l === '' || l.trim() === l)), `9: ${id} lines are a real line or deliberately empty`)
+  assert(!quip.frequent || quip.lines.every((l) => l === ''), `9: ${id} is frequent, so it must be wordless`)
   assert(PATTERN_NAMES.has(quip.grid.pattern), `9: ${id} uses a real pattern (${quip.grid.pattern})`)
   assert(MODES.has(quip.grid.mode), `9: ${id} uses a real mode (${quip.grid.mode})`)
   assert(COLOR_KEYS.has(quip.grid.color), `9: ${id} uses a real color (${quip.grid.color})`)

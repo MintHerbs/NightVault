@@ -261,6 +261,40 @@ export default function NotesBrowserPage() {
     return arr
   }, [items, search, typeFilter, sort])
 
+  // Searching. Both of these key off the debounced result rather than off each
+  // keystroke: a query on its way to matching something passes through several
+  // states that match nothing, and remarking on those would be wrong every
+  // time. The delay is what makes "no results" mean the visitor stopped typing.
+  const SEARCH_SETTLE_MS = 700
+  const STILL_LOOKING_WINDOW_MS = 30000
+  const STILL_LOOKING_LIMIT = 3
+  const searchTimes = useRef([])
+
+  useEffect(() => {
+    const query = search.trim()
+    if (!query) return undefined
+
+    const timeout = setTimeout(() => {
+      const now = Date.now()
+      searchTimes.current = [...searchTimes.current, now]
+        .filter((t) => now - t < STILL_LOOKING_WINDOW_MS)
+
+      if (searchTimes.current.length >= STILL_LOOKING_LIMIT) {
+        searchTimes.current = []
+        fireQuip({ kind: 'moment', id: 'still-looking' })
+        return
+      }
+      if (displayItems.length === 0) fireQuip({ kind: 'moment', id: 'no-results' })
+    }, SEARCH_SETTLE_MS)
+
+    return () => clearTimeout(timeout)
+    // displayItems is deliberately not a dependency: it changes as the list
+    // filters down mid-query, which would restart the timer on every keystroke
+    // and mean the settle never elapses. The timer only needs the value it
+    // finds when it fires, and `search` changing is what should restart it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
+
   const crumbs = [{ key: 'home', label: 'Home', to: () => navigate('/home') }]
   crumbs.push({ key: 'root', label: 'Subjects', to: () => navigate(`/notes-browser/${courseId}`) })
   if (moduleId && activeModule) {

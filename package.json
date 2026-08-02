@@ -11,7 +11,7 @@
     "test": "npm run test:math && npm run test:hooks && npm run test:sentinel && npm run test:chem && npm run test:recurrence && npm run test:tree && npm run test:logic && npm run test:circuits && npm run test:erd && npm run test:analytics",
     "test:math": "node src/lib/noteMath.test.js",
     "test:hooks": "node src/hooks/useAIState.test.js",
-    "test:sentinel": "node src/lib/sentinel/quips.test.js && node src/hooks/useSentinelQuip.test.js",
+    "test:sentinel": "node src/lib/sentinel/quips.test.js && node src/lib/sentinel/session.test.js && node src/hooks/useSentinelQuip.test.js",
     "test:chem": "node src/lib/chem/noteChem.test.js && node src/lib/chem/reactionLayout.test.js",
     "test:recurrence": "node src/lib/algo/recurrence.test.js && node src/lib/algo/recurrence.oracle.test.js",
     "test:recurrence:oracle": "node src/lib/algo/recurrence.oracle.test.js",

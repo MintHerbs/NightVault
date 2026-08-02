@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Bell, BellOff, Check, ChevronDown, Monitor, Moon, Palette, Sun, X } from 'lucide-react'
+import { Bell, BellOff, Check, ChevronDown, Monitor, Moon, Palette, Smile, Sun, X, Zap } from 'lucide-react'
 import {
   Dialog,
   DialogBackdrop,
@@ -13,6 +13,9 @@ import { useTheme } from '../../../hooks/useTheme'
 import useIslandNotifications, {
   setIslandNotificationsEnabled,
 } from '../../../hooks/useIslandNotifications'
+import useSentinelPersonality, {
+  setSentinelPersonalityEnabled,
+} from '../../../hooks/useSentinelPersonality'
 import styles from './AppearanceDialog.module.css'
 
 const MODE_OPTIONS = [
@@ -28,6 +31,7 @@ export default function AppearanceDialog({ open, onClose, sessionId }) {
   const [wheelOpen, setWheelOpen] = useState(isCustom)
   const dropdownRef = useRef(null)
   const notificationsEnabled = useIslandNotifications()
+  const personalityEnabled = useSentinelPersonality()
 
   const activeTheme = themes.find((t) => t.key === colorTheme)
   const activeLabel = isCustom ? 'Custom' : (activeTheme?.name ?? 'Theme')
@@ -186,6 +190,36 @@ export default function AppearanceDialog({ open, onClose, sessionId }) {
             <span
               className={`${styles.switchTrack} ${
                 notificationsEnabled ? styles.switchTrackOn : ''
+              }`}
+            >
+              <span className={styles.switchThumb} />
+            </span>
+          </button>
+
+          {/* Personality is a separate switch from alerts above, deliberately.
+              Wanting to be told about a message and not wanting a remark about
+              the folder you just opened is a reasonable pair of preferences,
+              and one toggle could not express it. */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={personalityEnabled}
+            className={styles.switchRow}
+            onClick={() => setSentinelPersonalityEnabled(!personalityEnabled)}
+          >
+            <span className={styles.switchIcon}>
+              {personalityEnabled ? <Smile size={16} /> : <Zap size={16} />}
+            </span>
+            <span className={styles.switchText}>
+              <span className={styles.switchLabel}>Sentinel reactions</span>
+              <span className={styles.switchHint}>
+                The island remarks on what you open and dozes off when you go
+                quiet. Turning this off leaves it a plain status pill.
+              </span>
+            </span>
+            <span
+              className={`${styles.switchTrack} ${
+                personalityEnabled ? styles.switchTrackOn : ''
               }`}
             >
               <span className={styles.switchThumb} />

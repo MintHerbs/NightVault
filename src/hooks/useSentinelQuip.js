@@ -9,24 +9,31 @@
  * click. `fireQuip()` is importable from anywhere and the island is the only
  * subscriber.
  *
- * Three gates stand between a fire and the pill, in the order they are cheapest
+ * Four gates stand between a fire and the pill, in the order they are cheapest
  * to check:
  *
+ *   preference the visitor switched Sentinel's reactions off in Appearance.
  *   busy       the island is showing something that outranks flavour. Dropped
  *              without marking the quip seen, so the joke is not burned by a
- *              beat the visitor never saw.
+ *              beat the visitor never saw. Callers whose moment can only ever
+ *              happen while the island is busy pass `deferIfBusy` instead.
  *   min gap    a floor between any two quips, whatever fired them, so a fast
- *              click-through of four folders is not four remarks.
+ *              click-through of four folders is not four remarks. Wordless
+ *              confirmations get a much shorter floor, see QUIP_FREQUENT_GAP_MS.
  *   freshness  a quip on cooldown is skipped outright; one that has come off
  *              cooldown fires on a coin toss. A first-ever sighting always
- *              fires.
+ *              fires, and a `frequent` entry skips this gate entirely.
  *
  * Dropping rather than queueing matches the island's existing stance for chat
  * notifications: a reaction that arrives after the moment has passed is noise.
+ * Deferring is the one exception, and it holds exactly one quip.
  */
 import { useEffect, useState } from 'react'
+import { isSentinelPersonalityEnabled } from './useSentinelPersonality.js'
 import {
   QUIP_COOLDOWN_MS,
+  QUIP_FLASH_MS,
+  QUIP_FREQUENT_GAP_MS,
   QUIP_HOLD_MS,
   QUIP_MIN_GAP_MS,
   QUIP_REPEAT_CHANCE,
@@ -162,6 +169,11 @@ export function setQuipBusy(next) {
  * @returns {boolean} whether a quip was actually shown
  */
 export function fireQuip(context, { deferIfBusy = false } = {}) {
+  // Checked before anything else, including the defer: a visitor who switched
+  // personality off should not accumulate a pending quip waiting to ambush
+  // them if they switch it back on.
+  if (!isSentinelPersonalityEnabled()) return false
+
   if (busy) {
     if (deferIfBusy) deferQuip(context, { explicit: false })
     return false
@@ -169,19 +181,26 @@ export function fireQuip(context, { deferIfBusy = false } = {}) {
   if (!listener) return false
 
   const now = Date.now()
-  if (now - lastFiredAt < QUIP_MIN_GAP_MS) return false
-
   const quip = resolveQuip({ ...context, now })
   if (!quip) return false
 
-  const seenAt = readSeen()[quip.id]
-  if (typeof seenAt === 'number') {
-    if (now - seenAt < QUIP_COOLDOWN_MS) return false
-    if (Math.random() > QUIP_REPEAT_CHANCE) return false
+  // Resolved before the floor is applied, because which floor applies is the
+  // quip's own business: a wordless confirmation answers its action every time
+  // and only needs enough of a gap not to strobe.
+  if (now - lastFiredAt < (quip.frequent ? QUIP_FREQUENT_GAP_MS : QUIP_MIN_GAP_MS)) return false
+
+  if (!quip.frequent) {
+    const seenAt = readSeen()[quip.id]
+    if (typeof seenAt === 'number') {
+      if (now - seenAt < quip.cooldownMs) return false
+      if (Math.random() > QUIP_REPEAT_CHANCE) return false
+    }
+    // Frequent quips are deliberately not recorded: they have no cooldown to
+    // enforce, so writing them would churn storage for nothing.
+    markSeen(quip.id, now)
   }
 
   lastFiredAt = now
-  markSeen(quip.id, now)
   listener(quip)
   return true
 }
@@ -210,7 +229,7 @@ export default function useSentinelQuip() {
       // Only clear what this effect was scheduled for, so a quip that arrived
       // during the wait keeps its full time on screen.
       setQuip((current) => (current === quip ? null : current))
-    }, QUIP_HOLD_MS)
+    }, quip.line ? QUIP_HOLD_MS : QUIP_FLASH_MS)
     return () => clearTimeout(timeout)
   }, [quip])
 

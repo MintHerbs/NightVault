@@ -3,6 +3,7 @@ import {
   upsertNote, moveNote, baseName, buildNotePath, segmentToSubfolder, ROOT_SEGMENT,
 } from '../lib/notesApi'
 import { invalidateNotesRegistry } from './useNotesRegistry'
+import { fireQuip } from './useSentinelQuip'
 
 // Title to filename conversion
 function titleToFilename(title) {
@@ -106,6 +107,10 @@ export function useEditorSave({
       }
 
       showToast('Saved.', 'success')
+      // A save is confirmed wordlessly by the island as well as by the toast:
+      // the toast says what happened, the pill just acknowledges it. A brand
+      // new note going live is the one that gets a word.
+      fireQuip({ kind: 'moment', id: isNewNote ? 'published' : 'saved' })
       setUnsaved(false)
       setOriginalPath({ moduleId, path: newPath, subfolder })
 

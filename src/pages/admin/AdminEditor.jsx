@@ -28,7 +28,11 @@ import { useEditorFormatting, renderInlineLaTeX } from '../../hooks/useEditorFor
 import { useEditorFiles } from '../../hooks/useEditorFiles'
 import { useEditorDrafts } from '../../hooks/useEditorDrafts'
 import { clearActiveCourse } from '../../hooks/useActiveCourse'
-import { deferQuip } from '../../hooks/useSentinelQuip'
+import { deferQuip, fireQuip } from '../../hooks/useSentinelQuip'
+
+// How long changes sit unsaved before the island mentions it. Long enough that
+// ordinary editing never trips it, short enough to catch a walk away.
+const UNSAVED_NUDGE_MS = 10 * 60 * 1000
 
 // Feature flag for the WYSIWYG migration (T-036). While true the Milkdown
 // NoteEditor replaces Monaco; Monaco stays importable behind the flag until
@@ -647,6 +651,19 @@ function AdminEditorContent() {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
+  }, [unsaved])
+
+  // A quiet nudge for work that has been sitting unsaved. Deliberately not a
+  // modal or a toast: there is an autosave draft behind this and the
+  // beforeunload guard above, so nothing is at risk. It is a reminder, not a
+  // warning, and it clears itself like any other quip.
+  useEffect(() => {
+    if (!unsaved) return undefined
+    const timeout = setTimeout(
+      () => fireQuip({ kind: 'moment', id: 'unsaved' }),
+      UNSAVED_NUDGE_MS,
+    )
+    return () => clearTimeout(timeout)
   }, [unsaved])
 
   const handleSignOut = async () => {

@@ -264,7 +264,11 @@ state name. Nothing else may write to `data-state`.
    GridLoader face and "Hi, I'm Sentinel", held ~2.8s, no online count.
    Every visit after that: a static face, a randomly-picked welcome-back
    line, then the online count segmented in beside it, held ~2s
-2. `idle` — small pill, green dot only
+2. `idle` — small pill, green dot only. After a couple of minutes untouched
+   the dot gives way to a drowsy Sentinel face, and after ten to a sleeping
+   one (`src/hooks/useSentinelIdle.js`); any interaction restores the dot, and
+   waking from a full sleep flashes a startled face. Late at night both
+   thresholds halve. Hovering still shows the real online count
 3. `hover` — segmented: green dot + online count, divider, then a music icon
    and a timer icon. The pill body still opens music
 4. `music` — expanded music player, with a progress ring around the art
@@ -277,10 +281,13 @@ state name. Nothing else may write to `data-state`.
 8. `timer-done` — green timer icon + "Time's up", clears after 10s
 9. `break` — violet `wave-tb` GridLoader + the hourly break reminder
 10. `chat` — coalesced chat notification, dot + count + snippet
-11. `quip` — Sentinel remarking on what was just opened: a GridLoader unique
-    to that remark + one line, held 2.6s (T-094). Catalog and resolution
-    ladder in `src/lib/sentinel/quips.js`, gating in
-    `src/hooks/useSentinelQuip.js`
+11. `quip` — Sentinel remarking on what you just did: a GridLoader unique to
+    that remark plus one line, held 2.6s (T-094). A wordless variant shows the
+    glyph alone for 0.9s and is used for confirmations (a copy, a save, a
+    message sent). Catalog and resolution ladder in
+    `src/lib/sentinel/quips.js`, gating in `src/hooks/useSentinelQuip.js`,
+    browser-level triggers in `src/hooks/useSentinelSignals.js`. The whole
+    system is behind the "Sentinel reactions" switch in Appearance
 12. `return` — hover-only "← Back", offered for 60s after the island itself
     opened chat
 13. `observing` — blue pulse GridLoader + "Observing"
