@@ -277,18 +277,23 @@ state name. Nothing else may write to `data-state`.
 8. `timer-done` — green timer icon + "Time's up", clears after 10s
 9. `break` — violet `wave-tb` GridLoader + the hourly break reminder
 10. `chat` — coalesced chat notification, dot + count + snippet
-11. `return` — hover-only "← Back", offered for 60s after the island itself
+11. `quip` — Sentinel remarking on what was just opened: a GridLoader unique
+    to that remark + one line, held 2.6s (T-094). Catalog and resolution
+    ladder in `src/lib/sentinel/quips.js`, gating in
+    `src/hooks/useSentinelQuip.js`
+12. `return` — hover-only "← Back", offered for 60s after the island itself
     opened chat
-12. `observing` — blue pulse GridLoader + "Observing"
-13. `waiting` — white stagger GridLoader + "Waiting"
-14. `thinking` — amber stagger GridLoader + "Thinking"
-15. `generating` — white stagger GridLoader + "Generating"
-16. `error` — red GridLoader face + message, auto-collapses after 3s
+13. `observing` — blue pulse GridLoader + "Observing"
+14. `waiting` — white stagger GridLoader + "Waiting"
+15. `thinking` — amber stagger GridLoader + "Thinking"
+16. `generating` — white stagger GridLoader + "Generating"
+17. `error` — red GridLoader face + message, auto-collapses after 3s
 
 **Precedence** (highest first): an open panel (`music`, `timer`, `timer-set`)
 beats a live AI state, beats `break`, beats `timer-done`, beats `chat`, beats
-`return`, beats `greeting`, beats `hover`, beats `timer-running`, beats
-`idle`. Chat is deliberately near-last: it never preempts an open panel or AI
+`quip`, beats `return`, beats `greeting`, beats `hover`, beats `timer-running`,
+beats `idle`. A quip sits under everything that carries information and over
+everything merely ambient: it is flavour, and flavour never covers news. Chat is deliberately near-last: it never preempts an open panel or AI
 feedback the visitor is waiting on, and a notification blocked by either is
 dropped rather than deferred. The break reminder is the opposite — it is
 deferred until it can be shown, because it is hourly and deliberate.

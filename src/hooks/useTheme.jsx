@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { PRESET_THEMES, derivePalette, normalizeHex } from '../lib/theme/palette'
+import { fireQuip } from './useSentinelQuip'
 
 // Preset keys match the [data-color-theme] blocks in src/styles/global.css.
 export const COLOR_THEMES = PRESET_THEMES
@@ -64,6 +65,18 @@ export function ThemeProvider({ children }) {
   const [systemPrefersDark, setSystemPrefersDark] = useState(getSystemPrefersDark)
 
   const resolvedMode = mode === 'system' ? (systemPrefersDark ? 'dark' : 'light') : mode
+
+  // Sentinel reacts to the mode actually in force rather than to setMode, so a
+  // 'system' pick that flips at sunset counts too. The ref starts at the first
+  // resolved value so the initial paint is not treated as a switch, which
+  // would have Sentinel greet every page load with a remark about the theme.
+  const previousMode = useRef(resolvedMode)
+
+  useEffect(() => {
+    if (previousMode.current === resolvedMode) return
+    previousMode.current = resolvedMode
+    fireQuip({ kind: 'chrome', id: resolvedMode === 'dark' ? 'theme-dark' : 'theme-light' })
+  }, [resolvedMode])
 
   useEffect(() => {
     if (mode !== 'system') return undefined

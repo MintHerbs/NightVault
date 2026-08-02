@@ -116,6 +116,13 @@ export interface GridLoaderProps {
   color?: "white" | "red" | "blue" | "green" | "amber" | string;
   /** Gap between cells in pixels */
   gap?: number;
+  /**
+   * Accessible name for the glyph. Defaults to "Loading", which is right for
+   * the loading states this started as and wrong for the ones that are not:
+   * pass "" to mark the glyph decorative when the surrounding UI already
+   * announces what is happening (see the island's QuipContent).
+   */
+  label?: string;
   /** Animation mode */
   mode?: "pulse" | "sequence" | "stagger";
   /** Pattern to display - preset name or custom 3x3 matrix */
@@ -679,6 +686,7 @@ const GridLoader = ({
   size,
   blur,
   gap: gapProp,
+  label,
   rounded,
   static: isStatic,
   className,
@@ -749,7 +757,11 @@ const GridLoader = ({
 
   return (
     <output
-      aria-label="Loading"
+      // `output` carries an implicit live region, so a decorative glyph has to
+      // be hidden outright rather than merely left unnamed: an unnamed one
+      // still announces its own (empty) updates.
+      aria-hidden={label === "" ? true : undefined}
+      aria-label={label === "" ? undefined : (label ?? "Loading")}
       className={className}
       style={{
         display: 'grid',

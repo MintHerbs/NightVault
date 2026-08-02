@@ -8,6 +8,41 @@ epic: none
 created: 2026-08-01
 ---
 
+## Implementation notes (2026-08-02): contextual quips
+
+Shipped the quip system: Sentinel now reacts to what you open, with 45
+curated moments and a unique grid animation per moment.
+
+- `src/lib/sentinel/quips.js` — the catalog plus the four-rung resolution
+  ladder (exact id, empty folder, keyword, structural). Pure, no imports.
+- `src/lib/sentinel/routeMatch.js` + `routeQuips.js` — route arrivals to
+  quip contexts, with the tool half derived from the TOOLS registry so a
+  renamed route cannot leave a stale copy. Split in two because the node
+  test runner cannot resolve the registry's own import chain.
+- `src/hooks/useSentinelQuip.js` — module-level emitter with three gates
+  (island busy, 20s global floor, 14-day per-quip cooldown plus a 35%
+  repeat roll), and `deferQuip` for actions that end in a hard navigation.
+- `src/components/layout/DynamicIsland/QuipContent.jsx` plus a new `quip`
+  state in `displayStateFor()`, ranked under everything informational.
+- `GridLoader` gained an optional `label` prop: its hardcoded
+  `aria-label="Loading"` was wrong for a glyph that is not a loader, and
+  `output` is an implicit live region.
+- Fire points: notes browser (Subject, folder, file, search, back-spam),
+  route arrivals (10 tools, admin, settings, feed), chat open, theme
+  switch, music skip-spam, admin sign-out.
+- `src/lib/sentinel/quips.test.js` and `src/hooks/useSentinelQuip.test.js`,
+  wired together as `npm run test:sentinel`. The first asserts the ladder,
+  the unique-animation constraint, that every pattern named is one
+  GridLoader really has, and that every registry tool has a line; the
+  second covers the emitter's gates (drop vs. hold vs. spend) and its
+  behaviour against hostile or corrupt storage.
+
+Still backlog from the sections below: every ambient/session moment
+(idle-sleep, offline, tab-away, 404, error boundary, easter eggs,
+battery, streaks) and the whole retrofit list. The infrastructure those
+need now exists: `fireQuip` is callable from anywhere, and the `quip`
+display state is the slot they would render into.
+
 ## Implementation notes (2026-08-01)
 
 Shipped: the flagship greeting (`src/hooks/useSentinelGreeting.js`,
@@ -30,8 +65,8 @@ The Dynamic Island's AI-persona system is being named **Sentinel** and
 extended beyond its current handful of states (observing/waiting/thinking/
 generating/error) into a first-visit greeting, a set of retrofits on
 existing generic loading/empty UI, and a long tail of ambient "just for
-life" moments elsewhere on the site. This is a spec-only ticket — nothing
-in this ticket has been implemented yet.
+life" moments elsewhere on the site. This section is the original spec; see
+the implementation notes above for what has actually shipped since.
 
 Hard constraint carried through the whole ticket: **every new personality
 moment below needs its own unique grid animation** (distinct

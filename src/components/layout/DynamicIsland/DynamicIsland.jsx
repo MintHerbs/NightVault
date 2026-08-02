@@ -7,7 +7,9 @@ import BreakReminderContent from './BreakReminderContent'
 import TimerPanel from './TimerPanel'
 import TimerSetPanel from './TimerSetPanel'
 import SentinelFace from './SentinelFace'
+import QuipContent from './QuipContent'
 import useChatNotification from '../../../hooks/useChatNotification'
+import useSentinelQuip, { setQuipBusy } from '../../../hooks/useSentinelQuip'
 import useIslandNotifications from '../../../hooks/useIslandNotifications'
 import useStudyTimer from '../../../hooks/useStudyTimer'
 import useBreakReminder, { BREAK_INTERVAL_MS } from '../../../hooks/useBreakReminder'
@@ -61,7 +63,8 @@ function displayStateFor({
   timerFinished,
   timerRunning,
   returnAvailable,
-  isHovered
+  isHovered,
+  quip
 }) {
   // An open panel means the visitor is actively interacting — nothing preempts it.
   if (intent === 'music') return 'music'
@@ -73,6 +76,12 @@ function displayStateFor({
   if (breakDue) return 'break'
   if (timerFinished) return 'timer-done'
   if (notification) return 'chat'
+  // Flavour, so it sits under everything that carries information and over
+  // everything that is only ambient. The emitter also refuses to fire while
+  // any of the above is showing (setQuipBusy below), so reaching this line and
+  // losing is rare; when it happens the quip expires unseen rather than
+  // queueing, matching how this file treats a late chat notification.
+  if (quip) return 'quip'
   // Hover-only offer: the collapsed pill stays a plain dot until pointed at.
   if (returnAvailable && isHovered) return 'return'
   if (phase === 'greeting') return 'greeting'
@@ -122,6 +131,7 @@ export default function DynamicIsland({
   const timer = useStudyTimer()
   const breakReminder = useBreakReminder(breakIntervalMs)
   const sentinelGreeting = useSentinelGreeting()
+  const quip = useSentinelQuip()
 
   const isPanelOpen = intent === 'music' || intent === 'timer' || intent === 'timer-set'
   const returnAvailable = isChatOpen && chatOpenedFromIsland && returnWindowOpen
@@ -180,8 +190,28 @@ export default function DynamicIsland({
     timerFinished: timer.hasFinished,
     timerRunning: timer.isRunning,
     returnAvailable,
-    isHovered
+    isHovered,
+    quip
   })
+
+  // Keeps the quip emitter in step with what the pill is actually showing.
+  // Without this a quip fired during an AI state would be marked seen, put on
+  // a two-week cooldown, and never appear: the joke spent on a beat nobody
+  // saw. The list mirrors everything that outranks 'quip' in displayStateFor,
+  // plus a phase that isn't collapsed (hidden, or mid-greeting).
+  useEffect(() => {
+    setQuipBusy(
+      isPanelOpen ||
+      aiState !== 'idle' ||
+      phase !== 'collapsed' ||
+      breakReminder.isDue ||
+      timer.hasFinished ||
+      Boolean(notification)
+    )
+  }, [isPanelOpen, aiState, phase, breakReminder.isDue, timer.hasFinished, notification])
+
+  // A stale `true` would silence Sentinel for the rest of the page's life.
+  useEffect(() => () => setQuipBusy(false), [])
 
   useEffect(() => {
     const delay = setTimeout(() => setRevealDelayElapsed(true), REVEAL_DELAY_MS)
@@ -387,6 +417,8 @@ export default function DynamicIsland({
     announcement = BREAK_MESSAGE
   } else if (displayState === 'timer-done') {
     announcement = 'Timer finished'
+  } else if (displayState === 'quip') {
+    announcement = quip.line
   } else if (displayState === 'error') {
     announcement = errorMessage
   } else if (aiState !== 'idle') {
@@ -495,6 +527,10 @@ export default function DynamicIsland({
                   <ArrowLeft size={14} />
                   <span className={styles.returnText}>Back</span>
                 </div>
+              )}
+
+              {displayState === 'quip' && (
+                <QuipContent line={quip.line} grid={quip.grid} />
               )}
 
               {displayState === 'idle' && <div className={styles.greenDot} />}

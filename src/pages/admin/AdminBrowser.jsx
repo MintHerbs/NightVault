@@ -22,6 +22,7 @@ import {
 import AvatarGroup from '../../components/common/AvatarGroup/AvatarGroup'
 import { listCourses } from '../../lib/coursesApi'
 import { useActiveCourse, clearActiveCourse } from '../../hooks/useActiveCourse'
+import { deferQuip } from '../../hooks/useSentinelQuip'
 import '../../styles/adminTokens.css'
 import styles from './AdminBrowser.module.css'
 
@@ -468,6 +469,10 @@ function AdminBrowserContent() {
 
   const handleSignOut = async () => {
     clearActiveCourse()
+    // Deferred, not fired: the redirect below replaces the document, so an
+    // inline quip would be thrown away before it painted. It shows once the
+    // login page's island settles instead.
+    deferQuip({ kind: 'chrome', id: 'logout' })
     await supabase.auth.signOut()
     window.location.href = '/admin'
   }

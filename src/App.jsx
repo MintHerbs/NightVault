@@ -14,6 +14,8 @@ import Starfield from './components/effects/Starfield/Starfield'
 import { ChatPanel, ChatDimOverlay } from './features/chat/components'
 import { AppRoutes, preloadRoutes } from './routes'
 import { trackPageView } from './lib/analytics/tracker'
+import { fireQuip } from './hooks/useSentinelQuip'
+import { routeQuipContext } from './lib/sentinel/routeQuips'
 import { allowsIslandNotifications } from './lib/notificationScope'
 import { songs } from './config/songs'
 
@@ -87,6 +89,26 @@ function AppContent() {
     trackPageView(location.pathname)
   }, [location.pathname])
 
+  // Sentinel's reaction to arriving somewhere (T-094). Keyed on search as well
+  // as pathname, unlike the pageview above: the four Digital Logic tools share
+  // one path and differ only by ?mode=, so dropping search would give all four
+  // the same remark. fireQuip gates itself and never throws, so this cannot
+  // affect navigation.
+  useEffect(() => {
+    const context = routeQuipContext(location.pathname, location.search)
+    // Deferred when the island is busy rather than dropped: a fresh load
+    // straight onto a tool page arrives while the pill is still doing its
+    // entrance, so without this every tool would be silent to anyone who
+    // opened it in a new tab.
+    if (context) fireQuip(context, { deferIfBusy: true })
+  }, [location.pathname, location.search])
+
+  // Chat opens from the sidebar, the island and its own route, so this watches
+  // the flag rather than any one of those doors.
+  useEffect(() => {
+    if (isChatOpen) fireQuip({ kind: 'chrome', id: 'chat' }, { deferIfBusy: true })
+  }, [isChatOpen])
+
   useEffect(() => {
     // Player autoplays muted (browsers block unmuted autoplay). Unmute
     // as soon as the visitor interacts with the page in any way.
@@ -116,7 +138,23 @@ function AppContent() {
     // actually happened (a blocked autoplay, a buffer stall, an ad).
   }
 
+  // Three skips inside this window reads as nothing on the playlist landing,
+  // which is the only thing worth remarking on. A track ending on its own does
+  // not count: handleTrackEnd is a separate path deliberately.
+  const RESTLESS_WINDOW_MS = 15000
+  const skipTimes = useRef([])
+
   const skipTrack = (delta) => {
+    const now = Date.now()
+    skipTimes.current = [...skipTimes.current, now].filter((t) => now - t < RESTLESS_WINDOW_MS)
+    if (skipTimes.current.length >= 3) {
+      skipTimes.current = []
+      // Always deferred in practice: the skip buttons only exist inside the
+      // open music panel, which is itself a state that outranks a quip, so
+      // firing this inline would drop it every single time. It surfaces when
+      // the panel closes.
+      fireQuip({ kind: 'chrome', id: 'music-restless' }, { deferIfBusy: true })
+    }
     setAutoplayOnTrackChange(isPlaying)
     setCurrentSongIndex((prev) => (prev + delta + songs.length) % songs.length)
   }

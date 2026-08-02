@@ -28,6 +28,7 @@ import { useEditorFormatting, renderInlineLaTeX } from '../../hooks/useEditorFor
 import { useEditorFiles } from '../../hooks/useEditorFiles'
 import { useEditorDrafts } from '../../hooks/useEditorDrafts'
 import { clearActiveCourse } from '../../hooks/useActiveCourse'
+import { deferQuip } from '../../hooks/useSentinelQuip'
 
 // Feature flag for the WYSIWYG migration (T-036). While true the Milkdown
 // NoteEditor replaces Monaco; Monaco stays importable behind the flag until
@@ -650,6 +651,10 @@ function AdminEditorContent() {
 
   const handleSignOut = async () => {
     clearActiveCourse()
+    // Deferred, not fired: the redirect below replaces the document, so an
+    // inline quip would be thrown away before it painted. It shows once the
+    // login page's island settles instead.
+    deferQuip({ kind: 'chrome', id: 'logout' })
     await supabase.auth.signOut()
     window.location.href = '/admin'
   }

@@ -184,6 +184,23 @@
   flex-shrink: 0;
 }
 
+/* Sentinel's remark about whatever was just opened (T-094). Sized to its own
+   line rather than to a fixed width: the catalog's lines range from "Ow." to
+   "Everything is O(n) if you don't measure", and a fixed panel would leave the
+   short ones stranded in empty space. */
+.quipText {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.pill[data-state="quip"] .content {
+  padding: 9px 16px;
+  max-width: min(360px, calc(100vw - 48px));
+}
+
 .musicPanel {
   display: flex;
   align-items: center;
@@ -697,6 +714,19 @@
   .pill[data-state="break"] .content,
   .pill[data-state="timer-done"] .content {
     max-width: calc(100vw - 64px);
+  }
+
+  .pill[data-state="quip"] .content {
+    max-width: calc(100vw - 48px);
+  }
+
+  /* The longest lines in the catalog do not fit a phone on one line, and a
+     truncated punchline is worse than a wrapped one, so narrow screens let the
+     remark run to a second line instead of ellipsing it away. */
+  .quipText {
+    white-space: normal;
+    line-height: 1.25;
+    font-size: 12px;
   }
 
   .segmentButton {

@@ -18,6 +18,7 @@ import {
 import AvatarGroup from '../../components/common/AvatarGroup/AvatarGroup'
 import { noteRoute } from '../../components/layout/Sidebar/modules'
 import { prefetchNote } from '../../lib/noteCache'
+import { fireQuip } from '../../hooks/useSentinelQuip'
 import { trackToolEvent } from '../../lib/analytics/tracker'
 import styles from './NotesBrowserPage.module.css'
 
@@ -119,9 +120,20 @@ export default function NotesBrowserPage() {
   const activeSubfolder = segmentToSubfolder(subfolder)
   const level = subfolder ? 'files' : moduleId ? 'folders' : 'subjects'
 
+  // Three retreats inside this window and Sentinel says something. Longer and
+  // it would catch ordinary browsing; shorter and only a frantic click counts.
+  const LOST_WINDOW_MS = 5000
+  const backTimes = useRef([])
+
   // Discrete "go up one directory" step, distinct from the breadcrumb's jump
   // to an arbitrary ancestor — mirrors NotesPage's deterministic handleBack.
   const goUp = () => {
+    const now = Date.now()
+    backTimes.current = [...backTimes.current, now].filter((t) => now - t < LOST_WINDOW_MS)
+    if (backTimes.current.length >= 3) {
+      backTimes.current = []
+      fireQuip({ kind: 'chrome', id: 'lost' })
+    }
     if (level === 'files') navigate(`/notes-browser/${courseId}/${moduleId}`)
     else if (level === 'folders') navigate(`/notes-browser/${courseId}`)
     else navigate(`/courses/${courseId}`)
@@ -172,6 +184,14 @@ export default function NotesBrowserPage() {
       // records on arrival: this says people navigate by browsing rather than
       // through the sidebar.
       trackToolEvent('notes-browser', 'open-file')
+      // Depth counts the Subject plus every path segment, so a note buried in
+      // nested folders can earn a remark that a top-level one cannot.
+      fireQuip({
+        kind: 'file',
+        name: f.name,
+        updatedAt: f.updatedAt,
+        depth: 1 + String(f.path ?? '').split('/').length,
+      })
       navigate(noteRoute(moduleId, f.path))
     },
     onWarm: warmNote(f.path),
@@ -189,7 +209,15 @@ export default function NotesBrowserPage() {
       return [
         ...subfoldersForModule(activeModule).map((name) => ({
           kind: 'folder', key: name, name, date: null,
-          onOpen: () => navigate(`/notes-browser/${courseId}/${moduleId}/${encodeURIComponent(name)}`),
+          onOpen: () => {
+            fireQuip({
+              kind: 'folder',
+              name,
+              itemCount: filesForFolder(activeModule, name).length,
+              depth: 2,
+            })
+            navigate(`/notes-browser/${courseId}/${moduleId}/${encodeURIComponent(name)}`)
+          },
           authors: authorsForFolder(activeModule, name),
         })),
         ...rootFilesForModule(activeModule).map(fileItem),
@@ -197,7 +225,16 @@ export default function NotesBrowserPage() {
     }
     return modules.map((m) => ({
       kind: 'module', key: m.id, name: m.label, date: null,
-      onOpen: () => navigate(`/notes-browser/${courseId}/${m.id}`),
+      onOpen: () => {
+        fireQuip({
+          kind: 'module',
+          id: m.id,
+          name: m.label,
+          itemCount: subfoldersForModule(m).length + rootFilesForModule(m).length,
+          depth: 1,
+        })
+        navigate(`/notes-browser/${courseId}/${m.id}`)
+      },
       authors: authorsForModule(m),
     }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -279,6 +316,7 @@ export default function NotesBrowserPage() {
               placeholder="Search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onFocus={() => fireQuip({ kind: 'chrome', id: 'search' })}
             />
           </div>
 
