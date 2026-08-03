@@ -31,8 +31,7 @@ export function belongsBefore(direction) {
 }
 
 /** The comparison symbol to print in a step description, for this direction. */
-export function relSymbol(direction, strict = false) {
-  if (strict) return direction === DESC ? '>' : '<'
+export function relSymbol(direction) {
   return direction === DESC ? '≥' : '≤'
 }
 

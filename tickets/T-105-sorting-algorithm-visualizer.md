@@ -285,11 +285,13 @@ pair, matching `TreeNode.module.css`'s `.keyChip`.
   held value.
 - **Partition bands.** After `partition-done`, the left range gets a red outline,
   the right a blue one, the pivot a locked neutral cell.
-- **Recursion frames** (quick, merge). Each active frame is a row down the page,
-  bracketed by `quickSort(` … `)` / `mergeSort(` … `)` labels, depth growing
-  downward. Placed pivots sit between sibling frames, as in screenshot 3. Cap the
-  drawn depth at what fits and scroll the frame stack rather than shrinking cells
+- **Recursion frames** (merge). Each active frame is a row down the page,
+  bracketed by `mergeSort(` … `)` labels, depth growing downward. Cap the drawn
+  depth at what fits and scroll the frame stack rather than shrinking cells
   below legibility.
+  **Superseded for quicksort** by the follow-up at the end of this ticket: it
+  draws a full recursion tree of segments rather than a call-stack ladder, which
+  is what screenshot 3 actually shows.
 - **Bucket rows** (radix). Ten labelled rows `0`–`9`; scatter animates cells into
   a bucket, collect walks them back out in order.
 
@@ -507,7 +509,7 @@ plain-node style of the existing suites (`package.json:12-20`).
 
 ## Outcome (implemented 2026-08-03)
 
-Shipped. All acceptance criteria met. Verified by 241 test assertions across
+Shipped. All acceptance criteria met. Verified by test assertions across
 three suites plus a Playwright pass over the running app.
 
 ### Verified against the lecture
@@ -625,4 +627,49 @@ depths strictly increasing downward, sibling segments never overlapping, every
 segment aligned to the cells it owns and holding exactly `high - low + 1`
 values, the result row appearing only on the final step and never above the
 deepest level, and the top row still holding its own partition rather than the
-sorted array at the end. 67 assertions in that file, 246 across the three.
+sorted array at the end.
+
+---
+
+## Self review (2026-08-04)
+
+Adversarial pass over the whole diff. Scope is clean: all 44 files belong to
+this ticket. Three defects found and fixed, all by reading the code and driving
+the built page rather than re-reading the implementation report.
+
+1. **Selection sort's listing indented the swap into the inner scan loop**
+   (`pseudocode.js`). It said selection sort swaps on every comparison, which is
+   the exact property that separates it from bubble sort, and it contradicted
+   both the narration and the animation, which do one swap per pass. Fixed, and
+   asserted against the engine's own line numbers plus a
+   "swaps == passes" check so the two cannot drift again.
+
+2. **The result row was off screen at the end of a deep run** (`SortCanvas.jsx`).
+   `scrollIntoView` followed the active row, and on the final step there is no
+   active row, so nothing scrolled. With 24 already-sorted values (23 levels) the
+   run ended with the payoff a full panel-height out of sight. The scroll target
+   is now the result row once it exists. Verified: result fully visible at both
+   9 and 24 values.
+
+3. **The right recursive call never lit its own line** (`quickSort.js`). Both
+   halves highlighted `quickSort(A, low, p - 1)` when they started, so line 5 of
+   the listing never highlighted at all and the pane named the wrong call for
+   half the tree. Segments now carry the line that created them, and the listing
+   reads 3 → 4 → 5. Asserted.
+
+Also hardened: the canvas centred its SVG on the scroll container itself, which
+in a browser that does not clamp centred overflow puts the top of a tall tree
+past the scroll origin where it cannot be reached. Centring moved to an inner
+stage with `min-height: 100%`, so it only applies when the content fits.
+
+Removed a dead `strict` parameter from `relSymbol`.
+
+**Not fixed, reported instead —** `docs/documentation.md` is pre-existing stale:
+its "Current tools" list names two tools and files the shipped logic tools under
+"Planned (not yet implemented)", and its path listings predate the
+`features/`/`pages/` layout. Adding one line for Sorting Algo to a list already
+missing eight tools would misrepresent the doc as maintained. Its own ticket.
+
+Gates after the fixes: `npm run test:sorting` 256 assertions across three files,
+full `npm test` exit 0, `npm run build` clean, stylelint clean on every new
+stylesheet, no page errors driving all six methods in both directions.

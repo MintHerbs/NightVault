@@ -29,13 +29,17 @@ import { belongsBefore, createRecorder, marksOf, recordSwap, relSymbol } from '.
  *   split    partitioned; its pivot is final and its two halves are below it.
  *   done     a single value, or an empty range's stand-in. Nothing to do.
  */
-function makeSegment(ctx, low, high, depth) {
+function makeSegment(ctx, low, high, depth, originLine) {
   const segment = {
     id: `d${depth}:${low}-${high}`,
     depth,
     low,
     high,
     state: 'pending',
+    // Which line of the listing called this range into being. Without it the
+    // right half of every split highlighted `quickSort(A, low, p - 1)` when it
+    // started, and line 5 never lit up at all.
+    originLine,
     // Frozen when the segment stops being active. While it is active the
     // snapshot below reads the live array instead, so the row being worked on
     // animates and the rows above it stay as they were left.
@@ -159,7 +163,7 @@ function sortSegment(rec, segment, ctx) {
     segment.state = 'done'
     rec.push('frame-enter', `quickSort([${rec.arr[low]}]): a single value is already sorted.`, {
       ...snapshot(rec, ctx),
-      codeLine: L.guard,
+      codeLine: segment.originLine ?? L.guard,
     })
     return
   }
@@ -167,7 +171,7 @@ function sortSegment(rec, segment, ctx) {
   rec.push(
     'frame-enter',
     `quickSort([${rec.arr.slice(low, high + 1).join(', ')}]): sort positions ${low} to ${high}.`,
-    { ...snapshot(rec, ctx), codeLine: L.call }
+    { ...snapshot(rec, ctx), codeLine: segment.originLine ?? L.call }
   )
 
   const p = partition(rec, segment, ctx)
@@ -181,8 +185,8 @@ function sortSegment(rec, segment, ctx) {
   // Both halves are created before either is worked on, so the split itself is
   // a step you can stop on: one row becomes two, and only then does the left
   // one start moving.
-  const left = low <= p - 1 ? makeSegment(ctx, low, p - 1, depth + 1) : null
-  const right = p + 1 <= high ? makeSegment(ctx, p + 1, high, depth + 1) : null
+  const left = low <= p - 1 ? makeSegment(ctx, low, p - 1, depth + 1, L.recurseLeft) : null
+  const right = p + 1 <= high ? makeSegment(ctx, p + 1, high, depth + 1, L.recurseRight) : null
   if (left) left.values = rec.arr.slice(left.low, left.high + 1)
   if (right) right.values = rec.arr.slice(right.low, right.high + 1)
 
@@ -193,7 +197,10 @@ function sortSegment(rec, segment, ctx) {
   rec.push(
     'recurse',
     `${pivotValue} is settled, so this row is finished. It splits into ${describe(left, 'left')} and ${describe(right, 'right')}, each sorted the same way.`,
-    { ...snapshot(rec, ctx), codeLine: L.recurseLeft }
+    // The partition call, which has just returned p and is what produced the
+    // split. The two recursive calls light their own lines when each half
+    // actually starts, so the listing reads 3 → 4 → 5 rather than 4 twice.
+    { ...snapshot(rec, ctx), codeLine: L.partitionCall }
   )
 
   if (left) sortSegment(rec, left, ctx)
@@ -220,7 +227,7 @@ export default function traceQuickSort(values, direction) {
   }
 
   if (values.length > 0) {
-    sortSegment(rec, makeSegment(ctx, 0, values.length - 1, 0), ctx)
+    sortSegment(rec, makeSegment(ctx, 0, values.length - 1, 0, L.call), ctx)
   }
 
   ctx.i = null

@@ -10,7 +10,7 @@
  */
 
 import { parseSortInput, MAX_VALUES, MIN_VALUES } from './parseSortInput.js'
-import { pseudocodeFor, QUICK_LINES } from './pseudocode.js'
+import { pseudocodeFor, QUICK_LINES, SELECTION_LINES } from './pseudocode.js'
 import traceQuickSort from './quickSort.js'
 import { METHODS, expectedResult, traceSort } from './index.js'
 
@@ -197,6 +197,48 @@ checkThat(
   pseudocodeFor('radix', 'desc').some((line) => line.includes('9 -> 0')),
   'descending radix listing still reads 0 -> 9'
 )
+
+// Both recursive calls light their own line. The right half used to highlight
+// `quickSort(A, low, p - 1)` when it started, so line 5 never lit at all and
+// the listing said the wrong call was running for half the tree.
+{
+  const lit = new Set(traceSort(LECTURE, 'quick', 'asc').map((s) => s.codeLine))
+  checkThat('quick: the partition call is highlighted', lit.has(QUICK_LINES.partitionCall))
+  checkThat('quick: the left recursive call is highlighted', lit.has(QUICK_LINES.recurseLeft))
+  checkThat('quick: the right recursive call is highlighted', lit.has(QUICK_LINES.recurseRight))
+}
+
+// Indentation in these listings is structure, not formatting. Selection sort
+// swaps once per pass, after the scan; indenting the swap into the inner loop
+// said it swaps on every comparison, which is exactly the property that
+// separates it from bubble sort and exactly what the animation shows it not
+// doing. Asserted against the engine's own line numbers so the two cannot drift.
+{
+  const listing = pseudocodeFor('selection', 'asc')
+  const indent = (line) => line.length - line.trimStart().length
+  const swapLines = [SELECTION_LINES.hold, SELECTION_LINES.writeLeft, SELECTION_LINES.writeRight]
+
+  for (const line of swapLines) {
+    check(
+      `selection: line ${line} sits in the outer loop, not the scan`,
+      indent(listing[line]),
+      indent(listing[SELECTION_LINES.initMin])
+    )
+    checkThat(
+      `selection: line ${line} is outside the inner loop body`,
+      indent(listing[line]) < indent(listing[SELECTION_LINES.setMin]),
+      `"${listing[line]}" is indented as deep as "${listing[SELECTION_LINES.setMin]}"`
+    )
+  }
+
+  // The engine emits exactly one swap per pass, so the listing agreeing with
+  // that is the whole point of the check above.
+  const passes = traceSort(LECTURE, 'selection', 'asc').filter((s) => s.type === 'frame-enter').length
+  const swaps = traceSort(LECTURE, 'selection', 'asc').filter(
+    (s) => s.type === 'swap-hold' || s.type === 'swap-noop'
+  ).length
+  check('selection: exactly one swap per pass', swaps, passes)
+}
 
 // ---------------------------------------------------------------------------
 // 5. Descending is not a no-op

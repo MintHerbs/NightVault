@@ -43,14 +43,22 @@ export default function SortCanvas({ step, values }) {
   const isTree = layout.mode === 'tree'
 
   const activeRef = useRef(null)
+  const resultRef = useRef(null)
   const activeDepth = layout.activeLevel?.depth
+  const hasResult = Boolean(layout.result)
 
   // Follow the working row down the tree. Without this a deep recursion walks
   // off the bottom of the panel and the visitor watches an empty box.
+  //
+  // On the last step there is no working row, so the target becomes the result.
+  // 24 already-sorted values recurse 23 levels; without this the run ends with
+  // the payoff scrolled a full panel-height out of sight, which is the one frame
+  // that has to land.
   useEffect(() => {
     if (!isTree) return
-    activeRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-  }, [isTree, activeDepth])
+    const target = hasResult ? resultRef.current : activeRef.current
+    target?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [isTree, activeDepth, hasResult])
 
   const bandFor = (kind) => (layout.bands || []).find((b) => b.kind === kind)
   const tempBand = bandFor('temp')
@@ -67,115 +75,122 @@ export default function SortCanvas({ step, values }) {
 
   return (
     <div className={styles.wrapper}>
-      <svg
-        className={styles.canvas}
-        viewBox={layout.viewBox}
-        preserveAspectRatio="xMidYMid meet"
-        style={isTree ? { aspectRatio: `${layout.width + 256} / ${layout.height}` } : undefined}
-        role="img"
-        aria-label={step?.description || 'The array, waiting to be sorted'}
-      >
-        {/* Partition bands sit behind the cells so the outline reads as a
-            region the cells are in, not a box drawn over them. */}
-        {!isTree &&
-          (step?.ranges || []).map((range) => {
-            const box = rangeBox(range)
-            return (
+      {/* An inner stage rather than centring on the scroll container itself.
+          A flex item taller than its container and cross-axis centred pushes its
+          overflow past the scroll origin, where it cannot be reached; giving the
+          stage min-height:100% means the centring only ever applies when the
+          content actually fits. */}
+      <div className={styles.stage}>
+        <svg
+          className={styles.canvas}
+          viewBox={layout.viewBox}
+          preserveAspectRatio="xMidYMid meet"
+          style={isTree ? { aspectRatio: `${layout.width + 256} / ${layout.height}` } : undefined}
+          role="img"
+          aria-label={step?.description || 'The array, waiting to be sorted'}
+        >
+          {/* Partition bands sit behind the cells so the outline reads as a
+              region the cells are in, not a box drawn over them. */}
+          {!isTree &&
+            (step?.ranges || []).map((range) => {
+              const box = rangeBox(range)
+              return (
+                <rect
+                  key={`${range.role}-${range.low}-${range.high}`}
+                  className={styles.band}
+                  data-role={range.role}
+                  x={box.x}
+                  y={layout.arrayY - 6}
+                  width={box.width}
+                  height={CELL_HEIGHT + 12}
+                  rx={12}
+                />
+              )
+            })}
+
+          {isTree ? (
+            <SortLevels layout={layout} marks={marks} activeRef={activeRef} resultRef={resultRef} />
+          ) : (
+            <SortRow values={array} y={layout.arrayY} marks={marks} />
+          )}
+
+          {/* Pointer markers. Driven off `pointers` rather than off `marks`,
+              because a pointer can legitimately sit outside the array (i at
+              low - 1) where no cell exists to mark.
+
+              Stacked when two land on the same cell, which is not an edge case:
+              quicksort's "scan finished" step puts j on the pivot every single
+              time, and two labels at one coordinate is just a smudge. */}
+          {showPointers &&
+            (() => {
+              const lanes = new Map()
+              // During a merge, `i` and `j` index the two runs, not the array, so
+              // drawing them here would point at cells that have nothing to do
+              // with the comparison being made. SortRuns labels them on the runs
+              // themselves. `k` stays, because k really is an array position.
+              const drawable = step?.runs
+                ? POINTER_ORDER.filter((name) => name !== 'i' && name !== 'j')
+                : POINTER_ORDER
+              return drawable
+                .filter((name) => Number.isInteger(pointers[name]))
+                .map((name) => {
+                  const x = pointerX(pointers[name], count)
+                  const lane = lanes.get(x) || 0
+                  lanes.set(x, lane + 1)
+                  return (
+                    <text
+                      key={name}
+                      className={styles.pointer}
+                      data-role={name}
+                      x={x}
+                      y={rowY - 14 - lane * 16}
+                    >
+                      {name}
+                    </text>
+                  )
+                })
+            })()}
+
+          {/* temp, directly under the working row, where the lecture draws it. */}
+          {step?.temp && tempY !== null && (
+            <g className={styles.temp}>
+              <text className={styles.tempLabel} x={cellCenterX(step.temp.from)} y={tempLabelY}>
+                temp
+              </text>
               <rect
-                key={`${range.role}-${range.low}-${range.high}`}
-                className={styles.band}
-                data-role={range.role}
-                x={box.x}
-                y={layout.arrayY - 6}
-                width={box.width}
-                height={CELL_HEIGHT + 12}
-                rx={12}
+                className={styles.tempBox}
+                x={cellX(step.temp.from)}
+                y={tempY}
+                width={CELL_WIDTH}
+                height={CELL_HEIGHT}
+                rx={10}
               />
-            )
-          })}
+              <text
+                className={styles.tempValue}
+                x={cellCenterX(step.temp.from)}
+                y={tempY + CELL_HEIGHT / 2}
+              >
+                {step.temp.value}
+              </text>
+            </g>
+          )}
 
-        {isTree ? (
-          <SortLevels layout={layout} marks={marks} activeRef={activeRef} />
-        ) : (
-          <SortRow values={array} y={layout.arrayY} marks={marks} />
-        )}
+          {runsBand && <SortRuns runs={step.runs} y={runsBand.y + RUN_ROW_HEIGHT / 4} />}
 
-        {/* Pointer markers. Driven off `pointers` rather than off `marks`,
-            because a pointer can legitimately sit outside the array (i at
-            low - 1) where no cell exists to mark.
+          {bucketsBand && (
+            <SortBuckets buckets={step.buckets} y={bucketsBand.y} width={layout.width} />
+          )}
 
-            Stacked when two land on the same cell, which is not an edge case:
-            quicksort's "scan finished" step puts j on the pivot every single
-            time, and two labels at one coordinate is just a smudge. */}
-        {showPointers &&
-          (() => {
-            const lanes = new Map()
-            // During a merge, `i` and `j` index the two runs, not the array, so
-            // drawing them here would point at cells that have nothing to do
-            // with the comparison being made. SortRuns labels them on the runs
-            // themselves. `k` stays, because k really is an array position.
-            const drawable = step?.runs
-              ? POINTER_ORDER.filter((name) => name !== 'i' && name !== 'j')
-              : POINTER_ORDER
-            return drawable
-              .filter((name) => Number.isInteger(pointers[name]))
-              .map((name) => {
-                const x = pointerX(pointers[name], count)
-                const lane = lanes.get(x) || 0
-                lanes.set(x, lane + 1)
-                return (
-                  <text
-                    key={name}
-                    className={styles.pointer}
-                    data-role={name}
-                    x={x}
-                    y={rowY - 14 - lane * 16}
-                  >
-                    {name}
-                  </text>
-                )
-              })
-          })()}
-
-        {/* temp, directly under the working row, where the lecture draws it. */}
-        {step?.temp && tempY !== null && (
-          <g className={styles.temp}>
-            <text className={styles.tempLabel} x={cellCenterX(step.temp.from)} y={tempLabelY}>
-              temp
-            </text>
-            <rect
-              className={styles.tempBox}
-              x={cellX(step.temp.from)}
-              y={tempY}
-              width={CELL_WIDTH}
-              height={CELL_HEIGHT}
-              rx={10}
+          {framesBand && (
+            <CallFrames
+              frames={layout.frames}
+              array={array}
+              label={FRAME_LABEL[step.algo] || 'sort'}
+              rowHeight={framesBand.height / Math.max(1, layout.frames.length)}
             />
-            <text
-              className={styles.tempValue}
-              x={cellCenterX(step.temp.from)}
-              y={tempY + CELL_HEIGHT / 2}
-            >
-              {step.temp.value}
-            </text>
-          </g>
-        )}
-
-        {runsBand && <SortRuns runs={step.runs} y={runsBand.y + RUN_ROW_HEIGHT / 4} />}
-
-        {bucketsBand && (
-          <SortBuckets buckets={step.buckets} y={bucketsBand.y} width={layout.width} />
-        )}
-
-        {framesBand && (
-          <CallFrames
-            frames={layout.frames}
-            array={array}
-            label={FRAME_LABEL[step.algo] || 'sort'}
-            rowHeight={framesBand.height / Math.max(1, layout.frames.length)}
-          />
-        )}
-      </svg>
+          )}
+        </svg>
+      </div>
     </div>
   )
 }

@@ -195,9 +195,13 @@ function selection(rel) {
     '    for j = i + 1 to n - 1',
     `      if A[j] ${rel} A[min]`,
     '        min = j',
-    '      temp = A[i]',
-    '      A[i] = A[min]',
-    '      A[min] = temp',
+    // Four spaces, not six: the swap runs once the scan has finished, not once
+    // per comparison. Indenting it into the inner loop said selection sort
+    // swaps on every comparison, which is precisely the thing that separates it
+    // from bubble sort and precisely what the animation shows it not doing.
+    '    temp = A[i]',
+    '    A[i] = A[min]',
+    '    A[min] = temp',
   ]
 }
 

@@ -33,7 +33,7 @@ function marksForSegment(segment) {
   return {}
 }
 
-export default function SortLevels({ layout, marks, activeRef }) {
+export default function SortLevels({ layout, marks, activeRef, resultRef }) {
   return (
     <g className={styles.levels}>
       {layout.levels.map((level) => (
@@ -88,7 +88,7 @@ export default function SortLevels({ layout, marks, activeRef }) {
       ))}
 
       {layout.result && (
-        <g className={styles.result}>
+        <g className={styles.result} ref={resultRef}>
           <text className={styles.resultLabel} x={cellX(0) - 16} y={layout.result.y + CELL_HEIGHT / 2}>
             Sorted
           </text>

@@ -5,11 +5,21 @@
 .wrapper {
   flex: 1;
   min-height: 0;
+  overflow: auto;
+}
+
+/* The centring lives here, not on .wrapper. A flex item taller than its
+   container and cross-axis centred pushes its overflow past the scroll origin,
+   where no amount of scrolling reaches it. min-height: 100% means the stage
+   grows with the tree, so the centring only ever applies when the content
+   actually fits. */
+.stage {
+  min-height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px 16px;
-  overflow: auto;
+  box-sizing: border-box;
 }
 
 .canvas {
