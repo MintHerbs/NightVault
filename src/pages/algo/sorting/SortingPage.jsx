@@ -7,7 +7,7 @@
 // The result view is canvas + listing + transport. Every frame is one atomic
 // action, so the transport's step buttons walk a comparison, a pointer move and
 // each of the three beats of a swap one at a time.
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BackButton from '../../../components/common/BackButton/BackButton'
 import Starfield from '../../../components/effects/Starfield/Starfield'
@@ -24,7 +24,6 @@ import {
   ASC,
   DEFAULT_METHOD,
   METHOD_BY_ID,
-  expectedResult,
   parseSortInput,
   traceSort,
 } from '../../../lib/algo/sorting'
@@ -138,11 +137,6 @@ export default function SortingPage({ onAIStateChange }) {
 
   const activeMethod = METHOD_BY_ID.get(run?.method || method)
 
-  const summary = useMemo(() => {
-    if (!run) return null
-    return expectedResult(run.values, run.direction).join(', ')
-  }, [run])
-
   if (view === 'input') {
     return (
       <div className={styles.container}>
@@ -210,9 +204,12 @@ export default function SortingPage({ onAIStateChange }) {
     <div className={styles.resultPage}>
       <Starfield />
       <BackButton onClick={() => navigate('/home')} />
+      {/* No title. The navbar's left slot sits directly under the fixed-position
+          BackButton, so the arrow lands on top of the text and leaves it looking
+          like a stray word beside an arrow. TreePage hit the same thing in T-085
+          and dropped its title for the same reason. The run's method and order
+          are stated on the canvas panel instead, where nothing overlaps them. */}
       <Navbar
-        showTitle
-        title="Sorting Algo"
         showNewFormula
         onNewFormula={() => handleReset(false)}
         newFormulaText="New array"
@@ -231,14 +228,10 @@ export default function SortingPage({ onAIStateChange }) {
       ) : (
         <div className={styles.splitPanel}>
           <div className={styles.canvasPanel}>
-            <div className={styles.runLabel}>
-              <span className={styles.runMethod}>{activeMethod?.label}</span>
-              <span className={styles.runDirection}>
-                {run?.direction === ASC ? 'ascending' : 'descending'}
-              </span>
-              <span className={styles.runTarget}>→ {summary}</span>
-            </div>
-
+            {/* No header row. It named the method, which the listing beside it
+                already says on its first line, and then printed the sorted array
+                — giving away the answer at the top of a panel whose whole job is
+                to work up to it. */}
             <SortCanvas step={player.currentStep} values={run?.values || []} />
 
             {player.hasSteps && (
