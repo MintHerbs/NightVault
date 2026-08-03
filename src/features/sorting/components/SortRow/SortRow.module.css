@@ -1,0 +1,94 @@
+/* One row of array cells. Colour is carried entirely by the --sort-* role
+   tokens (docs/design.md), never by the theme accent, because i, j, the pivot
+   and the two partitions have to be told apart from each other. */
+
+/* Positioned with a transform so a swap slides. Without this the two cells
+   would simply cut to each other's values, and the animation would report the
+   swap rather than show it. */
+.cell {
+  transition: transform 260ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.cellBox {
+  fill: var(--color-surface);
+  stroke: var(--color-border);
+  stroke-width: 1.5;
+  transition: fill 200ms ease, stroke 200ms ease, stroke-width 200ms ease;
+}
+
+.cellValue {
+  fill: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  user-select: none;
+}
+
+.cellIndex {
+  fill: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  opacity: 0.55;
+  user-select: none;
+}
+
+/* Rows that are finished, or not started yet, step back so the row being
+   worked on is the one the eye lands on. They stay legible: the whole point of
+   keeping them on screen is that you can still read them. */
+.row[data-tone='history'] {
+  opacity: 0.62;
+}
+
+.row[data-tone='pending'] {
+  opacity: 0.38;
+}
+
+/* Roles. A ring and a tint rather than a solid fill, so the value keeps its
+   normal colour and no role needs its own on-fill contrast pair — the same
+   choice TreeNode makes for a marked key. */
+.cell[data-role] .cellBox {
+  stroke-width: 3;
+}
+
+.cell[data-role='i'] .cellBox {
+  fill: rgba(var(--sort-i-rgb), 0.16);
+  stroke: var(--sort-i);
+}
+
+.cell[data-role='j'] .cellBox {
+  fill: rgba(var(--sort-j-rgb), 0.18);
+  stroke: var(--sort-j);
+}
+
+.cell[data-role='pivot'] .cellBox {
+  fill: rgba(var(--sort-pivot-rgb), 0.18);
+  stroke: var(--sort-pivot);
+}
+
+.cell[data-role='min'] .cellBox {
+  fill: rgba(var(--sort-min-rgb), 0.18);
+  stroke: var(--sort-min);
+}
+
+.cell[data-role='k'] .cellBox {
+  fill: rgba(var(--sort-pivot-rgb), 0.14);
+  stroke: var(--sort-pivot);
+  stroke-dasharray: 4 3;
+}
+
+.cell[data-role='sorted'] .cellBox {
+  fill: rgba(var(--sort-sorted-rgb), 0.12);
+  stroke: var(--sort-sorted);
+  stroke-width: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell {
+    transition: none;
+  }
+}

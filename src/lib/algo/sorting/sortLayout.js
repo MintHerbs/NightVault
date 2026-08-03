@@ -30,6 +30,22 @@ export const RUN_ROW_HEIGHT = 44
 export const LEFT_MARGIN = 120
 export const RIGHT_MARGIN = 64
 
+/** Vertical space between one recursion level and the next. */
+export const LEVEL_GAP = 26
+
+/**
+ * Clear space a `quickSort` label plus its bracket needs on one side.
+ *
+ * The label goes on whichever side has room, left preferred, which is what the
+ * lecture slide does: `quickSort( … )` on the left half and `( … )quickSort` on
+ * the right. Pinning every label to the left instead put the right half's label
+ * straight through the left half's last cell.
+ */
+export const LABEL_SPACE = 78
+
+/** Room either side of the tree, wide enough for a label on the outer edge. */
+export const TREE_MARGIN = 128
+
 /** Width a row of `count` cells occupies, gaps included. */
 export function rowWidth(count) {
   if (count <= 0) return 0
@@ -62,13 +78,92 @@ export function pointerX(index, count) {
 }
 
 /**
+ * The recursion tree: one row per depth, deepest last, plus the combined
+ * result underneath once the run finishes.
+ *
+ * Only the level currently being worked on gets the pointer lane above it and
+ * the temp lane below it. Reserving that room on every level would make a deep
+ * recursion three times taller than it needs to be; reserving it only when temp
+ * is actually on screen would make every row below jump by 78px twice per swap.
+ * Reserving it for the whole time a level is active is the version that neither
+ * wastes space nor moves.
+ *
+ * @param {object} step - one animation step carrying `segments`
+ * @param {number} count - array length
+ */
+export function layoutTree(step, count) {
+  const width = rowWidth(count)
+  const segments = step?.segments || []
+  const activeDepth = segments.find((s) => s.state === 'active')?.depth ?? null
+
+  const byDepth = new Map()
+  for (const segment of segments) {
+    if (!byDepth.has(segment.depth)) byDepth.set(segment.depth, [])
+    byDepth.get(segment.depth).push(segment)
+  }
+
+  const depths = [...byDepth.keys()].sort((a, b) => a - b)
+  const levels = []
+  let y = 0
+
+  for (const depth of depths) {
+    const isActive = depth === activeDepth
+    const rowY = y + (isActive ? POINTER_LANE : 10)
+    // Siblings own disjoint ranges, so left-to-right order is by `low` and the
+    // gap between two of them is exactly the pivot column that separated them.
+    const placed = byDepth
+      .get(depth)
+      .map((segment) => ({
+        ...segment,
+        x: cellX(segment.low),
+        width: rowWidth(segment.high - segment.low + 1),
+      }))
+      .sort((a, b) => a.x - b.x)
+
+    placed.forEach((segment, index) => {
+      const leftRoom = segment.x - (index === 0 ? -TREE_MARGIN : placed[index - 1].x + placed[index - 1].width)
+      const rightRoom =
+        (index === placed.length - 1 ? width + TREE_MARGIN : placed[index + 1].x) -
+        (segment.x + segment.width)
+      segment.labelSide =
+        leftRoom >= LABEL_SPACE ? 'left' : rightRoom >= LABEL_SPACE ? 'right' : null
+    })
+
+    levels.push({ depth, y: rowY, isActive, segments: placed })
+    y = rowY + CELL_HEIGHT + (isActive ? TEMP_LANE : 0) + LEVEL_GAP
+  }
+
+  // The payoff row. Held back until the run finishes: showing it earlier would
+  // give away the answer the animation is in the middle of working out.
+  const result = step?.type === 'done' ? { y: y + 14, values: step.array } : null
+  if (result) y = result.y + CELL_HEIGHT + LEVEL_GAP
+
+  const activeLevel = levels.find((level) => level.isActive) || null
+
+  return {
+    mode: 'tree',
+    width,
+    height: Math.max(y, CELL_HEIGHT + POINTER_LANE),
+    levels,
+    activeLevel,
+    result,
+    // The temp box hangs off the active row; everything else is per-level.
+    tempY: activeLevel ? activeLevel.y + CELL_HEIGHT + 16 : null,
+    viewBox: `${-TREE_MARGIN} 0 ${width + TREE_MARGIN * 2} ${Math.max(y, CELL_HEIGHT + POINTER_LANE)}`,
+  }
+}
+
+/**
  * The main array row plus every optional band, sized to whatever the step
- * actually carries.
+ * actually carries. Used by every method that sorts one array in place;
+ * quicksort goes through layoutTree instead.
  *
  * @param {object} step - one animation step, or null before a run starts
  * @param {number} count - array length
  */
 export function layoutForStep(step, count) {
+  if (step?.segments) return layoutTree(step, count)
+
   const width = rowWidth(count)
   const arrayY = POINTER_LANE
 
@@ -107,6 +202,7 @@ export function layoutForStep(step, count) {
   }
 
   return {
+    mode: 'row',
     width,
     height: y,
     arrayY,

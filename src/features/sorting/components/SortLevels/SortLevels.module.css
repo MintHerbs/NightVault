@@ -1,0 +1,106 @@
+/* Quicksort's recursion tree. Reads top to bottom: the array as it was, then
+   how it came apart, then the combined result. */
+
+.levels {
+  pointer-events: none;
+}
+
+.segment text {
+  font-family: var(--font-mono);
+  dominant-baseline: middle;
+  user-select: none;
+}
+
+.label {
+  fill: var(--color-text-muted);
+  font-size: 12px;
+  font-style: italic;
+  text-anchor: end;
+  transition: fill 200ms ease, opacity 200ms ease;
+}
+
+.label[data-side='right'] {
+  text-anchor: start;
+}
+
+.bracket {
+  fill: var(--color-text-muted);
+  font-size: 26px;
+  text-anchor: middle;
+  transition: fill 200ms ease;
+}
+
+/* The row being worked on owns the reader's attention: its brackets and label
+   light up while the finished rows above and the untouched rows below stay in
+   the background. */
+.segment[data-state='active'] .label,
+.segment[data-state='active'] .bracket {
+  fill: var(--sort-sorted);
+}
+
+.segment[data-state='active'] .label {
+  font-weight: 600;
+}
+
+.segment[data-state='pending'] .label,
+.segment[data-state='pending'] .bracket {
+  opacity: 0.45;
+}
+
+/* Result -------------------------------------------------------------------- */
+
+.result {
+  animation: resultIn 420ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.resultBand {
+  fill: rgba(var(--sort-sorted-rgb), 0.07);
+  stroke: var(--sort-sorted);
+  stroke-width: 1.5;
+}
+
+.resultLabel {
+  fill: var(--sort-sorted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  font-style: italic;
+  text-anchor: end;
+  dominant-baseline: middle;
+  user-select: none;
+}
+
+.resultCell rect {
+  fill: rgba(var(--sort-sorted-rgb), 0.16);
+  stroke: var(--sort-sorted);
+  stroke-width: 2;
+}
+
+.resultCell text {
+  fill: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  user-select: none;
+}
+
+@keyframes resultIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result {
+    animation: none;
+  }
+}

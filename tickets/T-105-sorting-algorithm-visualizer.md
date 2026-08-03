@@ -569,3 +569,60 @@ methods in both directions. That is asserted directly.
 CallFrames, PseudocodePane, RunOptions), `src/pages/algo/sorting/`,
 `src/components/ui/StepControls/`, `src/lib/asciiArt/fields/sortSweep.js`,
 plus registry, routes, quip, tokens and `npm run test:sorting`.
+
+---
+
+## Follow-up: quicksort draws its recursion as a tree (2026-08-03)
+
+Owner request after seeing the first cut. Quicksort no longer animates in a
+single row with a textual call-stack ladder underneath. It now draws the shape
+the lecture draws:
+
+1. the whole array partitions in place, `i`, `j`, `temp`, pivot as before;
+2. the pivot lands, that row is finished, and it **stays on screen** holding the
+   arrangement its own partition produced;
+3. the row splits into its two halves, drawn as two rows beneath it — a step you
+   can stop on, before either half starts moving;
+4. the left half becomes the working row, then the right, recursively, each new
+   level appearing below the last;
+5. the combined sorted array appears at the very bottom, in an accent band.
+
+### Why the engine changed, not just the canvas
+
+The old engine emitted `frames`, a snapshot of the call stack. A stack cannot
+express this view, because it **pops** the ranges you still want to see. It now
+emits `segments`: every range any call has owned, each carrying its own frozen
+copy of what that range looked like when its partition finished, plus a state of
+`pending` → `active` → `split` / `done`. The frozen copy is the load-bearing
+part — row 0 must keep showing `2 4 1 3 5 7 9 6 8` while the rows below it churn,
+and a live slice of the array would rewrite history under the visitor.
+
+The partition logic is untouched, so both oracle tables still pass unchanged.
+
+### Layout notes
+
+- **Only the active level reserves the pointer lane and the temp lane.** Giving
+  every level that room makes a deep recursion three times taller than it needs
+  to be; giving it only when temp is on screen makes every row below jump 78px
+  twice per swap. Reserving it for as long as a level is active neither wastes
+  space nor moves.
+- **`quickSort` labels alternate sides.** Pinning them all to the left put the
+  right half's label straight through the left half's last cell (caught by
+  driving the built page, not by a test). The label now goes wherever there is
+  room, left preferred, which is exactly what the lecture slide does:
+  `quickSort( … )` on the left and `( … )quickSort` on the right.
+- **The tree is sized to its content and the panel scrolls**, with the active row
+  scrolled into view. A 24-value already-sorted input recurses 23 levels deep,
+  and squeezing that into a fixed panel makes every cell unreadable.
+- **`SortRow` was extracted** so a cell looks and animates identically whether it
+  is the whole array or one branch four levels down. The other five methods are
+  unchanged and still use the single-row layout.
+
+### Tests
+
+`sortLayout.test.js` gains a tree section: exactly one row live at a time,
+depths strictly increasing downward, sibling segments never overlapping, every
+segment aligned to the cells it owns and holding exactly `high - low + 1`
+values, the result row appearing only on the final step and never above the
+deepest level, and the top row still holding its own partition rather than the
+sorted array at the end. 67 assertions in that file, 246 across the three.

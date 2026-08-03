@@ -88,7 +88,7 @@ check('an in-range pointer sits on its cell centre', pointerX(3, 9), cellCenterX
 
 const INPUT = [2, 8, 4, 7, 1, 3, 9, 6, 5]
 
-for (const method of ['quick', 'merge', 'radix', 'bubble', 'insertion', 'selection']) {
+for (const method of ['merge', 'radix', 'bubble', 'insertion', 'selection']) {
   for (const direction of ['asc', 'desc']) {
     const steps = traceSort(INPUT, method, direction)
     const collisions = []
@@ -131,8 +131,8 @@ for (const method of ['quick', 'merge', 'radix', 'bubble', 'insertion', 'selecti
 // 4. Recursion frames land on the cells they describe
 // ---------------------------------------------------------------------------
 
-for (const method of ['quick', 'merge']) {
-  const steps = traceSort(INPUT, method, 'asc')
+{
+  const steps = traceSort(INPUT, 'merge', 'asc')
   const misplaced = []
   let sawFrames = false
 
@@ -157,9 +157,107 @@ for (const method of ['quick', 'merge']) {
     }
   }
 
-  checkThat(`${method}: the run produces recursion frames`, sawFrames)
-  check(`${method}: frames align to their cells`, misplaced.length, 0)
+  checkThat('merge: the run produces recursion frames', sawFrames)
+  check('merge: frames align to their cells', misplaced.length, 0)
   if (misplaced.length > 0) failures.push(`      ${misplaced[0]}`)
+}
+
+// ---------------------------------------------------------------------------
+// 4b. Quicksort's recursion tree
+// ---------------------------------------------------------------------------
+//
+// The shape this view exists for: one row per depth, deeper rows below
+// shallower ones, segments at a depth side by side over the cells they own,
+// exactly one row live at a time, and the combined result only at the end.
+
+for (const direction of ['asc', 'desc']) {
+  const steps = traceSort(INPUT, 'quick', direction)
+  const problems = []
+  let sawTree = false
+  let sawResult = false
+  let maxDepth = 0
+
+  for (const step of steps) {
+    const layout = layoutForStep(step, INPUT.length)
+    if (layout.mode !== 'tree') {
+      problems.push(`step ${step.id}: quicksort did not lay out as a tree`)
+      continue
+    }
+    sawTree = true
+
+    const actives = layout.levels.flatMap((l) => l.segments).filter((s) => s.state === 'active')
+    if (actives.length > 1) problems.push(`step ${step.id}: ${actives.length} rows are active at once`)
+
+    for (let n = 1; n < layout.levels.length; n++) {
+      const above = layout.levels[n - 1]
+      const below = layout.levels[n]
+      if (below.depth <= above.depth) problems.push(`step ${step.id}: depths out of order`)
+      // A row must clear the one above it, including the pointer lane and temp
+      // box the active row reserves.
+      if (below.y < above.y + CELL_HEIGHT) {
+        problems.push(`step ${step.id}: depth ${below.depth} overlaps depth ${above.depth}`)
+      }
+    }
+
+    for (const level of layout.levels) {
+      maxDepth = Math.max(maxDepth, level.depth)
+      const ordered = [...level.segments].sort((a, b) => a.x - b.x)
+      for (let n = 1; n < ordered.length; n++) {
+        // Siblings own disjoint ranges, so their rows must not run into each
+        // other — the pivot between them is on the row above, not this one.
+        if (ordered[n].x < ordered[n - 1].x + ordered[n - 1].width) {
+          problems.push(`step ${step.id}: segments overlap at depth ${level.depth}`)
+        }
+      }
+      for (const segment of level.segments) {
+        if (segment.x !== cellX(segment.low)) {
+          problems.push(`step ${step.id}: segment starts at ${segment.x}, cell ${segment.low} is at ${cellX(segment.low)}`)
+        }
+        if (segment.values.length !== segment.high - segment.low + 1) {
+          problems.push(`step ${step.id}: segment [${segment.low}..${segment.high}] holds ${segment.values.length} values`)
+        }
+      }
+    }
+
+    if (layout.result) {
+      sawResult = true
+      if (step.type !== 'done') problems.push(`step ${step.id}: the result row appeared before the run finished`)
+      const lowest = layout.levels[layout.levels.length - 1]
+      if (layout.result.y < lowest.y + CELL_HEIGHT) {
+        problems.push(`step ${step.id}: the result row overlaps the deepest level`)
+      }
+    }
+
+    if (layout.bands) problems.push(`step ${step.id}: tree layout still carries row bands`)
+  }
+
+  checkThat(`quick/${direction}: lays out as a tree`, sawTree)
+  checkThat(`quick/${direction}: recursion goes deeper than one level`, maxDepth >= 2, `max depth ${maxDepth}`)
+  checkThat(`quick/${direction}: the combined result is shown at the end`, sawResult)
+  check(`quick/${direction}: tree geometry holds`, problems.length, 0)
+  if (problems.length > 0) failures.push(`      ${problems[0]}`)
+}
+
+// The finished tree keeps every row that was ever worked on, which is the
+// point: it is a record of how the array came apart, not a live view.
+{
+  const steps = traceSort(INPUT, 'quick', 'asc')
+  const final = steps[steps.length - 1]
+  checkThat(
+    'quick: every level survives to the last frame',
+    final.segments.length >= 7,
+    `only ${final.segments.length} segments`
+  )
+  checkThat(
+    'quick: no row is left active at the end',
+    final.segments.every((s) => s.state !== 'active'),
+    'a row was still marked active'
+  )
+  checkThat(
+    'quick: the top row keeps its own partition, not the sorted array',
+    JSON.stringify(final.segments[0].values) === JSON.stringify([2, 4, 1, 3, 5, 7, 9, 6, 8]),
+    JSON.stringify(final.segments[0].values)
+  )
 }
 
 // ---------------------------------------------------------------------------
