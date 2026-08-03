@@ -1,14 +1,40 @@
-// Bottom transport bar for the B+ tree animation.
+// Shared transport bar for step-by-step animations.
 //
-// Playback starts on its own, so the middle button is a pause (and a replay once the
-// run has finished) rather than a gate the visitor has to open first. Same interaction
-// model as the tableaux controls, in the tree's own green identity.
+// Playback starts on its own, so the middle button is a pause (and a replay once
+// the run has finished) rather than a gate the visitor has to open first.
+//
+// Promoted out of src/features/tree/ for T-105: the B+ tree and the sorting
+// visualiser both drive a `useAnimationPlayer` of exactly this shape, and a
+// third hand-written copy of the same eight buttons is what docs/rules.md §16.2
+// names as a refactoring trigger. Every control here goes through the player,
+// which is where the Sentinel acks are fired (docs/rules.md §15.5), so a tool
+// gets its island responses by using this bar at all.
+//
+// src/features/logic/components/LogicStepControls.jsx is still a separate copy.
+// It carries a verdict badge and is styled against the M3 token set rather than
+// this one, so folding it in is a visual change to a shipped tool and belongs in
+// its own ticket. The `note` slot below is the seam it would use.
 import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw, SkipForward } from 'lucide-react'
 import styles from './StepControls.module.css'
 
 const SPEEDS = [0.5, 1, 2, 4]
 
-function StepControls({ player }) {
+/**
+ * @param {object}   props.player      - a useAnimationPlayer result
+ * @param {string}   [props.variant]   - 'inline' (inside a positioned canvas) or 'fixed' (pinned to the viewport)
+ * @param {string}   [props.accent]    - CSS colour for the active controls
+ * @param {string}   [props.onAccent]  - CSS colour for text on the primary button
+ * @param {node}     [props.note]      - optional badge shown before the description
+ * @param {string}   [props.skipLabel] - what the skip button says it skips to
+ */
+function StepControls({
+  player,
+  variant = 'inline',
+  accent = 'var(--accent-green)',
+  onAccent = 'var(--on-accent-green)',
+  note = null,
+  skipLabel = 'Skip to the finished result',
+}) {
   const {
     currentStepIndex,
     currentStep,
@@ -23,7 +49,7 @@ function StepControls({ player }) {
     prev,
     goToStep,
     skipToEnd,
-    updateSpeed
+    updateSpeed,
   } = player
 
   const description = currentStep?.description || 'Ready'
@@ -34,7 +60,10 @@ function StepControls({ player }) {
   const playLabel = finished ? 'Replay' : isPlaying ? 'Pause' : 'Play'
 
   return (
-    <div className={styles.controls}>
+    <div
+      className={`${styles.controls} ${variant === 'fixed' ? styles.fixed : styles.inline}`}
+      style={{ '--transport-accent': accent, '--transport-on-accent': onAccent }}
+    >
       <div className={styles.transport}>
         <button
           type="button"
@@ -74,15 +103,18 @@ function StepControls({ player }) {
           className={styles.iconButton}
           onClick={skipToEnd}
           disabled={isAtEnd || !hasSteps}
-          aria-label="Skip to the finished tree"
-          title="Skip to the finished tree"
+          aria-label={skipLabel}
+          title={skipLabel}
         >
           <SkipForward size={18} aria-hidden="true" />
         </button>
       </div>
 
       <div className={styles.progress}>
-        <p className={styles.description} aria-live="polite">{description}</p>
+        <div className={styles.descriptionRow}>
+          {note}
+          <p className={styles.description} aria-live="polite">{description}</p>
+        </div>
         <div className={styles.trackRow}>
           <input
             type="range"

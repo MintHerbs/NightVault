@@ -1,0 +1,213 @@
+/* The sorting canvas. Colour is carried entirely by the --sort-* role tokens
+   (docs/design.md), never by the theme accent, because i, j, the pivot and the
+   two partitions have to be told apart from each other. --sort-sorted is the
+   one exception and does follow the accent: "finished" is the tool agreeing
+   with the rest of the app. */
+
+.wrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow: auto;
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  overflow: visible;
+}
+
+/* Cells ------------------------------------------------------------------- */
+
+/* Positioned with a transform so a swap slides. Without this the two cells
+   would simply cut to each other's values, and the animation would report the
+   swap rather than show it. */
+.cell {
+  transition: transform 260ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.cellBox {
+  fill: var(--color-surface);
+  stroke: var(--color-border);
+  stroke-width: 1.5;
+  transition: fill 200ms ease, stroke 200ms ease, stroke-width 200ms ease;
+}
+
+.cellValue {
+  fill: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  user-select: none;
+}
+
+.cellIndex {
+  fill: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  opacity: 0.55;
+  user-select: none;
+}
+
+/* Roles. A ring and a tint rather than a solid fill, so the value keeps its
+   normal colour and no role needs its own on-fill contrast pair — the same
+   choice TreeNode makes for a marked key. */
+.cell[data-role] .cellBox {
+  stroke-width: 3;
+}
+
+.cell[data-role='i'] .cellBox {
+  fill: rgba(var(--sort-i-rgb), 0.16);
+  stroke: var(--sort-i);
+}
+
+.cell[data-role='j'] .cellBox {
+  fill: rgba(var(--sort-j-rgb), 0.18);
+  stroke: var(--sort-j);
+}
+
+.cell[data-role='pivot'] .cellBox {
+  fill: rgba(var(--sort-pivot-rgb), 0.18);
+  stroke: var(--sort-pivot);
+}
+
+.cell[data-role='min'] .cellBox {
+  fill: rgba(var(--sort-min-rgb), 0.18);
+  stroke: var(--sort-min);
+}
+
+.cell[data-role='k'] .cellBox {
+  fill: rgba(var(--sort-pivot-rgb), 0.14);
+  stroke: var(--sort-pivot);
+  stroke-dasharray: 4 3;
+}
+
+.cell[data-role='sorted'] .cellBox {
+  fill: rgba(var(--sort-sorted-rgb), 0.12);
+  stroke: var(--sort-sorted);
+  stroke-width: 2;
+}
+
+/* Partition bands --------------------------------------------------------- */
+
+.band {
+  fill: none;
+  stroke-width: 2;
+  transition: opacity 200ms ease;
+}
+
+.band[data-role='left'] {
+  stroke: var(--sort-left);
+}
+
+.band[data-role='right'] {
+  stroke: var(--sort-right);
+}
+
+/* The region a pass has already finished with. Dashed rather than solid: it is
+   a claim about the past, not a live boundary like the partition bands. */
+.band[data-role='settled'] {
+  stroke: var(--sort-sorted);
+  stroke-dasharray: 6 5;
+  opacity: 0.7;
+}
+
+/* Pointers ---------------------------------------------------------------- */
+
+.pointer {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 700;
+  text-anchor: middle;
+  user-select: none;
+  transition: x 260ms cubic-bezier(0.2, 0, 0, 1), y 160ms ease;
+}
+
+.pointer[data-role='i'] {
+  fill: var(--sort-i);
+}
+
+.pointer[data-role='j'] {
+  fill: var(--sort-j);
+}
+
+.pointer[data-role='pivot'] {
+  fill: var(--sort-pivot);
+}
+
+.pointer[data-role='min'] {
+  fill: var(--sort-min);
+}
+
+.pointer[data-role='k'] {
+  fill: var(--sort-pivot);
+}
+
+/* temp -------------------------------------------------------------------- */
+
+.tempLabel {
+  fill: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-style: italic;
+  text-anchor: middle;
+  user-select: none;
+}
+
+.tempBox {
+  fill: rgba(var(--color-fg-rgb), 0.06);
+  stroke: var(--color-text);
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+}
+
+.tempValue {
+  fill: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  user-select: none;
+}
+
+.temp {
+  animation: tempIn 180ms ease-out;
+}
+
+@keyframes tempIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Someone who has asked for less motion gets the state, not the travel
+   (docs/rules.md §10.3). The player already jumps such a visitor to the final
+   frame; this covers the cells they still step through by hand. */
+@media (prefers-reduced-motion: reduce) {
+  .cell,
+  .pointer {
+    transition: none;
+  }
+
+  .temp {
+    animation: none;
+  }
+}

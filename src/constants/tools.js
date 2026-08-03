@@ -9,7 +9,7 @@
 // (src/lib/asciiArt/fields) each tool's card renders on the home page and
 // on every course landing page.
 
-import { graphPulse, codeRain, spiralZoom, barMeter, truthTree, latticeGrid, algebraCascade, stateOrbit, circuitPulse } from '../lib/asciiArt/fields'
+import { graphPulse, codeRain, spiralZoom, barMeter, truthTree, latticeGrid, algebraCascade, stateOrbit, circuitPulse, sortSweep } from '../lib/asciiArt/fields'
 import { BTREE_COVER } from './coverPresets'
 
 /**
@@ -60,6 +60,14 @@ export const TOOLS = [
     description: 'Solve recurrences and follow the substitution steps.',
     field: spiralZoom,
     route: '/algo/recurrence-relation',
+    courses: ['computer-science'],
+  },
+  {
+    id: 'sorting',
+    title: 'Sorting Algo',
+    description: 'Watch every comparison, pointer move and swap of six sorting algorithms.',
+    field: sortSweep,
+    route: '/algo/sorting',
     courses: ['computer-science'],
   },
   {

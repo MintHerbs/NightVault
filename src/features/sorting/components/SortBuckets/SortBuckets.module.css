@@ -1,0 +1,54 @@
+/* Radix buckets. Rows that hold nothing stay drawn but faint: an empty bucket
+   is information (no value had that digit), and hiding it would make the ten
+   rows jump around between frames. */
+
+.buckets {
+  pointer-events: none;
+}
+
+.rule {
+  stroke: var(--color-border);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+  opacity: 0.5;
+}
+
+.digit {
+  fill: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-anchor: end;
+  dominant-baseline: middle;
+}
+
+.row[data-filled] .digit {
+  fill: var(--sort-pivot);
+}
+
+.chip rect {
+  fill: rgba(var(--sort-pivot-rgb), 0.14);
+  stroke: var(--sort-pivot);
+  stroke-width: 1;
+}
+
+.chip text {
+  fill: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  user-select: none;
+}
+
+/* During the collect pass the buckets are emptying rather than filling, so the
+   chips read as the source rather than the destination. */
+.buckets[data-phase='collect'] .chip rect {
+  fill: rgba(var(--sort-right-rgb), 0.14);
+  stroke: var(--sort-right);
+}
+
+.buckets[data-phase='collect'] .row[data-filled] .digit {
+  fill: var(--sort-right);
+}

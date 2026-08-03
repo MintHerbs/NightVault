@@ -1,28 +1,39 @@
-/* Transport bar for the tree animation. Green identity (--accent-green is the tree
-   canvas's own colour, deliberately not themed) rather than the page accent, so the
-   controls read as part of the visualiser. */
+/* Shared transport bar (T-105), promoted from the B+ tree's own copy.
 
-/* `left: 80px` clears the docked sidebar rail (56px wide, fixed, z-index 60),
-   with the same 24px of breathing room the bar's own padding uses. Without it
-   the leftmost button sat at x=24 with the rail on top of it, so "Previous
-   step" was only clickable on the 8px sliver that stuck out past the rail
-   (T-103). Matches how the tableaux transport has always handled this
-   (LogicStepControls.module.css); both drop back to 0 below 968px, where the
-   sidebar becomes a closed off-canvas drawer. */
+   The accent is a custom property set by the component rather than a token
+   picked here, because each tool's transport reads as part of *its* visualiser:
+   the tree is green because the tree canvas is green. Callers pass a colour;
+   the fallbacks keep the tree's identity as the default. */
+
 .controls {
-  position: absolute;
-  bottom: 0;
-  left: 80px;
-  right: 0;
-  z-index: 20;
   display: flex;
   align-items: center;
   gap: 24px;
-  height: 84px;
-  padding: 0 24px;
   background: rgba(var(--color-bg-rgb), 0.92);
   backdrop-filter: blur(16px);
   border-top: 1px solid var(--color-border);
+}
+
+/* Pinned to the bottom of a positioned canvas container. */
+.inline {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  height: 84px;
+  padding: 0 24px;
+}
+
+/* Pinned to the viewport, clearing the sidebar rail. */
+.fixed {
+  position: fixed;
+  bottom: 0;
+  left: 80px;
+  right: 0;
+  z-index: 50;
+  height: 88px;
+  padding: 0 28px;
 }
 
 .transport {
@@ -47,12 +58,12 @@
 }
 
 .iconButton:hover:not(:disabled) {
-  background: rgba(38, 222, 129, 0.12);
-  color: var(--accent-green);
+  background: color-mix(in srgb, var(--transport-accent) 12%, transparent);
+  color: var(--transport-accent);
 }
 
 .iconButton:focus-visible {
-  outline: 2px solid var(--accent-green);
+  outline: 2px solid var(--transport-accent);
   outline-offset: 2px;
 }
 
@@ -64,13 +75,13 @@
 .primaryButton {
   width: 48px;
   height: 48px;
-  background: var(--accent-green);
-  color: var(--on-accent-green);
+  background: var(--transport-accent);
+  color: var(--transport-on-accent);
 }
 
 .primaryButton:hover:not(:disabled) {
-  background: var(--accent-green-hover);
-  color: var(--on-accent-green);
+  background: color-mix(in srgb, var(--transport-accent) 82%, white);
+  color: var(--transport-on-accent);
 }
 
 .primaryButton:disabled {
@@ -84,6 +95,14 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.descriptionRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 0;
 }
 
 .description {
@@ -116,7 +135,7 @@
 }
 
 .scrubber:focus-visible {
-  outline: 2px solid var(--accent-green);
+  outline: 2px solid var(--transport-accent);
   outline-offset: 4px;
   border-radius: 4px;
 }
@@ -141,7 +160,7 @@
   margin-top: -4px;
   border: none;
   border-radius: 50%;
-  background: var(--accent-green);
+  background: var(--transport-accent);
 }
 
 .scrubber::-moz-range-thumb {
@@ -149,7 +168,7 @@
   height: 12px;
   border: none;
   border-radius: 50%;
-  background: var(--accent-green);
+  background: var(--transport-accent);
 }
 
 .scrubber:disabled {
@@ -188,18 +207,18 @@
 }
 
 .speedOption:hover:not(:disabled):not(.speedActive) {
-  background: rgba(38, 222, 129, 0.1);
+  background: color-mix(in srgb, var(--transport-accent) 10%, transparent);
   color: var(--color-text);
 }
 
 .speedOption:focus-visible {
-  outline: 2px solid var(--accent-green);
+  outline: 2px solid var(--transport-accent);
   outline-offset: 2px;
 }
 
 .speedActive {
-  background: rgba(38, 222, 129, 0.18);
-  color: var(--accent-green);
+  background: color-mix(in srgb, var(--transport-accent) 18%, transparent);
+  color: var(--transport-accent);
 }
 
 .speedOption:disabled {
@@ -207,16 +226,19 @@
   cursor: default;
 }
 
-/* Breakpoint token --breakpoint-xl (968px); custom properties cannot be read inside a
-   media condition, so the raw value is repeated here. */
+/* Breakpoint token --breakpoint-xl (968px); custom properties cannot be read
+   inside a media condition, so the raw value is repeated here. */
 @media (max-width: 968px) {
   .controls {
-    /* The sidebar is a closed drawer here, so the bar takes the full width. */
-    left: 0;
     height: auto;
     flex-wrap: wrap;
     gap: 12px;
     padding: 12px 16px;
+  }
+
+  .fixed {
+    left: 0;
+    height: auto;
   }
 
   .progress {

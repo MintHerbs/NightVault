@@ -912,6 +912,36 @@
   --kmap-group-8-rgb: 163, 190, 140;
 }
 
+/* Sorting visualiser roles (T-105).
+   Same reasoning as the K-map groups above, and declared here for the same
+   source-order reason: a sorting canvas shows i, j, the pivot, both partitions
+   and the finished region at once, and those have to be told apart from each
+   other rather than from the page. Derived from the appearance theme they would
+   collapse into six shades of one hue.
+
+   The hues are the ones the lecture material uses, so a student who learned
+   quicksort from a green `i` and a yellow `j` sees the same thing here:
+   green = i, yellow = j and the live pivot, red = the partition on the low side
+   of the pivot, blue = the high side. --sort-sorted is the exception and does
+   follow the theme accent, because "finished" is the tool agreeing with the
+   rest of the app rather than a role that competes with the other five. */
+:root {
+  --sort-i: #26de81;
+  --sort-i-rgb: 38, 222, 129;
+  --sort-j: #ffd54f;
+  --sort-j-rgb: 255, 213, 79;
+  --sort-pivot: #ff9f43;
+  --sort-pivot-rgb: 255, 159, 67;
+  --sort-left: #ff5f56;
+  --sort-left-rgb: 255, 95, 86;
+  --sort-right: #4f8ef7;
+  --sort-right-rgb: 79, 142, 247;
+  --sort-min: #c792ea;
+  --sort-min-rgb: 199, 146, 234;
+  --sort-sorted: var(--color-accent);
+  --sort-sorted-rgb: var(--color-accent-rgb);
+}
+
 [data-mode="light"] {
   --color-danger: #ad1457;
   --color-danger-rgb: 173, 20, 87;
@@ -940,6 +970,23 @@
   --kmap-group-7-rgb: 138, 97, 0;
   --kmap-group-8: #4d6b3a;
   --kmap-group-8-rgb: 77, 107, 58;
+
+  /* Sorting roles, restated for light surfaces, same reason as the K-map set
+     above: the dark values are tuned for #0b0a0a and the yellow in particular
+     is close to invisible on a near-white cell. --sort-sorted is not restated
+     because it tracks --color-accent, which already has a light-mode value. */
+  --sort-i: #0f7a45;
+  --sort-i-rgb: 15, 122, 69;
+  --sort-j: #8a6100;
+  --sort-j-rgb: 138, 97, 0;
+  --sort-pivot: #b45309;
+  --sort-pivot-rgb: 180, 83, 9;
+  --sort-left: #c0392b;
+  --sort-left-rgb: 192, 57, 43;
+  --sort-right: #1857c4;
+  --sort-right-rgb: 24, 87, 196;
+  --sort-min: #6d28d9;
+  --sort-min-rgb: 109, 40, 217;
 }
 
 /* Chemistry structure atom colours (T-091, docs/adr/0002). Theme-invariant

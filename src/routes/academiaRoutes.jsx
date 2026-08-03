@@ -13,6 +13,11 @@ const RecurrencePage = lazy(() =>
     setTimeout(() => resolve(import('../pages/algo/recurrence/RecurrencePage')), 300)
   )
 )
+const SortingPage = lazy(() =>
+  new Promise(resolve =>
+    setTimeout(() => resolve(import('../pages/algo/sorting/SortingPage')), 300)
+  )
+)
 const AboutPage = lazy(() => import('../pages/about/AboutPage'))
 const DisclaimerPage = lazy(() => import('../pages/disclaimer/DisclaimerPage'))
 const TermsPage = lazy(() => import('../pages/legal/TermsPage'))
@@ -46,6 +51,8 @@ export const routeComponents = {
   '/algo/code-complexity': ComplexityPage,
   '/algo/recurrence': RecurrencePage,
   '/algo/recurrence-relation': RecurrencePage,
+  '/algo/sorting': SortingPage,
+  '/algo/sorting-algorithms': SortingPage,
   '/logic/proof': LogicalEquivalencePage,
   '/logic/tableaux': TableauxPage,
   '/logic/truth-tree': TableauxPage,
@@ -70,6 +77,7 @@ export function preloadAcademiaRoutes() {
   import('../pages/arch/digital-logic/DigitalLogicPage')
   import('../pages/algo/complexity/ComplexityPage')
   import('../pages/algo/recurrence/RecurrencePage')
+  import('../pages/algo/sorting/SortingPage')
   import('../pages/tools/grade-toolkit/GradeToolkitPage')
   import('../pages/home/HomePage')
   import('../pages/course/CourseLandingPage')

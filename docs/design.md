@@ -90,6 +90,40 @@ Two additions to the token set, both in
 Both blocks are declared **before** `[data-mode="light"]`, which has equal
 specificity and only wins by source order.
 
+### Sorting visualiser roles `--sort-*` (T-105)
+
+Seven role tokens in [global.css](../src/styles/global.css), following the
+K-map precedent above and for the same reason: a sorting canvas shows `i`,
+`j`, the pivot, both partitions and the finished region **at once**, and
+those have to be told apart from each other rather than from the page.
+Derived from the appearance seed they would collapse into six shades of
+one hue.
+
+| Token | Role | Dark | Light |
+|---|---|---|---|
+| `--sort-i` | the `i` boundary pointer | `#26de81` | `#0f7a45` |
+| `--sort-j` | the `j` scanner | `#ffd54f` | `#8a6100` |
+| `--sort-pivot` | the pivot, and merge/radix's write head `k` | `#ff9f43` | `#b45309` |
+| `--sort-left` | the partition on the low side of the pivot | `#ff5f56` | `#c0392b` |
+| `--sort-right` | the partition on the high side | `#4f8ef7` | `#1857c4` |
+| `--sort-min` | selection sort's running best candidate | `#c792ea` | `#6d28d9` |
+| `--sort-sorted` | cells in final position | `var(--color-accent)` | inherited |
+
+The hues match the lecture material the tool reproduces (green `i`, yellow
+`j`), so a student who learned quicksort from those colours sees the same
+ones here. Each has an `-rgb` triplet so a cell can paint a translucent
+fill and an opaque ring from one token.
+
+`--sort-sorted` is the deliberate exception and **does** follow the theme
+accent: "finished" is the tool agreeing with the rest of the app, not a
+sixth role competing with the other five for attention. It is therefore
+not restated in the light block, because `--color-accent` already is.
+
+**Rule:** roles are drawn as a ring plus a translucent tint, never a solid
+fill. The value text keeps its normal colour and no role needs its own
+on-fill contrast pair, which is the same choice `TreeNode` makes for a
+marked key.
+
 **Rule:** No new colours without updating this table first.
 **Rule:** Dynamic Island pill is always `#000` — never themed, in any mode,
 and neither is anything inside it (its text stays white, its album-art slot

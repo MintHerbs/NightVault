@@ -211,6 +211,10 @@ export const QUIPS = {
     lines: ['To understand recursion, see recursion'],
     grid: { pattern: 'ripple-in', mode: 'stagger', color: 'blue', speed: 'slow' },
   },
+  'tool:sorting': {
+    lines: ['i, j, and a great deal of patience'],
+    grid: { pattern: 'snake-rev', mode: 'stagger', color: 'green', speed: 'normal' },
+  },
   'tool:semantic-tableaux': {
     lines: ['Truth, as a tree'],
     grid: { pattern: 'L-tl', mode: 'stagger', color: 'white', speed: 'normal' },

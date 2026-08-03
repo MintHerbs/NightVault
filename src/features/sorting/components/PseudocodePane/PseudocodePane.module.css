@@ -1,0 +1,91 @@
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.listing {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 16px 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.line {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 2px 16px;
+  border-left: 3px solid transparent;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.line[data-blank] {
+  min-height: 1.05em;
+}
+
+/* The active line is a band across the pane rather than a tint on the text:
+   the listing is monospace and mostly punctuation, and a colour change alone
+   is hard to spot at a glance while the canvas is moving. */
+.line[data-active] {
+  background: rgba(var(--sort-sorted-rgb), 0.12);
+  border-left-color: var(--sort-sorted);
+}
+
+.number {
+  flex: 0 0 auto;
+  width: 20px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+  user-select: none;
+}
+
+.line[data-active] .number {
+  opacity: 1;
+  color: var(--sort-sorted);
+}
+
+.code {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--color-text-muted);
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.line[data-active] .code {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.blurb {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 14px 16px;
+  border-top: 1px solid var(--color-border);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+/* --breakpoint-xl */
+@media (max-width: 968px) {
+  .listing {
+    padding: 10px 0;
+  }
+
+  .code {
+    font-size: 11.5px;
+  }
+}

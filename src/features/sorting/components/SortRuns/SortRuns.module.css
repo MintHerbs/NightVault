@@ -1,0 +1,61 @@
+/* The two merge runs. Three states per chip, because "already taken", "next up"
+   and "still waiting" are three different things and collapsing any two of them
+   loses the reason a value was chosen. */
+
+.runs {
+  pointer-events: none;
+}
+
+.label {
+  fill: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  text-anchor: end;
+  dominant-baseline: middle;
+}
+
+.chip rect {
+  fill: var(--color-surface);
+  stroke: var(--color-border);
+  stroke-width: 1;
+  transition: fill 200ms ease, stroke 200ms ease, opacity 200ms ease;
+}
+
+.chip text {
+  fill: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  user-select: none;
+}
+
+.chip[data-state='taken'] {
+  opacity: 0.3;
+}
+
+/* The head of each run is what the next comparison is between, so both heads
+   are lit at once. Lighting only the winner would show the answer without
+   showing the question. */
+.chip[data-state='head'] rect {
+  fill: rgba(var(--sort-j-rgb), 0.18);
+  stroke: var(--sort-j);
+  stroke-width: 2;
+}
+
+/* i on the left run, j on the right, drawn over the run they actually index. */
+.cursor {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 700;
+  text-anchor: middle;
+  fill: var(--sort-i);
+  transition: x 260ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.run[data-side='R'] .cursor {
+  fill: var(--sort-j);
+}
