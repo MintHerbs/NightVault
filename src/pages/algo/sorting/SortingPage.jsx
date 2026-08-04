@@ -11,9 +11,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BackButton from '../../../components/common/BackButton/BackButton'
 import Starfield from '../../../components/effects/Starfield/Starfield'
-import Navbar from '../../../components/layout/Navbar/Navbar'
+import PageShell, { ErrorBox } from '../../../components/layout/PageShell'
 import PillInput from '../../../components/ui/PillInput/PillInput'
-import { ScrambleText } from '../../../components/ui/ScrambleText'
 import StepControls from '../../../components/ui/StepControls/StepControls'
 import PseudocodePane from '../../../features/sorting/components/PseudocodePane/PseudocodePane'
 import RunOptions from '../../../features/sorting/components/RunOptions/RunOptions'
@@ -137,101 +136,84 @@ export default function SortingPage({ onAIStateChange }) {
 
   const activeMethod = METHOD_BY_ID.get(run?.method || method)
 
+  // Starfield and BackButton sit outside PageShell, not among its children.
+  // The landing <main> is translate()-centred, and a transformed ancestor
+  // re-anchors position:fixed descendants to itself, so a back arrow placed
+  // inside gets dragged into the middle of the hero instead of the corner.
   if (view === 'input') {
     return (
-      <div className={styles.container}>
-        <Starfield />
-        <BackButton onClick={() => navigate('/home')} />
-        <Navbar />
-        <main className={styles.landingCenter}>
-          <div className={styles.heroContainer}>
-            <h1 className={styles.title}>
-              <ScrambleText duration={500} speed={125} skipInitialAnimation>
-                Sorting Algo
-              </ScrambleText>
-            </h1>
-            <p className={styles.subtitle}>
-              <ScrambleText duration={500} speed={125} skipInitialAnimation>
-                Enter the numbers you want sorted
-              </ScrambleText>
-            </p>
-          </div>
+      <>
+      <Starfield />
+      <BackButton onClick={() => navigate('/home')} />
+      <PageShell title="Sorting Algo" subtitle="Enter the numbers you want sorted">
+        <PillInput
+          value={inputValue}
+          onValueChange={setInputValue}
+          onSubmit={handleSubmit}
+          onAIStateChange={setAIState}
+          placeholder="2, 8, 4, 7, 1, 3, 9, 6, 5"
+        />
 
-          <PillInput
-            value={inputValue}
-            onValueChange={setInputValue}
-            onSubmit={handleSubmit}
-            onAIStateChange={setAIState}
-            placeholder="2, 8, 4, 7, 1, 3, 9, 6, 5"
-          />
-
-          {/* Nothing to type before seeing what the tool does. The first chip is
-              the array from the lecture the Quicksort trace reproduces. */}
-          <div className={styles.examples}>
-            <span className={styles.examplesLabel}>Try:</span>
-            {EXAMPLES.map((example) => (
-              <button
-                key={example.label}
-                type="button"
-                className={styles.exampleChip}
-                onClick={() => useExample(example.values)}
-                title={example.values}
-              >
-                {example.label}
-              </button>
-            ))}
+        {/* Nothing to type before seeing what the tool does. The first chip is
+            the array from the lecture the Quicksort trace reproduces. */}
+        <div className={styles.examples}>
+          <span className={styles.examplesLabel}>Try:</span>
+          {EXAMPLES.map((example) => (
             <button
+              key={example.label}
               type="button"
               className={styles.exampleChip}
-              onClick={() => useExample(randomArray())}
+              onClick={() => useExample(example.values)}
+              title={example.values}
             >
-              Shuffle
+              {example.label}
             </button>
-          </div>
+          ))}
+          <button
+            type="button"
+            className={styles.exampleChip}
+            onClick={() => useExample(randomArray())}
+          >
+            Shuffle
+          </button>
+        </div>
 
-          <RunOptions
-            method={method}
-            direction={direction}
-            onMethodChange={setMethod}
-            onDirectionChange={setDirection}
-          />
-        </main>
-      </div>
+        <RunOptions
+          method={method}
+          direction={direction}
+          onMethodChange={setMethod}
+          onDirectionChange={setDirection}
+        />
+      </PageShell>
+      </>
     )
   }
 
   return (
-    <div className={styles.resultPage}>
-      <Starfield />
-      <BackButton onClick={() => navigate('/home')} />
-      {/* No title. The navbar's left slot sits directly under the fixed-position
-          BackButton, so the arrow lands on top of the text and leaves it looking
-          like a stray word beside an arrow. TreePage hit the same thing in T-085
-          and dropped its title for the same reason. The run's method and order
-          are stated on the canvas panel instead, where nothing overlaps them. */}
-      <Navbar
-        showNewFormula
-        onNewFormula={() => handleReset(false)}
-        newFormulaText="New array"
-      />
-
+    <>
+    <Starfield />
+    <BackButton onClick={() => navigate('/home')} />
+    <PageShell
+      variant="result"
+      navbar={{
+        showNewFormula: true,
+        onNewFormula: () => handleReset(false),
+        newFormulaText: 'New array',
+      }}
+    >
+      {/* No navbar title. Its left slot sits directly under the fixed-position
+          BackButton, so the arrow lands on top of the text. TreePage hit the
+          same thing in T-085. */}
       {error ? (
-        <div className={styles.errorContainer}>
-          <div className={styles.errorBox}>
-            <h3 className={styles.errorTitle}>Cannot sort that</h3>
-            <p className={styles.errorMessage}>{error}</p>
-            <button className={styles.retryButton} onClick={() => handleReset(true)}>
-              ← Edit these numbers
-            </button>
-          </div>
-        </div>
+        <ErrorBox
+          title="Cannot sort that"
+          message={error}
+          onRetry={() => handleReset(true)}
+          retryText="← Edit these numbers"
+        />
       ) : (
         <div className={styles.splitPanel}>
           <div className={styles.canvasPanel}>
-            {/* No header row. It named the method, which the listing beside it
-                already says on its first line, and then printed the sorted array
-                — giving away the answer at the top of a panel whose whole job is
-                to work up to it. */}
             <SortCanvas step={player.currentStep} values={run?.values || []} />
 
             {player.hasSteps && (
@@ -254,6 +236,7 @@ export default function SortingPage({ onAIStateChange }) {
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
+    </>
   )
 }

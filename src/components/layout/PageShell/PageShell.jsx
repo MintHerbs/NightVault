@@ -34,7 +34,13 @@ export default function PageShell({
   return (
     <div className={styles.container}>
       <Navbar {...navbarProps} />
-      <main className={styles.heroContainer}>
+      {/* landingCenter, not heroContainer: the absolute 45% centring and the
+          swipe-up entrance the guide promises live on .landingCenter, and this
+          used the inner hero class instead, so the landing variant never
+          centred anything. Every consumer so far has been variant="content",
+          which is why it went unnoticed — T-105 is the first landing page to
+          go through the shell. */}
+      <main className={styles.landingCenter}>
         {hasHero && (
           <div className={styles.heroContainer}>
             {title && (

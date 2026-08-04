@@ -21,12 +21,28 @@ It is the single source of truth for what exists in the codebase.
 Mooner.dev is a multi-tool academic visualizer for computer science students.
 Built with Vite + React, hosted on Vercel, Supabase for presence tracking.
 
-Current tools:
-- **B+ Tree Visualizer** (`/tree`) — animated step-by-step B+ tree construction
-- **ERD Builder** (`/erd`) — Chen notation ER diagram from natural language description
+Current tools. The registry is [src/constants/tools.js](../src/constants/tools.js);
+each entry's `courses` key is what publishes it to a course landing page, and
+routes are registered in [src/routes/academiaRoutes.jsx](../src/routes/academiaRoutes.jsx).
 
-Planned tools (not yet implemented):
-- Logic tools: Proof Tree, Semantic Tableaux, Resolution Method
+| Tool | Route | Appears on |
+|---|---|---|
+| B+ Tree Visualizer | `/tree` | Computer Science |
+| ERD Visualizer | `/erd` | Computer Science |
+| Code Complexity | `/algo/code-complexity` | Computer Science |
+| Recurrence Relation | `/algo/recurrence-relation` | Computer Science |
+| Sorting Algo | `/algo/sorting` | Computer Science |
+| Semantic Tableaux | `/logic/semantic-tableaux` | Computer Science |
+| Boolean Algebra | `/arch/digital-logic?mode=algebra` | Computer Science |
+| Truth Table & K-Map | `/arch/digital-logic?mode=kmap` | Computer Science |
+| State Machine | `/arch/digital-logic?mode=fsm` | Computer Science |
+| Circuit Sandbox | `/arch/digital-logic?mode=sandbox` | home page only (`courses: []`) |
+| Grade Toolkit | `/tools/grade-toolkit` | every course |
+
+Routed but deliberately outside the registry: **Logical Equivalence**
+(`/logic/proof`), the **Notes** browser (`/notes-browser/:courseId`), and
+`/experimental`, an unlisted directory of tools kept off the sidebar and the
+home page.
 
 ---
 
@@ -934,24 +950,55 @@ Validates and sanitizes Gemini JSON responses:
 
 ### Current Status
 
-**Fully Implemented:**
-- ✅ LogicInputPage with ScrambleText animations
-- ✅ SymbolBar with 8 logic symbols
-- ✅ Formula parser with comprehensive tests
-- ✅ Tableaux engine with step-by-step animation
-- ✅ Resolution engine with CNF conversion
-- ✅ TranslatePage with Gemini integration
-- ✅ TableauxPage with canvas visualization
-- ✅ ResolutionPage with V-connector diagram
-- ✅ RulesPanel with collapsible reference
-- ✅ LogicStepControls for animation playback
-- ✅ All routes added to App.jsx
-- ✅ Sidebar Logic group navigation updated
+**Shipped and routed:**
+- ✅ Semantic Tableaux (`/logic/tableaux`, `/logic/truth-tree`, `/logic/semantic-tableaux`)
+- ✅ Logical Equivalence (`/logic/proof`) — pure JS proof engine
+- ✅ Formula parser, tableaux engine, `LogicStepControls`, `RulesPanel`
 
-**Not Yet Implemented:**
-- ⏳ LogicalEquivalencePage (implemented with pure JS proof engine)
-- ⏳ ProofTreeCanvas component
-- ⏳ Animation engines for proof tree
+**Described below but no longer in the codebase.** The sections on
+`TranslatePage` and `ResolutionPage` document pages that were removed: neither
+file exists under `src/pages/logic/`, and neither `/logic/translate` nor
+`/logic/resolution` is in `routeComponents`. `src/engine/logic/ResolutionEngine.js`
+survives as an unrouted engine. Treat those sections as history until someone
+rewrites them.
+
+Logic components live under `src/features/logic/`, not the `src/components/logic/`
+path the older sections below still name.
+
+---
+
+## Sorting Algo
+
+**Route:** `/algo/sorting` (alias `/algo/sorting-algorithms`) — T-105.
+
+Six algorithms, ascending or descending, with every comparison, pointer move
+and swap as its own addressable animation step.
+
+| Piece | Where |
+|---|---|
+| Engines | `src/lib/algo/sorting/{quickSort,mergeSort,radixSort,bubbleSort,insertionSort,selectionSort}.js` |
+| Step contract + recorder | `src/lib/algo/sorting/steps.js` |
+| Input parsing and limits | `src/lib/algo/sorting/parseSortInput.js` (3–24 values; radix rejects negatives) |
+| Listings shown beside the canvas | `src/lib/algo/sorting/pseudocode.js` |
+| Geometry | `src/lib/algo/sorting/sortLayout.js` |
+| Page | `src/pages/algo/sorting/SortingPage.jsx` (built on `PageShell`) |
+| Components | `src/features/sorting/components/` — `SortCanvas`, `SortRow`, `SortLevels`, `SortRuns`, `SortBuckets`, `CallFrames`, `PseudocodePane`, `RunOptions` |
+| Tests | `npm run test:sorting` — 256 assertions over three files |
+
+Two things worth knowing before changing any of it:
+
+- **Every step carries a full `array` snapshot**, the same contract
+  `src/engine/AnimationEngine.js` uses for the B+ tree. That is why the
+  transport's scrubber can run backwards without an undo path, and why no
+  frame may change more than one cell (asserted in `sorting.oracle.test.js`).
+- **Quicksort emits `segments`, not a call stack.** A stack pops the ranges the
+  recursion-tree view still has to draw, so each segment keeps a frozen copy of
+  what its range looked like when its own partition finished. The other five
+  methods use the single-row layout.
+
+Colour roles come from the `--sort-*` tokens (see [design.md](design.md)), never
+from the theme accent, because `i`, `j`, the pivot and both partitions have to
+be told apart from each other.
 
 ---
 

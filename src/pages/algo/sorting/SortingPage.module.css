@@ -1,89 +1,7 @@
-/* SortingPage - landing screen and result view. Same skeleton as
-   RecurrencePage, so the two algo tools read as one pair. */
-
-.container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-  background-color: var(--color-bg);
-  position: relative;
-}
-
-.landingCenter {
-  position: absolute;
-  top: 45%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 28px;
-  width: 90%;
-  max-width: 800px;
-  animation: swipeUp 0.6s ease-out;
-}
-
-@keyframes swipeUp {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -45%);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
-}
-
-.heroContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  text-align: center;
-  min-height: 140px;
-  justify-content: center;
-}
-
-.title {
-  font-size: clamp(2.2rem, 5vw, 3.8rem);
-  font-weight: 700;
-  color: var(--color-accent);
-  margin: 0;
-  animation: softGlow 3s ease-in-out infinite;
-  min-height: 60px;
-  display: flex;
-  align-items: center;
-}
-
-@keyframes softGlow {
-  0%,
-  100% {
-    text-shadow: 0 0 10px rgba(var(--color-accent-rgb), 0.3),
-      0 0 20px rgba(var(--color-accent-rgb), 0.2),
-      0 0 30px rgba(var(--color-accent-rgb), 0.1);
-  }
-
-  50% {
-    text-shadow: 0 0 20px rgba(var(--color-accent-rgb), 0.5),
-      0 0 30px rgba(var(--color-accent-rgb), 0.3),
-      0 0 40px rgba(var(--color-accent-rgb), 0.2);
-  }
-}
-
-.subtitle {
-  font-size: clamp(0.9rem, 2vw, 1.15rem);
-  font-weight: 400;
-  color: rgba(var(--color-fg-rgb), 0.55);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 48px;
-  justify-content: center;
-}
+/* SortingPage. The page skeleton — container, centred hero, result shell,
+   error box and the sidebar offset — comes from PageShell
+   (docs/architecture/adding-a-page.md); what is left here is the two things
+   this tool adds: its example chips and its 1.9/1 canvas-to-listing split. */
 
 .examples {
   display: flex;
@@ -124,15 +42,6 @@
 
 /* Result view -------------------------------------------------------------- */
 
-.resultPage {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  padding-left: 80px;
-}
-
 .splitPanel {
   flex: 1;
   display: flex;
@@ -172,66 +81,8 @@
   overflow: hidden;
 }
 
-/* Error -------------------------------------------------------------------- */
-
-.errorContainer {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-}
-
-.errorBox {
-  max-width: 520px;
-  padding: 32px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  text-align: center;
-}
-
-.errorTitle {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--color-text);
-  margin: 0 0 12px 0;
-}
-
-.errorMessage {
-  font-size: 14px;
-  color: var(--color-muted);
-  margin: 0 0 24px 0;
-  line-height: 1.6;
-}
-
-.retryButton {
-  padding: 10px 20px;
-  background: var(--color-accent);
-  color: var(--color-bg);
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s ease, filter 0.2s ease;
-}
-
-.retryButton:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
-}
-
-.retryButton:active {
-  transform: translateY(0);
-}
-
 /* --breakpoint-xl */
 @media (max-width: 968px) {
-  .resultPage {
-    padding-left: 0;
-  }
-
   .splitPanel {
     flex-direction: column;
     padding: 12px;
