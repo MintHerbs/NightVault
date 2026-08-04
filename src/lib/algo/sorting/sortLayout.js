@@ -13,22 +13,15 @@ export const CELL_WIDTH = 56
 export const CELL_HEIGHT = 56
 export const CELL_GAP = 8
 export const POINTER_LANE = 46 // vertical room above the row for the i/j markers
-export const TEMP_LANE = 78 // vertical room below the row for the temp box
-export const FRAME_ROW_HEIGHT = 46
+export const TEMP_LANE = 94 // vertical room below the row for the temp box
+
+/* Gap between a row and its temp box. Wide enough to clear the row's index
+   numbers, which sit 13px under the cells — at the old 16px the word "temp"
+   landed on top of them. */
+export const TEMP_OFFSET = 30
 export const BUCKET_ROW_HEIGHT = 34
 export const BUCKET_LABEL_WIDTH = 34
 export const RUN_ROW_HEIGHT = 44
-
-/**
- * Room reserved either side of the array row in the viewBox.
- *
- * The left margin is not decorative. Two things live out there: the `i` pointer
- * when it sits at `low - 1`, and the `quickSort(` label on each recursion frame,
- * which is right-aligned to the frame's left edge. At the old one-cell margin
- * the label was clipped to "uickSort".
- */
-export const LEFT_MARGIN = 120
-export const RIGHT_MARGIN = 64
 
 /** Vertical space between one recursion level and the next. */
 export const LEVEL_GAP = 26
@@ -148,76 +141,125 @@ export function layoutTree(step, count) {
     activeLevel,
     result,
     // The temp box hangs off the active row; everything else is per-level.
-    tempY: activeLevel ? activeLevel.y + CELL_HEIGHT + 16 : null,
+    tempY: activeLevel ? activeLevel.y + CELL_HEIGHT + TEMP_OFFSET : null,
     viewBox: `${-TREE_MARGIN} 0 ${width + TREE_MARGIN * 2} ${Math.max(y, CELL_HEIGHT + POINTER_LANE)}`,
   }
 }
 
+/* History ------------------------------------------------------------------
+   The stacked record of every look the algorithm took at the array: one row
+   per comparison (or per bucket move, or per merge take), frozen at the state
+   that look left behind, grouped under the pass it belongs to.
+
+   This is the thing the lecture diagram is actually made of, and it is why the
+   rows are kept rather than mutated in place — "what did the array look like
+   three comparisons ago" is the question the diagram exists to answer.
+*/
+
+export const HISTORY_ROW_GAP = 10
+export const PASS_GAP = 26
+export const PASS_LABEL_LANE = 22
+export const PASS_RULE_INSET = 14
+
 /**
- * The main array row plus every optional band, sized to whatever the step
- * actually carries. Used by every method that sorts one array in place;
- * quicksort goes through layoutTree instead.
+ * Fold a step prefix into history rows.
  *
- * @param {object} step - one animation step, or null before a run starts
- * @param {number} count - array length
+ * Pure and prefix-driven rather than accumulated into each step: a step already
+ * carries a full array snapshot, so storing the whole history on every one of
+ * them would be quadratic in memory for no new information.
+ *
+ * @param {object[]} steps - the whole run
+ * @param {number} index - the step currently on screen
+ * @returns {object[]} rows, oldest first, the last one live
  */
-export function layoutForStep(step, count) {
-  if (step?.segments) return layoutTree(step, count)
+export function buildHistory(steps, index) {
+  if (!steps || steps.length === 0) return []
+  const upto = Math.max(0, Math.min(index, steps.length - 1))
+  const rows = []
 
-  const width = rowWidth(count)
-  const arrayY = POINTER_LANE
-
-  let y = arrayY + CELL_HEIGHT + 18
-  const bands = []
-
-  // The two runs being merged, drawn under the array they are feeding.
-  if (step?.runs) {
-    bands.push({ kind: 'runs', y, height: RUN_ROW_HEIGHT * 2 + 12 })
-    y += RUN_ROW_HEIGHT * 2 + 12 + 16
+  for (let n = 0; n <= upto; n++) {
+    const step = steps[n]
+    if (step.rowStart || rows.length === 0) {
+      rows.push({
+        rowIndex: rows.length,
+        pass: step.pass ?? 0,
+        passLabel: step.passLabel || '',
+        values: step.array,
+        marks: step.marks || {},
+        ranges: step.ranges || null,
+        live: false,
+      })
+    } else {
+      // Not a new row: this step refines the one already open, which is how the
+      // three beats of a swap animate inside a single comparison's row.
+      const row = rows[rows.length - 1]
+      row.values = step.array
+      row.marks = step.marks || {}
+      row.ranges = step.ranges || null
+    }
   }
 
-  // Ten bucket rows, only while a radix pass is in flight.
-  if (step?.buckets) {
-    bands.push({ kind: 'buckets', y, height: BUCKET_ROW_HEIGHT * 10 })
-    y += BUCKET_ROW_HEIGHT * 10 + 16
+  const last = rows[rows.length - 1]
+  if (last) last.live = true
+  for (const row of rows) {
+    // Cheap identity so a finished row can skip re-rendering while the live one
+    // moves. Completed rows never change again, so this is stable for them.
+    row.signature = `${row.values.join(',')}|${Object.entries(row.marks).sort().join(',')}|${row.live}`
   }
-
-  // The temp box sits directly under the array, where the lecture draws it.
-  if (step?.temp) {
-    bands.push({ kind: 'temp', y, height: TEMP_LANE })
-    y += TEMP_LANE + 8
-  }
-
-  // The call-stack ladder, deepest frame last, as in the lecture's nested
-  // quickSort( … ) rows.
-  const frames = (step?.frames || []).map((frame, depth) => ({
-    ...frame,
-    y: y + depth * FRAME_ROW_HEIGHT,
-    x: cellX(frame.low),
-    width: rowWidth(frame.high - frame.low + 1),
-  }))
-  if (frames.length > 0) {
-    bands.push({ kind: 'frames', y, height: frames.length * FRAME_ROW_HEIGHT })
-    y += frames.length * FRAME_ROW_HEIGHT + 8
-  }
-
-  return {
-    mode: 'row',
-    width,
-    height: y,
-    arrayY,
-    bands,
-    frames,
-    viewBox: `${-LEFT_MARGIN} 0 ${width + LEFT_MARGIN + RIGHT_MARGIN} ${y}`,
-  }
+  return rows
 }
 
-/** Screen span of a `ranges` entry, for the red/blue partition bands. */
-export function rangeBox(range) {
-  const span = range.high - range.low + 1
+/**
+ * Geometry for the history stack.
+ *
+ * Only the live row reserves the pointer lane above and the temp lane below,
+ * for the same reason the recursion tree does it: reserving on every row
+ * triples the height of a long run, and reserving only while temp is on screen
+ * makes everything below it jump twice per swap.
+ */
+export function layoutHistory(rows, count, { hasTemp = true, auxHeight = 0 } = {}) {
+  const width = rowWidth(count)
+  const groups = []
+  let y = 0
+
+  for (const row of rows) {
+    let group = groups[groups.length - 1]
+    if (!group || group.pass !== row.pass) {
+      if (group) y += PASS_GAP
+      y += PASS_LABEL_LANE
+      group = { pass: row.pass, label: row.passLabel, y, rows: [], height: 0 }
+      groups.push(group)
+    }
+
+    const rowY = y + (row.live ? POINTER_LANE : 0)
+    group.rows.push({ ...row, y: rowY })
+    // The live row also carries whatever auxiliary display this method needs
+    // hanging off it — merge's two runs, radix's ten buckets — so the rows that
+    // come after it have to clear that too.
+    y =
+      rowY +
+      CELL_HEIGHT +
+      (row.live && hasTemp ? TEMP_LANE : 0) +
+      (row.live ? auxHeight : 0) +
+      HISTORY_ROW_GAP
+    group.height = y - group.y
+  }
+
+  const liveGroup = groups.find((g) => g.rows.some((r) => r.live)) || null
+  const liveRow = liveGroup?.rows.find((r) => r.live) || null
+
   return {
-    x: cellX(range.low) - 4,
-    width: rowWidth(span) + 8,
-    role: range.role,
+    mode: 'history',
+    width,
+    height: Math.max(y, CELL_HEIGHT + POINTER_LANE),
+    groups,
+    liveRow,
+    tempY: liveRow ? liveRow.y + CELL_HEIGHT + TEMP_OFFSET : null,
+    auxY: liveRow ? liveRow.y + CELL_HEIGHT + (hasTemp ? TEMP_LANE : 0) + TEMP_OFFSET : null,
+    // Everything that belongs to the live row, not just the row: the scroll
+    // anchor spans this, so following the live row does not leave its temp box
+    // or its buckets hanging below the fold.
+    liveBlockHeight: CELL_HEIGHT + (hasTemp ? TEMP_LANE : 0) + auxHeight,
+    viewBox: `${-TREE_MARGIN} 0 ${width + TREE_MARGIN * 2} ${Math.max(y, CELL_HEIGHT + POINTER_LANE)}`,
   }
 }

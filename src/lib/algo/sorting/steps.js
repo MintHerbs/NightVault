@@ -55,6 +55,14 @@ export function createRecorder(arr, { algo, direction }) {
         direction,
         type,
         array: [...arr],
+        // History grouping. `rowStart` opens a new row in the stacked history
+        // the canvas draws; every step after it, up to the next rowStart,
+        // belongs to that row and updates it in place. `pass` groups rows under
+        // one bracket. Both are inert for quicksort, which draws its recursion
+        // tree instead.
+        rowStart: false,
+        pass: 0,
+        passLabel: '',
         pointers: null,
         marks: null,
         ranges: null,
@@ -72,6 +80,10 @@ export function createRecorder(arr, { algo, direction }) {
 /**
  * Emit a swap as the three beats a student is taught, through an explicit
  * `temp`, because `temp` is the part of the lesson a single-frame swap erases.
+ *
+ * The three beats deliberately carry no `rowStart`: they belong to the row the
+ * comparison that caused them opened, so the history shows one row per look at
+ * the array rather than four rows per swap.
  *
  * A self-swap collapses to one step. Without that, an already-ordered input
  * spends most of its animation moving values into the slots they are already

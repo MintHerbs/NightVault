@@ -40,6 +40,8 @@ function snapshot(ctx) {
           place: ctx.place,
         }
       : null,
+    pass: ctx.pass,
+    passLabel: ctx.passLabel,
   }
 }
 
@@ -57,6 +59,8 @@ export default function traceRadixSort(values, direction) {
     place: 1,
     j: null,
     k: null,
+    pass: 0,
+    passLabel: 'Input',
   }
 
   if (n > 0) {
@@ -74,6 +78,8 @@ export default function traceRadixSort(values, direction) {
 
   for (let pass = 0, place = 1; pass < passes; pass++, place *= 10) {
     ctx.place = place
+    ctx.pass = pass + 1
+    ctx.passLabel = `${placeName(place)} digit`
     ctx.buckets = Array.from({ length: 10 }, () => [])
     ctx.phase = 'scatter'
     ctx.collected = 0
@@ -92,7 +98,7 @@ export default function traceRadixSort(values, direction) {
       rec.push(
         'bucket-scatter',
         `${value} has ${placeName(place)} digit ${digit}, so it joins the back of bucket ${digit}.`,
-        { ...snapshot(ctx), codeLine: L.scatter }
+        { ...snapshot(ctx), rowStart: true, codeLine: L.scatter }
       )
     }
 
@@ -117,6 +123,7 @@ export default function traceRadixSort(values, direction) {
         ctx.collected = k + 1
         rec.push('bucket-collect', `${value} comes out of bucket ${digit} into position ${k}.`, {
           ...snapshot(ctx),
+          rowStart: true,
           codeLine: L.collect,
         })
         k += 1
@@ -129,14 +136,20 @@ export default function traceRadixSort(values, direction) {
     rec.push(
       'mark-sorted',
       `After the ${placeName(place)} pass the array is [${rec.arr.join(', ')}], sorted by every digit read so far.`,
-      { ...snapshot(ctx), codeLine: L.place }
+      { ...snapshot(ctx), rowStart: true, codeLine: L.place }
     )
   }
 
   ctx.j = null
   ctx.k = null
   for (let idx = 0; idx < n; idx++) ctx.sorted.add(idx)
-  rec.push('done', `Sorted: [${rec.arr.join(', ')}].`, { ...snapshot(ctx), codeLine: L.ret })
+  ctx.pass += 1
+  ctx.passLabel = 'Result'
+  rec.push('done', `Sorted: [${rec.arr.join(', ')}].`, {
+    ...snapshot(ctx),
+    rowStart: true,
+    codeLine: L.ret,
+  })
 
   return rec.steps
 }

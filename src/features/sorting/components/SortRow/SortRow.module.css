@@ -81,6 +81,15 @@
   stroke-dasharray: 4 3;
 }
 
+/* The two cells one comparison is about. Coloured together and neutrally,
+   the way the lecture diagram greys them: a comparison concerns both of them,
+   and lighting only one implies the other is a bystander. Which of the two is
+   `j` is said by the pointer marker above the row, not by the fill. */
+.cell[data-role='pair'] .cellBox {
+  fill: rgba(var(--color-fg-rgb), 0.14);
+  stroke: rgba(var(--color-fg-rgb), 0.55);
+}
+
 .cell[data-role='sorted'] .cellBox {
   fill: rgba(var(--sort-sorted-rgb), 0.12);
   stroke: var(--sort-sorted);

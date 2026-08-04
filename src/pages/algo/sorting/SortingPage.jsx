@@ -214,7 +214,7 @@ export default function SortingPage({ onAIStateChange }) {
       ) : (
         <div className={styles.splitPanel}>
           <div className={styles.canvasPanel}>
-            <SortCanvas step={player.currentStep} values={run?.values || []} />
+            <SortCanvas steps={steps} index={player.currentStepIndex} values={run?.values || []} />
 
             {player.hasSteps && (
               <StepControls

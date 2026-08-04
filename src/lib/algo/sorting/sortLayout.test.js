@@ -13,11 +13,12 @@ import {
   CELL_GAP,
   CELL_HEIGHT,
   CELL_WIDTH,
+  buildHistory,
   cellCenterX,
   cellX,
-  layoutForStep,
+  layoutHistory,
+  layoutTree,
   pointerX,
-  rangeBox,
   rowWidth,
 } from './sortLayout.js'
 import { traceSort } from './index.js'
@@ -82,85 +83,7 @@ checkThat(
 )
 check('an in-range pointer sits on its cell centre', pointerX(3, 9), cellCenterX(3))
 
-// ---------------------------------------------------------------------------
-// 3. Bands never overlap, at any step of any method
-// ---------------------------------------------------------------------------
-
 const INPUT = [2, 8, 4, 7, 1, 3, 9, 6, 5]
-
-for (const method of ['merge', 'radix', 'bubble', 'insertion', 'selection']) {
-  for (const direction of ['asc', 'desc']) {
-    const steps = traceSort(INPUT, method, direction)
-    const collisions = []
-    const shortRows = []
-
-    for (const step of steps) {
-      const layout = layoutForStep(step, INPUT.length)
-
-      // Bands are stacked, so each must start at or below the previous one's
-      // bottom edge.
-      for (let b = 1; b < layout.bands.length; b++) {
-        const above = layout.bands[b - 1]
-        const below = layout.bands[b]
-        if (below.y < above.y + above.height) {
-          collisions.push(`${method}/${direction} step ${step.id}: ${below.kind} overlaps ${above.kind}`)
-        }
-      }
-
-      // The first band must clear the array row and its pointer lane.
-      if (layout.bands.length > 0 && layout.bands[0].y < layout.arrayY + CELL_HEIGHT) {
-        collisions.push(`${method}/${direction} step ${step.id}: ${layout.bands[0].kind} overlaps the array row`)
-      }
-
-      // Every band has to fit inside the reported height, or the SVG clips it.
-      for (const band of layout.bands) {
-        if (band.y + band.height > layout.height) {
-          shortRows.push(`${method}/${direction} step ${step.id}: ${band.kind} extends past the canvas`)
-        }
-      }
-    }
-
-    check(`${method}/${direction}: no band collides with another`, collisions.length, 0)
-    if (collisions.length > 0) failures.push(`      ${collisions[0]}`)
-    check(`${method}/${direction}: every band fits the canvas`, shortRows.length, 0)
-    if (shortRows.length > 0) failures.push(`      ${shortRows[0]}`)
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 4. Recursion frames land on the cells they describe
-// ---------------------------------------------------------------------------
-
-{
-  const steps = traceSort(INPUT, 'merge', 'asc')
-  const misplaced = []
-  let sawFrames = false
-
-  for (const step of steps) {
-    const layout = layoutForStep(step, INPUT.length)
-    if (layout.frames.length > 0) sawFrames = true
-
-    for (const frame of layout.frames) {
-      if (frame.x !== cellX(frame.low)) {
-        misplaced.push(`step ${step.id}: frame starts at ${frame.x}, cell ${frame.low} is at ${cellX(frame.low)}`)
-      }
-      if (frame.x + frame.width !== cellX(frame.high) + CELL_WIDTH) {
-        misplaced.push(`step ${step.id}: frame ends at ${frame.x + frame.width}, cell ${frame.high} ends at ${cellX(frame.high) + CELL_WIDTH}`)
-      }
-    }
-
-    // Deeper frames are drawn lower, which is the whole reading of the ladder.
-    for (let f = 1; f < layout.frames.length; f++) {
-      if (layout.frames[f].y <= layout.frames[f - 1].y) {
-        misplaced.push(`step ${step.id}: depth ${f} is not below depth ${f - 1}`)
-      }
-    }
-  }
-
-  checkThat('merge: the run produces recursion frames', sawFrames)
-  check('merge: frames align to their cells', misplaced.length, 0)
-  if (misplaced.length > 0) failures.push(`      ${misplaced[0]}`)
-}
 
 // ---------------------------------------------------------------------------
 // 4b. Quicksort's recursion tree
@@ -178,7 +101,7 @@ for (const direction of ['asc', 'desc']) {
   let maxDepth = 0
 
   for (const step of steps) {
-    const layout = layoutForStep(step, INPUT.length)
+    const layout = layoutTree(step, INPUT.length)
     if (layout.mode !== 'tree') {
       problems.push(`step ${step.id}: quicksort did not lay out as a tree`)
       continue
@@ -261,51 +184,109 @@ for (const direction of ['asc', 'desc']) {
 }
 
 // ---------------------------------------------------------------------------
-// 5. Partition bands wrap their cells
-// ---------------------------------------------------------------------------
-
-const partitionStep = traceSort(INPUT, 'quick', 'asc').find((s) => s.type === 'partition-done')
-checkThat('quick: a partition-done step carries bands', (partitionStep?.ranges || []).length === 2)
-
-for (const range of partitionStep.ranges) {
-  const box = rangeBox(range)
-  checkThat(
-    `band ${range.role} starts left of cell ${range.low}`,
-    box.x <= cellX(range.low),
-    `box.x = ${box.x}, cellX = ${cellX(range.low)}`
-  )
-  checkThat(
-    `band ${range.role} ends right of cell ${range.high}`,
-    box.x + box.width >= cellX(range.high) + CELL_WIDTH,
-    `band ends at ${box.x + box.width}, cell ends at ${cellX(range.high) + CELL_WIDTH}`
-  )
-}
-
-// The two bands must not touch: they sit either side of the pivot, and a band
-// that ran over it would paint the finished cell as unfinished.
-const leftBox = rangeBox(partitionStep.ranges[0])
-const rightBox = rangeBox(partitionStep.ranges[1])
-checkThat(
-  'the two partition bands leave the pivot clear',
-  leftBox.x + leftBox.width < rightBox.x,
-  `left ends ${leftBox.x + leftBox.width}, right starts ${rightBox.x}`
-)
-
-// ---------------------------------------------------------------------------
 // 6. Layout is deterministic
 // ---------------------------------------------------------------------------
 
 const someStep = traceSort(INPUT, 'quick', 'asc')[12]
 check(
   'the same step lays out identically twice',
-  JSON.stringify(layoutForStep(someStep, INPUT.length)),
-  JSON.stringify(layoutForStep(someStep, INPUT.length))
+  JSON.stringify(layoutTree(someStep, INPUT.length)),
+  JSON.stringify(layoutTree(someStep, INPUT.length))
 )
 check(
-  'a null step still yields a usable canvas',
-  layoutForStep(null, INPUT.length).width,
+  'an empty history still yields a usable canvas',
+  layoutHistory([], INPUT.length).width,
   rowWidth(INPUT.length)
 )
+
+// ---------------------------------------------------------------------------
+// 7. History rows
+// ---------------------------------------------------------------------------
+//
+// The stacked record every method except quicksort draws. Its geometry is what
+// keeps a long run readable, so rows must not overlap, passes must not
+// interleave, and the record must never rewrite itself behind the visitor.
+
+for (const method of ['merge', 'radix', 'bubble', 'insertion', 'selection']) {
+  const source = method === 'radix' ? [12, 21, 5, 50, 45, 8] : [4, 1, 5, 1, 2, 3]
+  const steps = traceSort(source, method, 'asc')
+  const problems = []
+
+  for (const at of [0, 3, Math.floor(steps.length / 2), steps.length - 1]) {
+    const rows = buildHistory(steps, at)
+    const layout = layoutHistory(rows, source.length)
+
+    if (layout.mode !== 'history') problems.push(`step ${at}: not a history layout`)
+
+    // Exactly one live row, and it is the last one.
+    const live = rows.filter((r) => r.live)
+    if (live.length !== 1) problems.push(`step ${at}: ${live.length} live rows`)
+    if (live[0] && live[0].rowIndex !== rows.length - 1) {
+      problems.push(`step ${at}: the live row is not the last one`)
+    }
+
+    // Rows stack downward and never overlap.
+    const all = layout.groups.flatMap((g) => g.rows)
+    for (let n = 1; n < all.length; n++) {
+      if (all[n].y < all[n - 1].y + CELL_HEIGHT) {
+        problems.push(`step ${at}: row ${n} overlaps row ${n - 1}`)
+      }
+    }
+
+    // Groups are contiguous: a pass is never re-opened further down.
+    const labels = layout.groups.map((g) => g.label)
+    if (labels.length !== new Set(labels).size) problems.push(`step ${at}: a pass appears twice`)
+
+    // Every row holds the whole array. A row that lost a cell would be a
+    // snapshot of something that never existed.
+    for (const row of all) {
+      if (row.values.length !== source.length) {
+        problems.push(`step ${at}: a row holds ${row.values.length} of ${source.length} values`)
+      }
+    }
+
+    if (layout.height < (all[all.length - 1]?.y ?? 0) + CELL_HEIGHT) {
+      problems.push(`step ${at}: the canvas is shorter than its last row`)
+    }
+  }
+
+  check(`${method}: history geometry holds`, problems.length, 0)
+  if (problems.length > 0) failures.push(`      ${problems[0]}`)
+}
+
+// History only ever grows, and what is already written never changes. This is
+// the property the whole view exists for: scrubbing forward must not rewrite a
+// row the visitor has already read.
+{
+  const steps = traceSort([4, 1, 5, 1, 2, 3], 'bubble', 'asc')
+  let previous = buildHistory(steps, 0)
+  const rewritten = []
+
+  for (let at = 1; at < steps.length; at++) {
+    const rows = buildHistory(steps, at)
+    if (rows.length < previous.length) rewritten.push(`step ${at}: history shrank`)
+    // Every row before the one that was live last time must be untouched.
+    for (let r = 0; r < previous.length - 1; r++) {
+      if (JSON.stringify(rows[r].values) !== JSON.stringify(previous[r].values)) {
+        rewritten.push(`step ${at}: row ${r} changed after it was finished`)
+      }
+    }
+    previous = rows
+  }
+
+  check('bubble: finished rows are never rewritten', rewritten.length, 0)
+  if (rewritten.length > 0) failures.push(`      ${rewritten[0]}`)
+}
+
+// The first row is the input exactly as it was typed, which is what the diagram
+// opens with and what everything below it is read against.
+for (const method of ['bubble', 'selection', 'insertion']) {
+  const source = [4, 1, 5, 1, 2, 3]
+  const rows = buildHistory(traceSort(source, method, 'asc'), 0)
+  // Joined, because this file's `check` is strict equality and two arrays with
+  // the same contents are never ===.
+  check(`${method}: the history opens on the untouched input`, rows[0].values.join(','), source.join(','))
+}
 
 // ---------------------------------------------------------------------------
 

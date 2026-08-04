@@ -232,11 +232,13 @@ checkThat(
   }
 
   // The engine emits exactly one swap per pass, so the listing agreeing with
-  // that is the whole point of the check above.
-  const passes = traceSort(LECTURE, 'selection', 'asc').filter((s) => s.type === 'frame-enter').length
-  const swaps = traceSort(LECTURE, 'selection', 'asc').filter(
-    (s) => s.type === 'swap-hold' || s.type === 'swap-noop'
-  ).length
+  // that is the whole point of the check above. Counted off the pass labels
+  // rather than off frame-enter steps, which also cover the input row.
+  const selection = traceSort(LECTURE, 'selection', 'asc')
+  const passes = new Set(
+    selection.map((s) => s.passLabel).filter((label) => label.startsWith('Pass '))
+  ).size
+  const swaps = selection.filter((s) => s.type === 'swap-hold' || s.type === 'swap-noop').length
   check('selection: exactly one swap per pass', swaps, passes)
 }
 
@@ -306,6 +308,79 @@ for (const method of METHODS.map((m) => m.id)) {
       expectedResult(NEGATIVES, direction)
     )
   }
+}
+
+// ---------------------------------------------------------------------------
+// 6b. History rows
+// ---------------------------------------------------------------------------
+//
+// The stacked record is the thing the lecture diagram is made of, so the row
+// boundaries are a contract, not a rendering detail.
+
+const LINEAR = ['merge', 'radix', 'bubble', 'insertion', 'selection']
+
+for (const method of LINEAR) {
+  const input = method === 'radix' ? [12, 21, 5, 50, 45, 8] : [4, 1, 5, 1, 2, 3]
+  const steps = traceSort(input, method, 'asc')
+
+  checkThat(
+    `${method}: the run opens a history row before anything else`,
+    steps[0].rowStart === false && steps.some((s) => s.rowStart),
+    'the first step should be the untouched input, then rows follow'
+  )
+
+  // Every step belongs to a row, so nothing the visitor steps onto is orphaned.
+  const rows = steps.filter((s) => s.rowStart).length
+  checkThat(`${method}: produces more than one history row`, rows > 1, `${rows} rows`)
+
+  // A swap is three beats of one look at the array, so those beats must not
+  // each open a row — that is the difference between "one row per comparison"
+  // and a stack four times too tall that buries the pass structure.
+  const swapBeats = steps.filter((s) => s.type.startsWith('swap-') && s.rowStart)
+  check(`${method}: swap beats never open a row`, swapBeats.length, 0)
+
+  // Passes have to be contiguous: a row cannot belong to a pass that finished.
+  const seen = []
+  for (const step of steps) {
+    if (!step.rowStart) continue
+    if (seen[seen.length - 1] !== step.passLabel) seen.push(step.passLabel)
+  }
+  check(`${method}: no pass is re-entered after it ends`, seen.length, new Set(seen).size)
+
+  checkThat(
+    `${method}: every row carries a pass label`,
+    steps.filter((s) => s.rowStart).every((s) => typeof s.passLabel === 'string' && s.passLabel),
+    'a row had no pass label'
+  )
+
+  checkThat(
+    `${method}: the run ends on a Result row`,
+    steps[steps.length - 1].passLabel === 'Result' && steps[steps.length - 1].rowStart,
+    steps[steps.length - 1].passLabel
+  )
+}
+
+// Bubble's outer counter is a pass number, not a position. Marking cell[i] with
+// it put a ring on an arbitrary cell that had nothing to do with the comparison.
+{
+  const steps = traceSort([4, 1, 5, 1, 2, 3], 'bubble', 'asc')
+  checkThat(
+    'bubble: no step marks a cell as i',
+    steps.every((s) => !Object.values(s.marks || {}).includes('i')),
+    'bubble marked a cell with its pass counter'
+  )
+  checkThat(
+    'bubble: no step exposes an i pointer',
+    steps.every((s) => s.pointers?.i === null || s.pointers?.i === undefined),
+    'bubble exposed a pass counter as an array pointer'
+  )
+  // Both halves of a compared pair are marked, the way the diagram greys them.
+  const compare = steps.find((s) => s.type === 'compare')
+  check(
+    'bubble: a comparison marks both cells of the pair',
+    Object.values(compare.marks).filter((r) => r === 'pair').length,
+    2
+  )
 }
 
 // ---------------------------------------------------------------------------

@@ -1,0 +1,38 @@
+/* The stacked history. Finished rows stay legible but recede, so the row being
+   worked on is the one the eye lands on without the record above it going dark. */
+
+.history {
+  pointer-events: none;
+}
+
+.passLabel {
+  fill: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-style: italic;
+  font-weight: 600;
+  text-anchor: start;
+  dominant-baseline: hanging;
+  user-select: none;
+}
+
+.passRule {
+  stroke: var(--color-border);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* The pass currently being worked through gets its rule and label lit, so the
+   group boundaries read at a glance while scrolling a long run. */
+.group:has(.row[data-live]) .passRule {
+  stroke: var(--sort-sorted);
+}
+
+.group:has(.row[data-live]) .passLabel {
+  fill: var(--sort-sorted);
+}
+
+.liveAnchor {
+  fill: none;
+  pointer-events: none;
+}

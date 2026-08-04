@@ -673,3 +673,66 @@ missing eight tools would misrepresent the doc as maintained. Its own ticket.
 Gates after the fixes: `npm run test:sorting` 256 assertions across three files,
 full `npm test` exit 0, `npm run build` clean, stylelint clean on every new
 stylesheet, no page errors driving all six methods in both directions.
+
+---
+
+## Follow-up: every method keeps its history, not just quicksort (2026-08-04)
+
+Owner request, with the bubble-sort lecture diagram as the reference. The five
+non-quicksort methods animated one row that mutated in place, so the record of
+how the array got where it is was destroyed a step at a time. They now draw the
+diagram's actual shape: the input at the top, then **one row per look at the
+array** — showing the pair that was compared and the arrangement that look left
+behind, whether or not anything moved — grouped under the pass it belongs to,
+down to the result. Quicksort keeps its recursion tree, which is already its
+history.
+
+### Contract
+
+Steps gained three fields (`steps.js`): `rowStart` opens a history row, and
+`pass` / `passLabel` group rows. The three beats of a swap deliberately carry no
+`rowStart` — they belong to the row the comparison opened, so a swap is one row
+that animates rather than four rows that bury the pass structure.
+
+`buildHistory(steps, index)` folds a step prefix into rows and
+`layoutHistory(rows, count)` places them. Both pure, both tested. History is
+derived from the prefix rather than accumulated onto each step: a step already
+carries a full array snapshot, so storing the whole history on every one would
+be quadratic in memory for no new information.
+
+### Bubble sort's `i` was marking an arbitrary cell
+
+Bubble's outer counter is a pass number, not a position, and the snapshot was
+doing `marks[ctx.i] = 'i'` — putting a green ring on cell[pass], which had
+nothing to do with the comparison. There is no `i` marker on the array any more;
+the pass is named on its own bracket. Both cells of a compared pair are now
+marked together, as the diagram greys them, rather than one of the two.
+
+### The history had to be virtualised
+
+Bubble at the 24-value cap is ~290 rows and a 10,700px SVG. Rendering all of it
+put 21,700 nodes in the document and every step then cost a relayout of the lot:
+**300–500ms per frame**, far slower than the transport's own tick. Only rows
+within a viewport of the visible window are drawn now — 3,088 nodes, ~145ms at
+the cap and ~55ms at a typical nine values. The rows all still exist in the
+layout, so the scrollbar and every position in the history are unchanged; the
+ones nowhere near the viewport simply are not painted.
+
+The 24-value worst case still runs slower than 1x playback can ask for. Left as
+is rather than lowering `MAX_VALUES`, which is a product decision.
+
+### Removed as dead
+
+`CallFrames` (merge's call-stack ladder — the pass labels carry the split
+structure now), `layoutForStep`'s single-row path, `rangeBox`, `FRAME_ROW_HEIGHT`,
+the `LEFT_MARGIN`/`RIGHT_MARGIN` pair, and merge's `frames` emission. Confirmed
+against a fresh jcodemunch index rather than by grep: all were reachable only
+from their own tests.
+
+### Tests
+
+298 assertions. New: one live row and it is always the last; rows stack without
+overlapping; passes never re-open once ended; every row holds the whole array;
+**finished rows are never rewritten** as the run advances, which is the property
+the whole view exists for; swap beats never open a row; bubble marks no cell
+with its pass counter and marks both halves of a pair.

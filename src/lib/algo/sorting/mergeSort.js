@@ -1,6 +1,11 @@
 // src/lib/algo/sorting/mergeSort.js
 //
-// Split down to single values, then merge back up (T-105). `k` is the write
+// Split down to single values, then merge back up (T-105). The split structure
+// is carried by the pass labels on the history stack — "Merge [1, 4] + [5]" —
+// rather than by a separate call-stack ladder, which is why `ctx.stack` is kept
+// for the recursion itself but no longer emitted as drawable `frames`.
+//
+// `k` is the write
 // position in the array, and `i`/`j` index the two runs being consumed rather
 // than the array itself, which is why the merge steps carry a `runs` block: the
 // canvas draws the two source runs above the row they are being merged into,
@@ -21,12 +26,6 @@ function snapshot(ctx) {
   return {
     marks,
     pointers: { i: ctx.i, j: ctx.j, k: ctx.k, low: ctx.low, high: ctx.high },
-    frames: ctx.stack.map((f, idx) => ({
-      low: f.low,
-      high: f.high,
-      depth: f.depth,
-      state: idx === ctx.stack.length - 1 ? 'active' : 'waiting',
-    })),
     runs: ctx.runs
       ? {
           low: ctx.runs.low,
@@ -39,6 +38,8 @@ function snapshot(ctx) {
           k: ctx.runs.k,
         }
       : null,
+    pass: ctx.pass,
+    passLabel: ctx.passLabel,
   }
 }
 
@@ -52,11 +53,13 @@ function mergeRuns(rec, low, mid, high, ctx) {
   ctx.i = 0
   ctx.j = 0
   ctx.k = low
+  ctx.pass += 1
+  ctx.passLabel = `Merge [${left.join(', ')}] + [${right.join(', ')}]`
 
   rec.push(
     'frame-enter',
     `Merge [${left.join(', ')}] with [${right.join(', ')}] back into positions ${low} to ${high}.`,
-    { ...snapshot(ctx), codeLine: L.split }
+    { ...snapshot(ctx), rowStart: true, codeLine: L.split }
   )
 
   const take = (side) => {
@@ -71,7 +74,7 @@ function mergeRuns(rec, low, mid, high, ctx) {
     rec.push(
       'merge-take',
       `${value} is taken from the ${side} run into position ${ctx.runs.k - 1}.`,
-      { ...snapshot(ctx), codeLine: side === 'left' ? L.takeLeft : L.takeRight }
+      { ...snapshot(ctx), rowStart: true, codeLine: side === 'left' ? L.takeLeft : L.takeRight }
     )
   }
 
@@ -118,7 +121,7 @@ function mergeRuns(rec, low, mid, high, ctx) {
   rec.push(
     'mark-sorted',
     `Positions ${low} to ${high} are now sorted among themselves: [${rec.arr.slice(low, high + 1).join(', ')}].`,
-    { ...snapshot(ctx), codeLine: L.mergeCall }
+    { ...snapshot(ctx), rowStart: true, codeLine: L.mergeCall }
   )
 }
 
@@ -166,12 +169,25 @@ export default function traceMergeSort(values, direction) {
     k: null,
     low: 0,
     high: values.length - 1,
+    pass: 0,
+    passLabel: 'Split',
   }
+
+  rec.push('frame-enter', `The array as given: [${rec.arr.join(', ')}].`, {
+    ...snapshot(ctx),
+    codeLine: L.call,
+  })
 
   mergeSortRange(rec, 0, values.length - 1, ctx)
 
   for (let idx = 0; idx < values.length; idx++) ctx.sorted.add(idx)
-  rec.push('done', `Sorted: [${rec.arr.join(', ')}].`, { ...snapshot(ctx), codeLine: L.call })
+  ctx.pass += 1
+  ctx.passLabel = 'Result'
+  rec.push('done', `Sorted: [${rec.arr.join(', ')}].`, {
+    ...snapshot(ctx),
+    rowStart: true,
+    codeLine: L.call,
+  })
 
   return rec.steps
 }

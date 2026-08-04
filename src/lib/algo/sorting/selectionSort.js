@@ -21,6 +21,8 @@ function snapshot(ctx) {
     marks,
     pointers: { i: ctx.i, j: ctx.j, min: ctx.min, low: 0, high: ctx.n - 1 },
     ranges: ctx.prefix > 0 ? [{ low: 0, high: ctx.prefix - 1, role: 'settled' }] : null,
+    pass: ctx.pass,
+    passLabel: ctx.passLabel,
   }
 }
 
@@ -31,17 +33,24 @@ export default function traceSelectionSort(values, direction) {
   const superlative = direction === 'desc' ? 'largest' : 'smallest'
   const rel = direction === 'desc' ? '>' : '<'
 
-  const ctx = { i: null, j: null, min: null, n, sorted: new Set(), prefix: 0 }
+  const ctx = { i: null, j: null, min: null, n, sorted: new Set(), prefix: 0, pass: 0, passLabel: 'Input' }
+
+  rec.push('frame-enter', `The array as given: [${rec.arr.join(', ')}].`, {
+    ...snapshot(ctx),
+    codeLine: L.call,
+  })
 
   for (let i = 0; i < Math.max(0, n - 1); i++) {
     ctx.i = i
     ctx.min = i
     ctx.j = null
+    ctx.pass = i + 1
+    ctx.passLabel = `Pass ${i + 1}`
 
     rec.push(
       'frame-enter',
       `Pass ${i + 1}: find the ${superlative} value in positions ${i} to ${n - 1}. Assume it is a[${i}] = ${rec.arr[i]} until something beats it.`,
-      { ...snapshot(ctx), codeLine: L.initMin }
+      { ...snapshot(ctx), rowStart: true, codeLine: L.initMin }
     )
 
     for (let j = i + 1; j < n; j++) {
@@ -55,7 +64,7 @@ export default function traceSelectionSort(values, direction) {
         beats
           ? `a[${j}] = ${candidate} ${rel} a[${ctx.min}] = ${current}, so min moves to ${j}.`
           : `a[${j}] = ${candidate} does not beat a[${ctx.min}] = ${current}, so min stays at ${ctx.min}.`,
-        { ...snapshot(ctx), codeLine: L.test }
+        { ...snapshot(ctx), rowStart: true, codeLine: L.test }
       )
 
       if (beats) {
@@ -71,7 +80,7 @@ export default function traceSelectionSort(values, direction) {
     rec.push(
       'frame-exit',
       `The ${superlative} remaining value is ${rec.arr[ctx.min]} at position ${ctx.min}. Swap it into position ${i}.`,
-      { ...snapshot(ctx), codeLine: L.hold }
+      { ...snapshot(ctx), rowStart: true, codeLine: L.hold }
     )
 
     recordSwap(rec, i, ctx.min, snapshot(ctx), [L.hold, L.writeLeft, L.writeRight])
@@ -81,6 +90,7 @@ export default function traceSelectionSort(values, direction) {
     ctx.min = null
     rec.push('mark-sorted', `Position ${i} is final: ${rec.arr[i]}.`, {
       ...snapshot(ctx),
+      rowStart: true,
       codeLine: L.outer,
     })
   }
@@ -89,8 +99,14 @@ export default function traceSelectionSort(values, direction) {
   ctx.j = null
   ctx.min = null
   ctx.prefix = n
+  ctx.pass += 1
+  ctx.passLabel = 'Result'
   for (let idx = 0; idx < n; idx++) ctx.sorted.add(idx)
-  rec.push('done', `Sorted: [${rec.arr.join(', ')}].`, { ...snapshot(ctx), codeLine: L.call })
+  rec.push('done', `Sorted: [${rec.arr.join(', ')}].`, {
+    ...snapshot(ctx),
+    rowStart: true,
+    codeLine: L.call,
+  })
 
   return rec.steps
 }
