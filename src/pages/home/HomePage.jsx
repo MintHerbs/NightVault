@@ -3,7 +3,7 @@ import PageShell from '../../components/layout/PageShell';
 import Footer from '../../components/layout/Footer';
 import AsciiCard from '../../components/ui/AsciiCard';
 import Loading from '../../components/ui/Loading';
-import { listCourses } from '../../lib/coursesApi';
+import { listCourses, cachedCourses } from '../../lib/coursesApi';
 import { resolveCoverField } from '../../constants/coverPresets';
 import { TOOLS } from '../../constants/tools';
 import { eye } from '../../lib/asciiArt/fields';
@@ -30,6 +30,10 @@ export default function HomePage() {
   // anon-can't-read-courses bug (migration 0049 unapplied, so RLS returned zero
   // rows to logged-out visitors while admins saw all of them) so hard to spot.
   const [failed, setFailed] = useState(false);
+  // Whether the grid below is being painted from the cache rather than from a
+  // live read. The banner has to say something different in each case, since
+  // one of them still has every course card in it.
+  const [stale, setStale] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,7 +42,17 @@ export default function HomePage() {
       .catch((error) => {
         if (cancelled) return;
         console.error('[home] could not load courses:', error);
-        setCourses([]);
+        // The last list this browser saw, rather than nothing. Losing the
+        // course cards also loses the only route to their tool pages, and
+        // those tools need no database at all; an unreachable `courses` row
+        // took the B+ Tree visualiser down with it (owner report).
+        //
+        // `hidden` is honoured out of the cache exactly as it is out of a live
+        // read, so this cannot surface a course the owner has withheld; see
+        // cachedCourses() in src/lib/coursesApi.js.
+        const cached = cachedCourses();
+        setCourses(cached ? cached.filter((c) => !c.hidden) : []);
+        setStale(Boolean(cached?.length));
         setFailed(true);
       })
       .finally(() => { if (!cancelled) setLoading(false); });
@@ -65,9 +79,11 @@ export default function HomePage() {
 
       <section className={styles.section}>
         <p className={styles.sectionSubtitle}>
-          {failed
-            ? "Courses couldn't be loaded just now. The tools below still work."
-            : 'Pick a course to get started. Everything runs in your browser.'}
+          {!failed
+            ? 'Pick a course to get started. Everything runs in your browser.'
+            : stale
+              ? "Notes can't be reached just now, so this list may be out of date. Every tool still works."
+              : "Courses couldn't be loaded just now. The tools below still work."}
         </p>
         {loading ? (
           <Loading />
