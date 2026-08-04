@@ -431,7 +431,14 @@ export default function CircuitSandbox({
       // The browser's own page zoom is on these chords, so preventDefault is
       // not optional here: without it both zooms fire and the whole app scales
       // along with the circuit. '=' is the unshifted '+' on most layouts.
-      if (event.ctrlKey || event.metaKey) {
+      //
+      // Full variant only. This listener is on `window`, so it fires wherever
+      // focus happens to be, and the embedded copy is one panel on a page of
+      // mostly text (the K-map and FSM circuit stages). Taking ctrl+minus away
+      // from someone trying to zoom *that* page, to scale a canvas they may not
+      // even be looking at, is not a trade worth making. The dock buttons are
+      // in both variants and are enough there.
+      if (full && (event.ctrlKey || event.metaKey)) {
         if (event.key === '+' || event.key === '=') {
           event.preventDefault()
           zoomBy(1, surfaceCentre())
@@ -468,7 +475,7 @@ export default function CircuitSandbox({
 
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [selection, remove, undo, redo, zoomBy, surfaceCentre])
+  }, [selection, remove, undo, redo, zoomBy, surfaceCentre, full])
 
   /**
    * Wheel: ctrl/cmd to zoom, otherwise pan.
@@ -481,8 +488,16 @@ export default function CircuitSandbox({
    *
    * A trackpad pinch arrives here as a wheel event with ctrlKey set. Browsers
    * synthesise that, which is why pinch needs no separate code path.
+   *
+   * Full variant only, and for the reason the paragraph above is pleased about:
+   * swallowing the wheel is right when the canvas *is* the page (.pageFull is
+   * `height: 100vh; overflow: hidden`, so there is nothing behind it to
+   * scroll), and wrong when it is a panel partway down a scrolling one. The
+   * embedded copy would otherwise trap the wheel and leave no way to scroll
+   * past the canvas with a mouse.
    */
   useEffect(() => {
+    if (!full) return undefined
     const surface = surfaceRef.current
     if (!surface) return undefined
 
@@ -513,7 +528,7 @@ export default function CircuitSandbox({
 
     surface.addEventListener('wheel', onWheel, { passive: false })
     return () => surface.removeEventListener('wheel', onWheel)
-  }, [])
+  }, [full])
 
   // An open context menu closes on the next click anywhere, including a click
   // on the canvas that is about to do something else.
@@ -1292,11 +1307,14 @@ export default function CircuitSandbox({
             >
               <ZoomOut size={20} aria-hidden="true" />
             </IconButton>
+            {/* The visible text is the current zoom, but a button named "150%"
+                tells a screen reader nothing about what pressing it does. */}
             <button
               type="button"
               className={`${styles.zoomReadout} ${md.labelMedium}`}
               onClick={() => setCamera(CAMERA_HOME)}
               title="Reset the view to 100%"
+              aria-label={`Zoom is ${zoomLabel(camera.zoom)}. Reset the view to 100%`}
             >
               {zoomLabel(camera.zoom)}
             </button>
@@ -1388,6 +1406,14 @@ export default function CircuitSandbox({
 function ConfirmDialog({ title, body, confirmLabel, onConfirm, onCancel }) {
   const panelRef = useRef(null)
 
+  // Read through a ref so the effect below can run exactly once. Depending on
+  // `onCancel` directly would re-run it on every render of the sandbox, and the
+  // sandbox re-renders on every clock pulse while a circuit free-runs. That
+  // would move focus back to Cancel a few times a second and make it
+  // impossible to Tab to the confirm button.
+  const cancelRef = useRef(onCancel)
+  cancelRef.current = onCancel
+
   useEffect(() => {
     // Focused through the panel rather than with a ref on the button itself:
     // md's Button is a plain function component on React 18, so a `ref` prop
@@ -1397,11 +1423,11 @@ function ConfirmDialog({ title, body, confirmLabel, onConfirm, onCancel }) {
     const onKey = (event) => {
       if (event.key !== 'Escape') return
       event.stopPropagation()
-      onCancel()
+      cancelRef.current()
     }
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)
-  }, [onCancel])
+  }, [])
 
   return (
     <div className={styles.dialogScrim} onMouseDown={onCancel}>

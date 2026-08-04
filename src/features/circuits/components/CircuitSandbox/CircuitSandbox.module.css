@@ -693,6 +693,13 @@
     padding: 4px 2px;
     font-size: 11px;
   }
+
+  /* The empty-canvas hint is centred over the whole surface, and on a narrow
+     one it reaches far enough left to run under the zoom rail, which is now
+     sitting at the vertical middle of that same edge. */
+  .empty {
+    padding-left: 76px;
+  }
 }
 
 /* --breakpoint-lg */

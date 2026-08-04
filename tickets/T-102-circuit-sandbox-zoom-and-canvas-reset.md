@@ -161,11 +161,11 @@ rather than a lost circuit.
 
 ## Acceptance criteria
 
-- [x] Zoom in and zoom out controls sit in a bottom-left dock over the canvas, with a percentage readout between them; clicking the readout returns to 100%.
+- [x] Zoom in and zoom out controls sit in their own dock over the canvas, with a percentage readout between them; clicking the readout returns to 100%. Bottom-left when the canvas is wide enough, and a column on the middle of the left edge when it is not (see the implementation notes).
 - [x] Zoom is clamped to 25%–300%; the buttons step through a fixed ladder and disable at each end.
-- [x] Ctrl/cmd + wheel and a trackpad pinch zoom about the pointer: the document point under the cursor does not move while zooming.
-- [x] Plain wheel pans; neither gesture scrolls the page behind the canvas.
-- [x] Ctrl/cmd + `+` / `-` / `0` zoom in, out, and return to 100%, and do nothing while a form field has focus.
+- [x] Ctrl/cmd + wheel and a trackpad pinch zoom about the pointer: the document point under the cursor does not move while zooming. Full variant only.
+- [x] Plain wheel pans, and neither gesture scrolls the page behind the canvas. Full variant only: the embedded copy sits on a page that *does* scroll, and must leave the wheel alone.
+- [x] Ctrl/cmd + `+` / `-` / `0` zoom in, out, and return to 100%, and do nothing while a form field has focus. Full variant only; on a page carrying an embedded sandbox they stay the browser's page zoom.
 - [x] At every zoom level: components drop under the cursor where released, dragging a component tracks the pointer exactly, and a wire dragged between two pins lands on the pin that highlighted.
 - [x] The dot grid stays aligned with the lattice components snap to at every zoom level.
 - [x] Panning speed is unchanged by zoom (the content keeps up with the hand 1:1).
@@ -176,6 +176,7 @@ rather than a lost circuit.
 - [x] After confirming, reloading the page shows an empty canvas; the cleared circuit does not return from `localStorage`.
 - [x] Ctrl+Z immediately after confirming restores the circuit exactly as it was.
 - [x] `npm run test:circuits` covers the camera conversions and anchored zoom in `src/lib/circuits/camera.test.js`.
+- [x] The embedded variant keeps its zoom buttons, gains no clear button, and neither swallows the wheel nor the browser's zoom chords.
 
 ## Out of scope
 
@@ -224,3 +225,48 @@ a reload.
 
 **Not done, still out of scope:** zoom to fit, and counter-scaled pin hit
 targets.
+
+## Self-review findings (2026-08-04)
+
+Two real regressions in the **embedded** variant, both from gestures that are
+right when the canvas is the page and wrong when it is a panel on one. The full
+variant's page is `height: 100vh; overflow: hidden`
+([DigitalLogicPage.module.css](../src/pages/arch/digital-logic/DigitalLogicPage.module.css) `.pageFull`), so there is nothing behind it to
+scroll; the embedded copy sits inside `.page` (`min-height: 100vh`), which
+scrolls normally.
+
+1. **The wheel listener swallowed page scrolling.** `preventDefault()` ran
+   unconditionally on every wheel event over the surface, so on the K-map and
+   FSM circuit stages a mouse wheel over the embedded canvas scrolled nothing at
+   all and the page could not be moved past it. Before this ticket there was no
+   wheel handler, so this was a new regression. The listener is now registered
+   only when `variant === 'full'`.
+2. **The zoom chords hijacked the browser's page zoom.** The keydown listener is
+   on `window`, so ctrl/cmd + `+`/`-`/`0` fired wherever focus was whenever
+   *any* sandbox was mounted, scaling a small embedded panel instead of zooming
+   a page of mostly text. Also now full-only. The dock buttons remain in both
+   variants, so embedded keeps its zoom.
+
+Two smaller fixes:
+
+3. **The confirmation dialog stole focus repeatedly.** Its effect depended on
+   the inline `onCancel` arrow, so it re-ran on every render of the sandbox, and
+   the sandbox re-renders on every clock pulse while a circuit free-runs. Focus
+   jumped back to Cancel several times a second, making it impossible to Tab to
+   the confirm button. The callback is read through a ref and the effect now
+   runs once.
+4. **The zoom readout announced itself as "150%".** A button whose accessible
+   name is its own value says nothing about what pressing it does; it carries an
+   `aria-label` now. The empty-canvas hint also gained left padding inside the
+   container query, where it ran under the vertical zoom rail on a narrow canvas.
+
+Two acceptance ticks had been claimed without being exercised, and are now
+actually tested: that no camera state reaches the saved document (the stored
+keys are `version, components, wires, nextId`), and that Escape closes the
+dialog without also cancelling a wire left armed on the canvas behind it (a
+second Escape then cancels the wire, as it should).
+
+**Pre-existing, not fixed:** `TimingDialog` in the same file has the same
+unstable-dependency shape as finding 3 (`useEffect(..., [onClose])` against an
+inline arrow). It re-focuses the dialog panel rather than a button, so the
+symptom is milder, and it is outside this ticket.
