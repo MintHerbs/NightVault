@@ -145,7 +145,15 @@ export default function SortingPage({ onAIStateChange }) {
       <>
       <Starfield />
       <BackButton onClick={() => navigate('/home')} />
-      <PageShell title="Sorting Algo" subtitle="Enter the numbers you want sorted">
+      {/* The heading names the method, not the tool: "Sorting Algo" is the card
+          you clicked to get here, so repeating it says nothing, whereas the
+          method is the one thing on this screen that changes. PageShell runs
+          the title through ScrambleText, which re-animates whenever its text
+          changes, so picking a new method scrambles the heading into it. */}
+      <PageShell
+        title={activeMethod?.label || 'Sorting Algo'}
+        subtitle="Enter the numbers you want sorted"
+      >
         <PillInput
           value={inputValue}
           onValueChange={setInputValue}

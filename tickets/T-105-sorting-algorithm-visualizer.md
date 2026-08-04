@@ -321,9 +321,13 @@ shape of `RecurrencePage.jsx:103-131`:
   It is always visible, for every method (see Sort direction above). It also
   fires `fireAck('mode-switch')`, which is correct per `docs/rules.md §15.5`:
   one glyph per verb, and switching order is the same verb as switching method.
-- Both Method and Order survive the round trip back to the input view and are
-  echoed in the result view's header, so a visitor scrubbing a long descending
-  radix run can still see which settings produced it.
+- Both Method and Order survive the round trip back to the input view, and both
+  are legible from the result view, so a visitor scrubbing a long descending
+  radix run can still see which settings produced it. Not in a header, as this
+  first read: the result view carries no title at all (see the deviation below),
+  and the listing already states both — its first line names the routine
+  (`radixSort(A)`), and the direction is the comparison operator on the line
+  being highlighted.
 - **Example chips** when the field is empty, as `RecurrenceInput.jsx:13-20` does.
   One of them is `2, 8, 4, 7, 1, 3, 9, 6, 5` labelled "Lecture example", plus
   "Already sorted", "Reverse sorted", "With duplicates", and a "Shuffle" chip that
@@ -542,6 +546,12 @@ Screenshot 1's frame (`i` on 8, `j` on 4, `temp` holding 8, listing on
 - **`LEFT_MARGIN` in the viewBox.** Also found by driving it: the recursion
   frames' `quickSort(` label is right-aligned to the frame's left edge and was
   being clipped to `uickSort` at the old one-cell margin.
+- **The result view carries no title.** The spec had it echo Method and Order in
+  a header. The navbar's left slot sits directly under the fixed-position
+  `BackButton`, so the arrow lands on top of the text — the same collision
+  `TreePage` hit in T-085. Owner asked for it gone. Nothing is lost: the
+  listing's first line names the routine and the highlighted comparison states
+  the direction.
 - **`LogicStepControls` was not folded in.** The shared bar now lives at
   `src/components/ui/StepControls/` and the B+ tree uses it, so sorting adds no
   third copy and the acceptance criterion holds. The tableaux copy carries a
@@ -731,8 +741,36 @@ from their own tests.
 
 ### Tests
 
-298 assertions. New: one live row and it is always the last; rows stack without
+270 assertions across the three files (180 + 42 + 48). New: one live row and it
+is always the last; rows stack without
 overlapping; passes never re-open once ended; every row holds the whole array;
 **finished rows are never rewritten** as the run advances, which is the property
 the whole view exists for; swap beats never open a row; bubble marks no cell
 with its pass counter and marks both halves of a pair.
+
+---
+
+## Follow-up: the landing heading names the method (2026-08-04)
+
+Owner request. The heading read "Sorting Algo", which is the name of the card
+you clicked to get here — it told a visitor already on the page nothing. It now
+reads the selected method, and follows the dropdown: pick Radix Sort and the
+heading becomes "Radix Sort".
+
+One line in `SortingPage.jsx`: `title={activeMethod?.label || 'Sorting Algo'}`.
+`activeMethod` was already computed above the landing branch for the blurb, and
+`PageShell` already runs the title through `ScrambleText`, which re-animates on
+any change to its text — so the heading scrambles into the new name for free,
+and the transition matches the one the page already makes on entry. The tool
+card, the route and the page's own identity are untouched; only the heading is
+method-aware.
+
+The fallback is defensive only. `method` is either `DEFAULT_METHOD` or something
+the dropdown put there, so `METHOD_BY_ID.get` cannot miss.
+
+**Checked, since a changing `<h1>` is a layout risk:** at 320px the longest name
+("Selection Sort") measures 245px against a 320px viewport, the heading stays
+one line at 60px for every method, the pill's top is identical at 293px across
+all six, and there is no horizontal overflow. All six selections were driven in
+a browser, mid-scramble included, plus the round trip — run a sort, "New array"
+back — which returns to the heading naming the method that ran.
