@@ -1,7 +1,7 @@
 ---
 id: T-102
 title: Circuit Sandbox needs zoom and a confirmed canvas reset
-status: backlog
+status: done
 severity: medium
 area: circuits
 epic: none
@@ -161,21 +161,21 @@ rather than a lost circuit.
 
 ## Acceptance criteria
 
-- [ ] Zoom in and zoom out controls sit in a bottom-left dock over the canvas, with a percentage readout between them; clicking the readout returns to 100%.
-- [ ] Zoom is clamped to 25%–300%; the buttons step through a fixed ladder and disable at each end.
-- [ ] Ctrl/cmd + wheel and a trackpad pinch zoom about the pointer: the document point under the cursor does not move while zooming.
-- [ ] Plain wheel pans; neither gesture scrolls the page behind the canvas.
-- [ ] Ctrl/cmd + `+` / `-` / `0` zoom in, out, and return to 100%, and do nothing while a form field has focus.
-- [ ] At every zoom level: components drop under the cursor where released, dragging a component tracks the pointer exactly, and a wire dragged between two pins lands on the pin that highlighted.
-- [ ] The dot grid stays aligned with the lattice components snap to at every zoom level.
-- [ ] Panning speed is unchanged by zoom (the content keeps up with the hand 1:1).
-- [ ] Zoom resets to 100% on reload and never appears in the `digital-logic:sandbox` `localStorage` value.
-- [ ] A "Clear the canvas" button sits in the top-right dock beside Export and Import, disabled when the canvas is already empty.
-- [ ] Pressing it opens a modal asking for confirmation; Escape, the backdrop, and Cancel all dismiss it with the circuit untouched, and Escape does not also cancel a wire in flight.
-- [ ] Confirming empties the canvas, stops a free run in progress, clears the timing trace, and returns the camera to 100% at the origin.
-- [ ] After confirming, reloading the page shows an empty canvas; the cleared circuit does not return from `localStorage`.
-- [ ] Ctrl+Z immediately after confirming restores the circuit exactly as it was.
-- [ ] `npm run test:circuits` covers the camera conversions and anchored zoom in `src/lib/circuits/camera.test.js`.
+- [x] Zoom in and zoom out controls sit in a bottom-left dock over the canvas, with a percentage readout between them; clicking the readout returns to 100%.
+- [x] Zoom is clamped to 25%–300%; the buttons step through a fixed ladder and disable at each end.
+- [x] Ctrl/cmd + wheel and a trackpad pinch zoom about the pointer: the document point under the cursor does not move while zooming.
+- [x] Plain wheel pans; neither gesture scrolls the page behind the canvas.
+- [x] Ctrl/cmd + `+` / `-` / `0` zoom in, out, and return to 100%, and do nothing while a form field has focus.
+- [x] At every zoom level: components drop under the cursor where released, dragging a component tracks the pointer exactly, and a wire dragged between two pins lands on the pin that highlighted.
+- [x] The dot grid stays aligned with the lattice components snap to at every zoom level.
+- [x] Panning speed is unchanged by zoom (the content keeps up with the hand 1:1).
+- [x] Zoom resets to 100% on reload and never appears in the `digital-logic:sandbox` `localStorage` value.
+- [x] A "Clear the canvas" button sits in the top-right dock beside Export and Import, disabled when the canvas is already empty.
+- [x] Pressing it opens a modal asking for confirmation; Escape, the backdrop, and Cancel all dismiss it with the circuit untouched, and Escape does not also cancel a wire in flight.
+- [x] Confirming empties the canvas, stops a free run in progress, clears the timing trace, and returns the camera to 100% at the origin.
+- [x] After confirming, reloading the page shows an empty canvas; the cleared circuit does not return from `localStorage`.
+- [x] Ctrl+Z immediately after confirming restores the circuit exactly as it was.
+- [x] `npm run test:circuits` covers the camera conversions and anchored zoom in `src/lib/circuits/camera.test.js`.
 
 ## Out of scope
 
@@ -189,3 +189,38 @@ rather than a lost circuit.
 - [T-095](T-095-digital-logic-playground-and-input-language.md): the sandbox's interaction model
 - [docs/rules.md](../docs/rules.md) §5.1 *CSS Modules*: every new dock and dialog needs its styles in the co-located `.module.css`
 - Build the buttons from the local M3 primitives in [src/features/circuits/components/md/index.jsx](../src/features/circuits/components/md/index.jsx) (`IconButton`, `Button`), not a UI library. Note its file header cites "docs/rules.md §5.2" for the no-MUI rule and that section is actually *CSS Class Naming*. The rule is real and followed throughout the feature, but the citation is stale and worth correcting while nearby.
+
+## Implementation notes (2026-08-04)
+
+Built as specced, with one design change and one thing the spec got wrong.
+
+**The camera is one state object.** `offset` became `camera` (`{x, y, zoom}`)
+rather than a second `zoom` alongside it. Every conversion runs through the new
+`src/lib/circuits/camera.js`, so the seven call sites listed above do not each
+carry their own arithmetic. `camera.test.js` (94 checks, wired into
+`npm run test:circuits`) covers the round-trip, the anchor invariant across a
+burst of zooms, clamping, and the ladder's ends.
+
+**The dock layout needed a container query, not a breakpoint.** The parts dock
+is centred under `max-width: calc(100% - 300px)`, so once that cap binds its
+left edge sits at exactly 150px for every narrower size, which is inside the
+horizontal zoom dock's 12..164. Measuring the two docks against each other
+across a sweep of widths found the overlap at every size below about 1100px,
+including 950px, which a first guess of 900px missed.
+
+A media query would still have been wrong: the embedded variant puts the canvas
+in a page column, so a 700px canvas inside a 1400px window has the same
+collision while the viewport looks roomy. `.surfaceShell` is now a named query
+container (`container: sandbox / inline-size`) and the dock responds to the
+canvas. Verified both geometries: a viewport sweep from 1600 down to 360, and a
+fixed 1500px window with the canvas forced to 700/800/900/1000px.
+
+**Verified in a real browser**, not only by unit test: anchored ctrl+wheel zoom
+(0.000px drift over four notches), plain wheel panning without scrolling the
+page behind it, the keyboard chords, parts dropping under the cursor and drags
+tracking the pointer at both 50% and 200%, wiring at 50%, and the full clear
+flow including Cancel, Escape, Ctrl+Z restore, and the cleared canvas surviving
+a reload.
+
+**Not done, still out of scope:** zoom to fit, and counter-scaled pin hit
+targets.

@@ -16,10 +16,15 @@
   min-height: 0;
 }
 
-/* Everything — canvas and floating docks alike — is positioned against this. */
+/* Everything (canvas and floating docks alike) is positioned against this.
+   Also the query container the docks size themselves against: they have to
+   respond to the canvas, which is a page column wide in the embedded variant
+   and viewport-wide in the full one. `inline-size` only, so nothing here
+   constrains the height this box takes in the flex column above. */
 .surfaceShell {
   position: relative;
   width: 100%;
+  container: sandbox / inline-size;
 }
 
 .wrap[data-variant="full"] .surfaceShell {
@@ -94,7 +99,8 @@
 
 .dockTopLeft,
 .dockTopRight,
-.dockBottom {
+.dockBottom,
+.dockBottomLeft {
   position: absolute;
   z-index: 3;
 }
@@ -107,6 +113,14 @@
 .dockTopRight {
   top: 12px;
   right: 12px;
+}
+
+/* Zoom. Bottom-right is spoken for by the dynamic island in this mode, and
+   both top corners and bottom-centre already have docks, so this is the one
+   corner left (T-102). */
+.dockBottomLeft {
+  bottom: 16px;
+  left: 12px;
 }
 
 /* Centred, but never wide enough to reach the dynamic island, which parks in
@@ -133,6 +147,35 @@
 
 .fileInput {
   display: none;
+}
+
+/* Local copy of the transport dock's separator: CSS Modules are file-scoped,
+   so SandboxControls.module.css's .divider cannot be reached from here. */
+.dockDivider {
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: var(--md-outline-variant);
+}
+
+/* The zoom percentage, which is also the button that returns the view to
+   100%. Tabular figures so the dock does not jump a pixel wider between 25%
+   and 100%. */
+.zoomReadout {
+  min-width: 52px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: var(--md-shape-sm);
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  font-feature-settings: "tnum";
+  text-align: center;
+  cursor: pointer;
+}
+
+.zoomReadout:hover {
+  background: var(--md-surface-container);
+  color: var(--md-on-surface);
 }
 
 /* Under the transport dock, because it belongs to the current selection and
@@ -576,6 +619,37 @@
   overflow: auto;
 }
 
+/* The clear-the-canvas confirmation. Shares .dialogScrim with the timing
+   diagram but not .dialog, which is sized for a waveform panel. */
+.confirmDialog {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(400px, 100%);
+  padding: 24px;
+  border-radius: var(--md-shape-xl);
+  background: var(--md-surface-container-high);
+}
+
+.confirmBody {
+  margin: 0;
+  color: var(--md-on-surface-variant);
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* The error role, not the primary one: this button empties the canvas, and it
+   should not look like the same kind of thing as Cancel. */
+.confirmDanger {
+  background: var(--md-error);
+  color: var(--md-on-error);
+}
+
 @keyframes fade {
   from {
     opacity: 0;
@@ -583,6 +657,41 @@
 
   to {
     opacity: 1;
+  }
+}
+
+/* The parts dock is centred with `max-width: calc(100% - 300px)`, so once that
+   cap binds its left edge sits at exactly 150px and stays there however narrow
+   the canvas gets. That is inside the horizontal zoom dock's 12..164, so the
+   two would fight over the bottom-left corner across a wide band of sizes.
+   Only above roughly 1100px does the cap stop binding and the parts dock pull
+   away to the right, which is the one region where laying zoom out
+   horizontally in that corner is safe. Narrower than that, zoom moves to the
+   middle of the left edge and stands up as a column: about 56px wide, so it
+   clears the parts dock at every size down to 360px.
+
+   A *container* query, not a media query, because what matters is how wide the
+   canvas is and not how wide the window is. The embedded variant puts this
+   surface in a page column, so a 700px canvas inside a 1400px window has the
+   parts dock at x=150 while a viewport-based rule would still think there was
+   room. Both docks are children of .surfaceShell, which is the container
+   declared above. Verified by measuring the two docks against each other
+   across a sweep of sizes rather than by reading the arithmetic here. */
+@container sandbox (max-width: 1150px) {
+  .dockBottomLeft {
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+  }
+
+  .zoomDock {
+    flex-direction: column;
+  }
+
+  .zoomReadout {
+    min-width: 0;
+    padding: 4px 2px;
+    font-size: 11px;
   }
 }
 

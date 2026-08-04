@@ -36,13 +36,14 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useReducedMotion } from 'motion/react'
-import { Download, Upload, X } from 'lucide-react'
+import { Download, Eraser, Upload, X, ZoomIn, ZoomOut } from 'lucide-react'
 import {
   addComponent,
   allPortPositions,
   componentSize,
   deserialize,
   emptyDocument,
+  GRID,
   loadFromStorage,
   moveComponent,
   nextFreePosition,
@@ -57,6 +58,14 @@ import {
   snap,
   toNetlist,
 } from '../../../../lib/circuits/sandboxModel'
+import {
+  HOME as CAMERA_HOME,
+  canStepZoom,
+  stepZoom,
+  toDocument,
+  zoomAt,
+  zoomLabel,
+} from '../../../../lib/circuits/camera'
 import { fromCirc, toCirc } from '../../../../lib/circuits/circFormat'
 import { createSimulation, UNKNOWN } from '../../../../lib/circuits/simulator'
 import { isFlipFlop, FLIP_FLOP_PINS } from '../../../../lib/circuits/flipFlops'
@@ -68,7 +77,7 @@ import GatePalette from '../GatePalette/GatePalette'
 import GateIcon from '../GateIcon/GateIcon'
 import SandboxControls, { DEFAULT_PULSE_MS } from '../SandboxControls/SandboxControls'
 import WaveformPanel from '../WaveformPanel/WaveformPanel'
-import { IconButton, md } from '../md'
+import { Button, IconButton, md } from '../md'
 import styles from './CircuitSandbox.module.css'
 
 const HISTORY_LIMIT = 60
@@ -129,6 +138,10 @@ export default function CircuitSandbox({
   const [version, setVersion] = useState(0)
   const [timingOpen, setTimingOpen] = useState(false)
   const [menu, setMenu] = useState(null)
+  // The clear-the-canvas confirmation is open. Its own state rather than a
+  // generic dialog stack: it is the only destructive control here, and the
+  // timing diagram already owns the other modal.
+  const [confirmingClear, setConfirmingClear] = useState(false)
 
   // Hover, in three parts: the component under the pointer (its pins grow), the
   // pin under the pointer (it grows further), and the pin a connector in flight
@@ -147,15 +160,19 @@ export default function CircuitSandbox({
   // Free end of a wire being dragged out of a port, in document coordinates.
   const [wireEnd, setWireEnd] = useState(null)
 
-  // The camera: how far the document is shifted from its own origin, in
-  // screen pixels. A pure view transform — component x/y (their real
-  // "document" position) never change from panning, only what part of the
-  // document currently renders where and at what screen position. Replaces
-  // scrollLeft/scrollTop, which could only reveal what already overflowed the
-  // surface — a circuit smaller than the viewport had nowhere to pan *into*,
-  // which is what made panning look broken rather than merely unnecessary
-  // (owner report).
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  // The camera: `x`/`y` are how far the document is shifted from its own
+  // origin in screen pixels, `zoom` scales document units (T-102 added the
+  // scale; before that this was a pan-only `offset`). A pure view transform:
+  // component x/y (their real "document" position) never change from panning
+  // or zooming, only what part of the document renders where and at what size.
+  // Replaces scrollLeft/scrollTop, which could only reveal what already
+  // overflowed the surface, and a circuit smaller than the viewport had nowhere to
+  // pan *into*, which is what made panning look broken rather than merely
+  // unnecessary (owner report).
+  //
+  // All of the screen/document arithmetic lives in lib/circuits/camera.js, and
+  // every gesture below goes through it rather than doing the sums inline.
+  const [camera, setCamera] = useState(CAMERA_HOME)
 
   // A brief flourish for edits that are not the free-run itself — placing a
   // part, dragging one around — so the island has something to say about
@@ -378,6 +395,26 @@ export default function CircuitSandbox({
   // Editing the circuit invalidates whatever the last sweep was showing.
   useEffect(() => { stopSweep(); setFront(SETTLED) }, [doc, stopSweep])
 
+  // --- The camera ------------------------------------------------------------
+  //
+  // Declared above the keyboard and wheel effects that depend on them: a
+  // `useCallback` referenced in a dependency array further up the component
+  // would be read before its own `const` is initialised.
+
+  /** The middle of the visible surface. The anchor for zooms with no pointer
+   *  behind them (the dock buttons and the keyboard chords). */
+  const surfaceCentre = useCallback(() => {
+    const rect = surfaceRef.current?.getBoundingClientRect()
+    if (!rect) return { x: 0, y: 0 }
+    return { x: rect.width / 2, y: rect.height / 2 }
+  }, [])
+
+  /** One rung up (`direction` 1) or down (-1) the zoom ladder, held at
+   *  `anchor` (surface-relative screen coordinates). */
+  const zoomBy = useCallback((direction, anchor) => {
+    setCamera((current) => zoomAt(current, stepZoom(current.zoom, direction), anchor))
+  }, [])
+
   // --- Keyboard --------------------------------------------------------------
 
   useEffect(() => {
@@ -390,6 +427,29 @@ export default function CircuitSandbox({
         if (event.shiftKey) redo()
         else undo()
         return
+      }
+      // The browser's own page zoom is on these chords, so preventDefault is
+      // not optional here: without it both zooms fire and the whole app scales
+      // along with the circuit. '=' is the unshifted '+' on most layouts.
+      if (event.ctrlKey || event.metaKey) {
+        if (event.key === '+' || event.key === '=') {
+          event.preventDefault()
+          zoomBy(1, surfaceCentre())
+          return
+        }
+        if (event.key === '-' || event.key === '_') {
+          event.preventDefault()
+          zoomBy(-1, surfaceCentre())
+          return
+        }
+        if (event.key === '0') {
+          // Back to 100% *and* back to the origin. A zoom reset that left the
+          // pan where it was could still leave the circuit off-screen, which
+          // is the state this chord exists to escape.
+          event.preventDefault()
+          setCamera(CAMERA_HOME)
+          return
+        }
       }
       if (event.key === 'Delete' || event.key === 'Backspace') {
         if (!selection) return
@@ -408,7 +468,52 @@ export default function CircuitSandbox({
 
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [selection, remove, undo, redo])
+  }, [selection, remove, undo, redo, zoomBy, surfaceCentre])
+
+  /**
+   * Wheel: ctrl/cmd to zoom, otherwise pan.
+   *
+   * Registered by hand rather than as an `onWheel` prop because both branches
+   * call preventDefault, and React attaches its wheel listener passively. A
+   * passive listener that calls preventDefault does nothing except log a
+   * warning, so the page behind the canvas would scroll away underneath the
+   * gesture.
+   *
+   * A trackpad pinch arrives here as a wheel event with ctrlKey set. Browsers
+   * synthesise that, which is why pinch needs no separate code path.
+   */
+  useEffect(() => {
+    const surface = surfaceRef.current
+    if (!surface) return undefined
+
+    const onWheel = (event) => {
+      event.preventDefault()
+      const rect = surface.getBoundingClientRect()
+
+      if (event.ctrlKey || event.metaKey) {
+        // Continuous rather than snapped to the ladder: a pinch that could only
+        // land on preset rungs feels notched. clampZoom inside zoomAt keeps it
+        // in range. The exponential keeps a given wheel delta the same
+        // *proportional* change at every scale, so zooming out from 300% takes
+        // as many notches as zooming in from 100% took.
+        const factor = Math.exp(-event.deltaY / 400)
+        setCamera((current) => zoomAt(current, current.zoom * factor, {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        }))
+        return
+      }
+
+      // Shift+wheel is the conventional "scroll sideways" on a mouse with only
+      // one wheel; a trackpad reports deltaX itself.
+      const dx = event.shiftKey ? -event.deltaY : -event.deltaX
+      const dy = event.shiftKey ? 0 : -event.deltaY
+      setCamera((current) => ({ ...current, x: current.x + dx, y: current.y + dy }))
+    }
+
+    surface.addEventListener('wheel', onWheel, { passive: false })
+    return () => surface.removeEventListener('wheel', onWheel)
+  }, [])
 
   // An open context menu closes on the next click anywhere, including a click
   // on the canvas that is about to do something else.
@@ -529,12 +634,20 @@ export default function CircuitSandbox({
       const onDock = event.target instanceof Element && event.target.closest('[data-dock]')
       if (!inside || onDock) return
 
+      // The drop point is a screen position; the component's x/y are document
+      // units. Half the component's size is subtracted *after* the conversion
+      // so the part lands centred under the pointer at every zoom level, not
+      // just at 100%.
       const size = componentSize({ kind: current.kind, inputs: [], outputs: [] })
+      const point = toDocument(camera, {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      })
       commit(addComponent(
         doc,
         current.kind,
-        event.clientX - rect.left - offset.x - size.width / 2,
-        event.clientY - rect.top - offset.y - size.height / 2,
+        point.x - size.width / 2,
+        point.y - size.height / 2,
       ))
       setEditingActivity('placing', 900)
     }
@@ -548,7 +661,7 @@ export default function CircuitSandbox({
     // Only the presence of a carry re-registers the listeners; its coordinates
     // change on every frame and would otherwise churn them 60 times a second.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [carry !== null, doc, commit, offset, setEditingActivity])
+  }, [carry !== null, doc, commit, camera, setEditingActivity])
 
   // --- Dragging components ---------------------------------------------------
 
@@ -579,11 +692,13 @@ export default function CircuitSandbox({
   const onComponentPointerDown = (event, component) => {
     if (event.button !== 0) return
     event.stopPropagation()
-    const rect = surfaceRef.current.getBoundingClientRect()
+    // The grab offset is in document units, so it stays correct if the zoom
+    // changes mid-drag and so the same arithmetic works at any scale.
+    const grab = documentPoint(event)
     dragRef.current = {
       id: component.id,
-      dx: event.clientX - rect.left - offset.x - component.x,
-      dy: event.clientY - rect.top - offset.y - component.y,
+      dx: grab.x - component.x,
+      dy: grab.y - component.y,
       moved: false,
       origin: doc,
     }
@@ -609,10 +724,10 @@ export default function CircuitSandbox({
   const documentPoint = (event) => {
     const surface = surfaceRef.current
     const rect = surface.getBoundingClientRect()
-    return {
-      x: event.clientX - rect.left - offset.x,
-      y: event.clientY - rect.top - offset.y,
-    }
+    return toDocument(camera, {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    })
   }
 
   /**
@@ -625,7 +740,12 @@ export default function CircuitSandbox({
   const nearestPort = (point, sourceId) => {
     const source = sourceId ? ports.get(sourceId) : null
     let best = null
-    let bestDistance = SNAP_RADIUS
+    // SNAP_RADIUS is a distance on *screen*, but this hit-test runs in document
+    // units, so it has to be divided by the zoom. Left as a document constant
+    // it would shrink to 13px of aim at 50% and balloon to 52px at 200%: the
+    // capture would get harder exactly when the pins got smaller, which is
+    // backwards (T-102).
+    let bestDistance = SNAP_RADIUS / camera.zoom
 
     for (const [id, position] of ports) {
       if (id === sourceId) continue
@@ -652,8 +772,10 @@ export default function CircuitSandbox({
         // this is a camera offset, not a scroll position clamped to whatever
         // the circuit currently overflows, so there is always somewhere left
         // to pan into.
+        // Raw client deltas, deliberately unscaled: the pan lives in screen
+        // pixels, so the content keeps up with the hand 1:1 at every zoom.
         if (!pan.moved) setEditingActivity('dragging')
-        setOffset(o => ({ x: o.x + dx, y: o.y + dy }))
+        setCamera(c => ({ ...c, x: c.x + dx, y: c.y + dy }))
       }
       panRef.current = { x: event.clientX, y: event.clientY, moved }
       return
@@ -671,9 +793,9 @@ export default function CircuitSandbox({
 
     const drag = dragRef.current
     if (!drag) return
-    const rect = surfaceRef.current.getBoundingClientRect()
-    const x = event.clientX - rect.left - offset.x - drag.dx
-    const y = event.clientY - rect.top - offset.y - drag.dy
+    const point = documentPoint(event)
+    const x = point.x - drag.dx
+    const y = point.y - drag.dy
 
     // A snapped position that has not changed is not a move. Without this a
     // one-pixel wobble on mousedown counts as a drag and swallows the click
@@ -851,6 +973,52 @@ export default function CircuitSandbox({
     })
   }
 
+  // --- Clearing the canvas ---------------------------------------------------
+
+  /**
+   * Empty the canvas and send the camera home (T-102).
+   *
+   * Called only from the confirmation dialog, never straight off the button:
+   * there was no way to start a fresh circuit before this except deleting every
+   * component by hand, and the control that fixes that is also the most
+   * destructive one on the page.
+   *
+   * The document goes through `commit()` rather than `setDocState`, which does
+   * two things that both matter. It pushes an undo entry, so Ctrl+Z brings the
+   * circuit back and the dialog is a speed bump rather than the only safety
+   * net. And it autosaves, so the cleared canvas is what a reload finds; the
+   * saved circuit would otherwise still be sitting in localStorage under
+   * STORAGE_KEY, and clearing would silently undo itself on the next visit.
+   */
+  const clearCanvas = () => {
+    setRunning(false)
+    stopSweep()
+    setFront(SETTLED)
+
+    commit(emptyDocument())
+
+    // Every in-flight gesture refers to components that no longer exist.
+    setSelection(null)
+    setPendingPort(null)
+    setSnapPort(null)
+    setWireEnd(null)
+    setMenu(null)
+    wireRef.current = null
+    dragRef.current = null
+    panRef.current = null
+    carryRef.current = null
+    setCarry(null)
+    setEditingActivity(null)
+
+    // The simulation itself rebuilds on its own; it is a useMemo over `doc`.
+    setTrace([])
+    clockPhaseRef.current = 0
+
+    setCamera(CAMERA_HOME)
+    setConfirmingClear(false)
+    flash('Canvas cleared. Ctrl+Z brings it back.')
+  }
+
   // --- Import / export -------------------------------------------------------
 
   const exportFile = () => {
@@ -897,11 +1065,17 @@ export default function CircuitSandbox({
           ref={surfaceRef}
           className={styles.surface}
           // The dot grid is a background-image, not part of the SVG's own
-          // transformed content, so it has to be nudged in step with `offset`
+          // transformed content, so it has to be moved in step with the camera
           // by hand — otherwise the lattice would sit still while the circuit
           // panned across it, which looked like the components were sliding
-          // off their own snap grid.
-          style={{ backgroundPosition: `${offset.x}px ${offset.y}px` }}
+          // off their own snap grid. The spacing has to track the zoom for the
+          // same reason: the dots are a picture of the lattice components
+          // actually snap to, and a 20px grid under a circuit drawn at 50% is
+          // a picture of a lattice that does not exist.
+          style={{
+            backgroundPosition: `${camera.x}px ${camera.y}px`,
+            backgroundSize: `${GRID * camera.zoom}px ${GRID * camera.zoom}px`,
+          }}
           onPointerDown={onSurfacePointerDown}
           onPointerMove={onSurfacePointerMove}
           onPointerUp={onSurfacePointerUp}
@@ -930,13 +1104,17 @@ export default function CircuitSandbox({
             role="application"
             aria-label="Circuit editor"
           >
-            {/* Every shape below is in document space, unchanged by panning —
-                this transform is the only thing that moves. Everything drawn
-                outside the visible rect is simply not painted (an <svg>'s
-                default overflow is hidden), which is what makes this an
-                infinite canvas rather than a bigger fixed one: there is no
-                edge for the camera to run out of. */}
-            <g transform={`translate(${offset.x}, ${offset.y})`}>
+            {/* Every shape below is in document space, unchanged by panning or
+                zooming. This transform is the only thing that moves.
+                Everything drawn outside the visible rect is simply not painted
+                (an <svg>'s default overflow is hidden), which is what makes
+                this an infinite canvas rather than a bigger fixed one: there is
+                no edge for the camera to run out of.
+
+                translate before scale, so `camera.x`/`y` keep meaning screen
+                pixels. The other order would scale the pan too, and dragging
+                the canvas would move it at half speed at 50%. */}
+            <g transform={`translate(${camera.x}, ${camera.y}) scale(${camera.zoom})`}>
             {doc.wires.map((wire) => {
               const from = ports.get(wire.from)
               const to = ports.get(wire.to)
@@ -1081,9 +1259,56 @@ export default function CircuitSandbox({
                 className={styles.fileInput}
                 onChange={importFile}
               />
+
+              <span className={styles.dockDivider} aria-hidden="true" />
+
+              {/* Deliberately not called "Reset": the transport dock already
+                  has "Reset every flip-flop", and two controls called reset in
+                  one workbench is a coin toss over which one empties your
+                  work. */}
+              <IconButton
+                label="Clear the canvas"
+                onClick={() => setConfirmingClear(true)}
+                disabled={doc.components.length === 0 && doc.wires.length === 0}
+              >
+                <Eraser size={20} aria-hidden="true" />
+              </IconButton>
             </div>
           </div>
         )}
+
+        {/* Zoom sits bottom-left. Top-left is the transport dock with the pin
+            control beneath it, bottom-centre is the parts dock, and
+            bottom-right is where the dynamic island parks in this mode (see
+            .dockBottom's max-width). Unlike the file dock this is in both
+            variants: it is a camera control, and panning already works in the
+            embedded copy. */}
+        <div className={styles.dockBottomLeft} data-dock="zoom">
+          <div className={`${styles.fileDock} ${styles.zoomDock}`}>
+            <IconButton
+              label="Zoom out"
+              onClick={() => zoomBy(-1, surfaceCentre())}
+              disabled={!canStepZoom(camera.zoom, -1)}
+            >
+              <ZoomOut size={20} aria-hidden="true" />
+            </IconButton>
+            <button
+              type="button"
+              className={`${styles.zoomReadout} ${md.labelMedium}`}
+              onClick={() => setCamera(CAMERA_HOME)}
+              title="Reset the view to 100%"
+            >
+              {zoomLabel(camera.zoom)}
+            </button>
+            <IconButton
+              label="Zoom in"
+              onClick={() => zoomBy(1, surfaceCentre())}
+              disabled={!canStepZoom(camera.zoom, 1)}
+            >
+              <ZoomIn size={20} aria-hidden="true" />
+            </IconButton>
+          </div>
+        </div>
 
         <div className={styles.dockBottom} data-dock="parts">
           <GatePalette onPlace={place} onCarryStart={startCarry} />
@@ -1131,6 +1356,77 @@ export default function CircuitSandbox({
           onClose={() => setTimingOpen(false)}
         />
       )}
+
+      {confirmingClear && (
+        <ConfirmDialog
+          title="Clear the canvas?"
+          body="This removes every component and wire. You can undo it."
+          confirmLabel="Clear canvas"
+          onConfirm={clearCanvas}
+          onCancel={() => setConfirmingClear(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+/**
+ * A yes/no modal for a destructive action.
+ *
+ * Not `window.confirm`: nothing in this app uses it, it cannot follow the nine
+ * themes, and it blocks the main thread while a circuit may be free-running.
+ *
+ * Same shape as TimingDialog above, including the capture-phase Escape
+ * listener, because the canvas also listens for Escape to cancel a half-drawn wire, so
+ * without stopping the event here one press would both close this dialog and
+ * throw away an unrelated gesture underneath it.
+ *
+ * Cancel takes focus on open rather than the confirm button. The dialog exists
+ * because the action is hard to take back; the default answer should be the
+ * safe one, so a stray Enter closes it rather than emptying the canvas.
+ */
+function ConfirmDialog({ title, body, confirmLabel, onConfirm, onCancel }) {
+  const panelRef = useRef(null)
+
+  useEffect(() => {
+    // Focused through the panel rather than with a ref on the button itself:
+    // md's Button is a plain function component on React 18, so a `ref` prop
+    // would be dropped with a warning rather than reaching the DOM node.
+    panelRef.current?.querySelector('[data-autofocus]')?.focus()
+
+    const onKey = (event) => {
+      if (event.key !== 'Escape') return
+      event.stopPropagation()
+      onCancel()
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [onCancel])
+
+  return (
+    <div className={styles.dialogScrim} onMouseDown={onCancel}>
+      <div
+        ref={panelRef}
+        className={styles.confirmDialog}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="sandbox-confirm-title"
+        aria-describedby="sandbox-confirm-body"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <h2 id="sandbox-confirm-title" className={`${styles.dialogTitle} ${md.titleMedium}`}>
+          {title}
+        </h2>
+        <p id="sandbox-confirm-body" className={`${styles.confirmBody} ${md.bodyMedium}`}>
+          {body}
+        </p>
+        <div className={styles.confirmActions}>
+          <Button variant="text" data-autofocus onClick={onCancel}>Cancel</Button>
+          <Button variant="filled" className={styles.confirmDanger} onClick={onConfirm}>
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
