@@ -34,3 +34,27 @@ export function sortCourses(rows) {
   const rank = (c) => (RANK.has(c.id) ? RANK.get(c.id) : RANK.size)
   return [...rows].sort((a, b) => rank(a) - rank(b))
 }
+
+/**
+ * A readable name for a course id, without asking the database.
+ *
+ * Only ever used when `courses` is unreachable and no cached row is on hand
+ * (see cachedCourses() in src/lib/coursesApi.js): a course landing page still
+ * has to be titled something, and every id in this table is already a
+ * hyphenated version of its own display name. 'computer-science' →
+ * 'Computer Science'.
+ *
+ * Deliberately derived rather than a second hardcoded id → name map: a map
+ * would be one more thing to keep in step with `display_name`, and it would be
+ * wrong in a way nobody notices until the database is already down. This is
+ * approximate for a course whose display name is not its id (prod's
+ * 'computer-with-mathematics' is shown as "Mathematics with CS"), which is the
+ * right trade for a label that only appears mid-outage.
+ */
+export function fallbackCourseName(id) {
+  return String(id ?? '')
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}

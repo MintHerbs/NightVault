@@ -9,7 +9,7 @@ import PageShell from '../../components/layout/PageShell'
 import BackButton from '../../components/common/BackButton/BackButton'
 import Loading from '../../components/ui/Loading'
 import { useNotesRegistry } from '../../hooks/useNotesRegistry'
-import { listCourses } from '../../lib/coursesApi'
+import { listCourses, cachedCourses } from '../../lib/coursesApi'
 import {
   subfoldersForModule, filesForFolder, rootFilesForModule, segmentToSubfolder,
   authorsForFolder, authorsForModule, baseName,
@@ -81,7 +81,7 @@ function RowIcon({ kind }) {
 export default function NotesBrowserPage() {
   const navigate = useNavigate()
   const { courseId, moduleId, subfolder } = useParams()
-  const { modules: allModules, loading } = useNotesRegistry()
+  const { modules: allModules, loading, error: registryError, reload } = useNotesRegistry()
 
   // Course-scoped (T-077): a Subject belongs to exactly one course
   // (sidebar_modules.course_id), so the Subjects-level listing must filter to
@@ -105,7 +105,21 @@ export default function NotesBrowserPage() {
       .then((rows) => {
         if (!cancelled) setCourse(rows.find((c) => c.id === courseId && !c.hidden) ?? null)
       })
-      .catch(() => { if (!cancelled) setCourse(null) })
+      .catch(() => {
+        // Not `null`. A network error is not evidence that the course is
+        // absent, and answering "this course doesn't exist" to a reachability
+        // failure is how the whole browser used to disappear whenever Supabase
+        // did (owner report). It is an answer that is not merely unhelpful,
+        // it is wrong.
+        //
+        // The cached list still gets the final say on hidden courses; see the
+        // matching branch in CourseLandingPage.jsx for why. Anything else lands
+        // on `false`, meaning "unverified": the page opens, and the listing
+        // below reports the real problem instead.
+        if (cancelled) return
+        const cached = cachedCourses()
+        setCourse(cached ? (cached.find((c) => c.id === courseId && !c.hidden) ?? null) : false)
+      })
     return () => { cancelled = true }
   }, [courseId])
 
@@ -305,10 +319,20 @@ export default function NotesBrowserPage() {
   const toggleSort = (key) => setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }))
   const sortArrow = (key) => (sort.key !== key ? null : (sort.dir === 'asc' ? <ArrowUp size={12} weight="bold" /> : <ArrowDown size={12} weight="bold" />))
 
-  const notFound = Boolean(moduleId) && !loading && !activeModule
+  // The registry could not be read AND has no earlier result to fall back on.
+  // useNotesRegistry keeps the last good data across a failed refetch, so an
+  // error with modules still in hand is a stale listing, not a broken one, and
+  // is better left alone than interrupted.
+  const registryFailed = Boolean(registryError) && allModules.length === 0
+
+  // Checked before `notFound`, which is derived from an empty registry and so
+  // would otherwise report every subject as deleted during an outage.
+  const notFound = !registryFailed && Boolean(moduleId) && !loading && !activeModule
 
   // Unknown or hidden course: refuse the whole page rather than render an
   // empty Subjects list, which would imply the course exists but is bare.
+  // `false` is the third case (the course could not be checked at all) and
+  // must not land here; the listing reports that itself, below.
   if (course === null) {
     return (
       <PageShell variant="content">
@@ -394,6 +418,20 @@ export default function NotesBrowserPage() {
 
         {loading && level === 'subjects' ? (
           <div className={styles.emptyState}><Loading /></div>
+        ) : registryFailed ? (
+          /* The proper error message the owner asked for. It replaces two
+             lies this page used to tell when Supabase was unreachable:
+             "This course doesn't exist" (the course is fine) and "No subjects
+             yet" (there are plenty). Retry re-runs the same fetch in place, so
+             recovering from a blip costs a click rather than a reload. */
+          <div className={styles.errorState} role="alert">
+            <p className={styles.errorTitle}>Notes couldn&apos;t be loaded.</p>
+            <p className={styles.errorBody}>
+              The notes service isn&apos;t responding. Nothing has been lost; this is a
+              connection problem, not a missing folder.
+            </p>
+            <button className={styles.retryButton} onClick={reload}>Try again</button>
+          </div>
         ) : notFound ? (
           <div className={styles.emptyState}>This subject doesn't exist.</div>
         ) : view === 'list' ? (

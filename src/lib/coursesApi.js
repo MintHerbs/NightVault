@@ -42,7 +42,73 @@ export async function listCourses() {
     .select(COURSE_COLUMNS)
     .order('display_name', { ascending: true })
   if (error) throw new Error(error.message)
-  return sortCourses((data ?? []).map(toCourse))
+  const courses = sortCourses((data ?? []).map(toCourse))
+  writeCache(courses)
+  return courses
+}
+
+// ── Last-known course list ──────────────────────────────────────────────────
+//
+// `courses` is the one table the *whole* public site hangs off: the home grid,
+// every course landing page, and the notes browser all gate on it. So an
+// unreachable Supabase took away tools that need no database at all. The B+
+// Tree visualiser and everything beside it are pure client-side code, and they
+// vanished along with the row that merely names the course they sit under
+// (owner report).
+//
+// The fix is the same stale-while-revalidate shape useNotesRegistry already
+// uses for Subjects, moved to localStorage so it also survives a hard reload
+// mid-outage. A successful read always overwrites; the cache is only ever
+// *read* from a caller's catch branch, so it can never mask fresh data.
+//
+// It carries `hidden` with it deliberately. Hiding a course is an owner
+// decision that exists nowhere but this table, so a fallback that invented its
+// own list would quietly un-hide every hidden course for the length of an
+// outage. Serving back what this browser last legitimately saw cannot reveal
+// anything it was not already shown, and CACHE_TTL_MS bounds how long a course
+// hidden *during* an outage can linger.
+const CACHE_KEY = 'courses_cache_v1'
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
+
+function safeStorage() {
+  try {
+    return typeof window === 'undefined' ? null : window.localStorage
+  } catch {
+    // Safari in private mode, and any browser with storage disabled. Losing
+    // the cache costs a degraded outage, never a working page.
+    return null
+  }
+}
+
+function writeCache(courses) {
+  const storage = safeStorage()
+  if (!storage) return
+  try {
+    storage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), courses }))
+  } catch {
+    // Quota. Nothing here is worth failing a successful read over.
+  }
+}
+
+/**
+ * The last course list this browser successfully read, or null.
+ *
+ * For use in a `listCourses()` catch branch and nowhere else; a caller that
+ * reaches for this on the happy path is choosing stale data over fresh.
+ */
+export function cachedCourses() {
+  const storage = safeStorage()
+  if (!storage) return null
+  try {
+    const raw = storage.getItem(CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed?.courses)) return null
+    if (!(Date.now() - parsed.at < CACHE_TTL_MS)) return null
+    return parsed.courses
+  } catch {
+    return null
+  }
 }
 
 /** Row → the shape the app uses. `cover*` feed resolveCoverField()
