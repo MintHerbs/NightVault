@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 626 322" width="626" height="322" font-family="JetBrains Mono, ui-monospace, Menlo, Consolas, monospace" role="img" aria-label="Annotated Python code">
+  <rect width="626" height="322" fill="#0b0d17"/>
+  <text x="18" y="33" fill="#4b5563" font-size="12">1</text>
+  <text x="48.0" y="33" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">def</text>
+  <text x="84.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">binary_search</text>
+  <text x="201.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">(</text>
+  <text x="210.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">items</text>
+  <text x="255.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">,</text>
+  <text x="273.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">target</text>
+  <text x="327.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">)</text>
+  <text x="336.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">:</text>
+  <text x="18" y="59" fill="#4b5563" font-size="12">2</text>
+  <text x="84.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">low</text>
+  <text x="111.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">,</text>
+  <text x="129.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">high</text>
+  <text x="174.0" y="59" fill="#7FE7FF" font-size="15" xml:space="preserve">=</text>
+  <text x="192.0" y="59" fill="#FF5FA2" font-size="15" xml:space="preserve">0</text>
+  <text x="201.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">,</text>
+  <text x="219.0" y="59" fill="#FF5FA2" font-size="15" xml:space="preserve">len</text>
+  <text x="246.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">(</text>
+  <text x="255.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">items</text>
+  <text x="300.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">)</text>
+  <text x="318.0" y="59" fill="#7FE7FF" font-size="15" xml:space="preserve">-</text>
+  <text x="336.0" y="59" fill="#FF5FA2" font-size="15" xml:space="preserve">1</text>
+  <text x="18" y="85" fill="#4b5563" font-size="12">3</text>
+  <text x="84.0" y="85" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">while</text>
+  <text x="138.0" y="85" fill="#e8e8ea" font-size="15" xml:space="preserve">low</text>
+  <text x="174.0" y="85" fill="#7FE7FF" font-size="15" xml:space="preserve">&lt;=</text>
+  <text x="201.0" y="85" fill="#e8e8ea" font-size="15" xml:space="preserve">high</text>
+  <text x="237.0" y="85" fill="#e8e8ea" font-size="15" xml:space="preserve">:</text>
+  <text x="18" y="111" fill="#4b5563" font-size="12">4</text>
+  <text x="120.0" y="111" fill="#e8e8ea" font-size="15" xml:space="preserve">mid</text>
+  <text x="156.0" y="111" fill="#7FE7FF" font-size="15" xml:space="preserve">=</text>
+  <text x="174.0" y="111" fill="#e8e8ea" font-size="15" xml:space="preserve">(</text>
+  <text x="183.0" y="111" fill="#e8e8ea" font-size="15" xml:space="preserve">low</text>
+  <text x="219.0" y="111" fill="#7FE7FF" font-size="15" xml:space="preserve">+</text>
+  <text x="237.0" y="111" fill="#e8e8ea" font-size="15" xml:space="preserve">high</text>
+  <text x="273.0" y="111" fill="#e8e8ea" font-size="15" xml:space="preserve">)</text>
+  <text x="291.0" y="111" fill="#7FE7FF" font-size="15" xml:space="preserve">//</text>
+  <text x="318.0" y="111" fill="#FF5FA2" font-size="15" xml:space="preserve">2</text>
+  <text x="18" y="137" fill="#4b5563" font-size="12">5</text>
+  <text x="120.0" y="137" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">if</text>
+  <text x="147.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">items</text>
+  <text x="192.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">[</text>
+  <text x="201.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">mid</text>
+  <text x="228.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">]</text>
+  <text x="246.0" y="137" fill="#7FE7FF" font-size="15" xml:space="preserve">==</text>
+  <text x="273.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">target</text>
+  <text x="327.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">:</text>
+  <text x="18" y="163" fill="#4b5563" font-size="12">6</text>
+  <text x="156.0" y="163" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">return</text>
+  <text x="219.0" y="163" fill="#e8e8ea" font-size="15" xml:space="preserve">mid</text>
+  <text x="18" y="189" fill="#4b5563" font-size="12">7</text>
+  <text x="120.0" y="189" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">elif</text>
+  <text x="165.0" y="189" fill="#e8e8ea" font-size="15" xml:space="preserve">items</text>
+  <text x="210.0" y="189" fill="#e8e8ea" font-size="15" xml:space="preserve">[</text>
+  <text x="219.0" y="189" fill="#e8e8ea" font-size="15" xml:space="preserve">mid</text>
+  <text x="246.0" y="189" fill="#e8e8ea" font-size="15" xml:space="preserve">]</text>
+  <text x="264.0" y="189" fill="#7FE7FF" font-size="15" xml:space="preserve">&lt;</text>
+  <text x="282.0" y="189" fill="#e8e8ea" font-size="15" xml:space="preserve">target</text>
+  <text x="336.0" y="189" fill="#e8e8ea" font-size="15" xml:space="preserve">:</text>
+  <text x="18" y="215" fill="#4b5563" font-size="12">8</text>
+  <text x="156.0" y="215" fill="#e8e8ea" font-size="15" xml:space="preserve">low</text>
+  <text x="192.0" y="215" fill="#7FE7FF" font-size="15" xml:space="preserve">=</text>
+  <text x="210.0" y="215" fill="#e8e8ea" font-size="15" xml:space="preserve">mid</text>
+  <text x="246.0" y="215" fill="#7FE7FF" font-size="15" xml:space="preserve">+</text>
+  <text x="264.0" y="215" fill="#FF5FA2" font-size="15" xml:space="preserve">1</text>
+  <text x="18" y="241" fill="#4b5563" font-size="12">9</text>
+  <text x="120.0" y="241" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">else</text>
+  <text x="156.0" y="241" fill="#e8e8ea" font-size="15" xml:space="preserve">:</text>
+  <text x="18" y="267" fill="#4b5563" font-size="12">10</text>
+  <text x="156.0" y="267" fill="#e8e8ea" font-size="15" xml:space="preserve">high</text>
+  <text x="201.0" y="267" fill="#7FE7FF" font-size="15" xml:space="preserve">=</text>
+  <text x="219.0" y="267" fill="#e8e8ea" font-size="15" xml:space="preserve">mid</text>
+  <text x="255.0" y="267" fill="#7FE7FF" font-size="15" xml:space="preserve">-</text>
+  <text x="273.0" y="267" fill="#FF5FA2" font-size="15" xml:space="preserve">1</text>
+  <text x="18" y="293" fill="#4b5563" font-size="12">11</text>
+  <text x="84.0" y="293" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">return</text>
+  <text x="147.0" y="293" fill="#7FE7FF" font-size="15" xml:space="preserve">-</text>
+  <text x="156.0" y="293" fill="#FF5FA2" font-size="15" xml:space="preserve">1</text>
+  <path d="M 367 100 H 359 V 278 H 367" fill="none" stroke="#9CA3AF" stroke-width="1.6" stroke-linejoin="round"/>
+  <rect x="372" y="176.0" width="108.4" height="26" rx="7" fill="rgba(156,163,175,0.13)" stroke="#9CA3AF" stroke-width="1"/>
+  <text x="380.0" y="194.0" fill="#9CA3AF" font-size="13" font-weight="700" xml:space="preserve">O(1) / pass</text>
+  <path d="M 502.4 74 H 494.4 V 278 H 502.4" fill="none" stroke="#A78BFA" stroke-width="1.6" stroke-linejoin="round"/>
+  <rect x="507.4" y="163.0" width="100.0" height="26" rx="7" fill="rgba(167,139,250,0.13)" stroke="#A78BFA" stroke-width="1"/>
+  <text x="515.4" y="181.0" fill="#A78BFA" font-size="13" font-weight="700" xml:space="preserve">= O(log n)</text>
+</svg>

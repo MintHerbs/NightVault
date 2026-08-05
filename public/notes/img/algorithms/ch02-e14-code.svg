@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 582 192" width="582" height="192" font-family="JetBrains Mono, ui-monospace, Menlo, Consolas, monospace" role="img" aria-label="Annotated Python code">
+  <rect width="582" height="192" fill="#0b0d17"/>
+  <text x="18" y="33" fill="#4b5563" font-size="12">1</text>
+  <text x="48.0" y="33" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">def</text>
+  <text x="84.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">common</text>
+  <text x="138.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">(</text>
+  <text x="147.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">list_a</text>
+  <text x="201.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">,</text>
+  <text x="219.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">list_b</text>
+  <text x="273.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">)</text>
+  <text x="282.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">:</text>
+  <text x="18" y="59" fill="#4b5563" font-size="12">2</text>
+  <text x="84.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">result</text>
+  <text x="147.0" y="59" fill="#7FE7FF" font-size="15" xml:space="preserve">=</text>
+  <text x="165.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">[</text>
+  <text x="174.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">]</text>
+  <text x="18" y="85" fill="#4b5563" font-size="12">3</text>
+  <text x="84.0" y="85" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">for</text>
+  <text x="120.0" y="85" fill="#e8e8ea" font-size="15" xml:space="preserve">x</text>
+  <text x="138.0" y="85" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">in</text>
+  <text x="165.0" y="85" fill="#e8e8ea" font-size="15" xml:space="preserve">list_a</text>
+  <text x="219.0" y="85" fill="#e8e8ea" font-size="15" xml:space="preserve">:</text>
+  <text x="18" y="111" fill="#4b5563" font-size="12">4</text>
+  <text x="120.0" y="111" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">if</text>
+  <text x="147.0" y="111" fill="#e8e8ea" font-size="15" xml:space="preserve">x</text>
+  <text x="165.0" y="111" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">in</text>
+  <text x="192.0" y="111" fill="#e8e8ea" font-size="15" xml:space="preserve">list_b</text>
+  <text x="246.0" y="111" fill="#e8e8ea" font-size="15" xml:space="preserve">:</text>
+  <text x="18" y="137" fill="#4b5563" font-size="12">5</text>
+  <text x="156.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">result</text>
+  <text x="210.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">.</text>
+  <text x="219.0" y="137" fill="#FF5FA2" font-size="15" xml:space="preserve">append</text>
+  <text x="273.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">(</text>
+  <text x="282.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">x</text>
+  <text x="291.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">)</text>
+  <text x="18" y="163" fill="#4b5563" font-size="12">6</text>
+  <text x="84.0" y="163" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">return</text>
+  <text x="147.0" y="163" fill="#e8e8ea" font-size="15" xml:space="preserve">result</text>
+  <path d="M 322 100 H 314 V 122 H 322" fill="none" stroke="#22C55E" stroke-width="1.6" stroke-linejoin="round"/>
+  <rect x="327" y="98.0" width="49.6" height="26" rx="7" fill="rgba(34,197,94,0.13)" stroke="#22C55E" stroke-width="1"/>
+  <text x="335.0" y="116.0" fill="#22C55E" font-size="13" font-weight="700" xml:space="preserve">O(m)</text>
+  <path d="M 398.6 74 H 390.6 V 148 H 398.6" fill="none" stroke="#22C55E" stroke-width="1.6" stroke-linejoin="round"/>
+  <rect x="403.6" y="98.0" width="49.6" height="26" rx="7" fill="rgba(34,197,94,0.13)" stroke="#22C55E" stroke-width="1"/>
+  <text x="411.6" y="116.0" fill="#22C55E" font-size="13" font-weight="700" xml:space="preserve">O(n)</text>
+  <path d="M 475.20000000000005 22 H 467.20000000000005 V 174 H 475.20000000000005" fill="none" stroke="#F97316" stroke-width="1.6" stroke-linejoin="round"/>
+  <rect x="480.20000000000005" y="85.0" width="83.2" height="26" rx="7" fill="rgba(249,115,22,0.13)" stroke="#F97316" stroke-width="1"/>
+  <text x="488.2" y="103.0" fill="#F97316" font-size="13" font-weight="700" xml:space="preserve">= O(n·m)</text>
+</svg>
