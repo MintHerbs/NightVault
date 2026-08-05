@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 545 192" width="545" height="192" font-family="JetBrains Mono, ui-monospace, Menlo, Consolas, monospace" role="img" aria-label="Annotated Python code">
+  <rect width="545" height="192" fill="#0b0d17"/>
+  <text x="18" y="33" fill="#4b5563" font-size="12">1</text>
+  <text x="48.0" y="33" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">for</text>
+  <text x="84.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">i</text>
+  <text x="102.0" y="33" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">in</text>
+  <text x="129.0" y="33" fill="#FF5FA2" font-size="15" xml:space="preserve">range</text>
+  <text x="174.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">(</text>
+  <text x="183.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">n</text>
+  <text x="192.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">)</text>
+  <text x="201.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">:</text>
+  <text x="18" y="59" fill="#4b5563" font-size="12">2</text>
+  <text x="84.0" y="59" fill="#FF5FA2" font-size="15" xml:space="preserve">print</text>
+  <text x="129.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">(</text>
+  <text x="138.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">i</text>
+  <text x="147.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">)</text>
+  <text x="18" y="85" fill="#4b5563" font-size="12">3</text>
+  <text x="18" y="111" fill="#4b5563" font-size="12">4</text>
+  <text x="48.0" y="111" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">for</text>
+  <text x="84.0" y="111" fill="#e8e8ea" font-size="15" xml:space="preserve">i</text>
+  <text x="102.0" y="111" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">in</text>
+  <text x="129.0" y="111" fill="#FF5FA2" font-size="15" xml:space="preserve">range</text>
+  <text x="174.0" y="111" fill="#e8e8ea" font-size="15" xml:space="preserve">(</text>
+  <text x="183.0" y="111" fill="#e8e8ea" font-size="15" xml:space="preserve">n</text>
+  <text x="192.0" y="111" fill="#e8e8ea" font-size="15" xml:space="preserve">)</text>
+  <text x="201.0" y="111" fill="#e8e8ea" font-size="15" xml:space="preserve">:</text>
+  <text x="18" y="137" fill="#4b5563" font-size="12">5</text>
+  <text x="84.0" y="137" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">for</text>
+  <text x="120.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">j</text>
+  <text x="138.0" y="137" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">in</text>
+  <text x="165.0" y="137" fill="#FF5FA2" font-size="15" xml:space="preserve">range</text>
+  <text x="210.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">(</text>
+  <text x="219.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">n</text>
+  <text x="228.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">)</text>
+  <text x="237.0" y="137" fill="#e8e8ea" font-size="15" xml:space="preserve">:</text>
+  <text x="18" y="163" fill="#4b5563" font-size="12">6</text>
+  <text x="120.0" y="163" fill="#FF5FA2" font-size="15" xml:space="preserve">print</text>
+  <text x="165.0" y="163" fill="#e8e8ea" font-size="15" xml:space="preserve">(</text>
+  <text x="174.0" y="163" fill="#e8e8ea" font-size="15" xml:space="preserve">i</text>
+  <text x="183.0" y="163" fill="#e8e8ea" font-size="15" xml:space="preserve">,</text>
+  <text x="201.0" y="163" fill="#e8e8ea" font-size="15" xml:space="preserve">j</text>
+  <text x="210.0" y="163" fill="#e8e8ea" font-size="15" xml:space="preserve">)</text>
+  <path d="M 268 22 H 260 V 70 H 268" fill="none" stroke="#22C55E" stroke-width="1.6" stroke-linejoin="round"/>
+  <rect x="273" y="33.0" width="49.6" height="26" rx="7" fill="rgba(34,197,94,0.13)" stroke="#22C55E" stroke-width="1"/>
+  <text x="281.0" y="51.0" fill="#22C55E" font-size="13" font-weight="700" xml:space="preserve">O(n)</text>
+  <path d="M 268 126 H 260 V 174 H 268" fill="none" stroke="#22C55E" stroke-width="1.6" stroke-linejoin="round"/>
+  <rect x="273" y="137.0" width="49.6" height="26" rx="7" fill="rgba(34,197,94,0.13)" stroke="#22C55E" stroke-width="1"/>
+  <text x="281.0" y="155.0" fill="#22C55E" font-size="13" font-weight="700" xml:space="preserve">O(n)</text>
+  <path d="M 344.6 100 H 336.6 V 174 H 344.6" fill="none" stroke="#F97316" stroke-width="1.6" stroke-linejoin="round"/>
+  <rect x="349.6" y="124.0" width="74.8" height="26" rx="7" fill="rgba(249,115,22,0.13)" stroke="#F97316" stroke-width="1"/>
+  <text x="357.6" y="142.0" fill="#F97316" font-size="13" font-weight="700" xml:space="preserve">= O(n²)</text>
+  <path d="M 446.40000000000003 22 H 438.40000000000003 V 174 H 446.40000000000003" fill="none" stroke="#F97316" stroke-width="1.6" stroke-linejoin="round"/>
+  <rect x="451.40000000000003" y="85.0" width="74.8" height="26" rx="7" fill="rgba(249,115,22,0.13)" stroke="#F97316" stroke-width="1"/>
+  <text x="459.4" y="103.0" fill="#F97316" font-size="13" font-weight="700" xml:space="preserve">= O(n²)</text>
+</svg>

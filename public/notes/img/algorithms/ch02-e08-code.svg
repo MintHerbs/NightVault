@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 386 140" width="386" height="140" font-family="JetBrains Mono, ui-monospace, Menlo, Consolas, monospace" role="img" aria-label="Annotated Python code">
+  <rect width="386" height="140" fill="#0b0d17"/>
+  <text x="18" y="33" fill="#4b5563" font-size="12">1</text>
+  <text x="48.0" y="33" fill="#e8e8ea" font-size="15" xml:space="preserve">i</text>
+  <text x="66.0" y="33" fill="#7FE7FF" font-size="15" xml:space="preserve">=</text>
+  <text x="84.0" y="33" fill="#FF5FA2" font-size="15" xml:space="preserve">1</text>
+  <text x="18" y="59" fill="#4b5563" font-size="12">2</text>
+  <text x="48.0" y="59" fill="#5B8CFF" font-size="15" font-weight="600" xml:space="preserve">while</text>
+  <text x="102.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">i</text>
+  <text x="120.0" y="59" fill="#7FE7FF" font-size="15" xml:space="preserve">&lt;</text>
+  <text x="138.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">n</text>
+  <text x="147.0" y="59" fill="#e8e8ea" font-size="15" xml:space="preserve">:</text>
+  <text x="18" y="85" fill="#4b5563" font-size="12">3</text>
+  <text x="84.0" y="85" fill="#FF5FA2" font-size="15" xml:space="preserve">print</text>
+  <text x="129.0" y="85" fill="#e8e8ea" font-size="15" xml:space="preserve">(</text>
+  <text x="138.0" y="85" fill="#e8e8ea" font-size="15" xml:space="preserve">i</text>
+  <text x="147.0" y="85" fill="#e8e8ea" font-size="15" xml:space="preserve">)</text>
+  <text x="18" y="111" fill="#4b5563" font-size="12">4</text>
+  <text x="84.0" y="111" fill="#e8e8ea" font-size="15" xml:space="preserve">i</text>
+  <text x="102.0" y="111" fill="#7FE7FF" font-size="15" xml:space="preserve">*=</text>
+  <text x="129.0" y="111" fill="#FF5FA2" font-size="15" xml:space="preserve">2</text>
+  <path d="M 178 100 H 170 V 122 H 178" fill="none" stroke="#9CA3AF" stroke-width="1.6" stroke-linejoin="round"/>
+  <rect x="183" y="98.0" width="74.8" height="26" rx="7" fill="rgba(156,163,175,0.13)" stroke="#9CA3AF" stroke-width="1"/>
+  <text x="191.0" y="116.0" fill="#9CA3AF" font-size="13" font-weight="700" xml:space="preserve">doubles</text>
+  <path d="M 279.8 48 H 271.8 V 122 H 279.8" fill="none" stroke="#A78BFA" stroke-width="1.6" stroke-linejoin="round"/>
+  <rect x="284.8" y="72.0" width="83.2" height="26" rx="7" fill="rgba(167,139,250,0.13)" stroke="#A78BFA" stroke-width="1"/>
+  <text x="292.8" y="90.0" fill="#A78BFA" font-size="13" font-weight="700" xml:space="preserve">O(log n)</text>
+</svg>

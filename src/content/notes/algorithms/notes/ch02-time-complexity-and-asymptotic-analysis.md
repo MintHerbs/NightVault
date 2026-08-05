@@ -53,7 +53,7 @@ def search(items, target):
 | Average | target is somewhere in the middle | $O(n)$ |
 | Worst | target is last, or absent | $O(n)$ |
 
-Unless a question says otherwise, :color[**give the worst case**]{hex="#ffa31a"}. It is the guarantee, and the average case usually needs assumptions about the data that you were not given.
+Unless a question says otherwise, **:color[give the worst case]{hex="#ffa31a"}**. It is the guarantee, and the average case usually needs assumptions about the data that you were not given.
 
 ## Five rules for reading code
 
@@ -85,24 +85,26 @@ This table covers most of what an exam can put in front of you.
 
 | Pattern | Iterations | Complexity |
 | --- | --- | --- |
-| `for i in range(n)` | $n$ | $O(n)$ |
-| `for i in range(0, n, 2)` | $n/2$ | $O(n)$ |
-| `for i in range(0, n, k)` | $n/k$ | $O(n)$ |
-| `for i in range(1000)` | 1000 | $O(1)$ |
-| `while i < n: i *= 2` | $\log_2 n$ | $O(\log n)$ |
-| `while i < n: i *= 3` | $\log_3 n$ | $O(\log n)$ |
-| `while i > 1: i //= 2` | $\log_2 n$ | $O(\log n)$ |
-| `while i * i < n: i += 1` | $\sqrt{n}$ | $O(\sqrt{n})$ |
-| `for i in range(n)` + `for j in range(n)` (nested) | $n \times n$ | $O(n^2)$ |
-| `for i in range(n)` + `for j in range(i)` | $\frac{n(n-1)}{2}$ | $O(n^2)$ |
-| `for i in range(n)` + `for j in range(100)` | $100n$ | $O(n)$ |
-| `for i in range(n)` + `while j < n: j *= 2` (j reset inside) | $n \log n$ | $O(n \log n)$ |
-| three nested `range(n)` loops | $n^3$ | $O(n^3)$ |
+| `for i in range(n)` | $n$ | :color[O(n)]{hex="#22C55E"} |
+| `for i in range(0, n, 2)` | $n/2$ | :color[O(n)]{hex="#22C55E"} |
+| `for i in range(0, n, k)` | $n/k$ | :color[O(n)]{hex="#22C55E"} |
+| `for i in range(1000)` | 1000 | :color[O(1)]{hex="#9CA3AF"} |
+| `while i < n: i *= 2` | $\log_2 n$ | :color[O(log n)]{hex="#A78BFA"} |
+| `while i < n: i *= 3` | $\log_3 n$ | :color[O(log n)]{hex="#A78BFA"} |
+| `while i > 1: i //= 2` | $\log_2 n$ | :color[O(log n)]{hex="#A78BFA"} |
+| `while i * i < n: i += 1` | $\sqrt{n}$ | :color[O(√n)]{hex="#2DD4BF"} |
+| `for i in range(n)` + `for j in range(n)` (nested) | $n \times n$ | :color[O(n²)]{hex="#F97316"} |
+| `for i in range(n)` + `for j in range(i)` | $\frac{n(n-1)}{2}$ | :color[O(n²)]{hex="#F97316"} |
+| `for i in range(n)` + `for j in range(100)` | $100n$ | :color[O(n)]{hex="#22C55E"} |
+| `for i in range(n)` + `while j < n: j *= 2` (j reset inside) | $n \log n$ | :color[O(n log n)]{hex="#EAB308"} |
+| three nested `range(n)` loops | $n^3$ | :color[O(n³)]{hex="#EF4444"} |
 
 Two facts explain the whole table:
 
-- A loop that **adds** a fixed amount to the counter is :color[linear]{hex="#3B82F6"} in the range it covers.
-- A loop that **multiplies or divides** the counter is :color[logarithmic]{hex="#22C55E"}, because the counter has to be doubled $\log_2 n$ times to travel from 1 to $n$.
+- A loop that **adds** a fixed amount to the counter is **:color[linear]{hex="#22C55E"}** in the range it covers.
+- A loop that **multiplies or divides** the counter is **:color[logarithmic]{hex="#A78BFA"}**, because the counter has to be doubled $\log_2 n$ times to travel from 1 to $n$.
+
+The colours above are not decoration: the same hue means the same complexity everywhere in this chapter. The scale is set out just before the worked examples.
 
 ## Python operations are not all $O(1)$
 
@@ -114,8 +116,8 @@ This is where Python analysis differs from pseudocode analysis. A single innocen
 | `len(lst)` | $O(1)$ | the length is stored |
 | `lst.append(x)` | $O(1)$ amortised | occasionally has to resize |
 | `lst.pop()` | $O(1)$ | from the end |
-| `lst.pop(0)` / `lst.insert(0, x)` | :color[$O(n)$]{hex="#EF4444"} | everything shifts |
-| `x in lst` | :color[$O(n)$]{hex="#EF4444"} | scans the list |
+| `lst.pop(0)` / `lst.insert(0, x)` | :color[O(n)]{hex="#EF4444"} | everything shifts |
+| `x in lst` | :color[O(n)]{hex="#EF4444"} | scans the list |
 | `x in set` / `x in dict` | $O(1)$ average | hashed |
 | `lst[a:b]` | $O(b - a)$ | a slice copies |
 | `lst.sort()` / `sorted(lst)` | $O(n \log n)$ | Timsort |
@@ -147,71 +149,65 @@ def doubled(items):        # O(n) extra space
 
 ---
 
+## How to read the worked examples
+
+Every example below is the code with **brackets down the right hand side**, which is exactly how you should annotate a listing in an exam.
+
+> **Read them from the inside out.** The bracket closest to the code is the innermost block, and each bracket further right encloses the ones before it. A label starting with `=` is the conclusion drawn from the brackets inside it.
+>
+> So three nested brackets reading **:color[O(n)]{hex="#22C55E"}** then **:color[= O(n²)]{hex="#F97316"}** then **:color[= O(n³)]{hex="#EF4444"}** says: the innermost loop is linear, wrapping it in a second loop squares that, wrapping it in a third cubes it.
+
+**The colour is the answer.** Cool means fast, warm means slow, and it is the same scale as the growth rate table in Chapter 1:
+
+| Bracket label | Tier | Where it comes from |
+| --- | --- | --- |
+| **:color[O(1)]{hex="#9CA3AF"}** | constant | no loop, or a loop with a fixed bound |
+| **:color[O(log n)]{hex="#A78BFA"}** | logarithmic | a counter that multiplies or divides |
+| **:color[O(√n)]{hex="#2DD4BF"}** | root | a counter tested against $i \times i$ |
+| **:color[O(n)]{hex="#22C55E"}** | linear | one pass over the input |
+| **:color[O(n log n)]{hex="#EAB308"}** | log linear | a linear loop wrapping a logarithmic one, or a sort |
+| **:color[O(n²)]{hex="#F97316"}** | quadratic | two nested passes |
+| **:color[O(n³)]{hex="#EF4444"}** | cubic | three nested passes |
+
+The highlighted answer under each example uses the same scale, so a :mark[**quadratic**]{hex="#5C3A1A"} answer is highlighted in the same orange as its bracket. Inside the diagrams the code itself keeps the site's usual syntax colours, so only the bracket labels carry complexity meaning.
+
+---
+
 # Worked examples
 
 ## Example 1: no loops
 
-```python
-def area(w, h):
-    a = w * h
-    return a
-```
+![Annotated code: a constant time function, bracketed as O(1)](/notes/img/algorithms/ch02-e01-code.svg)
 
-Two operations, neither depends on the input size. :mark[**$O(1)$**]{hex="#204A2E"}
+Two operations, neither depends on the input size. :mark[**$O(1)$**]{hex="#3A3A3E"}
 
 ## Example 2: one loop
 
-```python
-def total(items):
-    s = 0                 # 1
-    for x in items:       # n iterations
-        s += x            # 1 per iteration
-    return s              # 1
-```
+![Annotated code: a single loop, bracketed as O(n)](/notes/img/algorithms/ch02-e02-code.svg)
 
 $T(n) = 1 + n + 1 = n + 2$. :mark[**$O(n)$**]{hex="#204A2E"}
 
 ## Example 3: two loops one after the other
 
-```python
-for i in range(n):        # n
-    print(i)
-for j in range(n):        # n
-    print(j)
-```
+![Annotated code: two sequential loops, each O(n), together O(n)](/notes/img/algorithms/ch02-e03-code.svg)
 
 $T(n) = n + n = 2n$. Sequence adds, then the constant 2 is dropped. :mark[**$O(n)$**]{hex="#204A2E"}
 
 ## Example 4: a loop next to a nested loop
 
-```python
-for i in range(n):            # n
-    print(i)
+![Annotated code: a loop beside a nested loop, together O(n squared)](/notes/img/algorithms/ch02-e04-code.svg)
 
-for i in range(n):            # n
-    for j in range(n):        # x n
-        print(i, j)
-```
-
-$T(n) = n + n^2$. Keep the highest order term. :mark[**$O(n^2)$**]{hex="#204A2E"}
+$T(n) = n + n^2$. Keep the highest order term. :mark[**$O(n^2)$**]{hex="#5C3A1A"}
 
 ## Example 5: nested loops
 
-```python
-for i in range(n):
-    for j in range(n):
-        print(i, j)
-```
+![Annotated code: two nested loops, O(n) inside O(n), together O(n squared)](/notes/img/algorithms/ch02-e05-code.svg)
 
-The inner loop runs $n$ times for each of the $n$ outer iterations. $T(n) = n \times n$. :mark[**$O(n^2)$**]{hex="#204A2E"}
+The inner loop runs $n$ times for each of the $n$ outer iterations. $T(n) = n \times n$. :mark[**$O(n^2)$**]{hex="#5C3A1A"}
 
 ## Example 6: triangular nested loop
 
-```python
-for i in range(n):
-    for j in range(i):
-        print(i, j)
-```
+![Annotated code: a triangular nested loop, together O(n squared)](/notes/img/algorithms/ch02-e06-code.svg)
 
 The inner loop runs $0, 1, 2, \dots, n-1$ times:
 
@@ -219,91 +215,55 @@ $$
 T(n) = 0 + 1 + 2 + \dots + (n-1) = \frac{n(n-1)}{2} = \frac{n^2}{2} - \frac{n}{2}
 $$
 
-Half of $n^2$ is still $n^2$ once constants go. :mark[**$O(n^2)$**]{hex="#204A2E"}
+Half of $n^2$ is still $n^2$ once constants go. :mark[**$O(n^2)$**]{hex="#5C3A1A"}
 
 > A nested loop is not automatically $O(n^2)$, and a triangular one is not automatically better. Count first, simplify last.
 
 ## Example 7: inner loop with a fixed bound
 
-```python
-for i in range(n):
-    for j in range(100):
-        print(i, j)
-```
+![Annotated code: a nested loop with a fixed bound, together O(n)](/notes/img/algorithms/ch02-e07-code.svg)
 
 $T(n) = 100n$. The inner loop does not depend on $n$, so it is a constant factor. :mark[**$O(n)$**]{hex="#204A2E"}
 
 ## Example 8: the counter doubles
 
-```python
-i = 1
-while i < n:
-    print(i)
-    i *= 2
-```
+![Annotated code: a doubling while loop, O(log n)](/notes/img/algorithms/ch02-e08-code.svg)
 
-$i$ takes the values $1, 2, 4, 8, \dots$ Stop when $2^k \ge n$, so $k = \log_2 n$. :mark[**$O(\log n)$**]{hex="#204A2E"}
+$i$ takes the values $1, 2, 4, 8, \dots$ Stop when $2^k \ge n$, so $k = \log_2 n$. :mark[**$O(\log n)$**]{hex="#3B2A5E"}
 
 ## Example 9: the counter halves
 
-```python
-i = n
-while i > 1:
-    print(i)
-    i //= 2
-```
+![Annotated code: a halving while loop, O(log n)](/notes/img/algorithms/ch02-e09-code.svg)
 
-$n \to n/2 \to n/4 \to \dots \to 1$ takes $\log_2 n$ steps. :mark[**$O(\log n)$**]{hex="#204A2E"}
+$n \to n/2 \to n/4 \to \dots \to 1$ takes $\log_2 n$ steps. :mark[**$O(\log n)$**]{hex="#3B2A5E"}
 
 Halving and doubling are the same count read in opposite directions.
 
 ## Example 10: a linear loop wrapping a logarithmic one
 
-```python
-for i in range(n):          # n
-    j = 1
-    while j < n:            # log n, and j restarts every time
-        j *= 2
-```
+![Annotated code: a logarithmic loop inside a linear loop, O(n log n)](/notes/img/algorithms/ch02-e10-code.svg)
 
-$T(n) = n \times \log_2 n$. :mark[**$O(n \log n)$**]{hex="#204A2E"}
+$T(n) = n \times \log_2 n$. :mark[**$O(n \log n)$**]{hex="#565426"}
 
 ## Example 11: the trap where the counter is not reset
 
-```python
-i = 0
-j = 0
-while i < n:
-    while j < n:
-        j += 1
-    i += 1
-```
+![Annotated code: a nested while whose counter is never reset, O(n)](/notes/img/algorithms/ch02-e11-code.svg)
 
 It *looks* nested, but `j` is never reset. The inner `while` runs $n$ times in total across the whole program, not $n$ times per outer iteration.
 
 $T(n) = n + n = 2n$. :mark[**$O(n)$**]{hex="#204A2E"}
 
-> :color[**Always ask where the inner counter is initialised.**]{hex="#EF4444"} Inside the outer loop means multiply. Outside means add.
+> **:color[Always ask where the inner counter is initialised.]{hex="#EF4444"}** Inside the outer loop means multiply. Outside means add.
 
 ## Example 12: the counter squared against $n$
 
-```python
-i = 1
-while i * i < n:
-    print(i)
-    i += 1
-```
+![Annotated code: a loop testing i squared against n, O(square root of n)](/notes/img/algorithms/ch02-e12-code.svg)
 
-The loop stops when $i > \sqrt{n}$. :mark[**$O(\sqrt{n})$**]{hex="#204A2E"}
+The loop stops when $i > \sqrt{n}$. :mark[**$O(\sqrt{n})$**]{hex="#1B4A46"}
 
 ## Example 13: two different inputs
 
-```python
-for x in list_a:       # n
-    print(x)
-for y in list_b:       # m
-    print(y)
-```
+![Annotated code: two loops over two different inputs, O(n + m)](/notes/img/algorithms/ch02-e13-code.svg)
 
 :mark[**$O(n + m)$**]{hex="#204A2E"}, and nested it would be $O(n \times m)$.
 
@@ -311,82 +271,45 @@ Writing $O(n^2)$ here is wrong: `list_b` could hold 3 items or 3 million, and no
 
 ## Example 14: the hidden loop
 
-```python
-def common(list_a, list_b):
-    result = []
-    for x in list_a:            # n iterations
-        if x in list_b:         # each test scans list_b: m
-            result.append(x)
-    return result
-```
+![Annotated code: a list membership test inside a loop, O(n times m)](/notes/img/algorithms/ch02-e14-code.svg)
 
-$T = n \times m$. :mark[**$O(n \times m)$**]{hex="#204A2E"}, which is $O(n^2)$ when the two lists have similar size.
+$T = n \times m$. :mark[**$O(n \times m)$**]{hex="#5C3A1A"}, which is $O(n^2)$ when the two lists have similar size.
 
 The fix is one line:
 
-```python the same function, O(n + m)
-def common(list_a, list_b):
-    lookup = set(list_b)         # O(m), built once
-    return [x for x in list_a if x in lookup]   # O(n) tests, O(1) each
-```
+![Annotated code: the same function using a set, O(n + m)](/notes/img/algorithms/ch02-e14-fixed-code.svg)
 
 :mark[**$O(n + m)$.**]{hex="#204A2E"} Same output, and on two lists of 10 000 items it is about 10 000 times less work.
 
 ## Example 15: building a string
 
-```python
-s = ""
-for word in words:          # n iterations
-    s += word               # each += copies the whole string so far
-```
+![Annotated code: string concatenation in a loop, O(n squared)](/notes/img/algorithms/ch02-e15-code.svg)
 
-Copy costs $1 + 2 + 3 + \dots + n$, giving $\frac{n(n+1)}{2}$. :mark[**$O(n^2)$**]{hex="#204A2E"}
+Copy costs $1 + 2 + 3 + \dots + n$, giving $\frac{n(n+1)}{2}$. :mark[**$O(n^2)$**]{hex="#5C3A1A"}
 
-```python the same thing, O(n)
-s = "".join(words)
-```
+![Annotated code: the same thing with join, O(n)](/notes/img/algorithms/ch02-e15-fixed-code.svg)
 
 :mark[**$O(n)$**]{hex="#204A2E"} Strings are immutable, so `+=` in a loop rebuilds the string every time. `join` walks the list once.
 
 ## Example 16: a sort inside the function
 
-```python
-def second_largest(items):
-    items = sorted(items)     # O(n log n)
-    return items[-2]          # O(1)
-```
+![Annotated code: a sort inside a function, O(n log n)](/notes/img/algorithms/ch02-e16-code.svg)
 
-$T(n) = n \log n + 1$. :mark[**$O(n \log n)$**]{hex="#204A2E"}
+$T(n) = n \log n + 1$. :mark[**$O(n \log n)$**]{hex="#565426"}
 
 The sort dominates, and it is the most commonly missed line in an exam. A single pass would have solved this in $O(n)$.
 
 ## Example 17: binary search
 
-```python
-def binary_search(items, target):
-    low, high = 0, len(items) - 1
-    while low <= high:
-        mid = (low + high) // 2
-        if items[mid] == target:
-            return mid
-        elif items[mid] < target:
-            low = mid + 1
-        else:
-            high = mid - 1
-    return -1
-```
+![Annotated code: binary search, O(log n)](/notes/img/algorithms/ch02-e17-code.svg)
 
-Each iteration halves the search space: $n \to n/2 \to n/4 \to \dots \to 1$. :mark[**$O(\log n)$**]{hex="#204A2E"}
+Each iteration halves the search space: $n \to n/2 \to n/4 \to \dots \to 1$. :mark[**$O(\log n)$**]{hex="#3B2A5E"}
 
 Best case $O(1)$ if the middle element is the target on the first try.
 
 ## Example 18: nested loop with a moving start
 
-```python
-for i in range(n):
-    for j in range(i, n):
-        print(i, j)
-```
+![Annotated code: a nested loop with a moving start, O(n squared)](/notes/img/algorithms/ch02-e18-code.svg)
 
 Inner counts are $n, n-1, n-2, \dots, 1$:
 
@@ -394,44 +317,25 @@ $$
 T(n) = \frac{n(n+1)}{2}
 $$
 
-:mark[**$O(n^2)$**]{hex="#204A2E"}
+:mark[**$O(n^2)$**]{hex="#5C3A1A"}
 
 ## Example 19: matrix multiplication
 
-```python
-for i in range(n):
-    for j in range(n):
-        total = 0
-        for k in range(n):
-            total += a[i][k] * b[k][j]
-        c[i][j] = total
-```
+![Annotated code: three nested loops, O(n cubed)](/notes/img/algorithms/ch02-e19-code.svg)
 
-Three nested loops each running $n$ times. :mark[**$O(n^3)$**]{hex="#204A2E"}, with $O(n^2)$ space for the result.
+Three nested loops each running $n$ times. :mark[**$O(n^3)$**]{hex="#5C2323"}, with $O(n^2)$ space for the result.
 
 ## Example 20: halving inside a linear loop
 
-```python
-for i in range(n):          # n
-    j = i
-    while j > 0:            # log i, at most log n
-        j //= 2
-```
+![Annotated code: a halving loop inside a linear loop, O(n log n)](/notes/img/algorithms/ch02-e20-code.svg)
 
-$T(n) \le n \log_2 n$. :mark[**$O(n \log n)$**]{hex="#204A2E"}
+$T(n) \le n \log_2 n$. :mark[**$O(n \log n)$**]{hex="#565426"}
 
 ## Example 21: exam favourite
 
-```python
-count = 0
-for i in range(n // 2, n):        # n/2 iterations
-    j = 1
-    while j <= n:                 # log n iterations
-        j *= 2
-        count += 1
-```
+![Annotated code: a half range loop wrapping a doubling loop, O(n log n)](/notes/img/algorithms/ch02-e21-code.svg)
 
-$T(n) = \dfrac{n}{2} \times \log_2 n$. :mark[**$O(n \log n)$**]{hex="#204A2E"}
+$T(n) = \dfrac{n}{2} \times \log_2 n$. :mark[**$O(n \log n)$**]{hex="#565426"}
 
 The $n/2$ is a constant factor, so it disappears. Only the *shape* of each loop matters.
 
@@ -453,7 +357,7 @@ def fib(n):
     return fib(n - 1) + fib(n - 2)
 ```
 
-Each call spawns two more. :mark[**$O(2^n)$**]{hex="#204A2E"}
+Each call spawns two more. :mark[**$O(2^n)$**]{hex="#5C2323"}
 
 Recursive costs are written as **recurrence relations**, $T(n) = T(n-1) + 1$ for the first and $T(n) = T(n-1) + T(n-2) + 1$ for the second. Solving those is Chapters 3 and 4.
 
