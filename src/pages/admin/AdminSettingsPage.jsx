@@ -136,11 +136,33 @@ function AdminSettingsContent() {
   const saveDisplayName = async () => {
     const trimmed = displayName.trim()
     if (!trimmed) { showToast('Display name cannot be empty', 'error'); return }
+    // Both read BEFORE the write, and kept separate on purpose.
+    //
+    // `cardWasTracking` mirrors 0053's trigger condition: it re-points the
+    // contributor card's name only when that name still matches the profile
+    // name the database currently holds. Evaluating it against
+    // savedDisplayName (not the editing buffer) is what keeps this optimistic
+    // update honest; a card whose name was deliberately set to something else
+    // is left alone in the database, so it must not appear to change here
+    // either, or the difference would only surface as a flicker on reload.
+    //
+    // `cardFieldUntouched` is a second, narrower question: the trigger writes
+    // the stored row, but the card form below has its own editing buffer. If
+    // someone has typed a new card name and not yet pressed "Save card",
+    // overwriting that buffer would silently discard their edit, so the
+    // visible field only follows along when it is still showing the saved
+    // value.
+    const cardWasTracking = Boolean(card) && card.name === savedDisplayName
+    const cardFieldUntouched = Boolean(card) && cardName === card.name
     setSavingName(true)
     try {
       await updateOwnProfile({ displayName: trimmed, avatarUrl })
       setDisplayName(trimmed)
       setSavedDisplayName(trimmed)
+      if (cardWasTracking) {
+        setCard((prev) => (prev ? { ...prev, name: trimmed } : prev))
+        if (cardFieldUntouched) setCardName(trimmed)
+      }
       showToast('Display name updated', 'success')
     } catch (err) {
       showToast(`Failed to update display name: ${err.message}`, 'error')
@@ -246,6 +268,10 @@ function AdminSettingsContent() {
               {savingName ? 'Saving…' : 'Save'}
             </button>
           </div>
+          <p className={styles.hint}>
+            Also renames your public team card, unless you have given that card
+            a name of its own.
+          </p>
         </Card>
 
         <Card title="Password" className={styles.card}>

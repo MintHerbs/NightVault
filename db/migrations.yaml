@@ -19,7 +19,7 @@
 # See db/README.md for how to apply migrations against a Supabase project.
 
 project: b-tree
-schema_version: 52
+schema_version: 53
 
 migrations:
   - id: "0001"
@@ -453,3 +453,11 @@ migrations:
     created: 2026-07-31
     applied_envs: ["prod"]
     related_issues: ["T-086"]
+
+  - id: "0053"
+    file: sql/0053_profile_name_syncs_contributor_card.sql
+    description: "T-106: renaming yourself in Settings now renames your public 'Meet the Team' card. admin_users.display_name (written by admin_update_own_profile, 0043) and contributor_cards.name were unconnected: AboutPage.jsx renders row.name and never reads admin_users, and T-072 only ever specified the card name as a DEFAULT for a card that does not exist yet (AdminSettingsPage.jsx seeds it via row?.name ?? display_name ?? username), never as something that follows a later rename. Companion to 0045, which syncs the opposite direction and the other column. Deliberately CONDITIONAL: the trigger re-points a card whose name still equals the old display_name (or, for cards seeded before display_name existed, the username), and leaves any other name alone. Unconditional mirroring was rejected because scripts/migrate-team-to-contributor-cards.mjs seeded the roster with formal full names ('Munazir Ramjhun') while display_name is free to be a short handle, so it would have overwritten a public page with login handles the first time anyone touched their profile; same principle 0045 states for photos. Guards on `new.display_name is not distinct from old.display_name` because `after update of display_name` fires whenever the column is in the SET list and the RPC assigns both columns on every call, so without it every profile-photo change would bump contributor_cards.updated_at through 0043's trigger; also refuses null/blank, which contributor_cards.name forbids and AboutPage.jsx's .charAt(0) fallback would render as a nameless card. No recursion: it writes only `name`, so 0045's trigger sees photo_url unchanged and writes nothing back. No backfill, unlike 0045's: `avatar_url is null` identified a genuine absence, whereas a name that already differs is ambiguous between stale and deliberate, so pre-existing divergence must be reconciled once by its owner in Settings (the header carries a query listing those rows). EXECUTE revoked from public, anon AND authenticated, not just PUBLIC (the grant gotcha noted against 0048/0051). Applied and behaviourally tested against local dev via docker exec psql (npm run db:migrate is still blocked by 0024's drift): verified the tracking rename propagates, a custom card name does not move, a card seeded from username picks up a first-ever display_name, an admin with no card does not error, blank names are refused, a write-spy trigger confirms the photo-only path issues no card write at all, and re-applying the file is clean. NOT yet applied to prod."
+    author: agent
+    created: 2026-08-06
+    applied_envs: ["dev"]
+    related_issues: ["T-106"]
