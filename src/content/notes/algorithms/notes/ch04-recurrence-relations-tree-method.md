@@ -94,9 +94,9 @@ Once you have the level costs, only their *trend* matters.
 
 | Level costs go | Series | Who dominates | Total |
 | --- | --- | --- | --- |
-| :color[**down**]{hex="#22C55E"} ($n, \frac n2, \frac n4 \dots$) | decreasing geometric | the **root** | $O(f(n))$ |
-| :color[**flat**]{hex="#3B82F6"} ($n, n, n \dots$) | constant | every level | $O(f(n) \times \text{height})$ |
-| :color[**up**]{hex="#EF4444"} ($n, 2n, 4n \dots$) | increasing geometric | the **leaves** | $O(n^{\log_b a})$ |
+| **:color[down]{hex="#22C55E"}** ($n, \frac n2, \frac n4 \dots$) | decreasing geometric | the **root** | $O(f(n))$ |
+| **:color[flat]{hex="#3B82F6"}** ($n, n, n \dots$) | constant | every level | $O(f(n) \times \text{height})$ |
+| **:color[up]{hex="#EF4444"}** ($n, 2n, 4n \dots$) | increasing geometric | the **leaves** | $O(n^{\log_b a})$ |
 
 The two geometric sums you will keep writing:
 
@@ -1306,7 +1306,7 @@ $$
 \text{level } 2: \; \frac{n}{16} + \frac n8 + \frac n8 + \frac n4 = \frac{n + 2n + 2n + 4n}{16} = \frac{9n}{16} = \left(\frac34\right)^2 n
 $$
 
-The pattern: the children's sizes total $\frac14 + \frac12 = \frac34$ of the parent, so :color[**each level costs $\frac34$ of the level above**]{hex="#22C55E"}:
+The pattern: the children's sizes total $\frac14 + \frac12 = \frac34$ of the parent, so **:color[each level costs 3/4 of the level above]{hex="#22C55E"}**:
 
 $$
 \text{level } i: \; \left(\frac34\right)^i n
@@ -1346,7 +1346,7 @@ $$
 \text{level } 2: \; \frac n9 + \frac{2n}{9} + \frac{2n}{9} + \frac{4n}{9} = \frac{9n}{9} = n
 $$
 
-The pieces total exactly $n$, so :color[**every level costs $n$**]{hex="#3B82F6"}, until branches start reaching the base case.
+The pieces total exactly $n$, so **:color[every level costs n]{hex="#3B82F6"}**, until branches start reaching the base case.
 
 **Step 3: height.** Two depths again:
 

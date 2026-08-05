@@ -58,8 +58,8 @@ The recursive part gives the $T(\dots)$ terms, and everything else in the body g
 
 Two rules cover every geometric series that appears:
 
-- Ratio :color[**bigger than 1**]{hex="#EF4444"} (like $1 + 2 + 4 + \dots$): the **last** term dominates.
-- Ratio :color[**smaller than 1**]{hex="#22C55E"} (like $n + \frac{n}{2} + \frac{n}{4} + \dots$): the **first** term dominates, and the sum is a constant multiple of it.
+- Ratio **:color[bigger than 1]{hex="#EF4444"}** (like $1 + 2 + 4 + \dots$): the **last** term dominates.
+- Ratio **:color[smaller than 1]{hex="#22C55E"}** (like $n + \frac{n}{2} + \frac{n}{4} + \dots$): the **first** term dominates, and the sum is a constant multiple of it.
 
 ## The two shapes
 

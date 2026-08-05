@@ -56,7 +56,7 @@ Step 3: if i is not equal to n, go to Step 3
 Step 4: print i
 ```
 
-Step 3 loops forever whenever $n \neq 1$, so it breaks :color[**finiteness**]{hex="#EF4444"}.
+Step 3 loops forever whenever $n \neq 1$, so it breaks **:color[finiteness]{hex="#EF4444"}**.
 
 ## Comparing two algorithms
 
@@ -120,7 +120,7 @@ Two decisions make this machine independent:
 1. **Count basic operations, not seconds.** Comparisons, assignments, arithmetic. Each takes some constant time $c$ on any machine, so seconds are just $c \times (\text{operations})$.
 2. **Care about large $n$ only.** Every algorithm is fast on 10 items. The difference shows up when the input grows.
 
-So instead of "8.8 seconds", we say the cost is $T(n) = c n^2$, and then we drop the constant $c$ and call it :color[**quadratic growth**]{hex="#EA6C0A"}.
+So instead of "8.8 seconds", we say the cost is $T(n) = c n^2$, and then we drop the constant $c$ and call it **:color[quadratic growth]{hex="#EA6C0A"}**.
 
 ### Why constants and lower order terms are dropped
 
@@ -180,7 +180,7 @@ Let $c$ be the time one input costs, and $x$ the speed of the machine. A machine
 | $x$ | $n$ | $c$ | $T = cn$ |
 | $10x$ | $10n$ | $c/10$ | $T = (10n)(c/10) = cn$ |
 
-Ten times the machine, ten times the input, :color[**same total time**]{hex="#22C55E"}. Hardware pays off perfectly.
+Ten times the machine, ten times the input, **:color[same total time]{hex="#22C55E"}**. Hardware pays off perfectly.
 
 **Quadratic algorithm, $T = cn^2$**
 
@@ -189,7 +189,7 @@ Ten times the machine, ten times the input, :color[**same total time**]{hex="#22
 | $x$ | $n$ | $c$ | $T = cn^2$ |
 | $10x$ | $10n$ | $c/10$ | $T = (10n)^2(c/10) = 10cn^2$ |
 
-Ten times the machine, ten times the input, and it now takes :color[**ten times longer**]{hex="#EF4444"}. To keep the same running time on a 10 times faster machine, you can only grow the input by $\sqrt{10} \approx 3.16$.
+Ten times the machine, ten times the input, and it now takes **:color[ten times longer]{hex="#EF4444"}**. To keep the same running time on a 10 times faster machine, you can only grow the input by $\sqrt{10} \approx 3.16$.
 
 **What a 10 times faster machine buys, per growth rate**
 
@@ -298,7 +298,7 @@ Worth memorising, for input multiplied by $m$:
 
 *An algorithm takes 1 second on 1 000 records and 4 seconds on 2 000 records. State the likely complexity and predict the time for 8 000 records.*
 
-Input doubled, time went up 4 times. Time $\propto n^2$, so the algorithm is :color[$O(n^2)$]{hex="#EA6C0A"}.
+Input doubled, time went up 4 times. Time $\propto n^2$, so the algorithm is :color[O(n²)]{hex="#EA6C0A"}.
 
 $$
 \frac{T_2}{T_1} = \left(\frac{8000}{1000}\right)^2 = 64 \quad\Rightarrow\quad T_2 = 64 \times 1
@@ -402,7 +402,7 @@ $$
 n = 30 + \log_2 1000 = 30 + 9.97 = 39.97
 $$
 
-:mark[**$n = 39$.**]{hex="#204A2E"} A machine a thousand times faster bought :color[**nine extra items**]{hex="#EF4444"}. Buying hardware to fix an exponential algorithm is throwing money away.
+:mark[**$n = 39$.**]{hex="#204A2E"} A machine a thousand times faster bought **:color[nine extra items]{hex="#EF4444"}**. Buying hardware to fix an exponential algorithm is throwing money away.
 
 ## Q11. Watch the units
 
@@ -491,13 +491,13 @@ At $n = 1000$: $100 \log_2 1000 = 997 < 1000$, so B wins.
 
 **(b)** A on the fast machine costs the time of $n^2/10$ operations. That beats B while $n^2/10 < 100n\log_2 n$, i.e. $n < 1000 \log_2 n$, which holds up to about $n = 13\,750$.
 
-So the faster machine pushes the crossover from 1 000 to 13 750, and then :color[**loses anyway**]{hex="#EF4444"}. The hardware bought a constant factor; the algorithm changed the curve.
+So the faster machine pushes the crossover from 1 000 to 13 750, and then **:color[loses anyway]{hex="#EF4444"}**. The hardware bought a constant factor; the algorithm changed the curve.
 
 ## Q18. Which term matters
 
 *An algorithm costs $T(n) = 2n^2 + 100n + 5000$ operations. State its complexity, and say at which input size the $n^2$ term starts to dominate.*
 
-Complexity: :color[$O(n^2)$]{hex="#EA6C0A"}, the highest order term with its constant dropped.
+Complexity: :color[O(n²)]{hex="#EA6C0A"}, the highest order term with its constant dropped.
 
 $2n^2$ overtakes $100n + 5000$ when $2n^2 > 100n + 5000$, and solving the quadratic gives $n > 80.9$.
 
