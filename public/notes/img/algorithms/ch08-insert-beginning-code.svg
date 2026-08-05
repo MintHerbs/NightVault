@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 649 231" width="649" height="231" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" role="img" aria-label="insertBeginning">
+  <rect width="649" height="231" fill="#0b0a0a"/>
+  <rect x="14" y="14" width="620.5" height="203" rx="10" fill="#0b0a0a" stroke="rgba(91,140,255,0.28)" stroke-width="1"/>
+  <line x1="14" y1="46" x2="634.5" y2="46" stroke="rgba(91,140,255,0.18)" stroke-width="1"/>
+  <circle cx="31" cy="30" r="4" fill="#5B8CFF" style="filter:drop-shadow(0 0 4px rgba(91,140,255,0.6))"/>
+  <circle cx="44" cy="30" r="4" fill="#FF5FA2" style="filter:drop-shadow(0 0 4px rgba(255,95,162,0.6))"/>
+  <circle cx="57" cy="30" r="4" fill="#7FE7FF" style="filter:drop-shadow(0 0 4px rgba(127,231,255,0.6))"/>
+  <text x="73" y="34" fill="#5B8CFF" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="600" letter-spacing="0.6">INSERTBEGINNING</text>
+  <line x1="47" y1="47" x2="47" y2="216" stroke="rgba(91,140,255,0.1)" stroke-width="1"/>
+  <text x="36" y="70.5" fill="#bfb9b0" font-size="11" font-weight="500" text-anchor="end" opacity="0.85">1</text>
+  <text x="88" y="70.5" fill="#5B8CFF" font-size="12.5" font-weight="600" style="filter:drop-shadow(0 0 3px rgba(91,140,255,0.4))" xml:space="preserve">def</text>
+  <text x="118" y="70.5" fill="#FF5FA2" font-size="12.5" font-weight="600" style="filter:drop-shadow(0 0 3px rgba(255,95,162,0.4))" xml:space="preserve">insertBeginning</text>
+  <text x="230.5" y="70.5" fill="#7FE7FF" font-size="12.5" font-weight="500" style="filter:drop-shadow(0 0 3px rgba(127,231,255,0.3))" xml:space="preserve">(</text>
+  <text x="238" y="70.5" fill="#5B8CFF" font-size="12.5" font-weight="600" style="filter:drop-shadow(0 0 3px rgba(91,140,255,0.4))" xml:space="preserve">self</text>
+  <text x="268" y="70.5" fill="#7FE7FF" font-size="12.5" font-weight="500" style="filter:drop-shadow(0 0 3px rgba(127,231,255,0.3))" xml:space="preserve">,</text>
+  <text x="283" y="70.5" fill="#f5f2ec" font-size="12.5" font-weight="400" xml:space="preserve">data</text>
+  <text x="313" y="70.5" fill="#7FE7FF" font-size="12.5" font-weight="500" style="filter:drop-shadow(0 0 3px rgba(127,231,255,0.3))" xml:space="preserve">):</text>
+  <text x="36" y="91.5" fill="#bfb9b0" font-size="11" font-weight="500" text-anchor="end" opacity="0.85">2</text>
+  <text x="118" y="91.5" fill="#898580" font-size="12.5" font-style="italic" font-weight="400" xml:space="preserve"># add a node at the beginning of the linked list</text>
+  <text x="36" y="112.5" fill="#bfb9b0" font-size="11" font-weight="500" text-anchor="end" opacity="0.85">3</text>
+  <text x="118" y="112.5" fill="#f5f2ec" font-size="12.5" font-weight="400" xml:space="preserve">new_node</text>
+  <text x="185.5" y="112.5" fill="#7FE7FF" font-size="12.5" font-weight="500" style="filter:drop-shadow(0 0 3px rgba(127,231,255,0.3))" xml:space="preserve">=</text>
+  <text x="200.5" y="112.5" fill="#FF5FA2" font-size="12.5" font-weight="600" style="filter:drop-shadow(0 0 3px rgba(255,95,162,0.4))" xml:space="preserve">Node</text>
+  <text x="230.5" y="112.5" fill="#7FE7FF" font-size="12.5" font-weight="500" style="filter:drop-shadow(0 0 3px rgba(127,231,255,0.3))" xml:space="preserve">(</text>
+  <text x="238" y="112.5" fill="#f5f2ec" font-size="12.5" font-weight="400" xml:space="preserve">data</text>
+  <text x="268" y="112.5" fill="#7FE7FF" font-size="12.5" font-weight="500" style="filter:drop-shadow(0 0 3px rgba(127,231,255,0.3))" xml:space="preserve">)</text>
+  <text x="328" y="112.5" fill="#898580" font-size="12.5" font-style="italic" font-weight="400" xml:space="preserve"># create a new node</text>
+  <text x="36" y="133.5" fill="#bfb9b0" font-size="11" font-weight="500" text-anchor="end" opacity="0.85">4</text>
+  <text x="118" y="133.5" fill="#898580" font-size="12.5" font-style="italic" font-weight="400" xml:space="preserve"># set its next attribute to point to what head is pointing</text>
+  <text x="36" y="154.5" fill="#bfb9b0" font-size="11" font-weight="500" text-anchor="end" opacity="0.85">5</text>
+  <text x="118" y="154.5" fill="#f5f2ec" font-size="12.5" font-weight="400" xml:space="preserve">new_node</text>
+  <text x="178" y="154.5" fill="#7FE7FF" font-size="12.5" font-weight="500" style="filter:drop-shadow(0 0 3px rgba(127,231,255,0.3))" xml:space="preserve">.</text>
+  <text x="185.5" y="154.5" fill="#f5f2ec" font-size="12.5" font-weight="400" xml:space="preserve">next</text>
+  <text x="223" y="154.5" fill="#7FE7FF" font-size="12.5" font-weight="500" style="filter:drop-shadow(0 0 3px rgba(127,231,255,0.3))" xml:space="preserve">=</text>
+  <text x="238" y="154.5" fill="#5B8CFF" font-size="12.5" font-weight="600" style="filter:drop-shadow(0 0 3px rgba(91,140,255,0.4))" xml:space="preserve">self</text>
+  <text x="268" y="154.5" fill="#7FE7FF" font-size="12.5" font-weight="500" style="filter:drop-shadow(0 0 3px rgba(127,231,255,0.3))" xml:space="preserve">.</text>
+  <text x="275.5" y="154.5" fill="#f5f2ec" font-size="12.5" font-weight="400" xml:space="preserve">head</text>
+  <text x="36" y="175.5" fill="#bfb9b0" font-size="11" font-weight="500" text-anchor="end" opacity="0.85">6</text>
+  <text x="118" y="175.5" fill="#5B8CFF" font-size="12.5" font-weight="600" style="filter:drop-shadow(0 0 3px rgba(91,140,255,0.4))" xml:space="preserve">self</text>
+  <text x="148" y="175.5" fill="#7FE7FF" font-size="12.5" font-weight="500" style="filter:drop-shadow(0 0 3px rgba(127,231,255,0.3))" xml:space="preserve">.</text>
+  <text x="155.5" y="175.5" fill="#f5f2ec" font-size="12.5" font-weight="400" xml:space="preserve">head</text>
+  <text x="193" y="175.5" fill="#7FE7FF" font-size="12.5" font-weight="500" style="filter:drop-shadow(0 0 3px rgba(127,231,255,0.3))" xml:space="preserve">=</text>
+  <text x="208" y="175.5" fill="#f5f2ec" font-size="12.5" font-weight="400" xml:space="preserve">new_node</text>
+  <text x="328" y="175.5" fill="#898580" font-size="12.5" font-style="italic" font-weight="400" xml:space="preserve"># set head to point to the new node</text>
+  <text x="36" y="196.5" fill="#bfb9b0" font-size="11" font-weight="500" text-anchor="end" opacity="0.85">7</text>
+  <text x="118" y="196.5" fill="#5B8CFF" font-size="12.5" font-weight="600" style="filter:drop-shadow(0 0 3px rgba(91,140,255,0.4))" xml:space="preserve">self</text>
+  <text x="148" y="196.5" fill="#7FE7FF" font-size="12.5" font-weight="500" style="filter:drop-shadow(0 0 3px rgba(127,231,255,0.3))" xml:space="preserve">.</text>
+  <text x="155.5" y="196.5" fill="#f5f2ec" font-size="12.5" font-weight="400" xml:space="preserve">size</text>
+  <text x="193" y="196.5" fill="#7FE7FF" font-size="12.5" font-weight="500" style="filter:drop-shadow(0 0 3px rgba(127,231,255,0.3))" xml:space="preserve">+=</text>
+  <text x="215.5" y="196.5" fill="#FF5FA2" font-size="12.5" font-weight="500" style="filter:drop-shadow(0 0 3px rgba(255,95,162,0.3))" xml:space="preserve">1</text>
+  <text x="328" y="196.5" fill="#898580" font-size="12.5" font-style="italic" font-weight="400" xml:space="preserve"># increment the size of the linked list</text>
+</svg>

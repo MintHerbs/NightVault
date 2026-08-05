@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 690 330" width="690" height="330" font-family="Inter, -apple-system, Segoe UI, sans-serif" role="img" aria-label="An animation of A, B and C entering a stack and a queue in that order. The stack gives back C then B, the queue gives back A then B.">
+  <defs><marker id="head-5B8CFF" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#5B8CFF"/></marker><marker id="head-2DD4BF" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#2DD4BF"/></marker></defs>
+  <style>
+    .k-sa{animation:k-sa 13s linear infinite}
+    .k-sb{animation:k-sb 13s linear infinite}
+    .k-sc{animation:k-sc 13s linear infinite}
+    .k-qa{animation:k-qa 13s linear infinite}
+    .k-qb{animation:k-qb 13s linear infinite}
+    .k-qc{animation:k-qc 13s linear infinite}
+    .k-cap0{animation:k-cap0 13s linear infinite}
+    .k-cap1{animation:k-cap1 13s linear infinite}
+    .k-cap2{animation:k-cap2 13s linear infinite}
+    .k-cap3{animation:k-cap3 13s linear infinite}
+    .k-cap4{animation:k-cap4 13s linear infinite}
+    .k-cap5{animation:k-cap5 13s linear infinite}
+    .k-cap6{animation:k-cap6 13s linear infinite}
+    .k-cap7{animation:k-cap7 13s linear infinite}
+    @keyframes k-sa{0%{opacity:0;translate:0px -78px}5.4%{opacity:0;translate:0px -78px}8.6%{opacity:1;translate:0px 0px}83.1%{opacity:1;translate:0px 0px}86.3%{opacity:0;translate:0px -78px}100%{opacity:0;translate:0px -78px}}
+    @keyframes k-sb{0%{opacity:0;translate:0px -78px}15.4%{opacity:0;translate:0px -78px}18.6%{opacity:1;translate:0px 0px}52.3%{opacity:1;translate:0px 0px}55.5%{opacity:0;translate:0px -78px}100%{opacity:0;translate:0px -78px}}
+    @keyframes k-sc{0%{opacity:0;translate:0px -78px}25.4%{opacity:0;translate:0px -78px}28.6%{opacity:1;translate:0px 0px}39.2%{opacity:1;translate:0px 0px}42.5%{opacity:0;translate:0px -78px}100%{opacity:0;translate:0px -78px}}
+    @keyframes k-qa{0%{opacity:0;translate:60px 0px}5.4%{opacity:0;translate:60px 0px}8.6%{opacity:1;translate:0px 0px}39.2%{opacity:1;translate:0px 0px}42.5%{opacity:0;translate:-106px 0px}100%{opacity:0;translate:60px 0px}}
+    @keyframes k-qb{0%{opacity:0;translate:60px 0px}15.4%{opacity:0;translate:60px 0px}18.6%{opacity:1;translate:0px 0px}39.2%{opacity:1;translate:0px 0px}42.5%{opacity:1;translate:-60px 0px}52.3%{opacity:1;translate:-60px 0px}55.5%{opacity:0;translate:-166px 0px}100%{opacity:0;translate:60px 0px}}
+    @keyframes k-qc{0%{opacity:0;translate:60px 0px}25.4%{opacity:0;translate:60px 0px}28.6%{opacity:1;translate:0px 0px}39.2%{opacity:1;translate:0px 0px}42.5%{opacity:1;translate:-60px 0px}52.3%{opacity:1;translate:-60px 0px}55.5%{opacity:1;translate:-120px 0px}83.1%{opacity:1;translate:-120px 0px}86.3%{opacity:0;translate:-226px 0px}100%{opacity:0;translate:60px 0px}}
+    @keyframes k-cap0{0%{opacity:1;translate:0px 0px}4%{opacity:1;translate:0px 0px}6.8%{opacity:0;translate:0px 0px}100%{opacity:0;translate:0px 0px}}
+    @keyframes k-cap1{0%{opacity:0;translate:0px 0px}4%{opacity:0;translate:0px 0px}6.8%{opacity:1;translate:0px 0px}14%{opacity:1;translate:0px 0px}16.8%{opacity:0;translate:0px 0px}100%{opacity:0;translate:0px 0px}}
+    @keyframes k-cap2{0%{opacity:0;translate:0px 0px}14%{opacity:0;translate:0px 0px}16.8%{opacity:1;translate:0px 0px}24%{opacity:1;translate:0px 0px}26.8%{opacity:0;translate:0px 0px}100%{opacity:0;translate:0px 0px}}
+    @keyframes k-cap3{0%{opacity:0;translate:0px 0px}24%{opacity:0;translate:0px 0px}26.8%{opacity:1;translate:0px 0px}37.8%{opacity:1;translate:0px 0px}40.6%{opacity:0;translate:0px 0px}100%{opacity:0;translate:0px 0px}}
+    @keyframes k-cap4{0%{opacity:0;translate:0px 0px}37.8%{opacity:0;translate:0px 0px}40.6%{opacity:1;translate:0px 0px}50.9%{opacity:1;translate:0px 0px}53.7%{opacity:0;translate:0px 0px}100%{opacity:0;translate:0px 0px}}
+    @keyframes k-cap5{0%{opacity:0;translate:0px 0px}50.9%{opacity:0;translate:0px 0px}53.7%{opacity:1;translate:0px 0px}63.2%{opacity:1;translate:0px 0px}66%{opacity:0;translate:0px 0px}100%{opacity:0;translate:0px 0px}}
+    @keyframes k-cap6{0%{opacity:0;translate:0px 0px}63.2%{opacity:0;translate:0px 0px}66%{opacity:1;translate:0px 0px}81.7%{opacity:1;translate:0px 0px}84.5%{opacity:0;translate:0px 0px}100%{opacity:0;translate:0px 0px}}
+    @keyframes k-cap7{0%{opacity:0;translate:0px 0px}81.7%{opacity:0;translate:0px 0px}84.5%{opacity:1;translate:0px 0px}98.6%{opacity:1;translate:0px 0px}100%{opacity:0;translate:0px 0px}100%{opacity:0;translate:0px 0px}}
+    @media (prefers-reduced-motion: reduce){
+      .k-sa{animation:none}
+      .k-sb{animation:none}
+      .k-sc{animation:none}
+      .k-qa{animation:none}
+      .k-qb{animation:none}
+      .k-qc{animation:none}
+      .k-cap0{animation:none}
+      .k-cap1{animation:none}
+      .k-cap2{animation:none}
+      .k-cap3{animation:none}
+      .k-cap4{animation:none}
+      .k-cap5{animation:none}
+      .k-cap6{animation:none}
+      .k-cap7{animation:none}
+      .k-cap1,.k-cap2,.k-cap3,.k-cap4,.k-cap5,.k-cap6,.k-cap7{display:none}
+    }
+  </style>
+  <rect width="690" height="330" fill="#0b0a0a"/>
+  <rect x="14" y="14" width="322" height="302" rx="12" fill="#0b0a0a" stroke="rgba(91,140,255,0.28)" stroke-width="1"/>
+  <text x="175" y="42" fill="#5B8CFF" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="700" text-anchor="middle">STACK</text>
+  <text x="175" y="62" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="500" text-anchor="middle">LIFO, last in first out</text>
+  <path d="M108,122 L108,260 L242,260 L242,122" fill="none" stroke="rgba(91,140,255,0.45)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M113,94 L113,122" fill="none" stroke="#5B8CFF" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head-5B8CFF)"/>
+  <path d="M237,122 L237,94" fill="none" stroke="#5B8CFF" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head-5B8CFF)"/>
+  <text x="113" y="86" fill="#5B8CFF" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" text-anchor="middle">push</text>
+  <text x="237" y="86" fill="#5B8CFF" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" text-anchor="middle">pop</text>
+  <rect x="350" y="14" width="322" height="302" rx="12" fill="#0b0a0a" stroke="rgba(45,212,191,0.28)" stroke-width="1"/>
+  <text x="511" y="42" fill="#2DD4BF" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="700" text-anchor="middle">QUEUE</text>
+  <text x="511" y="62" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="500" text-anchor="middle">FIFO, first in first out</text>
+  <line x1="412" y1="148" x2="610" y2="148" stroke="rgba(45,212,191,0.45)" stroke-width="2" stroke-linecap="round"/><line x1="412" y1="210" x2="610" y2="210" stroke="rgba(45,212,191,0.45)" stroke-width="2" stroke-linecap="round"/>
+  <path d="M630,179 L602,179" fill="none" stroke="#2DD4BF" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head-2DD4BF)"/>
+  <path d="M420,179 L392,179" fill="none" stroke="#2DD4BF" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head-2DD4BF)"/>
+  <text x="366" y="134" fill="#2DD4BF" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" text-anchor="start">dequeue</text>
+  <text x="656" y="134" fill="#2DD4BF" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" text-anchor="end">enqueue</text>
+  <text x="451" y="226" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="500" text-anchor="middle">front</text>
+  <g class="k-sa" transform="translate(117,216)"><rect x="0" y="0" width="116" height="34" rx="7" fill="rgba(91,140,255,0.16)" stroke="#5B8CFF" stroke-width="1.4"/><text x="58" y="22.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="15" font-weight="600" text-anchor="middle">A</text></g>
+  <g class="k-sb" transform="translate(117,175)"><rect x="0" y="0" width="116" height="34" rx="7" fill="rgba(91,140,255,0.16)" stroke="#5B8CFF" stroke-width="1.4"/><text x="58" y="22.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="15" font-weight="600" text-anchor="middle">B</text></g>
+  <g class="k-sc" transform="translate(117,134)"><rect x="0" y="0" width="116" height="34" rx="7" fill="rgba(91,140,255,0.16)" stroke="#5B8CFF" stroke-width="1.4"/><text x="58" y="22.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="15" font-weight="600" text-anchor="middle">C</text></g>
+  <g class="k-qa" transform="translate(424,158)"><rect x="0" y="0" width="54" height="42" rx="7" fill="rgba(45,212,191,0.16)" stroke="#2DD4BF" stroke-width="1.4"/><text x="27" y="26.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="15" font-weight="600" text-anchor="middle">A</text></g>
+  <g class="k-qb" transform="translate(484,158)"><rect x="0" y="0" width="54" height="42" rx="7" fill="rgba(45,212,191,0.16)" stroke="#2DD4BF" stroke-width="1.4"/><text x="27" y="26.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="15" font-weight="600" text-anchor="middle">B</text></g>
+  <g class="k-qc" transform="translate(544,158)"><rect x="0" y="0" width="54" height="42" rx="7" fill="rgba(45,212,191,0.16)" stroke="#2DD4BF" stroke-width="1.4"/><text x="27" y="26.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="15" font-weight="600" text-anchor="middle">C</text></g>
+  <g class="k-cap0"><text x="175" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">empty</text><text x="511" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">empty</text></g>
+  <g class="k-cap1" opacity="0"><text x="175" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">push A</text><text x="511" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">enqueue A</text></g>
+  <g class="k-cap2" opacity="0"><text x="175" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">push B</text><text x="511" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">enqueue B</text></g>
+  <g class="k-cap3" opacity="0"><text x="175" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">push C</text><text x="511" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">enqueue C</text></g>
+  <g class="k-cap4" opacity="0"><text x="175" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">pop gives C, the newest</text><text x="511" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">dequeue gives A, the oldest</text></g>
+  <g class="k-cap5" opacity="0"><text x="175" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">pop gives B</text><text x="511" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">dequeue gives B</text></g>
+  <g class="k-cap6" opacity="0"><text x="175" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">A is left, it went in first</text><text x="511" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">C is left, it went in last</text></g>
+  <g class="k-cap7" opacity="0"><text x="175" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">empty</text><text x="511" y="292" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" text-anchor="middle">empty</text></g>
+</svg>
