@@ -17,6 +17,7 @@ import {
   splitReactionSmiles,
   convertChemPaste,
 } from '../../../lib/chem/noteChem'
+import { remarkNoteDirectiveFallback } from '../../../lib/noteDirectives'
 import { resolveDraftSrc } from '../../../lib/draftImagePreviews'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../../lib/noteImageSrc'
 import { parseImageTitle, formatImageTitle, MIN_IMAGE_WIDTH } from '../../../lib/noteImageWidth'
@@ -76,6 +77,15 @@ const HEADING_LEVEL = { title: 1, subtitle: 2 }
 // instead of raw HTML (MarkdownRenderer deliberately has no rehype-raw; the
 // editor shouldn't grow a parallel unsafe-HTML path either). See T-055.
 const directiveRemark = $remark('directive', () => remarkDirective)
+
+// …and immediately takes back the ones the syntax hands over by accident.
+// Milkdown throws `Cannot match target parser for node` for any directive
+// without a registered parser, and remark-directive names allow digits, so a
+// clock time in prose ("now 09:30") is enough to bring the whole editor down.
+// This rewrites every unhandled directive back to its literal source before the
+// ProseMirror parse sees it; MarkdownRenderer runs the same plugin so the two
+// paths agree. See src/lib/noteDirectives.js.
+const directiveFallbackRemark = $remark('directive-fallback', () => remarkNoteDirectiveFallback)
 
 // Text color mark — round-trips to `:color[text]{hex="#..."}`. `hex` is
 // validated on both this (write) path and MarkdownRenderer's (read) path
@@ -1183,6 +1193,7 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange, onE
       .use(math)
       .use(history)
       .use(directiveRemark)
+      .use(directiveFallbackRemark)
       .use(colorMarkSchema)
       .use(highlightMarkSchema)
       .use(setTextColorCommand)

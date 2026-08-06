@@ -15,6 +15,7 @@ import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../lib/noteImageSr
 import { parseImageTitle } from '../../lib/noteImageWidth'
 import { HEX_COLOR_RE } from '../../constants/noteColors'
 import { normalizeNoteMath, noteHasMath, MATH_DELIMITED_RE } from '../../lib/noteMath'
+import { remarkNoteDirectiveFallback } from '../../lib/noteDirectives'
 import { YOUTUBE_ID_RE, youtubeThumbnailSrc, youtubeEmbedSrc } from '../../lib/youtube'
 import styles from './MarkdownRenderer.module.css'
 
@@ -28,6 +29,11 @@ import styles from './MarkdownRenderer.module.css'
 // stored Markdown can also arrive via a GitHub backup restore. An invalid
 // value is left as an unrecognised directive node (renders as plain
 // children/nothing) rather than passed through unchecked.
+//
+// Only the five names below ever reach here: remarkNoteDirectiveFallback runs
+// first and has already rewritten every other directive back to the literal
+// text it was written as, which is what stops a stray `09:30` in prose from
+// being parsed as `:30` and dropped (T-107).
 function remarkNoteDirectives() {
   return (tree) => {
     visit(tree, (node) => {
@@ -437,7 +443,7 @@ function MarkdownRenderer({ content }) {
         return (
           <ReactMarkdown
             key={i}
-            remarkPlugins={[remarkGfm, remarkMath, remarkBrToBreak, remarkDirective, remarkNoteDirectives]}
+            remarkPlugins={[remarkGfm, remarkMath, remarkBrToBreak, remarkDirective, remarkNoteDirectiveFallback, remarkNoteDirectives]}
             rehypePlugins={katexPlugin ? [katexPlugin] : []}
             components={markdownComponents}
           >
