@@ -172,11 +172,58 @@
   white-space: pre-wrap;
 }
 
+/* A statement the script means to have refused. Amber rather than red: the
+   constraint working is the lesson, and a student should not read it as
+   something they broke. */
+.expected {
+  color: #c08a2e;
+  white-space: pre-wrap;
+}
+
+.expectedTag {
+  margin-left: 0.45rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  background-color: rgba(192, 138, 46, 0.18);
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .empty {
   margin: 0.35rem 0 0;
   font-size: 0.76rem;
   color: var(--color-text-muted);
   font-style: italic;
+}
+
+/* The engine failing to start is different from a statement being rejected:
+   nothing the reader wrote is wrong, and there is nothing to fix by editing. */
+.engineError {
+  margin: 0.5rem 0.65rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid rgba(217, 83, 79, 0.4);
+  border-radius: 0.45rem;
+  background-color: rgba(217, 83, 79, 0.08);
+}
+
+.engineErrorHead {
+  margin: 0 0 0.3rem;
+  font-weight: 600;
+  color: #d9534f;
+}
+
+.engineErrorBody {
+  margin: 0 0 0.25rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+  word-break: break-word;
+}
+
+.engineErrorBody:last-child {
+  margin-bottom: 0;
 }
 
 .gridWrap {

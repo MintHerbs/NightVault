@@ -120,6 +120,10 @@ export default function NoteSqlConsole({ scriptId }) {
   const [busy, setBusy] = useState(false)
   const [booting, setBooting] = useState(false)
   const [editing, setEditing] = useState(false)
+  // Failures to start the engine at all, as opposed to a statement Postgres
+  // rejected. Without this the console just sits there looking idle when the
+  // WASM never loaded, which tells the reader nothing.
+  const [engineError, setEngineError] = useState(null)
   const dbRef = useRef(null)
   const logEndRef = useRef(null)
 
@@ -186,6 +190,7 @@ export default function NoteSqlConsole({ scriptId }) {
   const runStep = useCallback(async () => {
     if (!entry || cursor >= entry.steps.length) return
     setBusy(true)
+    setEngineError(null)
     try {
       const db = await ensureDb()
       const step = entry.steps[cursor]
@@ -203,7 +208,13 @@ export default function NoteSqlConsole({ scriptId }) {
           rows: res.rows,
         }
       } catch (err) {
-        record = { sql, note: step.note, ok: false, status: String(err?.message ?? err) }
+        record = {
+          sql,
+          note: step.note,
+          ok: false,
+          expected: Boolean(step.expectError && sql === step.sql),
+          status: String(err?.message ?? err),
+        }
       }
       setLog((l) => [...l, record])
       const after = await readWatched(db)
@@ -217,6 +228,8 @@ export default function NoteSqlConsole({ scriptId }) {
         })
       )
       setCursor((c) => c + 1)
+    } catch (err) {
+      setEngineError(err)
     } finally {
       setBusy(false)
     }
@@ -225,6 +238,7 @@ export default function NoteSqlConsole({ scriptId }) {
   const runAll = useCallback(async () => {
     if (!entry) return
     setBusy(true)
+    setEngineError(null)
     try {
       const db = await ensureDb()
       const records = []
@@ -235,16 +249,34 @@ export default function NoteSqlConsole({ scriptId }) {
           const res = await db.query(sql)
           records.push({ sql, note: step.note, ok: true, status: statusLine(res), fields: res.fields, rows: res.rows })
         } catch (err) {
-          records.push({ sql, note: step.note, ok: false, status: String(err?.message ?? err) })
-          setLog((l) => [...l, ...records])
-          setCursor(i + 1)
-          setWatched(await readWatched(db))
-          return
+          const expected = step.expectError && sql === step.sql
+          records.push({
+            sql,
+            note: step.note,
+            ok: false,
+            expected,
+            status: String(err?.message ?? err),
+          })
+          // A step that is *meant* to fail is part of the lesson — the DDL
+          // script proves referential integrity by having Postgres refuse a bad
+          // row — so Run carries on through it. An unexpected failure stops the
+          // run, because every statement after it is now working against a
+          // database in a state the script did not plan for. Editing a step
+          // forfeits its expected status: the reader's own SQL failing is a
+          // real failure, whatever the original was going to do.
+          if (!expected) {
+            setLog((l) => [...l, ...records])
+            setCursor(i + 1)
+            setWatched(await readWatched(db))
+            return
+          }
         }
       }
       setLog((l) => [...l, ...records])
       setCursor(entry.steps.length)
       setWatched(await readWatched(db))
+    } catch (err) {
+      setEngineError(err)
     } finally {
       setBusy(false)
     }
@@ -256,6 +288,7 @@ export default function NoteSqlConsole({ scriptId }) {
     setLog([])
     setWatched([])
     setCursor(0)
+    setEngineError(null)
   }, [])
 
   useEffect(() => {
@@ -314,6 +347,17 @@ export default function NoteSqlConsole({ scriptId }) {
         </div>
       ) : null}
 
+      {engineError ? (
+        <div className={styles.engineError}>
+          <p className={styles.engineErrorHead}>Postgres could not be started in this browser.</p>
+          <p className={styles.engineErrorBody}>{String(engineError.message ?? engineError)}</p>
+          <p className={styles.engineErrorBody}>
+            The SQL on this page is still correct; only the live console is unavailable. Reloading
+            the page usually clears it.
+          </p>
+        </div>
+      ) : null}
+
       {log.length ? (
         <div className={styles.log}>
           {log.map((rec, i) => (
@@ -321,9 +365,10 @@ export default function NoteSqlConsole({ scriptId }) {
             // very same statement (a SELECT before and after an UPDATE).
             <div key={i} className={styles.entry}>
               <pre className={styles.ranSql}>{rec.sql}</pre>
-              <p className={rec.ok ? styles.ok : styles.error}>
+              <p className={rec.ok ? styles.ok : rec.expected ? styles.expected : styles.error}>
                 {rec.ok ? '✓ ' : '✕ '}
                 {rec.status}
+                {rec.expected ? <span className={styles.expectedTag}>rejected on purpose</span> : null}
               </p>
               {rec.ok ? <ResultGrid fields={rec.fields} rows={rec.rows} labels={entry.labels} /> : null}
             </div>

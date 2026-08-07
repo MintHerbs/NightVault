@@ -11,6 +11,15 @@ export default defineConfig({
     },
   },
   assetsInclude: ['**/*.json'],
+  optimizeDeps: {
+    // PGlite ships a WASM module plus a 6 MB filesystem image, and locates the
+    // image by a URL relative to its own source. Pre-bundling rewrites that
+    // module into .vite/deps and the relative URL then resolves to the wrong
+    // place: the fetch returns the dev server's HTML fallback, and PGlite
+    // rejects it with "Invalid FS bundle size: 2331 !== 6293225". Excluding it
+    // leaves the package to be served as-is, with its asset URLs intact.
+    exclude: ['@electric-sql/pglite'],
+  },
   server: {
     watch: {
       // Agent worktrees live under .claude/worktrees and are full checkouts of
