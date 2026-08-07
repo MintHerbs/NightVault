@@ -5,9 +5,13 @@ import { Plugin, PluginKey, TextSelection } from '@milkdown/kit/prose/state'
 import remarkDirective from 'remark-directive'
 import CodeBlock from '../../social/CodeBlock/CodeBlock'
 import NotePlayground from '../../markdown/NotePlayground'
+import NoteAnimation from '../../markdown/NoteAnimation'
+import NoteSqlConsole from '../../markdown/NoteSqlConsole'
 import MoleculeStructure from '../../markdown/MoleculeStructure/MoleculeStructure'
 import ReactionScheme from '../../markdown/ReactionScheme/ReactionScheme'
 import { PLAYGROUND_ID_RE } from '../../../constants/notePlaygrounds'
+import { ANIMATION_ID_RE } from '../../../constants/noteAnimations'
+import { SQL_SCRIPT_ID_RE } from '../../../constants/noteSql'
 import { loadOCL } from '../../../lib/chem/loadChem'
 import {
   isValidSmiles,
@@ -270,6 +274,85 @@ const playgroundSchema = $nodeSchema('playground', () => ({
   },
 }))
 
+// Animation embed and SQL console embed. Both are block atoms round-tripping
+// to `::anim{id="…"}` / `::sqlrun{id="…"}`, and both exist for exactly the
+// reason playgroundSchema above does: the directive is now on the handled list
+// in lib/noteDirectives, so the fallback no longer rewrites it to literal text.
+// Without a schema here Milkdown would have no parser for the node and the
+// whole editor would go down on any note using one (the T-107 failure).
+//
+// Like a playground, the id is all that lives in the Markdown; the SVG frames
+// and the SQL script come from code-defined registries.
+const animSchema = $nodeSchema('anim', () => ({
+  inline: false,
+  group: 'block',
+  atom: true,
+  selectable: true,
+  isolating: true,
+  attrs: { animationId: { default: '', validate: 'string' } },
+  parseDOM: [{
+    tag: 'div[data-type="anim"]',
+    getAttrs: (dom) => {
+      if (!(dom instanceof HTMLElement)) return false
+      const id = dom.getAttribute('data-anim-id') || ''
+      return ANIMATION_ID_RE.test(id) ? { animationId: id } : false
+    },
+  }],
+  toDOM: (node) => ['div', { 'data-type': 'anim', 'data-anim-id': node.attrs.animationId }],
+  parseMarkdown: {
+    match: (node) => node.type === 'leafDirective' && node.name === 'anim',
+    runner: (state, node, type) => {
+      const id = node.attributes?.id || ''
+      if (!ANIMATION_ID_RE.test(id)) return
+      state.addNode(type, { animationId: id })
+    },
+  },
+  toMarkdown: {
+    match: (node) => node.type.name === 'anim',
+    runner: (state, node) => {
+      state.addNode('leafDirective', undefined, undefined, {
+        name: 'anim',
+        attributes: { id: node.attrs.animationId },
+      })
+    },
+  },
+}))
+
+const sqlrunSchema = $nodeSchema('sqlrun', () => ({
+  inline: false,
+  group: 'block',
+  atom: true,
+  selectable: true,
+  isolating: true,
+  attrs: { scriptId: { default: '', validate: 'string' } },
+  parseDOM: [{
+    tag: 'div[data-type="sqlrun"]',
+    getAttrs: (dom) => {
+      if (!(dom instanceof HTMLElement)) return false
+      const id = dom.getAttribute('data-sql-id') || ''
+      return SQL_SCRIPT_ID_RE.test(id) ? { scriptId: id } : false
+    },
+  }],
+  toDOM: (node) => ['div', { 'data-type': 'sqlrun', 'data-sql-id': node.attrs.scriptId }],
+  parseMarkdown: {
+    match: (node) => node.type === 'leafDirective' && node.name === 'sqlrun',
+    runner: (state, node, type) => {
+      const id = node.attributes?.id || ''
+      if (!SQL_SCRIPT_ID_RE.test(id)) return
+      state.addNode(type, { scriptId: id })
+    },
+  },
+  toMarkdown: {
+    match: (node) => node.type.name === 'sqlrun',
+    runner: (state, node) => {
+      state.addNode('leafDirective', undefined, undefined, {
+        name: 'sqlrun',
+        attributes: { id: node.attrs.scriptId },
+      })
+    },
+  },
+}))
+
 // Molecule structure — a block atom round-tripping to
 // `::molecule{smiles="..." label="..."}` (T-093). Same shape as
 // youtubeSchema/playgroundSchema above, for the same reason: without a
@@ -403,6 +486,42 @@ const playgroundNodeView = $prose(() => new Plugin({
     },
   },
 }))
+
+// Animation and SQL console node views. Same raw `nodeViews` registration as
+// playgroundNodeView above, so an author editing a note sees the real figure
+// and the real console rather than an opaque placeholder. Both own their own
+// controls, so stopEvent keeps ProseMirror out of their clicks.
+const embedNodeView = (name, render) => $prose(() => new Plugin({
+  key: new PluginKey(`NOTE_EDITOR_${name.toUpperCase()}_VIEW`),
+  props: {
+    nodeViews: {
+      [name]: (node) => {
+        const dom = document.createElement('div')
+        const root = createRoot(dom)
+        const draw = (n) => queueMicrotask(() => {
+          try {
+            root.render(render(n))
+          } catch { /* editor may have torn down */ }
+        })
+        draw(node)
+        return {
+          dom,
+          update: (updated) => {
+            if (updated.type !== node.type) return false
+            draw(updated)
+            return true
+          },
+          ignoreMutation: () => true,
+          stopEvent: () => true,
+          destroy: () => queueMicrotask(() => root.unmount()),
+        }
+      },
+    },
+  },
+}))
+
+const animNodeView = embedNodeView('anim', (n) => <NoteAnimation animationId={n.attrs.animationId} />)
+const sqlrunNodeView = embedNodeView('sqlrun', (n) => <NoteSqlConsole scriptId={n.attrs.scriptId} />)
 
 // YouTube node view: rounded thumbnail + play button (mirrors imageWrap's
 // rounded-corner treatment), swapped for a lazy-mounted iframe on click so
@@ -1203,6 +1322,10 @@ const MilkdownInner = forwardRef(function MilkdownInner({ content, onChange, onE
       .use(createYoutubeAutoEmbed(applyingExternal))
       .use(playgroundSchema)
       .use(playgroundNodeView)
+      .use(animSchema)
+      .use(animNodeView)
+      .use(sqlrunSchema)
+      .use(sqlrunNodeView)
       .use(moleculeSchema)
       .use(moleculeNodeView)
       .use(markdownClipboard)

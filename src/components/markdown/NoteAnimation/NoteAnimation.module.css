@@ -1,0 +1,173 @@
+/* Semantic palette for the figures. These exist because an inline SVG inherits
+   the page's CSS, which the site's 316 `<img>`-based diagrams cannot: those bake
+   dark-theme hex values in and are unreadable under [data-mode="light"]. Frames
+   in the registry reference these vars instead of literal colours, so one figure
+   serves every theme.
+
+   Meaning is fixed across every figure on the site:
+     focus   the thing the current step is about
+     ok      settled, correct, satisfies the rule
+     bad     a violation, a rejected row, a collision
+     alt     a second tracked thing, distinct from focus
+     link    a pointer, an edge, a foreign key
+     mark    a computed or derived value */
+.wrapper {
+  --anim-text: var(--color-text);
+  --anim-muted: var(--color-text-muted);
+  --anim-line: rgba(var(--color-fg-rgb), 0.28);
+  --anim-fill: rgba(var(--color-fg-rgb), 0.06);
+  --anim-focus: #ff5fa2;
+  --anim-ok: #22c55e;
+  --anim-bad: #ef4444;
+  --anim-alt: #a78bfa;
+  --anim-link: #2dd4bf;
+  --anim-mark: #eab308;
+
+  margin: 1.6rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* The light themes need darker hues: #ff5fa2 measures 6.98:1 on the dark
+   surfaces but only 2.71:1 on the light ones, the same trade global.css
+   documents for the accent. Values here are picked to clear 4.5:1 on white. */
+:global([data-mode='light']) .wrapper {
+  --anim-line: rgba(var(--color-fg-rgb), 0.38);
+  --anim-fill: rgba(var(--color-fg-rgb), 0.05);
+  --anim-focus: #c2185b;
+  --anim-ok: #15803d;
+  --anim-bad: #b91c1c;
+  --anim-alt: #6d28d9;
+  --anim-link: #0f766e;
+  --anim-mark: #a16207;
+}
+
+.stage {
+  width: 100%;
+  max-width: 100%;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Frames are siblings in one document; only the active one is painted. The
+   fade is short on purpose: long enough to read as a transition, short enough
+   that holding the next-step button does not queue up a blur. */
+.frameOn {
+  opacity: 1;
+  transition: opacity 220ms ease;
+}
+
+.frameOff {
+  opacity: 0;
+  transition: opacity 160ms ease;
+  pointer-events: none;
+}
+
+.caption {
+  margin: 0.65rem 0 0;
+  text-align: center;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+  max-width: 46rem;
+}
+
+/* The transport is deliberately quiet. It rests at low contrast and only comes
+   fully up when the reader reaches for it, so a page of figures does not read
+   as a wall of buttons. */
+.transport {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.3rem;
+  border-radius: 999px;
+  opacity: 0.4;
+  transition: opacity 180ms ease, background-color 180ms ease;
+}
+
+.wrapper:hover .transport,
+.transport:focus-within {
+  opacity: 1;
+  background-color: rgba(var(--color-fg-rgb), 0.05);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.button:hover {
+  color: var(--color-text);
+  background-color: rgba(var(--color-fg-rgb), 0.08);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  color: var(--color-text);
+}
+
+.count {
+  margin-left: 0.3rem;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  user-select: none;
+}
+
+.ticks {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: 0.4rem;
+}
+
+.tick {
+  width: 0.34rem;
+  height: 0.34rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background-color: rgba(var(--color-fg-rgb), 0.25);
+  cursor: pointer;
+  transition: background-color 140ms ease, transform 140ms ease;
+}
+
+.tick:hover {
+  background-color: rgba(var(--color-fg-rgb), 0.5);
+}
+
+.tickOn {
+  background-color: var(--color-accent);
+  transform: scale(1.25);
+}
+
+/* Reduced motion: the player already lands on the final frame and starts
+   paused (see NoteAnimation.jsx), so all that is left is to stop the fade. */
+@media (prefers-reduced-motion: reduce) {
+  .frameOn,
+  .frameOff {
+    transition: none;
+  }
+
+  .transport {
+    opacity: 1;
+  }
+}

@@ -31,6 +31,7 @@
     "team:migrate-contributor-cards": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/migrate-team-to-contributor-cards.mjs"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.5.4",
     "@google/generative-ai": "^0.24.1",
     "@headlessui/react": "^2.2.10",
     "@milkdown/kit": "^7.21.3",

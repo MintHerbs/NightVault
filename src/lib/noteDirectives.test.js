@@ -110,9 +110,9 @@ eq(
 
 // ------------------------------------------------------ real directives
 eq(
-  'the five real directives are left alone',
+  'the seven real directives are left alone',
   survivingDirectives(
-    ':color[a]{hex="#00FFA3"} :mark[b]{hex="#1E3A5C"}\n\n::youtube{id="dQw4w9WgXcQ"}\n\n::playground{id="ch02-target"}\n\n::molecule{smiles="CCO"}',
+    ':color[a]{hex="#00FFA3"} :mark[b]{hex="#1E3A5C"}\n\n::youtube{id="dQw4w9WgXcQ"}\n\n::playground{id="ch02-target"}\n\n::molecule{smiles="CCO"}\n\n::anim{id="db-norm-flatten"}\n\n::sqlrun{id="ddl-create-branch"}',
   ),
   [
     'textDirective:color',
@@ -120,7 +120,20 @@ eq(
     'leafDirective:youtube',
     'leafDirective:playground',
     'leafDirective:molecule',
+    'leafDirective:anim',
+    'leafDirective:sqlrun',
   ],
+)
+
+// Adding a name to HANDLED_DIRECTIVES without also giving Milkdown a schema for
+// it re-opens T-107: the fallback stops rewriting the directive to literal text,
+// and the editor then has no parser for the node, so opening the note takes the
+// whole editor down. This pins the list so that pairing cannot be forgotten —
+// every name here must have a `$nodeSchema` in NoteEditor.jsx.
+eq(
+  'anim and sqlrun survive as leaf directives, not text',
+  survivingDirectives('::anim{id="x"}\n\n::sqlrun{id="y"}'),
+  ['leafDirective:anim', 'leafDirective:sqlrun'],
 )
 
 // An invalid attribute is the *renderer's* call to make (it degrades to plain

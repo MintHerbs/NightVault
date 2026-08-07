@@ -3,9 +3,9 @@
 // Turns directive nodes nobody handles back into the literal text the author
 // typed, before either Markdown pipeline gets to act on them.
 //
-// Notes define exactly five directives (`:color`, `:mark`, `::youtube`,
-// `::playground`, `::molecule` — see NoteEditor.jsx's schemas and
-// MarkdownRenderer.jsx's remarkNoteDirectives). remark-directive's *name*
+// Notes define exactly seven directives (`:color`, `:mark`, `::youtube`,
+// `::playground`, `::molecule`, `::anim`, `::sqlrun` – see NoteEditor.jsx's
+// schemas and MarkdownRenderer.jsx's remarkNoteDirectives). remark-directive's *name*
 // grammar is far wider than that: micromark-extension-directive v4 accepts
 // digits anywhere in a name, so ordinary prose produces directives by accident.
 // A clock time is the one that bites — "The time is now 09:30." parses `:30` as
@@ -34,7 +34,7 @@ import { visit, SKIP } from 'unist-util-visit'
  *  module exists to guarantee. */
 const HANDLED_DIRECTIVES = {
   textDirective: new Set(['color', 'mark']),
-  leafDirective: new Set(['youtube', 'playground', 'molecule']),
+  leafDirective: new Set(['youtube', 'playground', 'molecule', 'anim', 'sqlrun']),
   containerDirective: new Set(),
 }
 

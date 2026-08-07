@@ -6,9 +6,13 @@ import remarkDirective from 'remark-directive'
 import { visit } from 'unist-util-visit'
 import CodeBlock from '../social/CodeBlock/CodeBlock'
 import NotePlayground from './NotePlayground'
+import NoteAnimation from './NoteAnimation'
+import NoteSqlConsole from './NoteSqlConsole'
 import MoleculeStructure from './MoleculeStructure/MoleculeStructure'
 import ReactionScheme from './ReactionScheme/ReactionScheme'
 import { PLAYGROUND_ID_RE } from '../../constants/notePlaygrounds'
+import { ANIMATION_ID_RE } from '../../constants/noteAnimations'
+import { SQL_SCRIPT_ID_RE } from '../../constants/noteSql'
 import { isValidSmiles, isValidLabel, parseReactionBlock } from '../../lib/chem/noteChem'
 import RichTooltip, { YouTubeIcon, InstagramIcon, LinkedInIcon } from '../ui/smoothui/rich-popover/index.tsx'
 import { resolveNoteImageSrc, noteImageFallbackSrc } from '../../lib/noteImageSrc'
@@ -80,6 +84,25 @@ function remarkNoteDirectives() {
       // discipline as HEX_COLOR_RE above. An invalid smiles/label drops the
       // directive entirely (renders as nothing), matching how an invalid
       // hex/id already degrades for :color/:mark/::youtube.
+      // `::anim{id="db-norm-flatten"}` and `::sqlrun{id="ddl-create-staff"}`.
+      // Both follow the ::playground rule above exactly: the id names an entry
+      // in a code-defined registry (src/content/animations, src/content/sql),
+      // so note content can only ever *choose* a figure or a script, never
+      // supply SVG or SQL of its own. Unknown or malformed ids render nothing.
+      if (node.type === 'leafDirective' && node.name === 'anim') {
+        const id = attrs.id || ''
+        if (!ANIMATION_ID_RE.test(id)) return
+        data.hName = 'note-animation'
+        data.hProperties = { animationId: id }
+        return
+      }
+      if (node.type === 'leafDirective' && node.name === 'sqlrun') {
+        const id = attrs.id || ''
+        if (!SQL_SCRIPT_ID_RE.test(id)) return
+        data.hName = 'note-sql-console'
+        data.hProperties = { scriptId: id }
+        return
+      }
       if (node.type === 'leafDirective' && node.name === 'molecule') {
         const smiles = attrs.smiles || ''
         const label = attrs.label || ''
@@ -300,6 +323,12 @@ const markdownComponents = {
   },
   'note-molecule': function NoteMoleculeComponent({ smiles, label }) {
     return <MoleculeStructure smiles={smiles} label={label} />
+  },
+  'note-animation': function NoteAnimationComponent({ animationId }) {
+    return <NoteAnimation animationId={animationId} />
+  },
+  'note-sql-console': function NoteSqlConsoleComponent({ scriptId }) {
+    return <NoteSqlConsole scriptId={scriptId} />
   },
   img({ src, alt, title }) {
     // The image title carries the width chosen in the editor (`w=<px>`), so the
