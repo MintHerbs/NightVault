@@ -36,12 +36,22 @@ export function text(x, y, s, { size = 12, fill = C.text, anchor = 'start', weig
   )
 }
 
-export function rect(x, y, w, h, { fill = 'none', stroke = C.line, sw = 1, rx = 4, dash, opacity } = {}) {
+/**
+ * `annot` marks a shape as an ANNOTATION drawn deliberately across other
+ * elements, such as the box ringing the repeating-group columns of a table.
+ * scripts/verify-note-animations.mjs treats any partial overlap as a defect,
+ * which is what catches a subclass poking through the border of its container;
+ * an annotation is the one case where crossing things is the point. Marking it
+ * here keeps the exemption explicit and greppable rather than loosening the
+ * check for every figure.
+ */
+export function rect(x, y, w, h, { fill = 'none', stroke = C.line, sw = 1, rx = 4, dash, opacity, annot } = {}) {
   const d = dash ? ` stroke-dasharray="${dash}"` : ''
   const o = opacity == null ? '' : ` opacity="${opacity}"`
+  const a = annot ? ' data-ok-overlap="1"' : ''
   return (
     `<rect x="${r(x)}" y="${r(y)}" width="${r(w)}" height="${r(h)}" rx="${rx}" fill="${fill}" ` +
-    `stroke="${stroke}" stroke-width="${sw}"${d}${o}/>`
+    `stroke="${stroke}" stroke-width="${sw}"${d}${o}${a}/>`
   )
 }
 

@@ -96,18 +96,43 @@ for (let f = 0; f < stages.length; f += 1) {
                 `at ${((r.left - frame.left) / px).toFixed(0)},${((r.top - frame.top) / px).toFixed(0)}`
             )
           }
-          if (node.tagName === 'text') boxes.push({ r, t: node.textContent || '' })
+          boxes.push({
+            r,
+            tag: node.tagName,
+            t: node.textContent || '',
+            // Shapes the builder declares as annotations, drawn deliberately
+            // across other elements. See rect()'s `annot` option in draw.mjs.
+            annot: node.hasAttribute('data-ok-overlap'),
+          })
         }
       }
+
+      // Partial overlap is the bug; containment is deliberate.
+      //
+      // Nesting is how the notation works: a label sits inside its own ellipse,
+      // a multivalued attribute is an ellipse inside an ellipse, and the whole
+      // reference table is one big rect around everything. All of those are
+      // full containment. What is never intended is two shapes CLIPPING each
+      // other, which is exactly what a subclass ellipse poking through the
+      // bottom border of its container looks like.
+      const contains = (A, B) =>
+        A.left <= B.left + px && A.top <= B.top + px && A.right >= B.right - px && A.bottom >= B.bottom - px
+
+      const at = (b) =>
+        `${((b.r.left - frame.left) / px).toFixed(0)},${((b.r.top - frame.top) / px).toFixed(0)} ` +
+        `${(b.r.width / px).toFixed(0)}x${(b.r.height / px).toFixed(0)}`
+      const describe = (b) => `${b.tag}${b.t ? ` "${b.t.slice(0, 20)}"` : ''} @${at(b)}`
+
       for (let a = 0; a < boxes.length; a += 1) {
         for (let c = a + 1; c < boxes.length; c += 1) {
           const A = boxes[a].r
           const B = boxes[c].r
           const ox = Math.min(A.right, B.right) - Math.max(A.left, B.left)
           const oy = Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top)
-          if (ox > 1.5 * px && oy > 1.5 * px) {
-            out.push(`text overlap: "${boxes[a].t.slice(0, 22)}" / "${boxes[c].t.slice(0, 22)}"`)
-          }
+          if (ox <= 2 * px || oy <= 2 * px) continue
+          if (contains(A, B) || contains(B, A)) continue
+          if (boxes[a].annot || boxes[c].annot) continue
+          out.push(`overlap: ${describe(boxes[a])} / ${describe(boxes[c])}`)
         }
       }
       return out

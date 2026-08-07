@@ -149,7 +149,7 @@ const entries = []
         heading('0NF: the repeating group') +
         sub('the three boxed columns repeat together inside one row') +
         t.svg +
-        rect(groupX, 104, groupW, t.height, { fill: tint(C.bad), stroke: C.bad, sw: 1.4, rx: 4 }) +
+        rect(groupX, 104, groupW, t.height, { fill: tint(C.bad), stroke: C.bad, sw: 1.4, rx: 4, annot: true }) +
         text(groupX + groupW / 2, 104 + t.height + 20, 'repeating group', {
           size: 11,
           fill: C.bad,

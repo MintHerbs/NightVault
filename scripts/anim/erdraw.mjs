@@ -82,10 +82,18 @@ export function connect(x1, y1, x2, y2, { total = false, colour = C.line, label,
     out.push(line(x1, y1, x2, y2, { stroke: colour, sw: 1.1 }))
   }
   if (label) {
+    // No backing rect behind the label: it would have to be painted in the
+    // page background colour to mask the line, and the figures are
+    // theme-agnostic so there is no such colour to use. Nudging the label off
+    // the line is what keeps it readable.
     const lx = x1 + (x2 - x1) * labelAt
     const ly = y1 + (y2 - y1) * labelAt
-    out.push(rect(lx - 9, ly - 8, 18, 15, { fill: 'var(--anim-bg-solid, transparent)', stroke: 'none', rx: 2 }))
-    out.push(text(lx, ly + 4, label, { size: 10.5, anchor: 'middle', weight: 700, fill: colour, mono: true }))
+    const dx = x2 - x1
+    const dy = y2 - y1
+    const len = Math.hypot(dx, dy) || 1
+    const ox = (-dy / len) * 8
+    const oy = (dx / len) * 8
+    out.push(text(lx + ox, ly + oy + 3.5, label, { size: 10.5, anchor: 'middle', weight: 700, fill: colour, mono: true }))
   }
   return out.join('')
 }

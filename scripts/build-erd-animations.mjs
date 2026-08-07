@@ -23,19 +23,27 @@ const R = (cx, cy) => ({ cx, cy, shape: 'diamond' })
   const GX = 26
   const MX = 150
   const SX = 470
-  const rowH = 46
 
+  // Each row declares the height its symbol needs rather than every row sharing
+  // one. A composite attribute is three ellipses stacked two deep and needs
+  // roughly twice the room of a single ellipse; forcing it into the same band
+  // is what pushed its children through the bottom border of the table.
   const shell = (rows, title, colour) => {
     const out = [head(title, colour)]
     const top = 40
-    out.push(rect(GX - 8, top - 6, W - 2 * (GX - 8), rows.length * rowH + 12, { fill: 'none', stroke: C.line, rx: 6 }))
+    const heights = rows.map((r) => r.h ?? 48)
+    const totalH = heights.reduce((a, b) => a + b, 0)
+    out.push(rect(GX - 8, top - 6, W - 2 * (GX - 8), totalH + 12, { fill: 'none', stroke: C.line, rx: 6 }))
+    let y0 = top
     rows.forEach((r, i) => {
-      const y = top + i * rowH + rowH / 2
-      if (i > 0) out.push(line(GX - 8, top + i * rowH - 6, W - GX + 8, top + i * rowH - 6, { stroke: C.line, sw: 0.5 }))
+      const h = heights[i]
+      const y = y0 + h / 2
+      if (i > 0) out.push(line(GX - 8, y0 - 6, W - GX + 8, y0 - 6, { stroke: C.line, sw: 0.5 }))
       if (r.group) out.push(text(GX, y + 4, r.group, { size: 11.5, weight: 700, fill: r.colour ?? C.muted }))
       out.push(text(MX, y - 2, r.name, { size: 11.5, weight: 600, fill: C.text }))
       if (r.note) out.push(text(MX, y + 13, r.note, { size: 10, fill: C.muted }))
       out.push(r.symbol(SX + 90, y))
+      y0 += h
     })
     return out.join('')
   }
@@ -62,7 +70,18 @@ const R = (cx, cy) => ({ cx, cy, shape: 'diamond' })
         { group: '', name: 'Key attribute', note: 'underlined, unique per entity', symbol: (x, y) => attribute(x, y, 'studentNo', { key: true, rx: 46 }) },
         { group: '', name: 'Multivalued', note: 'double outline, many values at once', symbol: (x, y) => attribute(x, y, 'phone', { multi: true }) },
         { group: '', name: 'Derived', note: 'dashed, computed from others', symbol: (x, y) => attribute(x, y, 'age', { derived: true }) },
-        { group: '', name: 'Composite', note: 'made of smaller attributes', symbol: (x, y) => attribute(x, y - 10, 'address') + connect(x - 20, y - 10 + ATTR_RY - 4, x - 44, y + 16) + connect(x + 16, y - 10 + ATTR_RY - 4, x + 40, y + 16) + attribute(x - 60, y + 18, 'city', { rx: 24 }) + attribute(x + 56, y + 18, 'zip', { rx: 22 }) },
+        {
+          group: '',
+          name: 'Composite',
+          note: 'made of smaller attributes',
+          h: 92,
+          symbol: (x, y) =>
+            attribute(x, y - 24, 'address') +
+            connect(x - 18, y - 24 + ATTR_RY - 2, x - 52, y + 12) +
+            connect(x + 18, y - 24 + ATTR_RY - 2, x + 52, y + 12) +
+            attribute(x - 62, y + 22, 'city', { rx: 26 }) +
+            attribute(x + 62, y + 22, 'zip', { rx: 24 }),
+        },
       ],
       'Attributes',
       C.link
@@ -74,8 +93,9 @@ const R = (cx, cy) => ({ cx, cy, shape: 'diamond' })
     hold: 5200,
     svg: shell(
       [
-        { group: 'Relationship', name: 'Strong relationship', note: 'ordinary association', symbol: (x, y) => relationship(x, y, 'enrols') },
-        { group: '', name: 'Weak (identifying)', note: 'double diamond, identifies a weak entity', symbol: (x, y) => relationship(x, y, 'has', { weak: true }) },
+        // A diamond is 52px tall, so these rows cannot use the 48px default.
+        { group: 'Relationship', name: 'Strong relationship', note: 'ordinary association', h: 64, symbol: (x, y) => relationship(x, y, 'enrols') },
+        { group: '', name: 'Weak (identifying)', note: 'double diamond, identifies a weak entity', h: 64, symbol: (x, y) => relationship(x, y, 'has', { weak: true }) },
         { group: 'Constraints', name: 'Cardinality', note: '1:1, 1:M or M:N, written on the line', symbol: (x, y) => connect(x - 70, y, x + 70, y, { label: 'M' }) + text(x + 58, y - 8, 'N', { size: 10.5, weight: 700, fill: C.line, mono: true }) },
         { group: '', name: 'Total participation', note: 'double line, every entity must take part', symbol: (x, y) => connect(x - 70, y, x + 70, y, { total: true }) },
       ],
@@ -170,7 +190,8 @@ const R = (cx, cy) => ({ cx, cy, shape: 'diamond' })
   layers.push(
     entity(LECT.cx, LECT.cy, 'Lecturer') +
       attachedAttribute(LECT, LECT.cx - 6, LECT.cy - 56, 'staffNo', { key: true, rx: 34 }) +
-      attachedAttribute(LECT, LECT.cx + 106, LECT.cy - 40, 'lName', { rx: 28 }) +
+      // Kept clear of the teaches diamond, which reaches up to y = 48.
+      attachedAttribute(LECT, LECT.cx + 96, LECT.cy - 54, 'lName', { rx: 28 }) +
       // Clear of the vertical Lecturer-to-heads edge, which runs down x = LECT.cx.
       attachedAttribute(LECT, LECT.cx - 82, LECT.cy + 42, 'age', { derived: true, rx: 24 })
   )
