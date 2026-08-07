@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 690 326" width="690" height="326" font-family="Inter, -apple-system, Segoe UI, sans-serif" role="img" aria-label="Deleting a key from an open addressed table strands a later key unless a tombstone is left">
+  <defs><marker id="hFF5FA2" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#FF5FA2"/></marker><marker id="h22C55E" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#22C55E"/></marker><marker id="hEF4444" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#EF4444"/></marker><marker id="hA78BFA" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#A78BFA"/></marker><marker id="h2DD4BF" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#2DD4BF"/></marker><marker id="hEAB308" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#EAB308"/></marker><marker id="hbfb9b0" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#bfb9b0"/></marker><marker id="h7d7870" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#7d7870"/></marker><marker id="hf5f2ec" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#f5f2ec"/></marker></defs>
+  <rect width="690" height="326" fill="#0b0a0a"/>
+  <text x="36" y="30" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="700" text-anchor="start">Deleting from an open addressed table</text>
+  <text x="36" y="70" fill="#EF4444" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" text-anchor="start">remove the key in slot 0, and simply blank it</text>
+  <rect x="61" y="96" width="48" height="34" rx="6" fill="rgba(239,68,68,0.05)" stroke="#EF4444" stroke-width="1.6" stroke-dasharray="4 3"/>
+  <text x="85" y="90" fill="#EF4444" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">0</text>
+  <rect x="113" y="96" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="137" y="117.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">1</text>
+  <text x="137" y="90" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">1</text>
+  <rect x="165" y="96" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="189" y="117.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">13</text>
+  <text x="189" y="90" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">2</text>
+  <rect x="217" y="96" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="241" y="117.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">11</text>
+  <text x="241" y="90" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">3</text>
+  <rect x="269" y="96" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="293" y="117.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">24</text>
+  <text x="293" y="90" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">4</text>
+  <rect x="321" y="96" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="345" y="117.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">33</text>
+  <text x="345" y="90" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">5</text>
+  <rect x="373" y="96" width="48" height="34" rx="6" fill="rgba(125,120,112,0.05)" stroke="#7d7870" stroke-width="1.3" stroke-dasharray="4 3"/>
+  <text x="397" y="90" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">6</text>
+  <rect x="425" y="96" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="449" y="117.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">18</text>
+  <text x="449" y="90" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">7</text>
+  <rect x="477" y="96" width="48" height="34" rx="6" fill="rgba(125,120,112,0.05)" stroke="#7d7870" stroke-width="1.3" stroke-dasharray="4 3"/>
+  <text x="501" y="90" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">8</text>
+  <rect x="529" y="96" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="553" y="117.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">42</text>
+  <text x="553" y="90" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">9</text>
+  <rect x="581" y="96" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="605" y="117.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">31</text>
+  <text x="605" y="90" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">10</text>
+  <text x="36" y="162" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="600" text-anchor="start">now search for 11: h(11) = 0, the walk reaches the blank at 0 and stops.</text>
+  <text x="36" y="184" fill="#EF4444" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" text-anchor="start">11 is still in the table, and has become unreachable.</text>
+  <text x="36" y="222" fill="#22C55E" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" text-anchor="start">the fix: leave a tombstone</text>
+  <rect x="61" y="248" width="48" height="34" rx="6" fill="rgba(34,197,94,0.18)" stroke="#22C55E" stroke-width="1.8"/>
+  <text x="85" y="269.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">✕</text>
+  <text x="85" y="242" fill="#22C55E" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">0</text>
+  <rect x="113" y="248" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="137" y="269.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">1</text>
+  <text x="137" y="242" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">1</text>
+  <rect x="165" y="248" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="189" y="269.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">13</text>
+  <text x="189" y="242" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">2</text>
+  <rect x="217" y="248" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="241" y="269.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">11</text>
+  <text x="241" y="242" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">3</text>
+  <rect x="269" y="248" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="293" y="269.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">24</text>
+  <text x="293" y="242" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">4</text>
+  <rect x="321" y="248" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="345" y="269.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">33</text>
+  <text x="345" y="242" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">5</text>
+  <rect x="373" y="248" width="48" height="34" rx="6" fill="rgba(125,120,112,0.05)" stroke="#7d7870" stroke-width="1.3" stroke-dasharray="4 3"/>
+  <text x="397" y="242" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">6</text>
+  <rect x="425" y="248" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="449" y="269.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">18</text>
+  <text x="449" y="242" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">7</text>
+  <rect x="477" y="248" width="48" height="34" rx="6" fill="rgba(125,120,112,0.05)" stroke="#7d7870" stroke-width="1.3" stroke-dasharray="4 3"/>
+  <text x="501" y="242" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">8</text>
+  <rect x="529" y="248" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="553" y="269.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">42</text>
+  <text x="553" y="242" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">9</text>
+  <rect x="581" y="248" width="48" height="34" rx="6" fill="rgba(167,139,250,0.14)" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="605" y="269.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">31</text>
+  <text x="605" y="242" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">10</text>
+  <text x="36" y="306" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="500" text-anchor="start">A tombstone means "something was here". A search walks past it; an insert may reuse it.</text>
+</svg>

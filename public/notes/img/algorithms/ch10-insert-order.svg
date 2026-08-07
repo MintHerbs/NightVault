@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 690 388" width="690" height="388" font-family="Inter, -apple-system, Segoe UI, sans-serif" role="img" aria-label="The same seven keys inserted in two orders, giving a balanced tree and a degenerate one">
+  <defs><marker id="hEAB308" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#EAB308"/></marker><marker id="h5B8CFF" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#5B8CFF"/></marker><marker id="h22C55E" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#22C55E"/></marker><marker id="hFF5FA2" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#FF5FA2"/></marker><marker id="hA78BFA" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#A78BFA"/></marker><marker id="hEF4444" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#EF4444"/></marker><marker id="h2DD4BF" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#2DD4BF"/></marker><marker id="hbfb9b0" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#bfb9b0"/></marker><marker id="h7d7870" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#7d7870"/></marker><marker id="hf5f2ec" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#f5f2ec"/></marker></defs>
+  <rect width="690" height="388" fill="#0b0a0a"/>
+  <text x="36" y="32" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="700" text-anchor="start">The same seven keys, two insertion orders</text>
+  <rect x="36" y="62" width="301" height="268" rx="12" fill="#0b0a0a" stroke="rgba(34,197,94,0.3)" stroke-width="1"/>
+  <text x="52" y="85" fill="#22C55E" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" text-anchor="start">40, 20, 60, 10, 30, 50, 70</text>
+  <text x="52" y="102" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="500" text-anchor="start">balanced, height 2</text>
+  <path d="M163.7,149.2 L120.3,176.8" stroke="rgba(125,120,112,0.75)" stroke-width="1.4" opacity="1"/>
+  <path d="M192.3,149.2 L235.7,176.8" stroke="rgba(125,120,112,0.75)" stroke-width="1.4" opacity="1"/>
+  <path d="M95.5,199.4 L80.5,218.6" stroke="rgba(125,120,112,0.75)" stroke-width="1.4" opacity="1"/>
+  <path d="M116.5,199.4 L131.5,218.6" stroke="rgba(125,120,112,0.75)" stroke-width="1.4" opacity="1"/>
+  <path d="M239.5,199.4 L224.5,218.6" stroke="rgba(125,120,112,0.75)" stroke-width="1.4" opacity="1"/>
+  <path d="M260.5,199.4 L275.5,218.6" stroke="rgba(125,120,112,0.75)" stroke-width="1.4" opacity="1"/>
+  <circle cx="178" cy="140" r="14" fill="rgba(34,197,94,0.14)" stroke="#22C55E" stroke-width="1.6" opacity="1"/>
+  <text x="178" y="143.8" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">40</text>
+  <circle cx="106" cy="186" r="14" fill="rgba(34,197,94,0.14)" stroke="#22C55E" stroke-width="1.6" opacity="1"/>
+  <text x="106" y="189.8" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">20</text>
+  <circle cx="70" cy="232" r="14" fill="rgba(34,197,94,0.14)" stroke="#22C55E" stroke-width="1.6" opacity="1"/>
+  <text x="70" y="235.8" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">10</text>
+  <circle cx="142" cy="232" r="14" fill="rgba(34,197,94,0.14)" stroke="#22C55E" stroke-width="1.6" opacity="1"/>
+  <text x="142" y="235.8" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">30</text>
+  <circle cx="250" cy="186" r="14" fill="rgba(34,197,94,0.14)" stroke="#22C55E" stroke-width="1.6" opacity="1"/>
+  <text x="250" y="189.8" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">60</text>
+  <circle cx="214" cy="232" r="14" fill="rgba(34,197,94,0.14)" stroke="#22C55E" stroke-width="1.6" opacity="1"/>
+  <text x="214" y="235.8" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">50</text>
+  <circle cx="286" cy="232" r="14" fill="rgba(34,197,94,0.14)" stroke="#22C55E" stroke-width="1.6" opacity="1"/>
+  <text x="286" y="235.8" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">70</text>
+  <text x="52" y="310" fill="#22C55E" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" text-anchor="start">search cost O(log n)</text>
+  <rect x="353" y="62" width="301" height="268" rx="12" fill="#0b0a0a" stroke="rgba(239,68,68,0.3)" stroke-width="1"/>
+  <text x="369" y="85" fill="#EF4444" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" text-anchor="start">10, 20, 30, 40, 50, 60, 70</text>
+  <text x="369" y="102" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="500" text-anchor="start">degenerate, height 6</text>
+  <path d="M400.5,134.3 L403.5,136.7" stroke="rgba(125,120,112,0.75)" stroke-width="1.4" opacity="1"/>
+  <path d="M430.5,157.3 L433.5,159.7" stroke="rgba(125,120,112,0.75)" stroke-width="1.4" opacity="1"/>
+  <path d="M460.5,180.3 L463.5,182.7" stroke="rgba(125,120,112,0.75)" stroke-width="1.4" opacity="1"/>
+  <path d="M490.5,203.3 L493.5,205.7" stroke="rgba(125,120,112,0.75)" stroke-width="1.4" opacity="1"/>
+  <path d="M520.5,226.3 L523.5,228.7" stroke="rgba(125,120,112,0.75)" stroke-width="1.4" opacity="1"/>
+  <path d="M550.5,249.3 L553.5,251.7" stroke="rgba(125,120,112,0.75)" stroke-width="1.4" opacity="1"/>
+  <circle cx="387" cy="124" r="13" fill="rgba(239,68,68,0.14)" stroke="#EF4444" stroke-width="1.6" opacity="1"/>
+  <text x="387" y="127.8" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">10</text>
+  <circle cx="417" cy="147" r="13" fill="rgba(239,68,68,0.14)" stroke="#EF4444" stroke-width="1.6" opacity="1"/>
+  <text x="417" y="150.8" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">20</text>
+  <circle cx="447" cy="170" r="13" fill="rgba(239,68,68,0.14)" stroke="#EF4444" stroke-width="1.6" opacity="1"/>
+  <text x="447" y="173.8" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">30</text>
+  <circle cx="477" cy="193" r="13" fill="rgba(239,68,68,0.14)" stroke="#EF4444" stroke-width="1.6" opacity="1"/>
+  <text x="477" y="196.8" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">40</text>
+  <circle cx="507" cy="216" r="13" fill="rgba(239,68,68,0.14)" stroke="#EF4444" stroke-width="1.6" opacity="1"/>
+  <text x="507" y="219.8" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">50</text>
+  <circle cx="537" cy="239" r="13" fill="rgba(239,68,68,0.14)" stroke="#EF4444" stroke-width="1.6" opacity="1"/>
+  <text x="537" y="242.8" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">60</text>
+  <circle cx="567" cy="262" r="13" fill="rgba(239,68,68,0.14)" stroke="#EF4444" stroke-width="1.6" opacity="1"/>
+  <text x="567" y="265.8" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">70</text>
+  <text x="369" y="310" fill="#EF4444" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" text-anchor="start">search cost O(n), no better than a list</text>
+  <text x="36" y="356" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="600" text-anchor="start">Sorted input is the worst case, and it is the input that turns up most often in practice.</text>
+  <text x="36" y="374" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="500" text-anchor="start">Self balancing trees, AVL and red black, exist to stop the right hand picture happening.</text>
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 690 300" width="690" height="300" font-family="Inter, -apple-system, Segoe UI, sans-serif" role="img" aria-label="A key passing through a hash function to an index in a table">
+  <defs><marker id="hFF5FA2" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#FF5FA2"/></marker><marker id="h22C55E" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#22C55E"/></marker><marker id="hEF4444" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#EF4444"/></marker><marker id="hA78BFA" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#A78BFA"/></marker><marker id="h2DD4BF" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#2DD4BF"/></marker><marker id="hEAB308" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#EAB308"/></marker><marker id="hbfb9b0" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#bfb9b0"/></marker><marker id="h7d7870" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#7d7870"/></marker><marker id="hf5f2ec" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#f5f2ec"/></marker></defs>
+  <rect width="690" height="300" fill="#0b0a0a"/>
+  <text x="36" y="30" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="700" text-anchor="start">A hash table turns a key straight into an address</text>
+  <rect x="60" y="72" width="96" height="44" rx="9" fill="rgba(255,95,162,0.14)" stroke="#FF5FA2" stroke-width="1.5"/>
+  <text x="108" y="98" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="13.5" font-weight="700" text-anchor="middle">27</text>
+  <text x="108" y="64" fill="#FF5FA2" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700" text-anchor="middle">key</text>
+  <path d="M164,94 L242,94" fill="none" stroke="#7d7870" stroke-width="1.5" stroke-linecap="round" marker-end="url(#h7d7870)"/>
+  <rect x="250" y="72" width="150" height="44" rx="9" fill="rgba(234,179,8,0.14)" stroke="#EAB308" stroke-width="1.5"/>
+  <text x="325" y="98" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="13.5" font-weight="700" text-anchor="middle">k mod 11</text>
+  <text x="325" y="64" fill="#EAB308" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700" text-anchor="middle">hash function</text>
+  <path d="M408,94 L462,94" fill="none" stroke="#7d7870" stroke-width="1.5" stroke-linecap="round" marker-end="url(#h7d7870)"/>
+  <rect x="470" y="72" width="96" height="44" rx="9" fill="rgba(34,197,94,0.14)" stroke="#22C55E" stroke-width="1.5"/>
+  <text x="518" y="98" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="13.5" font-weight="700" text-anchor="middle">5</text>
+  <text x="518" y="64" fill="#22C55E" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700" text-anchor="middle">index</text>
+  <text x="51" y="189" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="600" text-anchor="end">table</text>
+  <rect x="61" y="168" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="85" y="162" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">0</text>
+  <rect x="113" y="168" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="137" y="162" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">1</text>
+  <rect x="165" y="168" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="189" y="162" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">2</text>
+  <rect x="217" y="168" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="241" y="162" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">3</text>
+  <rect x="269" y="168" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="293" y="162" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">4</text>
+  <rect x="321" y="168" width="48" height="34" rx="6" fill="rgba(34,197,94,0.26)" stroke="#22C55E" stroke-width="2"/>
+  <text x="345" y="189.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">27</text>
+  <text x="345" y="162" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">5</text>
+  <rect x="373" y="168" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="397" y="162" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">6</text>
+  <rect x="425" y="168" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="449" y="162" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">7</text>
+  <rect x="477" y="168" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="501" y="162" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">8</text>
+  <rect x="529" y="168" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="553" y="162" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">9</text>
+  <rect x="581" y="168" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="605" y="162" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">10</text>
+  <path d="M518,120 L345,162" fill="none" stroke="#22C55E" stroke-width="1.6" stroke-linecap="round" marker-end="url(#h22C55E)"/>
+  <text x="36" y="246" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="600" text-anchor="start">No searching, no comparisons, no tree to walk. One arithmetic operation gives the address.</text>
+  <text x="36" y="266" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="500" text-anchor="start">That is why insert, search and delete are all O(1) on average, which nothing in chapters 10 or 11 can do.</text>
+  <text x="36" y="286" fill="#EF4444" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="600" text-anchor="start">The catch is that two keys can land on the same index, and the rest of the chapter is about that.</text>
+</svg>

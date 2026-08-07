@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 690 352" width="690" height="352" font-family="Inter, -apple-system, Segoe UI, sans-serif" role="img" aria-label="The parent, left child and right child index formulas worked on one node">
+  <defs><marker id="hEAB308" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#EAB308"/></marker><marker id="h5B8CFF" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#5B8CFF"/></marker><marker id="h22C55E" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#22C55E"/></marker><marker id="hFF5FA2" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#FF5FA2"/></marker><marker id="hA78BFA" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#A78BFA"/></marker><marker id="hEF4444" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#EF4444"/></marker><marker id="h2DD4BF" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#2DD4BF"/></marker><marker id="hbfb9b0" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#bfb9b0"/></marker><marker id="h7d7870" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#7d7870"/></marker><marker id="hf5f2ec" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#f5f2ec"/></marker></defs>
+  <rect width="690" height="352" fill="#0b0a0a"/>
+  <text x="36" y="30" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="700" text-anchor="start">Finding a parent or a child is arithmetic, not a pointer</text>
+  <path d="M270.6,101 L219.4,133" stroke="rgba(125,120,112,0.7)" stroke-width="1.4" opacity="1"/>
+  <path d="M299.4,101 L350.6,133" stroke="rgba(125,120,112,0.7)" stroke-width="1.4" opacity="1"/>
+  <path d="M194.4,155.3 L175.6,178.7" stroke="rgba(125,120,112,0.7)" stroke-width="1.4" opacity="1"/>
+  <path d="M215.6,155.3 L234.4,178.7" stroke="rgba(125,120,112,0.7)" stroke-width="1.4" opacity="1"/>
+  <path d="M354.4,155.3 L335.6,178.7" stroke="rgba(125,120,112,0.7)" stroke-width="1.4" opacity="1"/>
+  <path d="M375.6,155.3 L394.4,178.7" stroke="rgba(125,120,112,0.7)" stroke-width="1.4" opacity="1"/>
+  <path d="M158.7,207.8 L151.3,226.2" stroke="rgba(125,120,112,0.7)" stroke-width="1.4" opacity="1"/>
+  <circle cx="285" cy="92" r="17" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.6" opacity="0.55"/>
+  <text x="285" y="96.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">25</text>
+  <text x="285" y="70" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle">0</text>
+  <circle cx="205" cy="142" r="17" fill="rgba(234,179,8,0.28)" stroke="#EAB308" stroke-width="2.1" opacity="1"/>
+  <text x="205" y="146.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">12</text>
+  <text x="205" y="120" fill="#EAB308" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle">1</text>
+  <circle cx="365" cy="142" r="17" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.6" opacity="0.55"/>
+  <text x="365" y="146.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">19</text>
+  <text x="365" y="120" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle">2</text>
+  <circle cx="165" cy="192" r="17" fill="rgba(255,95,162,0.28)" stroke="#FF5FA2" stroke-width="2.1" opacity="1"/>
+  <text x="165" y="196.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">5</text>
+  <text x="165" y="170" fill="#FF5FA2" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle">3</text>
+  <circle cx="245" cy="192" r="17" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.6" opacity="0.55"/>
+  <text x="245" y="196.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">7</text>
+  <text x="245" y="170" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle">4</text>
+  <circle cx="325" cy="192" r="17" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.6" opacity="0.55"/>
+  <text x="325" y="196.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">8</text>
+  <text x="325" y="170" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle">5</text>
+  <circle cx="405" cy="192" r="17" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.6" opacity="0.55"/>
+  <text x="405" y="196.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">16</text>
+  <text x="405" y="170" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle">6</text>
+  <circle cx="145" cy="242" r="17" fill="rgba(45,212,191,0.28)" stroke="#2DD4BF" stroke-width="2.1" opacity="1"/>
+  <text x="145" y="246.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">3</text>
+  <text x="145" y="220" fill="#2DD4BF" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle">7</text>
+  <circle cx="440" cy="104" r="9" fill="rgba(255,95,162,0.2)" stroke="#FF5FA2" stroke-width="1.5"/>
+  <text x="440" y="107.4" fill="#FF5FA2" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="9.5" font-weight="700" text-anchor="middle">3</text>
+  <text x="458" y="102" fill="#FF5FA2" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="start">i</text>
+  <text x="458" y="116" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="500" text-anchor="start">the node we are standing on</text>
+  <circle cx="440" cy="148" r="9" fill="rgba(234,179,8,0.2)" stroke="#EAB308" stroke-width="1.5"/>
+  <text x="440" y="151.4" fill="#EAB308" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="9.5" font-weight="700" text-anchor="middle">1</text>
+  <text x="458" y="146" fill="#EAB308" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="start">parent(i) = (i − 1) ÷ 2</text>
+  <text x="458" y="160" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="500" text-anchor="start">= (3 − 1) ÷ 2 = 1</text>
+  <circle cx="440" cy="192" r="9" fill="rgba(45,212,191,0.2)" stroke="#2DD4BF" stroke-width="1.5"/>
+  <text x="440" y="195.4" fill="#2DD4BF" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="9.5" font-weight="700" text-anchor="middle">7</text>
+  <text x="458" y="190" fill="#2DD4BF" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="start">left(i) = 2i + 1</text>
+  <text x="458" y="204" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="500" text-anchor="start">= 2×3 + 1 = 7, which is a real node</text>
+  <circle cx="440" cy="236" r="9" fill="rgba(239,68,68,0.2)" stroke="#EF4444" stroke-width="1.5"/>
+  <text x="440" y="239.4" fill="#EF4444" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="9.5" font-weight="700" text-anchor="middle">8</text>
+  <text x="458" y="234" fill="#EF4444" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="start">right(i) = 2i + 2</text>
+  <text x="458" y="248" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="500" text-anchor="start">= 8, but n = 8, so there is no right child</text>
+  <text x="36" y="298" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="600" text-anchor="start">Integer division, so it rounds down. The root has no parent, and a child index is a real node only while it is &lt; n.</text>
+  <text x="36" y="318" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="500" text-anchor="start">Numbering from 1 instead: parent(i) = i ÷ 2, left(i) = 2i, right(i) = 2i + 1. Some courses do. Check yours once.</text>
+  <text x="36" y="338" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="500" text-anchor="start">Indices 4 to 7 have no children at all, so half the array is leaves.</text>
+</svg>

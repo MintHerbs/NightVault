@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 686 344" width="686" height="344" font-family="Inter, -apple-system, Segoe UI, sans-serif" role="img" aria-label="Q20 answer, a binary tree">
+  <rect width="686" height="344" fill="#0b0a0a"/>
+  <text x="22" y="18" fill="#7d7870" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="600">Q20 answer</text>
+  <path d="M481.5,54.1 L292.5,103.9" stroke="rgba(125,120,112,0.75)" stroke-width="1.4"/>
+  <path d="M510.4,58.8 L571.6,99.2" stroke="rgba(125,120,112,0.75)" stroke-width="1.4"/>
+  <path d="M261.8,113 L116.2,161" stroke="rgba(125,120,112,0.75)" stroke-width="1.4"/>
+  <path d="M291.6,114.4 L394.4,159.6" stroke="rgba(125,120,112,0.75)" stroke-width="1.4"/>
+  <path d="M91.3,178.7 L66.7,211.3" stroke="rgba(125,120,112,0.75)" stroke-width="1.4"/>
+  <path d="M114.4,174.8 L175.6,215.2" stroke="rgba(125,120,112,0.75)" stroke-width="1.4"/>
+  <path d="M179.3,236.7 L154.7,269.3" stroke="rgba(125,120,112,0.75)" stroke-width="1.4"/>
+  <path d="M198.7,236.7 L223.3,269.3" stroke="rgba(125,120,112,0.75)" stroke-width="1.4"/>
+  <path d="M399.3,178.7 L374.7,211.3" stroke="rgba(125,120,112,0.75)" stroke-width="1.4"/>
+  <path d="M418.7,178.7 L443.3,211.3" stroke="rgba(125,120,112,0.75)" stroke-width="1.4"/>
+  <path d="M355.3,236.7 L330.7,269.3" stroke="rgba(125,120,112,0.75)" stroke-width="1.4"/>
+  <path d="M575.3,120.7 L550.7,153.3" stroke="rgba(125,120,112,0.75)" stroke-width="1.4"/>
+  <path d="M594.7,120.7 L619.3,153.3" stroke="rgba(125,120,112,0.75)" stroke-width="1.4"/>
+  <circle cx="497" cy="50" r="16" fill="rgba(234,179,8,0.16)" stroke="#EAB308" stroke-width="1.6"/>
+  <text x="497" y="54.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">11</text>
+  <circle cx="277" cy="108" r="16" fill="rgba(91,140,255,0.16)" stroke="#5B8CFF" stroke-width="1.6"/>
+  <text x="277" y="112.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">6</text>
+  <circle cx="101" cy="166" r="16" fill="rgba(91,140,255,0.16)" stroke="#5B8CFF" stroke-width="1.6"/>
+  <text x="101" y="170.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">2</text>
+  <circle cx="57" cy="224" r="20" fill="none" stroke="rgba(45,212,191,0.45)" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <circle cx="57" cy="224" r="16" fill="rgba(45,212,191,0.16)" stroke="#2DD4BF" stroke-width="1.6"/>
+  <text x="57" y="228.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">1</text>
+  <circle cx="189" cy="224" r="20" fill="none" stroke="rgba(45,212,191,0.45)" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <circle cx="189" cy="224" r="16" fill="rgba(45,212,191,0.16)" stroke="#2DD4BF" stroke-width="1.6"/>
+  <text x="189" y="228.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">4</text>
+  <circle cx="145" cy="282" r="20" fill="none" stroke="rgba(45,212,191,0.45)" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <circle cx="145" cy="282" r="16" fill="rgba(45,212,191,0.16)" stroke="#2DD4BF" stroke-width="1.6"/>
+  <text x="145" y="286.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">3</text>
+  <circle cx="233" cy="282" r="20" fill="none" stroke="rgba(45,212,191,0.45)" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <circle cx="233" cy="282" r="16" fill="rgba(45,212,191,0.16)" stroke="#2DD4BF" stroke-width="1.6"/>
+  <text x="233" y="286.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">5</text>
+  <circle cx="409" cy="166" r="16" fill="rgba(91,140,255,0.16)" stroke="#5B8CFF" stroke-width="1.6"/>
+  <text x="409" y="170.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">9</text>
+  <circle cx="365" cy="224" r="20" fill="none" stroke="rgba(45,212,191,0.45)" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <circle cx="365" cy="224" r="16" fill="rgba(45,212,191,0.16)" stroke="#2DD4BF" stroke-width="1.6"/>
+  <text x="365" y="228.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">8</text>
+  <circle cx="321" cy="282" r="20" fill="none" stroke="rgba(45,212,191,0.45)" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <circle cx="321" cy="282" r="16" fill="rgba(45,212,191,0.16)" stroke="#2DD4BF" stroke-width="1.6"/>
+  <text x="321" y="286.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">7</text>
+  <circle cx="453" cy="224" r="20" fill="none" stroke="rgba(45,212,191,0.45)" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <circle cx="453" cy="224" r="16" fill="rgba(45,212,191,0.16)" stroke="#2DD4BF" stroke-width="1.6"/>
+  <text x="453" y="228.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">10</text>
+  <circle cx="585" cy="108" r="16" fill="rgba(91,140,255,0.16)" stroke="#5B8CFF" stroke-width="1.6"/>
+  <text x="585" y="112.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">17</text>
+  <circle cx="541" cy="166" r="16" fill="rgba(34,197,94,0.16)" stroke="#22C55E" stroke-width="1.6"/>
+  <text x="541" y="170.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">13</text>
+  <circle cx="629" cy="166" r="16" fill="rgba(34,197,94,0.16)" stroke="#22C55E" stroke-width="1.6"/>
+  <text x="629" y="170.3" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">22</text>
+  <circle cx="27" cy="309.5" r="5" fill="rgba(45,212,191,0.16)" stroke="#2DD4BF" stroke-width="1.4"/>
+  <text x="37" y="313" fill="#7d7870" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5">newly inserted</text>
+</svg>

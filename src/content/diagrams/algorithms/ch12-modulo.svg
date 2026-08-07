@@ -1,0 +1,231 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 690 340" width="690" height="340" font-family="Inter, -apple-system, Segoe UI, sans-serif" role="img" aria-label="An animation working out a modulo step by step and landing on a table slot">
+  <defs><marker id="hFF5FA2" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#FF5FA2"/></marker><marker id="h22C55E" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#22C55E"/></marker><marker id="hEF4444" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#EF4444"/></marker><marker id="hA78BFA" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#A78BFA"/></marker><marker id="h2DD4BF" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#2DD4BF"/></marker><marker id="hEAB308" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#EAB308"/></marker><marker id="hbfb9b0" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#bfb9b0"/></marker><marker id="h7d7870" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#7d7870"/></marker><marker id="hf5f2ec" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#f5f2ec"/></marker></defs>
+  <style>@keyframes mo0{0%{opacity:1}19.4915%{opacity:1}19.5415%{opacity:0}100%{opacity:0}}@keyframes mo1{0%{opacity:0}19.4415%{opacity:0}19.4915%{opacity:1}38.9831%{opacity:1}39.0331%{opacity:0}100%{opacity:0}}@keyframes mo2{0%{opacity:0}38.9331%{opacity:0}38.9831%{opacity:1}58.4746%{opacity:1}58.5246%{opacity:0}100%{opacity:0}}@keyframes mo3{0%{opacity:0}58.4246%{opacity:0}58.4746%{opacity:1}77.9661%{opacity:1}78.0161%{opacity:1}100%{opacity:1}}@media (prefers-reduced-motion: reduce){*{animation:none !important}.fr{opacity:0 !important}.fr.final{opacity:1 !important}}</style>
+  <rect width="690" height="340" fill="#0b0a0a"/>
+  <text x="36" y="30" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="700" text-anchor="start">What the modulo is actually doing</text>
+  <text x="654" y="30" fill="#EAB308" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12.5" font-weight="700" text-anchor="end">27 mod 11</text>
+  <g class="fr" style="animation:mo0 11.799999999999999s linear infinite;opacity:0"><rect x="75" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="95" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="115" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="135" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="155" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="175" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="195" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="215" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="235" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="255" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="275" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="295" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="315" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="335" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="355" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="375" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="395" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="415" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="435" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="455" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="475" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="495" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="515" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="535" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="555" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="575" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="595" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.1)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="61" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="85" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">0</text>
+  <rect x="113" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="137" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">1</text>
+  <rect x="165" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="189" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">2</text>
+  <rect x="217" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="241" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">3</text>
+  <rect x="269" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="293" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">4</text>
+  <rect x="321" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="345" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">5</text>
+  <rect x="373" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="397" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">6</text>
+  <rect x="425" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="449" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">7</text>
+  <rect x="477" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="501" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">8</text>
+  <rect x="529" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="553" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">9</text>
+  <rect x="581" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="605" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">10</text>
+  <text x="36" y="276" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" text-anchor="start">h(27) = 27 mod 11</text>
+  <text x="36" y="294" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="500" text-anchor="start">"mod" is the remainder after dividing. Nothing more than that.</text></g>
+  <g class="fr" style="animation:mo1 11.799999999999999s linear infinite;opacity:0"><rect x="75" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="95" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="115" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="135" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="155" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="175" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="195" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="215" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="235" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="255" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="275" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="295" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="315" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="335" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="355" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="375" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="395" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="415" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="435" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="455" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="475" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="495" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="515" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.26)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="535" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.26)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="555" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.26)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="575" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.26)" stroke="#7d7870" stroke-width="1"/>
+  <rect x="595" y="84" width="18" height="26" rx="3" fill="rgba(125,120,112,0.26)" stroke="#7d7870" stroke-width="1"/>
+  <path d="M75,116 L75,122 L293,122 L293,116" fill="none" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="184" y="136" fill="#A78BFA" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" text-anchor="middle">11</text>
+  <path d="M295,116 L295,122 L513,122 L513,116" fill="none" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="404" y="136" fill="#A78BFA" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" text-anchor="middle">11</text>
+  <rect x="61" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="85" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">0</text>
+  <rect x="113" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="137" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">1</text>
+  <rect x="165" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="189" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">2</text>
+  <rect x="217" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="241" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">3</text>
+  <rect x="269" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="293" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">4</text>
+  <rect x="321" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="345" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">5</text>
+  <rect x="373" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="397" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">6</text>
+  <rect x="425" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="449" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">7</text>
+  <rect x="477" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="501" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">8</text>
+  <rect x="529" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="553" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">9</text>
+  <rect x="581" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="605" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">10</text>
+  <text x="36" y="276" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" text-anchor="start">How many whole 11s fit inside 27?</text>
+  <text x="36" y="294" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="500" text-anchor="start">2 of them, because 2 × 11 = 22, and the next one would be 33, which is too big.</text></g>
+  <g class="fr" style="animation:mo2 11.799999999999999s linear infinite;opacity:0"><rect x="75" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="95" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="115" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="135" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="155" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="175" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="195" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="215" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="235" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="255" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="275" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="295" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="315" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="335" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="355" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="375" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="395" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="415" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="435" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="455" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="475" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="495" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="515" y="84" width="18" height="26" rx="3" fill="rgba(234,179,8,0.26)" stroke="#EAB308" stroke-width="1"/>
+  <rect x="535" y="84" width="18" height="26" rx="3" fill="rgba(234,179,8,0.26)" stroke="#EAB308" stroke-width="1"/>
+  <rect x="555" y="84" width="18" height="26" rx="3" fill="rgba(234,179,8,0.26)" stroke="#EAB308" stroke-width="1"/>
+  <rect x="575" y="84" width="18" height="26" rx="3" fill="rgba(234,179,8,0.26)" stroke="#EAB308" stroke-width="1"/>
+  <rect x="595" y="84" width="18" height="26" rx="3" fill="rgba(234,179,8,0.26)" stroke="#EAB308" stroke-width="1"/>
+  <path d="M75,116 L75,122 L293,122 L293,116" fill="none" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="184" y="136" fill="#A78BFA" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" text-anchor="middle">11</text>
+  <path d="M295,116 L295,122 L513,122 L513,116" fill="none" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="404" y="136" fill="#A78BFA" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" text-anchor="middle">11</text>
+  <path d="M515,116 L515,122 L613,122 L613,116" fill="none" stroke="#EAB308" stroke-width="1.6"/>
+  <text x="564" y="138" fill="#EAB308" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700" text-anchor="middle">5 left over</text>
+  <text x="345" y="172" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="15" font-weight="700" text-anchor="middle">27  =  2 × 11  +  5</text>
+  <rect x="61" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="85" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">0</text>
+  <rect x="113" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="137" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">1</text>
+  <rect x="165" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="189" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">2</text>
+  <rect x="217" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="241" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">3</text>
+  <rect x="269" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="293" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">4</text>
+  <rect x="321" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="345" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">5</text>
+  <rect x="373" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="397" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">6</text>
+  <rect x="425" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="449" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">7</text>
+  <rect x="477" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="501" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">8</text>
+  <rect x="529" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="553" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">9</text>
+  <rect x="581" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="605" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">10</text>
+  <text x="36" y="276" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" text-anchor="start">What is left over?</text>
+  <text x="36" y="294" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="500" text-anchor="start">27 − 22 = 5. That leftover is the remainder.</text></g>
+  <g class="fr final" style="animation:mo3 11.799999999999999s linear infinite;opacity:0"><rect x="75" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="95" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="115" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="135" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="155" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="175" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="195" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="215" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="235" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="255" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="275" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="295" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="315" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="335" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="355" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="375" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="395" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="415" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="435" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="455" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="475" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="495" y="84" width="18" height="26" rx="3" fill="rgba(167,139,250,0.26)" stroke="#A78BFA" stroke-width="1"/>
+  <rect x="515" y="84" width="18" height="26" rx="3" fill="rgba(234,179,8,0.26)" stroke="#EAB308" stroke-width="1"/>
+  <rect x="535" y="84" width="18" height="26" rx="3" fill="rgba(234,179,8,0.26)" stroke="#EAB308" stroke-width="1"/>
+  <rect x="555" y="84" width="18" height="26" rx="3" fill="rgba(234,179,8,0.26)" stroke="#EAB308" stroke-width="1"/>
+  <rect x="575" y="84" width="18" height="26" rx="3" fill="rgba(234,179,8,0.26)" stroke="#EAB308" stroke-width="1"/>
+  <rect x="595" y="84" width="18" height="26" rx="3" fill="rgba(234,179,8,0.26)" stroke="#EAB308" stroke-width="1"/>
+  <path d="M75,116 L75,122 L293,122 L293,116" fill="none" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="184" y="136" fill="#A78BFA" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" text-anchor="middle">11</text>
+  <path d="M295,116 L295,122 L513,122 L513,116" fill="none" stroke="#A78BFA" stroke-width="1.3"/>
+  <text x="404" y="136" fill="#A78BFA" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" text-anchor="middle">11</text>
+  <path d="M515,116 L515,122 L613,122 L613,116" fill="none" stroke="#EAB308" stroke-width="1.6"/>
+  <text x="564" y="138" fill="#EAB308" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700" text-anchor="middle">5 left over</text>
+  <text x="345" y="172" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="15" font-weight="700" text-anchor="middle">27  =  2 × 11  +  5</text>
+  <rect x="61" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="85" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">0</text>
+  <rect x="113" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="137" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">1</text>
+  <rect x="165" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="189" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">2</text>
+  <rect x="217" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="241" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">3</text>
+  <rect x="269" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="293" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">4</text>
+  <rect x="321" y="208" width="48" height="34" rx="6" fill="rgba(234,179,8,0.3)" stroke="#EAB308" stroke-width="2.2"/>
+  <text x="345" y="229.5" fill="#f5f2ec" font-family="Cascadia Code, Fira Code, JetBrains Mono, SF Mono, Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">27</text>
+  <text x="345" y="202" fill="#EAB308" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">5</text>
+  <rect x="373" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="397" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">6</text>
+  <rect x="425" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="449" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">7</text>
+  <rect x="477" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="501" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">8</text>
+  <rect x="529" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="553" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">9</text>
+  <rect x="581" y="208" width="48" height="34" rx="6" fill="rgba(125,120,112,0.06)" stroke="#7d7870" stroke-width="1.3"/>
+  <text x="605" y="202" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" text-anchor="middle">10</text>
+  <text x="36" y="276" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" text-anchor="start">So h(27) = 5</text>
+  <text x="36" y="294" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="500" text-anchor="start">The remainder is always between 0 and 10, which is exactly the range of slot</text>
+  <text x="36" y="309" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="500" text-anchor="start">numbers.</text></g>
+</svg>
