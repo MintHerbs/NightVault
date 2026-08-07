@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 690 322" width="690" height="322" font-family="Inter, -apple-system, Segoe UI, sans-serif" role="img" aria-label="Expected probe count against load factor for chaining, double hashing and linear probing">
+  <defs><marker id="hFF5FA2" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#FF5FA2"/></marker><marker id="h22C55E" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#22C55E"/></marker><marker id="hEF4444" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#EF4444"/></marker><marker id="hA78BFA" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#A78BFA"/></marker><marker id="h2DD4BF" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#2DD4BF"/></marker><marker id="hEAB308" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#EAB308"/></marker><marker id="hbfb9b0" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#bfb9b0"/></marker><marker id="h7d7870" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#7d7870"/></marker><marker id="hf5f2ec" viewBox="0 0 10 8" refX="9.4" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.6,0.6 L9.4,4 L0.6,7.4 z" fill="#f5f2ec"/></marker></defs>
+  <rect width="690" height="322" fill="#0b0a0a"/>
+  <text x="36" y="30" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="700" text-anchor="start">Cost against how full the table is</text>
+  <text x="36" y="52" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="500" text-anchor="start">expected probes for an unsuccessful search, by load factor α = n / m</text>
+  <path d="M90,84 L90,214 L630,214" fill="none" stroke="rgba(125,120,112,0.7)" stroke-width="1.2"/>
+  <path d="M90,192.3 L630,192.3" stroke="rgba(125,120,112,0.18)" stroke-width="1"/>
+  <text x="82" y="196.3" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="600" text-anchor="end">2</text>
+  <path d="M90,170.7 L630,170.7" stroke="rgba(125,120,112,0.18)" stroke-width="1"/>
+  <text x="82" y="174.7" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="600" text-anchor="end">4</text>
+  <path d="M90,149 L630,149" stroke="rgba(125,120,112,0.18)" stroke-width="1"/>
+  <text x="82" y="153" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="600" text-anchor="end">6</text>
+  <path d="M90,127.3 L630,127.3" stroke="rgba(125,120,112,0.18)" stroke-width="1"/>
+  <text x="82" y="131.3" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="600" text-anchor="end">8</text>
+  <path d="M90,105.7 L630,105.7" stroke="rgba(125,120,112,0.18)" stroke-width="1"/>
+  <text x="82" y="109.7" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="600" text-anchor="end">10</text>
+  <path d="M90,84 L630,84" stroke="rgba(125,120,112,0.18)" stroke-width="1"/>
+  <text x="82" y="88" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="600" text-anchor="end">12</text>
+  <path d="M144,202.6 L225,201.9 L360,200.5 L495,199.1 L576,198.3 L603,198" fill="none" stroke="#22C55E" stroke-width="2"/>
+  <circle cx="144" cy="202.6" r="3" fill="#22C55E"/>
+  <circle cx="225" cy="201.9" r="3" fill="#22C55E"/>
+  <circle cx="360" cy="200.5" r="3" fill="#22C55E"/>
+  <circle cx="495" cy="199.1" r="3" fill="#22C55E"/>
+  <circle cx="576" cy="198.3" r="3" fill="#22C55E"/>
+  <circle cx="603" cy="198" r="3" fill="#22C55E"/>
+  <text x="636" y="98" fill="#22C55E" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700" text-anchor="start">chaining</text>
+  <path d="M144,202.6 L225,201.5 L360,198.9 L495,194 L576,186.3 L603,179.9" fill="none" stroke="#2DD4BF" stroke-width="2"/>
+  <circle cx="144" cy="202.6" r="3" fill="#2DD4BF"/>
+  <circle cx="225" cy="201.5" r="3" fill="#2DD4BF"/>
+  <circle cx="360" cy="198.9" r="3" fill="#2DD4BF"/>
+  <circle cx="495" cy="194" r="3" fill="#2DD4BF"/>
+  <circle cx="576" cy="186.3" r="3" fill="#2DD4BF"/>
+  <circle cx="603" cy="179.9" r="3" fill="#2DD4BF"/>
+  <text x="636" y="115" fill="#2DD4BF" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700" text-anchor="start">double hashing</text>
+  <path d="M144,201.9 L225,198.9 L360,186.9 L495,121.9 L576,84 L603,84" fill="none" stroke="#EF4444" stroke-width="2"/>
+  <circle cx="144" cy="201.9" r="3" fill="#EF4444"/>
+  <circle cx="225" cy="198.9" r="3" fill="#EF4444"/>
+  <circle cx="360" cy="186.9" r="3" fill="#EF4444"/>
+  <circle cx="495" cy="121.9" r="3" fill="#EF4444"/>
+  <circle cx="576" cy="84" r="3" fill="#EF4444"/>
+  <circle cx="603" cy="84" r="3" fill="#EF4444"/>
+  <text x="636" y="132" fill="#EF4444" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700" text-anchor="start">linear probing</text>
+  <text x="144" y="229" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="600" text-anchor="middle">0.1</text>
+  <text x="225" y="229" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="600" text-anchor="middle">0.25</text>
+  <text x="360" y="229" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="600" text-anchor="middle">0.5</text>
+  <text x="495" y="229" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="600" text-anchor="middle">0.75</text>
+  <text x="576" y="229" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="600" text-anchor="middle">0.9</text>
+  <text x="603" y="229" fill="rgba(125,120,112,0.95)" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="600" text-anchor="middle">0.95</text>
+  <text x="360" y="246" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="600" text-anchor="middle">load factor α</text>
+  <text x="36" y="268" fill="#f5f2ec" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="600" text-anchor="start">Chaining degrades gently and keeps working past α = 1. Open addressing falls off a cliff as the table fills.</text>
+  <text x="36" y="288" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="500" text-anchor="start">That is why an open addressed table is resized, usually doubling, once α passes about 0.7.</text>
+  <text x="36" y="308" fill="#bfb9b0" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="500" text-anchor="start">Resizing rehashes every key, because the index depends on m. It is O(n), but rare enough to average out to O(1).</text>
+</svg>
