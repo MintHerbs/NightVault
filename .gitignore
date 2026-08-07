@@ -36,3 +36,13 @@ dist-ssr
 
 # Generated artifacts (diagram extraction, import SQL)
 build/
+
+# Dev harness for the Database Systems note work (scripts/augment-database-notes.mjs).
+# preview-notes/ is a local dump of the `notes` table and preview-notes-original/
+# is the pre-augmentation snapshot it is diffed against. The database is the
+# source of truth for note content, so neither belongs in the repo; the on-disk
+# mirror is src/content/notes/, written by scripts/sync-notes-to-disk.mjs.
+# generated/ holds question Markdown emitted by the figure builders.
+preview-notes/
+preview-notes-original/
+generated/

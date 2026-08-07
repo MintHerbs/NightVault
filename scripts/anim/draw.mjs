@@ -184,6 +184,29 @@ export function wrap(s, max) {
 export function extent(svg) {
   let maxY = 0
   let maxX = 0
+
+  // A frame may wrap part of itself in `<g transform="translate(dx, dy)">`.
+  // Measuring the raw numbers would then report where the content was authored
+  // rather than where it lands, and the figure would be sized too short.
+  // Only flat, non-nested translate groups are handled, which is all the
+  // builders use; a nested one would need a real transform stack.
+  const groups = []
+  const GROUP_RE = /<g transform="translate\(\s*([-\d.]+)[ ,]+([-\d.]+)\s*\)"\s*>([\s\S]*?)<\/g>/g
+  let rest = svg
+  let m
+  while ((m = GROUP_RE.exec(svg)) !== null) {
+    groups.push({ dx: Number(m[1]), dy: Number(m[2]), body: m[3] })
+  }
+  if (groups.length) {
+    rest = svg.replace(GROUP_RE, '')
+    for (const g of groups) {
+      const inner = extent(g.body)
+      maxX = Math.max(maxX, inner.x + g.dx)
+      maxY = Math.max(maxY, inner.y + g.dy)
+    }
+  }
+  svg = rest
+
   const seeX = (v) => { if (Number.isFinite(v)) maxX = Math.max(maxX, v) }
   const seeY = (v) => { if (Number.isFinite(v)) maxY = Math.max(maxY, v) }
 

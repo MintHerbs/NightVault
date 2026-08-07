@@ -23,6 +23,21 @@ await page.goto(`http://localhost:${PORT}/preview-anim.html`, { waitUntil: 'netw
 await page.evaluate((m) => document.documentElement.setAttribute('data-mode', m), MODE)
 await page.waitForTimeout(1200)
 
+// The harness shows one note at a time, so select the page holding whatever we
+// were asked to check. NOTE_MATCH defaults to the every-figure page.
+const NOTE_MATCH = process.env.NOTE_MATCH ?? 'All new figures'
+const picked = await page.evaluate((match) => {
+  const b = [...document.querySelectorAll('nav button')].find((n) => n.textContent.includes(match))
+  if (b) b.click()
+  return Boolean(b)
+}, NOTE_MATCH)
+if (!picked) {
+  console.error(`no note matching "${NOTE_MATCH}" in the sidebar`)
+  await browser.close()
+  process.exit(1)
+}
+await page.waitForTimeout(1500)
+
 // Pause everything so stepping is under our control.
 await page.evaluate(() => {
   document.querySelectorAll('button[aria-label="Pause animation"]').forEach((b) => b.click())
@@ -54,30 +69,43 @@ for (let f = 0; f < stages.length; f += 1) {
     const bad = await page.evaluate(({ f }) => {
       const stage = [...document.querySelectorAll('div[role="img"]')][f]
       const svg = stage.querySelector('svg')
-      const vb = svg.viewBox.baseVal
+      const frame = svg.getBoundingClientRect()
       const live = [...svg.querySelectorAll('[data-fr]')].filter(
         (g) => getComputedStyle(g).opacity !== '0'
       )
       const out = []
       const boxes = []
+      // Screen space, not getBBox(): getBBox() reports a node's own user space
+      // and ignores every transform on its ancestors, so anything inside a
+      // translated <g> compares against the wrong coordinates. That produced a
+      // long list of overlaps between the question text and diagram labels
+      // that were nowhere near each other on screen.
+      const px = frame.width / svg.viewBox.baseVal.width
       for (const g of live) {
         for (const node of g.querySelectorAll('text, rect, ellipse, polygon')) {
-          const b = node.getBBox()
-          if (b.width === 0 && b.height === 0) continue
-          if (b.x < -1 || b.y < -1 || b.x + b.width > vb.width + 1 || b.y + b.height > vb.height + 1) {
-            out.push(`outside viewBox: ${node.tagName} "${(node.textContent || '').slice(0, 28)}" at ${b.x.toFixed(0)},${b.y.toFixed(0)} ${b.width.toFixed(0)}x${b.height.toFixed(0)}`)
+          const r = node.getBoundingClientRect()
+          if (r.width === 0 && r.height === 0) continue
+          if (
+            r.left < frame.left - 1 ||
+            r.top < frame.top - 1 ||
+            r.right > frame.right + 1 ||
+            r.bottom > frame.bottom + 1
+          ) {
+            out.push(
+              `outside viewBox: ${node.tagName} "${(node.textContent || '').slice(0, 28)}" ` +
+                `at ${((r.left - frame.left) / px).toFixed(0)},${((r.top - frame.top) / px).toFixed(0)}`
+            )
           }
-          if (node.tagName === 'text') boxes.push({ b, t: node.textContent || '' })
+          if (node.tagName === 'text') boxes.push({ r, t: node.textContent || '' })
         }
       }
-      // text-on-text overlap
       for (let a = 0; a < boxes.length; a += 1) {
         for (let c = a + 1; c < boxes.length; c += 1) {
-          const A = boxes[a].b
-          const B = boxes[c].b
-          const ox = Math.min(A.x + A.width, B.x + B.width) - Math.max(A.x, B.x)
-          const oy = Math.min(A.y + A.height, B.y + B.height) - Math.max(A.y, B.y)
-          if (ox > 1.5 && oy > 1.5) {
+          const A = boxes[a].r
+          const B = boxes[c].r
+          const ox = Math.min(A.right, B.right) - Math.max(A.left, B.left)
+          const oy = Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top)
+          if (ox > 1.5 * px && oy > 1.5 * px) {
             out.push(`text overlap: "${boxes[a].t.slice(0, 22)}" / "${boxes[c].t.slice(0, 22)}"`)
           }
         }
