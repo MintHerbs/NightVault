@@ -324,6 +324,26 @@ The two rules that decide every step:
 
 `
     ),
+    // The comparison row for leaf links said "Leaf nodes linked together" on
+    // BOTH sides, so the row showed no difference at all. A B-tree does not
+    // chain its leaves; that chain is exactly what a B+ tree adds, and it is
+    // the reason a range scan on a B+ tree costs one descent plus a walk.
+    replaceLine(
+      '| Leaf nodes are linked together like a linked list | Leaf nodes linked together                       |',
+      '| Leaf nodes are linked together like a linked list | Leaf nodes are **not** linked                     |'
+    ),
+    afterSection(
+      '# **B+ Trees vs B-Trees**',
+      `That last row is the one that matters most in practice. Because a B+ tree
+chains its leaves, a range query such as "every key between 11 and 29" costs one
+descent to find 11 and then a straight walk along the chain. A B-tree has to
+climb back up and down again for each step, because there is no sideways link to
+follow. It is also why a B+ tree keeps :color[every]{hex="#ff5fa2"} key in the
+leaves even when a copy already sits in an internal node: the leaf level has to
+be a complete, ordered list on its own.
+
+`
+    ),
     // The checkpoint's own worked example is right, but one heading is wrong:
     // the tree printed under "After inserting 23" is the tree after 29, and the
     // real state after 23 is missing. Verified against scripts/anim/bplus.mjs,
@@ -368,6 +388,30 @@ Colour is doing work in that figure and it is worth learning to read:
 
 `
     ),
+    append(`
+## The method, in five steps
+
+Exam questions hand you a table and its dependencies and ask for 3NF. The same
+five steps work every time:
+
+1. **Find the key.** Usually composite. If no single attribute identifies a
+   row, the key is the combination that does.
+2. **Look for partial dependencies.** Anything determined by *part* of the key
+   only. Peel each one off with its determinant, and take with it everything
+   that determinant determines.
+3. **You are now in 2NF.** Every non-key attribute needs the whole key.
+4. **Look for transitive dependencies.** A non-key attribute determined by
+   another non-key attribute. Peel those off the same way. They often turn up
+   inside a relation step 2 created, not in what is left of the original.
+5. **You are now in 3NF.** Every attribute depends on the key, the whole key,
+   and nothing but the key.
+
+The mark most often dropped is at step 2. When you move a determinant out, its
+own dependants have to travel with it, or you leave an attribute behind in a
+relation that no longer contains what determines it.
+
+`),
+    include('normalisation-questions.md'),
   ],
 }
 

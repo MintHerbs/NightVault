@@ -32,8 +32,9 @@ import { ANIMATION_ID_RE } from '../../constants/noteAnimations'
 import { databaseAnimations } from './database'
 import { bplusAnimations } from './bplus'
 import { erdAnimations } from './erd'
+import { normalisationAnimations } from './normalisation'
 
-const ALL = [...databaseAnimations, ...bplusAnimations, ...erdAnimations]
+const ALL = [...databaseAnimations, ...bplusAnimations, ...erdAnimations, ...normalisationAnimations]
 
 const BY_ID = new Map(ALL.map((entry) => [entry.id, entry]))
 
